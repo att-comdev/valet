@@ -1,0 +1,267 @@
+heat_template_version: 2013-05-23
+
+description: >
+  A WordPress stack with QoS considerations taken into account.
+  The stack consists of a database and web server instance.
+  A stub QoS pipe is established between the two servers.
+
+parameters:
+  server_image:
+    type: string
+    description: Image used for the servers
+    default: Fedora-x86_64-20-20131211.1-sda
+  server_flavor:
+    type: string
+    description: Flavor used by the servers
+    default: m1.small
+  ssh_key:
+    type: string
+    description: SSH key to connect to the servers
+    default: demo
+  db_name:
+    type: string
+    description: Name of the WordPress database
+    default: wordpress
+  db_user:
+    type: string
+    description: Name of the WordPress user
+    default: admin
+  preferred_db_server_az:
+    type: string
+    description: Preferred database server availability zone
+    default: nova
+  preferred_web_server_az:
+    type: string
+    description: Preferred web server availability zone
+    default: nova
+
+  mtu:
+    type: string
+    description: MTU (1430) - required for agave OpenStack at the moment.
+    default: 1430
+
+  #
+  # NOTE: There are named versions of these post-Icehouse. No _id needed!
+  #
+  public_net_id:
+    type: string
+    description: ID of public net for which floating IPs will be allocated
+    # default: agave-external
+    default: 0881c3f0-5cda-4220-9d8a-59b90556e57f
+  private_net_id:
+    type: string
+    description: ID of private network into which servers get deployed
+    # default: CloudQoS-private
+    default: a4ea3546-4b4c-43c7-b6f3-752a058ca9bb
+  private_subnet_id:
+    type: string
+    description: ID of private sub network into which servers get deployed
+    # default: CloudQoS-private-net
+    default: a3c56a42-e019-4643-8eaf-a760a2914857
+    
+resources:
+  db_password:
+    type: OS::Heat::RandomString
+
+  db_root_password:
+    type: OS::Heat::RandomString
+
+  db_server:
+    type: OS::Nova::Server
+    properties:
+      name: wordpress-db
+      flavor: {get_param: server_flavor}
+      image: {get_param: server_image}
+      key_name: {get_param: ssh_key}
+      availability_zone: {get_param: preferred_db_server_az}
+      networks:
+      - port: {get_resource: db_server_port}
+      user_data_format: RAW
+      user_data:
+        str_replace:
+          template: |
+            #!/bin/bash -v
+            ifconfig eth0 mtu $mtu
+            mkdir -p /etc/sysconfig/network-scripts
+            cat > /etc/sysconfig/network-scripts/ifcfg-eth0 << EOF
+            MTU=$mtu
+            EOF
+
+            yum -y install mariadb mariadb-server
+            systemctl enable mariadb.service
+            systemctl start mariadb.service
+
+            mysqladmin -u root password $db_root_password
+            cat << EOF | mysql -u root --password=$db_root_password
+            CREATE DATABASE $db_name;
+            GRANT ALL PRIVILEGES ON $db_name.* TO "$db_user"@"%"
+            IDENTIFIED BY "$db_password";
+            FLUSH PRIVILEGES;
+            EXIT
+            EOF
+          params:
+            $db_root_password: {get_attr: [db_root_password, value]}
+            $db_name: {get_param: db_name}
+            $db_user: {get_param: db_user}
+            $db_password: {get_attr: [db_password, value]}
+            $mtu: {get_param: mtu}
+
+  db_server_port:
+    type: OS::Neutron::Port
+    properties:
+      network_id: {get_param: private_net_id}
+      fixed_ips:
+      - subnet_id: {get_param: private_subnet_id}
+      security_groups:
+      - CloudQoS-public-icmp-ssh
+      - {get_resource: db_server_security_group}
+
+  db_server_floating_ip:
+    type: OS::Neutron::FloatingIP
+    properties:
+      floating_network_id: {get_param: public_net_id}
+      port_id: {get_resource: db_server_port}
+
+  db_server_security_group:
+    type: OS::Neutron::SecurityGroup
+    properties:
+      description: Permit db server access from private subnet
+      name: wordpress-public-db
+      rules:
+      - remote_ip_prefix: 10.0.2.0/24
+        protocol: tcp
+        port_range_min: 3306
+        port_range_max: 3306
+
+  web_server:
+    type: OS::Nova::Server
+    properties:
+      name: wordpress-server
+      flavor: {get_param: server_flavor}
+      image: {get_param: server_image}
+      key_name: {get_param: ssh_key}
+      availability_zone: {get_param: preferred_web_server_az}
+      networks:
+      - port: {get_resource: web_server_port}
+      user_data_format: RAW
+      user_data:
+        str_replace:
+          template: |
+            #!/bin/bash -v
+            ifconfig eth0 mtu $mtu
+            mkdir -p /etc/sysconfig/network-scripts
+            cat > /etc/sysconfig/network-scripts/ifcfg-eth0 << EOF
+            MTU=$mtu
+            EOF
+
+            yum -y install httpd wordpress
+            systemctl enable httpd.service
+            systemctl start httpd.service
+            setsebool -P httpd_can_network_connect_db=1
+
+            sed -i "/Deny from all/d" /etc/httpd/conf.d/wordpress.conf
+            sed -i "s/Require local/Require all granted/" /etc/httpd/conf.d/wordpress.conf
+            sed -i s/database_name_here/$db_name/ /etc/wordpress/wp-config.php
+            sed -i s/username_here/$db_user/ /etc/wordpress/wp-config.php
+            sed -i s/password_here/$db_password/ /etc/wordpress/wp-config.php
+            sed -i s/localhost/$db_host/ /etc/wordpress/wp-config.php
+
+            systemctl restart httpd.service
+          params:
+            $db_name: {get_param: db_name}
+            $db_user: {get_param: db_user}
+            $db_password: {get_attr: [db_password, value]}
+            $db_host: {get_attr: [db_server, networks, CloudQoS-private, 0]}
+            $mtu: {get_param: mtu}
+            
+  web_server_port:
+    type: OS::Neutron::Port
+    properties:
+      network_id: {get_param: private_net_id}
+      fixed_ips:
+      - subnet_id: {get_param: private_subnet_id}
+      security_groups:
+      - CloudQoS-public-icmp-ssh
+      - {get_resource: web_server_security_group}
+
+  web_server_floating_ip:
+    type: OS::Neutron::FloatingIP
+    properties:
+      floating_network_id: {get_param: public_net_id}
+      port_id: {get_resource: web_server_port}
+
+  web_server_security_group:
+    type: OS::Neutron::SecurityGroup
+    properties:
+      description: Permit http/s from everywhere
+      name: wordpress-public-http
+      rules:
+      - remote_ip_prefix: 0.0.0.0/0
+        protocol: tcp
+        port_range_min: 80
+        port_range_max: 80
+      - remote_ip_prefix: 0.0.0.0/0
+        protocol: tcp
+        port_range_min: 443
+        port_range_max: 443
+
+  deployment_plan:
+    type: ATT::QoS::DeploymentPlan
+    properties:
+      diversity_zones: [{get_resource: diversity_zone}]
+      pipes: [{get_resource: server_pipe}]
+
+  diversity_zone:
+    type: ATT::QoS::DiversityZone
+    properties:
+      name: dzone
+      level: rack
+      resources: [{get_resource: web_server}, {get_resource: db_server}]
+      spacing: 2
+
+  server_pipe:
+    type: ATT::QoS::Pipe
+    properties:
+      resources: [{get_resource: web_server}, {get_resource: db_server}]
+      bandwidth:
+        min: 1000
+        max: 1000
+        tolerance: 1.0
+        units: Mbps
+      latency:
+        min: 500
+        max: 500
+        tolerance: 1.0
+
+outputs:
+  db_password:
+    description: Database password
+    value: {get_attr: [db_password, value]}
+  db_root_password:
+    description: Database root password
+    value: {get_attr: [db_root_password, value]}
+  db_server_host:
+    description: The host db_server lives on.
+    value: {get_attr: [db_server, show, 'OS-EXT-SRV-ATTR:host']}
+  web_server_host:
+    description: The host web_server lives on.
+    value: {get_attr: [web_server, show, 'OS-EXT-SRV-ATTR:host']}
+  db_server_private_ip:
+    description: IP address of database server in private network
+    value: {get_attr: [db_server, networks, CloudQoS-private, 0]}
+  db_server_public_ip:
+    description: Floating IP address of database server in public network
+    value: {get_attr: [db_server_floating_ip, floating_ip_address]}
+  web_server_private_ip:
+    description: IP address of web server in private network
+    value: {get_attr: [web_server, networks, CloudQoS-private, 0]}
+  web_server_public_ip:
+    description: Floating IP address of web server in public network
+    value: {get_attr: [web_server_floating_ip, floating_ip_address]}
+  web_server_url:
+    description: URL for WordPress
+    value:
+      str_replace:
+        template: http://$ip/wordpress/
+        params:
+          $ip: {get_attr: [web_server_floating_ip, floating_ip_address]}

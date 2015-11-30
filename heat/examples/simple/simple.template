@@ -1,0 +1,221 @@
+#
+# simple.template
+#
+heat_template_version: 2013-05-23
+
+description: Minimal/Contrived Nested Template Example
+
+parameters:
+  server_image:
+    type: string
+    description: Image used for the servers
+    default: Fedora-x86_64-20-20131211.1-sda
+  server_flavor:
+    type: string
+    description: Flavor used by the servers
+    default: m1.small
+  ssh_key:
+    type: string
+    description: SSH key to connect to the servers
+    default: demo
+  volume_size:
+    type: number
+    description: Volume size in GB
+    default: 1
+  preferred_server1_az:
+    type: string
+    description: Preferred server 1 availability zone
+    default: nova
+  preferred_server2_az:
+    type: string
+    description: Preferred server 2 availability zone
+    default: nova
+
+  mtu:
+    type: string
+    description: MTU (1430) - required for agave OpenStack at the moment.
+    default: 1430
+
+  #
+  # NOTE: There are named versions of these post-Icehouse. No _id needed!
+  #
+  public_net_id:
+    type: string
+    description: ID of public net for which floating IPs will be allocated
+    # default: agave-external
+    default: 0881c3f0-5cda-4220-9d8a-59b90556e57f
+  private_net_id:
+    type: string
+    description: ID of private network into which servers get deployed
+    # default: CloudQoS-private
+    default: a4ea3546-4b4c-43c7-b6f3-752a058ca9bb
+  private_subnet_id:
+    type: string
+    description: ID of private sub network into which servers get deployed
+    # default: CloudQoS-private-net
+    default: a3c56a42-e019-4643-8eaf-a760a2914857
+    
+resources:
+  server1:
+    type: OS::Nova::Server
+    properties:
+      name: simple-server1
+      flavor: {get_param: server_flavor}
+      image: {get_param: server_image}
+      key_name: {get_param: ssh_key}
+      availability_zone: {get_param: preferred_server1_az}
+      networks:
+      - port: {get_resource: server1_port}
+      user_data_format: RAW
+      user_data:
+        str_replace:
+          template: |
+            #!/bin/bash -v
+            ifconfig eth0 mtu $mtu
+            mkdir -p /etc/sysconfig/network-scripts
+            cat > /etc/sysconfig/network-scripts/ifcfg-eth0 << EOF
+            MTU=$mtu
+            EOF
+          params:
+            $mtu: {get_param: mtu}
+
+  server1_port:
+    type: OS::Neutron::Port
+    properties:
+      network_id: {get_param: private_net_id}
+      fixed_ips:
+      - subnet_id: {get_param: private_subnet_id}
+      security_groups:
+      - CloudQoS-public-icmp-ssh
+
+  server1_floating_ip:
+    type: OS::Neutron::FloatingIP
+    properties:
+      floating_network_id: {get_param: public_net_id}
+      port_id: {get_resource: server1_port}
+
+  server2:
+    type: OS::Nova::Server
+    properties:
+      name: simple-server2
+      flavor: {get_param: server_flavor}
+      image: {get_param: server_image}
+      key_name: {get_param: ssh_key}
+      availability_zone: {get_param: preferred_server2_az}
+      networks:
+      - port: {get_resource: server2_port}
+      user_data_format: RAW
+      user_data:
+        str_replace:
+          template: |
+            #!/bin/bash -v
+            ifconfig eth0 mtu $mtu
+            mkdir -p /etc/sysconfig/network-scripts
+            cat > /etc/sysconfig/network-scripts/ifcfg-eth0 << EOF
+            MTU=$mtu
+            EOF
+          params:
+            $mtu: {get_param: mtu}
+            
+  server2_port:
+    type: OS::Neutron::Port
+    properties:
+      network_id: {get_param: private_net_id}
+      fixed_ips:
+      - subnet_id: {get_param: private_subnet_id}
+      security_groups:
+      - CloudQoS-public-icmp-ssh
+
+  server2_floating_ip:
+    type: OS::Neutron::FloatingIP
+    properties:
+      floating_network_id: {get_param: public_net_id}
+      port_id: {get_resource: server2_port}
+
+  volume:
+    type: OS::Cinder::Volume
+    properties:
+      size: {get_param: volume_size}
+      
+  volume_attachment:
+    type: OS::Cinder::VolumeAttachment
+    properties:
+      instance_uuid: {get_resource: server1}
+      volume_id: {get_resource: volume}
+      mountpoint: /dev/vdb
+
+  deployment_plan:
+    type: ATT::QoS::DeploymentPlan
+    properties:
+      diversity_zones:
+      - {get_resource: diversity_zone}
+      pipes:
+      - {get_resource: server_to_server_pipe}
+      - {get_resource: server_to_volume_pipe}
+
+  diversity_zone:
+    type: ATT::QoS::DiversityZone
+    properties:
+      name: dzone
+      level: rack
+      resources:
+      - {get_resource: server1}
+      - {get_resource: server2}
+      - {get_resource: volume}
+      spacing: 2
+
+  server_to_server_pipe:
+    type: ATT::QoS::Pipe
+    properties:
+      resources:
+      - {get_resource: server1}
+      - {get_resource: server2}
+      bandwidth:
+        min: 1000
+        max: 1000
+        tolerance: 1.0
+        units: Mbps
+      latency:
+        min: 60
+        max: 60
+        tolerance: 1.0
+        
+  server_to_volume_pipe:
+    type: ATT::QoS::Pipe
+    properties:
+      resources:
+      - {get_resource: volume_attachment}
+      access_type: mixed
+      bandwidth:
+        min: 1000
+        max: 1000
+        tolerance: 1.0
+        units: Mbps
+      iops:
+        min: 100000
+        max: 100000
+        tolerance: 1.0
+      latency:
+        min: 60
+        max: 60
+        tolerance: 1.0
+
+outputs:
+  server1_host:
+    description: The host server1 lives on.
+    value: {get_attr: [server1, show, 'OS-EXT-SRV-ATTR:host']}
+  server2_host:
+    description: The host server2 lives on.
+    value: {get_attr: [server2, show, 'OS-EXT-SRV-ATTR:host']}
+  server1_private_ip:
+    description: IP address of server 1 in private network
+    value: {get_attr: [server1, networks, CloudQoS-private, 0]}
+  server1_public_ip:
+    description: Floating IP address of server 1 in public network
+    value: {get_attr: [server1_floating_ip, floating_ip_address]}
+  server2_private_ip:
+    description: IP address of server 2 in private network
+    value: {get_attr: [server2, networks, CloudQoS-private, 0]}
+  server2_public_ip:
+    description: Floating IP address of server 2 in public network
+    value: {get_attr: [server2_floating_ip, floating_ip_address]}

@@ -6,13 +6,13 @@ QoSOrch adds resource plugins to OpenStack Heat for use with QoS services includ
 
 Getting Started
 ---------------
-If you'd like to run from the develop branch, you can clone the git repo:
+Clone the git repository from CodeCloud, using your username in the URI.
+For example, with the username of jd0616, specify:
 
 ::
 
-    git clone git+ssh://USERNAME@forge.research.att.com//var/lib/gforge/chroot/scmrepos/git/qosorch/qosorch.git
+    git clone https://jd0616@codecloud.web.att.com/scm/st_cloudqos/allegro.git
     cd qosorch
-    git checkout develop
 
 For more information, please see the `QoSOrch Wiki`_.
 
@@ -28,14 +28,7 @@ See ``requirements.txt`` for prerequisites.
 - QoSLite (Tegu)
 - IOArbiter
 
-Each cinder node's ``cinder.conf`` must have a unique storage availability zone using the same nomenclature as nova. For example, for the host named ``host1``:
-
-::
-
-   [DEFAULT]
-   storage_availability_zone=nova:host1
-
-This also means that cinder volume creations *must* specify an availability zone, otherwise the controller node will *always* be used. This is different from nova, where the availability zone may be omitted and a host will be chosen at random.
+NOTE: Prior documentation advised that each cinder node's ``cinder.conf`` must have a unique storage availability zone using the same nomenclature as nova (e.g., nova:host1). This is no longer required.
 
 As root, install in production or developer mode:
 

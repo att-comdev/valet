@@ -82,7 +82,7 @@ class DiversityZone(resource.Resource):
             constraints=[constraints.AllowedValues([CLOUD,
                          AVAILABILITY_ZONE, RACK, HOST, ANY])],
             default=ANY,
-            required=True,
+            required=False,
             update_allowed=True
             ),
         RESOURCES: properties.Schema(

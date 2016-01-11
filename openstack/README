@@ -1,0 +1,6 @@
+This directory is to contain the version of Allegro intended for
+open source release under the OpenStack Big Tent. It uses Ceilometer
+as a baseline model of CLI/API/Engine architecture, and matches on
+the API front (both use Pecan).
+
+Contact: "Joe D'Andrea" <jdandrea@research.att.com>

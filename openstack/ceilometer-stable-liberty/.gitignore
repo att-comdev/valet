@@ -1,0 +1,20 @@
+*.egg*
+*.mo
+*.pyc
+.coverage
+.testrepository
+.tox
+AUTHORS
+build/*
+ChangeLog
+cover/*
+dist/*
+doc/build
+doc/source/api/
+etc/ceilometer/ceilometer.conf
+subunit.log
+tools/lintstack.head.py
+tools/pylint_exceptions
+
+# Files created by releasenotes build
+releasenotes/build

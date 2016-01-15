@@ -1,0 +1,52 @@
+# turn on all the allegro services by default
+# Pollsters
+enable_service allegro-acompute allegro-acentral allegro-aipmi
+# Notification Agent
+enable_service allegro-anotification
+# Data Collector
+enable_service allegro-collector
+# API service
+enable_service allegro-api
+# Alarming
+enable_service allegro-alarm-notifier allegro-alarm-evaluator
+
+# Default directories
+ALLEGRO_DIR=$DEST/allegro
+ALLEGRO_CONF_DIR=/etc/allegro
+ALLEGRO_CONF=$ALLEGRO_CONF_DIR/allegro.conf
+ALLEGRO_API_LOG_DIR=/var/log/allegro-api
+ALLEGRO_AUTH_CACHE_DIR=${ALLEGRO_AUTH_CACHE_DIR:-/var/cache/allegro}
+ALLEGRO_WSGI_DIR=${ALLEGRO_WSGI_DIR:-/var/www/allegro}
+
+# Set up database backend
+ALLEGRO_BACKEND=${ALLEGRO_BACKEND:-mysql}
+
+# Allegro connection info.
+ALLEGRO_SERVICE_PROTOCOL=http
+ALLEGRO_SERVICE_HOST=$SERVICE_HOST
+ALLEGRO_SERVICE_PORT=${ALLEGRO_SERVICE_PORT:-8777}
+ALLEGRO_USE_MOD_WSGI=${ALLEGRO_USE_MOD_WSGI:-${ENABLE_HTTPD_MOD_WSGI_SERVICES}}
+
+# To enable OSprofiler change value of this variable to "notifications,profiler"
+ALLEGRO_NOTIFICATION_TOPICS=${ALLEGRO_NOTIFICATION_TOPICS:-notifications}
+ALLEGRO_EVENTS=${ALLEGRO_EVENTS:-True}
+
+ALLEGRO_COORDINATION_URL=${ALLEGRO_COORDINATION_URL:-}
+ALLEGRO_PIPELINE_INTERVAL=${ALLEGRO_PIPELINE_INTERVAL:-}
+
+ALLEGRO_EVENT_ALARM=${ALLEGRO_EVENT_ALARM:-False}
+
+# Tell Tempest this project is present
+TEMPEST_SERVICES+=,allegro
+
+# Set up default directories for client and middleware
+GITREPO["python-allegroclient"]=${ALLEGROCLIENT_REPO:-${GIT_BASE}/openstack/python-allegroclient.git}
+GITBRANCH["python-allegroclient"]=${ALLEGROCLIENT_BRANCH:-master}
+GITDIR["python-allegroclient"]=$DEST/python-allegroclient
+GITDIR["allegromiddleware"]=$DEST/allegromiddleware
+
+# Get rid of this before done.
+# Tell emacs to use shell-script-mode
+## Local variables:
+## mode: shell-script
+## End:

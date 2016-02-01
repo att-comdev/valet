@@ -51,7 +51,7 @@ class Datacenter:
         self.avail_local_disk_cap = 0
 
 
-# Information of rack or cluster
+# Data container for rack or cluster
 class HostGroup: 
     
     def __init__(self, _id):
@@ -79,7 +79,6 @@ class HostGroup:
         self.volume_list = []            # a list of placed volume names
 
         self.last_update = 0
-        #self.last_metadata_update = 0
         self.last_link_update = 0
 
     def init_resources(self):
@@ -91,8 +90,7 @@ class HostGroup:
         self.avail_local_disk_cap = 0
 
     def init_memberships(self):
-        for mk in self.memberships.keys():
-            m = self.memberships[mk]:
+        for mk, m in self.memberships.iteritems():
             if m.group_type == "EX":
                 level = m.name.split(":")[0]
                 if LEVELS.index(level) < LEVELS.index(self.host_type):
@@ -137,7 +135,6 @@ class Host:
         self.volume_list = []            # a list of placed volume names
 
         self.last_update = 0
-        #self.last_metadata_update = 0
         self.last_link_update = 0
 
     def check_availability(self):
@@ -166,7 +163,7 @@ class Switch:
         self.status = "enabled"
 
         self.up_links = {}
-        #self.down_links = {}
+        self.down_links = {}             # currently, not used
         self.peer_links = {}
 
         self.last_update = 0
@@ -190,17 +187,10 @@ class StorageHost:
         self.storage_class = None        # tiering, e.g., platinum, gold, silver 
   
         self.status = None
-        #self.timestamp = 0
-        #self.protocoal = None
         self.host_list = []  
-        #self.vendor = None
-        #self.backend_name = None 
 
         self.disk_cap = -1               # GB
         self.avail_disk_cap = -1
-
-        #self.iops = -1
-        #self.avail_iops = -1
 
         self.volume_list = []            # list of volume names placed in this host
 
@@ -219,7 +209,6 @@ class Flavor:
 
         self.extra_specs = {}
 
-        #self.last_update = 0
 
 
 

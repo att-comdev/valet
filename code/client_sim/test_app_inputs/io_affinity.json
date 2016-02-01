@@ -1,0 +1,127 @@
+[
+{
+  "version": "0.1",
+  "action": "create",
+  "stack_id": "app_uuid",
+  "application_name": "app",
+  "resources": {
+    "vm0_uuid": {
+      "name": "vm0",
+      "properties": {
+        "flavor": "sds.small"
+      },
+      "type": "OS::Nova::Server"
+    },
+    "vm1_uuid": {
+      "name": "vm1",
+      "properties": {
+        "flavor": "sds.small"
+      },
+      "type": "OS::Nova::Server"
+    },
+    "vm2_uuid": {
+      "name": "vm2",
+      "properties": {
+        "flavor": "sds.small"
+      },
+      "type": "OS::Nova::Server"
+    },
+    "vm0_vm1_pipe_uuid": {
+      "name": "vm0_vm1_pipe",
+      "properties": {
+        "bandwidth": {
+          "min": 20,
+          "unit": "Mbps"
+        },
+        "resources": [
+          "vm0_uuid",
+          "vm1_uuid"
+        ]
+      },
+      "type": "ATT::QoS::Pipe"
+    },
+    "vm1_vm2_pipe_uuid": {
+      "name": "vm1_vm2_pipe",
+      "properties": {
+        "bandwidth": {
+          "min": 20,
+          "unit": "Mbps"
+        },
+        "resources": [
+          "vm1_uuid",
+          "vm2_uuid"
+        ]
+      },
+      "type": "ATT::QoS::Pipe"
+    },
+    "vol0_uuid": {
+      "name": "vol0",
+      "properties": {
+        "size": 5,
+        "metadata": {
+          "tier": "1"
+        }
+      },
+      "type": "OS::Cinder::Volume"
+    },
+    "vm0_vol0_attachment_uuid": {
+      "name": "vm0_vol0_attachment",
+      "properties": {
+        "instance_uuid": "vm0_uuid",
+        "volume_id": "vol0_uuid"
+      },
+      "type": "OS::Cinder::VolumeAttachment"
+    },
+    "vm0_vol0_pipe_uuid": {
+      "name": "vm0_vol0_pipe",
+      "properties": {
+        "access_type": "sequential",
+        "bandwidth": {
+          "min": 30,
+          "unit": "Mbps"
+        },
+        "resources": [
+          "vm0_vol0_attachment_uuid"
+        ]
+      },
+      "type": "ATT::QoS::Pipe"
+    },
+    "affinity0_uuid": {
+      "name": "affinity0",
+      "properties": {
+        "relationship": "affinity",
+        "level": "rack",
+        "resources": [
+          "affinity1_uuid",
+          "vm2_uuid"
+        ]
+      },
+      "type": "ATT::QoS::ResourceGroup"
+    },
+    "affinity1_uuid": {
+      "name": "affinity1",
+      "properties": {
+        "relationship": "affinity",
+        "level": "host",
+        "resources": [
+          "vm0_uuid",
+          "vm1_uuid"
+        ]
+      },
+      "type": "ATT::QoS::ResourceGroup"
+    },
+    "diversity0_uuid": {
+      "name": "diversity0",
+      "properties": {
+        "relationship": "diversity",
+        "level": "host",
+        "resources": [
+          "affinity1_uuid",
+          "vm2_uuid"
+        ]
+      },
+      "type": "ATT::QoS::ResourceGroup"
+    }
+  }
+}
+]

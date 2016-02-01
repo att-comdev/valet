@@ -1,0 +1,75 @@
+Ostro version 2.0 Installation and Usage Guide
+
+Author: Gueyoung Jung
+Contact: gjung@research.att.com
+
+
+ASSUMPTIONS 
+
+- The physical hierarchy of datacenter (AIC site) is up to 3 layers, i.e., host, rack, and cluster. Here, the cluster can be availability zone.
+- The power domain is per rack base.
+- Up to 3-level networking hierarchy, i.e., host, top of rack switch (ToR), and spine
+- Remote storage I/O between host and storage is shared with other normal networking transmissions
+
+
+INSTALLATION
+
+0. Install Canssandra Python driver if needed
+
+	pip install cassandra-driver
+
+(assume your machine has ‘pip’ installed; otherwise download src from flask.pocoo.org and install manually)
+
+1. Install Cassandra (single node)
+
+Download Cassandra (version 2.2.0 or above) from: http://cassandra.apache.org/download/
+Unzip installation file in any directory (for example, /home/)
+In the installation directory, go to subdirectory: conf/
+Change configurations in file cassandra.yaml (assume your public ip is 135.207.143.212):
+
+	Cluster_name: ’your_cluster_name’
+	Initial_token: 0
+	- seeds: “135.207.143.212”
+	listen_address: localhost
+	broadcast_address: 135.207.143.212
+	rpc_address: localhost
+
+Refer: https://wiki.apache.org/cassandra/GettingStarted
+
+
+USAGE
+
+0. Configure Ostro
+
+Set authentication in code/ostro_server/ostro.auth file.
+
+Set all other configurations in code/ostro_server/ostro.cfg file such as logging, OpenStack Keystone and Nova API addresses.
+
+1. Start Cassandra
+
+Go to Cassandra installation directory and type:
+
+	sudo bin/cassandra start
+
+If you want to use the command line tool to interact with it, type:
+
+	sudo bin/cqlsh
+
+you can use this cqlsh to create a key_space (similar to session) in Cassandra by typing:
+
+CREATE KEYSPACE ostro_v_2_0_0
+WITH REPLICATION = {‘class’:’SimpleStrategy’,’replication_factor’:1};
+
+This will only be required once.
+
+2. Start/stop Ostro daemon
+
+Go to code/ostro_server, then start Ostro daemon.
+
+	python ostro_daemon.py start
+
+To stop this daemon process:
+
+	python ostro_daemon.py stop
+	
+

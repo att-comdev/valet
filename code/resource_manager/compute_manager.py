@@ -93,7 +93,6 @@ class ComputeManager(threading.Thread):
 
         if self.set_hosts() == True:
             self.logger.info("trigger setting hosts")
-            #self.resource.update_metadata()
             self.resource.update_topology()
 
         if self.set_flavors() == True:
@@ -149,8 +148,7 @@ class ComputeManager(threading.Thread):
 
                 self.logger.warn("new logical group (" + lk + ") added")
 
-        for rlk in self.resource.logical_groups.keys():
-            rl = self.resource.logical_groups[rlk]
+        for rlk, rl in self.resource.logical_groups.iteritems():
             if rl.group_type != "EX":
                 if rlk not in _logical_groups.keys():
                     del self.resource.logical_groups[rlk]
@@ -186,8 +184,7 @@ class ComputeManager(threading.Thread):
 
                 self.logger.warn("new host (" + new_host.name + ") added")
 
-        for rhk in self.resource.hosts.keys():
-            host = self.resource.hosts[rhk]
+        for rhk, host in self.resource.hosts.iteritems():
             if "nova" in host.tag:
                 if rhk not in _hosts.keys():
                     host.tag.remove("nova")
@@ -202,8 +199,7 @@ class ComputeManager(threading.Thread):
             if self._check_host_config_update(host, rhost) == True:
                 rhost.last_update = time.time()
 
-        for hk in self.resource.hosts.keys():                                                    
-            host = self.resource.hosts[hk]                                                       
+        for hk, host in self.resource.hosts.iteritems():                                                    
             if host.last_update > self.resource.current_timestamp:                               
                 self.resource.update_rack_resource(host)
 
@@ -271,8 +267,7 @@ class ComputeManager(threading.Thread):
 
                 self.logger.warn("host (" + _rhost.name + ") updated (new membership)")
 
-        for mk in _rhost.memberships.keys():
-            m = _rhost.memberships[mk]
+        for mk, m in _rhost.memberships.iteritems():
             if m.group_type == "EX":
                 if len(_rhost.vm_list) == 0:
                     del _rhost.memberships[mk]

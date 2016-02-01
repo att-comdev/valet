@@ -218,13 +218,11 @@ class TopologyManager(threading.Thread):
         if link_updated == True:
             self.resource.datacenter.last_link_update = time.time()
 
-        for hk in self.resource.hosts.keys():
-            host = self.resource.hosts[hk]
+        for hk, host in self.resource.hosts.iteritems():
             if host.last_update > self.resource.current_timestamp:
                 self.resource.update_rack_resource(host)
 
-        for hgk in self.resource.host_groups.keys():
-            hg = self.resource.host_groups[hgk]
+        for hgk, hg in self.resource.host_groups.iteritems():
             if hg.last_update > self.resource.current_timestamp:
                 self.resource.update_cluster_resource(hg)
 
@@ -247,33 +245,11 @@ class TopologyManager(threading.Thread):
         new_host = Host(_host.name)
         new_host.tag.append("infra")
 
-        #new_host.vCPUs = _host.vCPUs
-        #new_host.avail_vCPUs = new_host.vCPUs
-        #new_host.mem_cap = _host.mem_cap
-        #new_host.avail_mem_cap = new_host.mem_cap
-        #new_host.local_disk_cap = _host.local_disk_cap
-        #new_host.avail_local_disk_cap = new_host.local_disk_cap
-
-        #for sk in _host.switches.keys():
-            #s = self.resource.switches[_host.switches[sk].name]
-            #new_host.switches[s.name] = s
-
         return new_host
         
     def _create_new_host_group(self, _hg):
         new_hg = HostGroup(_hg.name)
         new_hg.host_type = _hg.host_type
-
-        #new_hg.vCPUs = _hg.vCPUs
-        #new_hg.avail_vCPUs = new_hg.vCPUs
-        #new_hg.mem_cap = _hg.mem_cap
-        #new_hg.avail_mem_cap = new_hg.mem_cap
-        #new_hg.local_disk_cap = _hg.local_disk_cap
-        #new_hg.avail_local_disk_cap = new_hg.local_disk_cap
-
-        #for sk in _hg.switches.keys():
-            #s = self.resource.switches[_hg.switches[sk].name]
-            #new_hg.switches[s.name] = s
 
         return new_hg
         

@@ -75,27 +75,6 @@ class Authentication:
 
         return project_id
 
-    #def get_tenant_tokens(self, _keystone_url, _token_id):
-        #buf = StringIO.StringIO()
-        #c = pycurl.Curl()
-        #c.setopt(pycurl.URL, _keystone_url + "tenants")
-        #c.setopt(pycurl.HTTPHEADER, ["User-Agent: python-keystoneclient", "X-Auth-Token: " + str(_token_id)])
-        #c.setopt(pycurl.POST, 0)
-        #c.setopt(pycurl.WRITEFUNCTION, buf.write)
-        #c.perform()
-        #tenants_result = buf.getvalue()
-        #buf.close()
-        #tenant_ids = []
-        #try:
-            #decoded = json.loads(tenants_result)
-            #print json.dumps(decoded, indent=4)
-            #elements = decoded["tenants"]
-            #for e in elements:
-                #tenant_ids.append(e["id"])
-        #except (ValueError, KeyError, TypeError):
-            #self.status = "JSON format error while getting tenants"
-            #return None
-        #return tenant_ids
 
 
 ## Test ##

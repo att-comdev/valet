@@ -11,8 +11,8 @@ See ``ALLEGRO_PATH/requirements.txt`` for full prerequisites.
 
 - Ubuntu 12 LTS and OpenStack Kilo are required at a minimum.
 - `Ostro`_ is the required and only supported placement engine at this time.
-- If VM-to-VM QoS is required, install QoSLite (`Tegu`_).
-- If VM-to-Volume QoS is required, install `IOArbiter`_.
+- If VM-to-VM QoS is required, install QoSLite (`Tegu`_ ).
+- If VM-to-Volume QoS is required, install `IOArbiter`_ .
 
 Getting Started
 ---------------

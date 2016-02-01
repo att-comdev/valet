@@ -18,6 +18,7 @@ LEVELS = ["host", "rack", "cluster"]
 class VGroup:
 
     def __init__(self, _app_uuid, _uuid):
+        test
         self.app_uuid = _app_uuid
         self.uuid = _uuid
         self.name = None
@@ -37,7 +38,7 @@ class VGroup:
 
         self.vCPUs = 0
         self.mem = 0                   # MB
-	self.local_volume_size = 0     # GB
+	    self.local_volume_size = 0     # GB
         self.volume_sizes = {}         # key = volume_class_name, value = size
         self.nw_bandwidth = 0          # Mbps
         self.io_bandwidth = 0          # Mbps

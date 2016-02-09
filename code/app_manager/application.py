@@ -4,7 +4,7 @@
 #################################################################################################################
 # Author: Gueyoung Jung, Mengsong Zou
 # Contact: gjung@research.att.com
-# Version 2.0.0: Oct. 15, 2015
+# Version 2.0.2: Feb. 9, 2016
 #
 #################################################################################################################
 
@@ -46,14 +46,14 @@ class App:
         self.vms[_vm.uuid]["status"] = "requested"
         self.vms[_vm.uuid]["uuid"] = "none"
 
-        if _vm.affinity_group != None:
-            self.vms[_vm.uuid]["affinity_group"] = _vm.affinity_group.uuid
+        if _vm.survgroup != None:
+            self.vms[_vm.uuid]["parent_group"] = _vm.survgroup.uuid
         else:
-            self.vms[_vm.uuid]["affinity_group"] = "none"
-        if _vm.availability_zone != None:
-            self.vms[_vm.uuid]["availability_zone"] = _vm.availability_zone
-        else:
-            self.vms[_vm.uuid]["availability_zone"] = "none"
+            self.vms[_vm.uuid]["parent_group"] = "none"
+        #if _vm.availability_zone != None:
+            #self.vms[_vm.uuid]["availability_zone"] = _vm.availability_zone
+        #else:
+            #self.vms[_vm.uuid]["availability_zone"] = "none"
         #self.vms[_vm.uuid]["host_aggregate"] = _vm.host_aggregate
         self.vms[_vm.uuid]["diversity_groups"] = {}
         for dgk in _vm.diversity_groups.keys():
@@ -80,14 +80,14 @@ class App:
         self.volumes[_vol.uuid]["status"] = "requested"
         self.volumes[_vol.uuid]["uuid"] = "none"
 
-        if _vol.affinity_group != None:
-            self.volumes[_vol.uuid]["affinity_group"] = _vol.affinity_group.uuid
+        if _vol.survgroup != None:
+            self.volumes[_vol.uuid]["parent_group"] = _vol.survgroup.uuid
         else:
-            self.volumes[_vol.uuid]["affinity_group"] = "none"
-        if _vol.availability_zone != None:
-            self.volumes[_vol.uuid]["availability_zone"] = _vol.availability_zone
-        else:
-            self.volumes[_vol.uuid]["availability_zone"] = "none"
+            self.volumes[_vol.uuid]["parent_group"] = "none"
+        #if _vol.availability_zone != None:
+            #self.volumes[_vol.uuid]["availability_zone"] = _vol.availability_zone
+        #else:
+            #self.volumes[_vol.uuid]["availability_zone"] = "none"
         #self.volumes[_vol.uuid]["host_aggregate"] = _vol.host_aggregate
         self.volumes[_vol.uuid]["diversity_groups"] = {}
         for dgk in _vol.diversity_groups.keys():
@@ -112,14 +112,14 @@ class App:
         self.vgroups[_vg.uuid]["name"] = _vg.name
         #self.vgroups[_vg.uuid]["status"] = "requested"
 
-        if _vg.affinity_group != None:
-            self.vgroups[_vg.uuid]["affinity_group"] = _vg.affinity_group.uuid
+        if _vg.survgroup != None:
+            self.vgroups[_vg.uuid]["parent_group"] = _vg.survgroup.uuid
         else:
-            self.vgroups[_vg.uuid]["affinity_group"] = "none"
-        if _vg.availability_zone != None:
-            self.vgroups[_vg.uuid]["availability_zone"] = _vg.availability_zone
-        else:
-            self.vgroups[_vg.uuid]["availability_zone"] = "none"
+            self.vgroups[_vg.uuid]["parent_group"] = "none"
+        #if _vg.availability_zone != None:
+            #self.vgroups[_vg.uuid]["availability_zone"] = _vg.availability_zone
+        #else:
+            #self.vgroups[_vg.uuid]["availability_zone"] = "none"
         #self.vgroups[_vg.uuid]["host_aggregate"] = _vg.host_aggregate
         self.vgroups[_vg.uuid]["diversity_groups"] = {}
         for dgk in _vg.diversity_groups.keys():

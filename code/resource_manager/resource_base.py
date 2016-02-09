@@ -4,7 +4,7 @@
 #################################################################################################################
 # Author: Gueyoung Jung
 # Contact: gjung@research.att.com
-# Version 2.0.1: Dec. 7, 2015
+# Version 2.0.2: Feb. 9, 2016
 #
 #################################################################################################################
 
@@ -36,8 +36,8 @@ class Datacenter:
 
         self.resources = {}
 
-        self.vm_list = []                # a list of placed vm names
-        self.volume_list = []            # a list of placed volume names
+        self.vms = {}                    # a list of placed vms, key=ochestration_uuid, value=name
+        self.volumes = {}                # a list of placed volumes
 
         self.last_update = 0
         self.last_link_update = 0
@@ -75,8 +75,8 @@ class HostGroup:
         self.parent_resource = None      # e.g., datacenter
         self.child_resources = {}        # e.g., hosting servers
 
-        self.vm_list = []                # a list of placed vm names
-        self.volume_list = []            # a list of placed volume names
+        self.vms = {}                    # a list of placed vms
+        self.volumes = {}                # a list of placed volumes
 
         self.last_update = 0
         self.last_link_update = 0
@@ -90,7 +90,8 @@ class HostGroup:
         self.avail_local_disk_cap = 0
 
     def init_memberships(self):
-        for mk, m in self.memberships.iteritems():
+        for mk in self.memberships.keys():
+            m = self.memberships[mk]
             if m.group_type == "EX":
                 level = m.name.split(":")[0]
                 if LEVELS.index(level) < LEVELS.index(self.host_type):
@@ -119,20 +120,20 @@ class Host:
 
         self.memberships = {}            # logical group (e.g., aggregate) this hosting server is involved in
 
-        self.vCPUs = -1
-        self.avail_vCPUs = -1
-        self.mem_cap = -1                # MB
-        self.avail_mem_cap = -1
-        self.local_disk_cap = -1         # GB, ephemeral
-        self.avail_local_disk_cap = -1
+        self.vCPUs = 0
+        self.avail_vCPUs = 0
+        self.mem_cap = 0                 # MB
+        self.avail_mem_cap = 0
+        self.local_disk_cap = 0          # GB, ephemeral
+        self.avail_local_disk_cap = 0
      
         self.switches = {}               # leaf
         self.storages = {} 
 
         self.host_group = None           # e.g., rack
 
-        self.vm_list = []                # a list of placed vm names
-        self.volume_list = []            # a list of placed volume names
+        self.vms = {}                    # a list of placed vms
+        self.volumes = {}                # a list of placed volumes
 
         self.last_update = 0
         self.last_link_update = 0
@@ -149,9 +150,14 @@ class LogicalGroup:
 
     def __init__(self, _name):
         self.name = _name
-        self.group_type = "AGGR"         # AGGR, AZ, INTG, or EX
+        self.group_type = "AGGR"         # AGGR, AZ, INTG, EX, or AFF
 
         self.metadata = {}               # any metadata to be matched when placing nodes
+
+        self.vms = {}                    # a list of placed vms
+        self.volumes = {}                # a list of placed volumes
+
+        #self.last_update = 0
 
 
 class Switch: 
@@ -175,8 +181,8 @@ class Link:
         self.name = _name                # format: source + "-" + target
         self.resource = None             # switch beging connected to
 
-        self.nw_bandwidth = -1           # Mbps
-        self.avail_nw_bandwidth = -1
+        self.nw_bandwidth = 0            # Mbps
+        self.avail_nw_bandwidth = 0
 
 
 # TODO: storage backend, pool, or physical storage? 
@@ -189,8 +195,8 @@ class StorageHost:
         self.status = None
         self.host_list = []  
 
-        self.disk_cap = -1               # GB
-        self.avail_disk_cap = -1
+        self.disk_cap = 0                # GB
+        self.avail_disk_cap = 0
 
         self.volume_list = []            # list of volume names placed in this host
 
@@ -203,9 +209,9 @@ class Flavor:
     def __init__(self, _name):
         self.name = _name
 
-        self.vCPUs = -1
-        self.mem_cap = -1
-        self.disk_cap = -1
+        self.vCPUs = 0
+        self.mem_cap = 0
+        self.disk_cap = 0
 
         self.extra_specs = {}
 

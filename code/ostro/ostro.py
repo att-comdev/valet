@@ -4,7 +4,7 @@
 #################################################################################################################
 # Author: Gueyoung Jung
 # Contact: gjung@research.att.com
-# Version 2.0.1: Dec. 7, 2015
+# Version 2.0.2: Feb. 9, 2016
 #
 # Functions 
 # - Deal with placement requests
@@ -44,85 +44,70 @@ class Ostro:
         self.logger = _logger
 
         self.db = None
-
-        self.resource = None
-
-        self.app_handler = None
-        self.optimizer = None
-
-        self.topology = None
-        self.compute = None
-        #self.storage = None
-        #self.network = None
-
-        self.status = "success"
-
-        self.data_lock = threading.Lock()
-        self.end_of_process = False
-
-    def run_ostro(self):
-        self.logger.info("start Ostro ......")
-    
-        #if self.config.db_keyspace != "none":
+        if self.config.db_keyspace != "none":
             #self.db = DatabaseConnector(self.config.db_keyspace)
+            pass
 
         self.resource = Resource(self.db, self.logger)
-
-        self.app_handler = AppHandler(self.resource, self.db, self.logger)
-        self.optimizer = Optimizer(self.resource, self.logger)
-
-        thread_list = []
-
         if self.config.mode.startswith("sim") == True:
             self.resource.datacenter = Datacenter(self.config.mode)
         else: 
             self.resource.datacenter = Datacenter(self.config.datacenter_name)
+
+        self.app_handler = AppHandler(self.resource, self.db, self.logger)
+        self.optimizer = Optimizer(self.resource, self.logger)
+
+        self.data_lock = threading.Lock()
+
+        self.thread_list = []
 
         self.topology = TopologyManager(1, "Topology", self.resource, self.data_lock, self.config, self.logger)
         self.compute = ComputeManager(2, "Compute", self.resource, self.data_lock, self.config, self.logger)
         #self.storage = TestStorage(3, "Storage", self.resource, self.data_lock, self.logger)
         #self.network = NetworkManager(3, "Network", self.resource, self.data_lock, self.config, self.logger)
 
-        if self._bootstrap_topology() == False:
-            return False
+        self.status = "success"
 
-        # For test
-        #display_dc_topology(self.resource)
+        self.end_of_process = False
+
+    def run_ostro(self):
+        self.logger.info("start Ostro ......")
 
         self.topology.start()
         self.compute.start()
         #self.storage.start()
         #self.network.start()
 
-        thread_list.append(self.topology)
-        thread_list.append(self.compute)
-        #thread_list.append(self.storage)
-        #thread_list.append(self.network)
+        self.thread_list.append(self.topology)
+        self.thread_list.append(self.compute)
+        #self.thread_list.append(self.storage)
+        #self.thread_list.append(self.network)
 
-        test_duration = 100
-        test_end = time.time() + test_duration
         while self.end_of_process == False:
             time.sleep(1)
 
             self.logger.debug("ostro running......")
-            if time.time() > test_end:
-                self.end_of_process = True
 
         self.topology.end_of_process = True
         self.compute.end_of_process = True
         #self.storage.end_of_process = True
         #self.network.end_of_process = True
 
-        time.sleep(1)
-
-        for t in thread_list:
+        for t in self.thread_list:
             t.join()
 
         self.logger.info("exit Ostro")
 
-        return True
+    def stop_ostro(self):
+        self.end_of_process = True
+       
+        while len(self.thread_list) > 0:
+            time.sleep(1)
+            for t in self.thread_list:
+                if not t.is_alive():
+                    self.thread_list.remove(t)
 
-    def _bootstrap_topology(self):
+    def bootstrap(self):
         if self._set_topology() == False:
             return False
 
@@ -140,6 +125,9 @@ class Ostro:
 
         #self.resource.update_metadata()
         self.resource.update_topology()  
+
+        # For test
+        #display_dc_topology(self.resource)
 
         return True
 

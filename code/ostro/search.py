@@ -4,7 +4,7 @@
 #################################################################################################################
 # Author: Gueyoung Jung
 # Contact: gjung@research.att.com
-# Version 2.0.1: Jan. 23, 2016
+# Version 2.0.2: Feb. 9, 2016
 #
 # Functions
 # - Search the optimal placement
@@ -94,8 +94,7 @@ class Search:
         self.disk_weight = -1
 
     def _create_avail_hosts(self):
-        for hk in self.resource.hosts.keys():
-            h = self.resource.hosts[hk]
+        for hk, h in self.resource.hosts.iteritems():
 
             if h.status != "enabled" or h.state != "up":
                 continue
@@ -167,8 +166,7 @@ class Search:
             self.avail_hosts[hk] = r
 
     def _create_avail_storage_hosts(self):
-        for shk in self.resource.storage_hosts.keys():
-            sh = self.resource.storage_hosts[shk]
+        for shk, sh in self.resource.storage_hosts.iteritems():
 
             if sh.status != "enabled":
                 continue
@@ -180,8 +178,7 @@ class Search:
 
             self.avail_storage_hosts[sr.storage_name] = sr
 
-        for hk in self.resource.hosts.keys():
-            host = self.resource.hosts[hk]
+        for hk, host in self.resource.hosts.iteritems():
 
             if host.status != "enabled" or host.state != "up":
                 continue
@@ -233,8 +230,7 @@ class Search:
                             r.cluster_avail_storages[csk] = csr 
 
     def _create_avail_switches(self):
-        for sk in self.resource.switches.keys():
-            s = self.resource.switches[sk]
+        for sk, s in self.resource.switches.iteritems():
 
             if s.status != "enabled":
                 continue
@@ -243,16 +239,14 @@ class Search:
             sr.switch_name = s.name
             sr.switch_type = s.switch_type
             
-            for ulk in s.up_links.keys():
-                ul = s.up_links[ulk]
+            for ulk, ul in s.up_links.iteritems():
                 sr.avail_bandwidths.append(ul.avail_nw_bandwidth) 
 
             # NOTE: peer_links?
 
             self.avail_switches[sk] = sr
 
-        for hk in self.resource.hosts.keys():
-            h = self.resource.hosts[hk]
+        for hk, h in self.resource.hosts.iteritems():
 
             if h.status != "enabled" or h.state != "up":
                 continue
@@ -723,7 +717,7 @@ class Search:
         sort_base = 0 # Set bandwidth usage penalty by placement
 
         # To check the bandwidth constraint at the last moment
-        # NOTE: 3rd entry to be used for special node communicating beyond datacenter or zone
+        # 3rd entry to be used for special node communicating beyond datacenter or zone
         req_bandwidths = [0, 0, 0]
 
         link_list = _n.get_all_links()
@@ -744,6 +738,12 @@ class Search:
                                                                   req_bandwidths)
 
         candidate = copy.deepcopy(_candidate)
+
+        exclusivity_id = _n.get_exclusivity_id()
+        if exclusivity_id != None:
+            if exclusivity_id.split(":")[0] == _level:
+                self._add_candidate_exclusivity(_level, candidate, exclusivity_id) 
+
         self._deduct_candidate_reservation(candidate, _n, req_bandwidths, _level)
 
         handled_vgroups = {}
@@ -762,66 +762,22 @@ class Search:
                 if implicit_diversity[0] != None:
                     diversity_level = implicit_diversity[1]
             if diversity_level == "ANY" or LEVELS.index(diversity_level) < LEVELS.index(_level):
-                saved_bandwidth = compute_reservation(_level, _level, bandwidth) 
-                temp_req_bandwidths = [0, 0, 0]
-                self.constraint_solver.get_req_bandwidths(_level, _level, bandwidth, temp_req_bandwidths)
-
-                resource_available == True 
                 vg = self._get_top_vgroup(vl.node, _level)
-                temp_n = Node()
-                temp_n.node = vg
                 if vg.uuid not in handled_vgroups.keys(): 
                     handled_vgroups[vg.uuid] = vg
-       
-                    if isinstance(vg, VM):
-                        if self.constraint_solver.check_compute_availability(_level, vg, candidate) == False:
-                            resource_available = False
-                    elif isinstance(vg, Volume):
-                        if self.constraint_solver.check_storage_availability(_level, vg, candidate) == False:
-                            resource_available = False
-                    else:
-                        if self.constraint_solver.check_compute_availability(_level, vg, candidate) == False or \
-                           self.constraint_solver.check_storage_availability(_level, vg, candidate) == False:
-                            resource_available = False
 
-                    if resource_available == True:
-                        if self.constraint_solver.check_nw_bandwidth_availability(_level, \
-                                                                                  temp_n, \
-                                                                                  self.node_placements, \
-                                                                                  candidate) == False:
-                            resource_available = False
+                    temp_n = Node()
+                    temp_n.node = vg
+                    temp_req_bandwidths = [0, 0, 0]
+                    self.constraint_solver.get_req_bandwidths(_level, _level, bandwidth, temp_req_bandwidths)
 
-                    if resource_available == True:
-                        if self.constraint_solver.check_host_aggregates(_level, vg, candidate) == False:
-                            resource_available = False
-
-                    if resource_available == True:
-                        if self.constraint_solver.check_diversity(_level, \
-                                                                  temp_n, \
-                                                                  self.node_placements, \
-                                                                  candidate) == True:
-                            resource_available = False
-
-                    if resource_available == True:
-                        exc_id = temp_n.get_exclusivity_id()
-                        if exc_id != None:
-                            exc_level = exc_id.split(":")[0]
-                            if exc_level == _level:
-                                if self.constraint_solver.check_exclusivity_candidate(exc_level, \
-                                                                                      exc_id, \
-                                                                                      candidate) == False:
-                                    if self.constraint_solver.check_hibernated_candidate(exc_level, \
-                                                                                         candidate) == False:
-                                        resource_available = False
-
-                    if resource_available == True:
+                    if self._check_availability(_level, temp_n, candidate) == True:
                         self._deduct_candidate_reservation(candidate, temp_n, temp_req_bandwidths, _level)
-
-                if resource_available == False:
-                    sort_base += saved_bandwidth
-                    req_bandwidths[0] += temp_req_bandwidths[0]
-                    req_bandwidths[1] += temp_req_bandwidths[1]
-                    req_bandwidths[2] += temp_req_bandwidths[2]
+                    else:
+                        sort_base += compute_reservation(_level, _level, bandwidth)
+                        req_bandwidths[0] += temp_req_bandwidths[0]
+                        req_bandwidths[1] += temp_req_bandwidths[1]
+                        req_bandwidths[2] += temp_req_bandwidths[2]
             else:
                 self.constraint_solver.get_req_bandwidths(_level, diversity_level, bandwidth, req_bandwidths)
                 sort_base += compute_reservation(_level, diversity_level, bandwidth) 
@@ -830,6 +786,26 @@ class Search:
             sort_base = -1
 
         return sort_base
+
+    def _add_candidate_exclusivity(self, _level, _candidate, _exclusivity_id):
+        if _level == "host":
+            if _candidate.host_num_of_placed_vms == 0 and \
+               _exclusivity_id not in _candidate.host_memberships.keys():
+                _candidate.host_memberships[_exclusivity_id] = "EX"
+            if _exclusivity_id not in _candidate.rack_memberships.keys():
+                _candidate.rack_memberships[_exclusivity_id] = "EX"
+            if _exclusivity_id not in _candidate.cluster_memberships.keys():
+                _candidate.cluster_memberships[_exclusivity_id] = "EX"
+        elif _level == "rack": 
+            if _candidate.rack_num_of_placed_vms == 0 and \
+               _exclusivity_id not in _candidate.rack_memberships.keys():
+                _candidate.rack_memberships[_exclusivity_id] = "EX"
+            if _exclusivity_id not in _candidate.cluster_memberships.keys():
+                _candidate.cluster_memberships[_exclusivity_id] = "EX"
+        elif _level == "cluster": 
+            if _candidate.cluster_num_of_placed_vms == 0 and \
+               _exclusivity_id not in _candidate.cluster_memberships.keys():
+                _candidate.cluster_memberships[_exclusivity_id] = "EX"
 
     def _get_top_vgroup(self, _v, _level):
         vg = _v.survgroup
@@ -842,13 +818,45 @@ class Search:
   
         return self._get_top_vgroup(vg, _level)
 
-    def _deduct_candidate_reservation(self, _candidate, _n, _rsrv, _level):
-        exclusivity_id = _n.get_exclusivity_id()
-        if exclusivity_id != None:
-            exclusivity_level = exclusivity_id.split(":")[0]
-            if exclusivity_level == _level:
-                self._add_candidate_exclusivity(_level, _candidate, exclusivity_id) 
+    def _check_availability(self, _level, _n, _candidate):
+        if isinstance(_n.node, VM):
+            if self.constraint_solver.check_compute_availability(_level, _n.node, _candidate) == False:
+                return False
+        elif isinstance(_n.node, Volume):
+            if self.constraint_solver.check_storage_availability(_level, _n.node, _candidate) == False:
+                return False
+        else:
+            if self.constraint_solver.check_compute_availability(_level, _n.node, _candidate) == False or \
+               self.constraint_solver.check_storage_availability(_level, _n.node, _candidate) == False:
+                return False
 
+        if self.constraint_solver.check_nw_bandwidth_availability(_level, \
+                                                                  _n, \
+                                                                  self.node_placements, \
+                                                                  _candidate) == False:
+            return False
+
+        if self.constraint_solver.check_host_aggregates(_level, _n.node, _candidate) == False:
+            return False
+
+        if self.constraint_solver.conflict_diversity(_level, _n, self.node_placements, _candidate) == True:
+            return False
+
+        exc_id = _n.get_exclusivity_id()
+        if exc_id == None:
+            exc_id = _n.get_parent_exclusivity_id()
+            if exc_id == None:
+                if self.constraint_solver.conflict_exclusivity(_level, _candidate) == True:
+                    return False
+            else: # no way to check
+                pass
+        else:
+            if self.constraint_solver.check_exclusivity(_level, exc_id, _candidate) == False:
+                return False
+
+        return True
+
+    def _deduct_candidate_reservation(self, _candidate, _n, _rsrv, _level):
         if isinstance(_n.node, VM) or isinstance(_n.node, VGroup):
             self._deduct_candidate_vm_reservation(_level, _n.node, _candidate)
 
@@ -856,17 +864,6 @@ class Search:
             self._deduct_candidate_volume_reservation(_level, _n.node, _candidate)
 
         self._deduct_candidate_nw_reservation(_candidate, _rsrv)
-
-    def _add_candidate_exclusivity(self, _level, _candidate, _exclusivity_id):
-        if _level == "host":
-            if _exclusivity_id not in _candidate.host_memberships.keys():
-                _candidate.host_memberships[_exclusivity_id] = "EX"
-        elif _level == "rack":
-            if _exclusivity_id not in _candidate.rack_memberships.keys():
-                _candidate.rack_memberships[_exclusivity_id] = "EX"
-        elif _level == "cluster":
-            if _exclusivity_id not in _candidate.cluster_memberships.keys():
-                _candidate.cluster_memberships[_exclusivity_id] = "EX"
 
     def _deduct_candidate_vm_reservation(self, _level, _v, _candidate):
         is_vm_included = False
@@ -976,8 +973,7 @@ class Search:
     def _deduct_reservation(self, _level, _best, _n):
         exclusivity_id = _n.get_exclusivity_id()
         if exclusivity_id != None:
-            exclusivity_level = exclusivity_id.split(":")[0]
-            if exclusivity_level == _level:
+            if exclusivity_id.split(":")[0] == _level:
                 self._add_exclusivity(_level, _best, exclusivity_id)
 
         if isinstance(_n.node, VM) and _level == "host":
@@ -990,8 +986,7 @@ class Search:
         if _level == "host":
             if _exclusivity_id not in chosen_host.host_memberships.keys():
                 chosen_host.host_memberships[_exclusivity_id] = "EX"
-            for npk in self.avail_hosts.keys():
-                np = self.avail_hosts[npk]
+            for npk, np in self.avail_hosts.iteritems():
                 if chosen_host.rack_name != "any" and np.rack_name == chosen_host.rack_name:
                     if _exclusivity_id not in np.rack_memberships.keys():
                         np.rack_memberships[_exclusivity_id] = "EX"
@@ -999,8 +994,7 @@ class Search:
                     if _exclusivity_id not in np.cluster_memberships.keys():
                         np.cluster_memberships[_exclusivity_id] = "EX"
         elif _level == "rack": 
-            for npk in self.avail_hosts.keys():
-                np = self.avail_hosts[npk]
+            for npk, np in self.avail_hosts.iteritems():
                 if chosen_host.rack_name != "any" and np.rack_name == chosen_host.rack_name:
                     if _exclusivity_id not in np.rack_memberships.keys():
                         np.rack_memberships[_exclusivity_id] = "EX"
@@ -1008,8 +1002,7 @@ class Search:
                     if _exclusivity_id not in np.cluster_memberships.keys():
                         np.cluster_memberships[_exclusivity_id] = "EX"
         elif _level == "cluster": 
-            for npk in self.avail_hosts.keys():
-                np = self.avail_hosts[npk]
+            for npk, np in self.avail_hosts.iteritems():
                 if chosen_host.cluster_name != "any" and np.cluster_name == chosen_host.cluster_name:
                     if _exclusivity_id not in np.cluster_memberships.keys():
                         np.cluster_memberships[_exclusivity_id] = "EX"
@@ -1024,8 +1017,7 @@ class Search:
             self.num_of_hosts += 1
         chosen_host.host_num_of_placed_vms += 1
 
-        for npk in self.avail_hosts.keys():
-            np = self.avail_hosts[npk]
+        for npk, np in self.avail_hosts.iteritems():
             if chosen_host.rack_name != "any" and np.rack_name == chosen_host.rack_name:
                 np.rack_avail_vCPUs -= _n.node.vCPUs
                 np.rack_avail_mem -= _n.node.mem
@@ -1042,8 +1034,6 @@ class Search:
                 cn = self.avail_hosts[self.node_placements[vml.node].host_name]
                 placement_level = cn.get_common_placement(chosen_host)
                 bandwidth = vml.nw_bandwidth
-                if bandwidth < 0: 
-                    bandwidth = 0
                 self.bandwidth_usage += self._deduct_nw_reservation(placement_level, chosen_host, cn, bandwidth)
 
         for voll in _n.node.volume_list:
@@ -1051,8 +1041,6 @@ class Search:
                 cn = self.avail_hosts[self.node_placements[voll.node].host_name]
                 placement_level = cn.get_common_placement(chosen_host)
                 bandwidth = voll.io_bandwidth
-                if bandwidth < 0: 
-                    bandwidth = 0
                 self.bandwidth_usage += self._deduct_nw_reservation(placement_level, chosen_host, cn, bandwidth)
 
     def _deduct_volume_resources(self, _best, _n):
@@ -1064,55 +1052,41 @@ class Search:
                 cn = self.avail_hosts[self.node_placements[vml.node].host_name]
                 placement_level = cn.get_common_placement(chosen_host)
                 bandwidth = vml.io_bandwidth
-                if bandwidth < 0: 
-                    bandwidth = 0
                 self.bandwidth_usage += self._deduct_nw_reservation(placement_level, chosen_host, cn, bandwidth)
             
     def _deduct_nw_reservation(self, _placement_level, _host1, _host2, _rsrv):
         nw_reservation = compute_reservation("host", _placement_level, _rsrv)
 
         if _placement_level == "host":
-            for srk in _host1.host_avail_switches.keys():
-                sr = _host1.host_avail_switches[srk]
+            for srk, sr in _host1.host_avail_switches.iteritems():
                 sr.avail_bandwidths = [bw - _rsrv for bw in sr.avail_bandwidths]    
-            for srk in _host2.host_avail_switches.keys():
-                sr = _host2.host_avail_switches[srk]
+            for srk, sr in _host2.host_avail_switches.iteritems():
                 sr.avail_bandwidths = [bw - _rsrv for bw in sr.avail_bandwidths]    
         elif _placement_level == "rack":
-            for srk in _host1.host_avail_switches.keys():
-                sr = _host1.host_avail_switches[srk]
+            for srk, sr in _host1.host_avail_switches.iteritems():
                 sr.avail_bandwidths = [bw - _rsrv for bw in sr.avail_bandwidths]    
-            for srk in _host2.host_avail_switches.keys():
-                sr = _host2.host_avail_switches[srk]
+            for srk, sr in _host2.host_avail_switches.iteritems():
                 sr.avail_bandwidths = [bw - _rsrv for bw in sr.avail_bandwidths] 
    
-            for srk in _host1.rack_avail_switches.keys():
-                sr = _host1.rack_avail_switches[srk]
+            for srk, sr in _host1.rack_avail_switches.iteritems():
                 sr.avail_bandwidths = [bw - _rsrv for bw in sr.avail_bandwidths]    
-            for srk in _host2.rack_avail_switches.keys():
-                sr = _host2.rack_avail_switches[srk]
+            for srk, sr in _host2.rack_avail_switches.iteritems():
                 sr.avail_bandwidths = [bw - _rsrv for bw in sr.avail_bandwidths] 
         elif _placement_level == "cluster":
-            for srk in _host1.host_avail_switches.keys():
-                sr = _host1.host_avail_switches[srk]
+            for srk, sr in _host1.host_avail_switches.iteritems():
                 sr.avail_bandwidths = [bw - _rsrv for bw in sr.avail_bandwidths]    
-            for srk in _host2.host_avail_switches.keys():
-                sr = _host2.host_avail_switches[srk]
+            for srk, sr in _host2.host_avail_switches.iteritems():
                 sr.avail_bandwidths = [bw - _rsrv for bw in sr.avail_bandwidths] 
    
-            for srk in _host1.rack_avail_switches.keys():
-                sr = _host1.rack_avail_switches[srk]
+            for srk, sr in _host1.rack_avail_switches.iteritems():
                 sr.avail_bandwidths = [bw - _rsrv for bw in sr.avail_bandwidths]    
-            for srk in _host2.rack_avail_switches.keys():
-                sr = _host2.rack_avail_switches[srk]
+            for srk, sr in _host2.rack_avail_switches.iteritems():
                 sr.avail_bandwidths = [bw - _rsrv for bw in sr.avail_bandwidths] 
 
-            for srk in _host1.cluster_avail_switches.keys():
-                sr = _host1.cluster_avail_switches[srk]
+            for srk, sr in _host1.cluster_avail_switches.iteritems():
                 if sr.switch_type == "spine":
                     sr.avail_bandwidths = [bw - _rsrv for bw in sr.avail_bandwidths]    
-            for srk in _host2.cluster_avail_switches.keys():
-                sr = _host2.cluster_avail_switches[srk]
+            for srk, sr in _host2.cluster_avail_switches.iteritems():
                 if sr.switch_type == "spine":
                     sr.avail_bandwidths = [bw - _rsrv for bw in sr.avail_bandwidths] 
   
@@ -1148,8 +1122,7 @@ class Search:
                _exclusivity_id in _chosen_host.host_memberships.keys():
                 del _chosen_host.host_memberships[_exclusivity_id]
 
-                for npk in self.avail_hosts.keys():
-                    np = self.avail_hosts[npk]
+                for npk, np in self.avail_hosts.iteritems():
                     if _chosen_host.rack_name != "any" and np.rack_name == _chosen_host.rack_name:
                         if _exclusivity_id in np.rack_memberships.keys():
                             del np.rack_memberships[_exclusivity_id]
@@ -1159,8 +1132,7 @@ class Search:
 
         elif _exclusivity_level == "rack": 
             if _chosen_host.rack_num_of_placed_vms == 0:
-                for npk in self.avail_hosts.keys():
-                    np = self.avail_hosts[npk]
+                for npk, np in self.avail_hosts.iteritems():
                     if _chosen_host.rack_name != "any" and np.rack_name == _chosen_host.rack_name:
                         if _exclusivity_id in np.rack_memberships.keys():
                             del np.rack_memberships[_exclusivity_id]
@@ -1170,8 +1142,7 @@ class Search:
 
         elif _exclusivity_level == "cluster": 
             if _chosen_host.cluster_num_of_placed_vms == 0:
-                for npk in self.avail_hosts.keys():
-                    np = self.avail_hosts[npk]
+                for npk, np in self.avail_hosts.iteritems():
                     if _chosen_host.cluster_name != "any" and np.cluster_name == _chosen_host.cluster_name:
                         if _exclusivity_id in np.cluster_memberships.keys():
                             del np.cluster_memberships[_exclusivity_id]
@@ -1187,8 +1158,7 @@ class Search:
             if chosen_host.host_num_of_placed_vms == 0:
                 self.num_of_hosts -= 1
 
-            for npk in self.avail_hosts.keys():
-                np = self.avail_hosts[npk]
+            for npk, np in self.avail_hosts.iteritems():
                 if chosen_host.rack_name != "any" and np.rack_name == chosen_host.rack_name:
                     np.rack_avail_vCPUs += _v.vCPUs
                     np.rack_avail_mem += _v.mem
@@ -1205,8 +1175,6 @@ class Search:
                     cn = self.avail_hosts[self.node_placements[vml.node].host_name]
                     level = cn.get_common_placement(chosen_host)
                     bandwidth = vml.nw_bandwidth
-                    if bandwidth < 0: 
-                        bandwidth = 0
                     self.bandwidth_usage -= self._rollback_nw_reservation(level, chosen_host, cn, bandwidth)
 
             for voll in _v.volume_list:
@@ -1214,8 +1182,6 @@ class Search:
                     cn = self.avail_hosts[self.node_placements[voll.node].host_name]
                     level = cn.get_common_placement(chosen_host)
                     bandwidth = voll.io_bandwidth
-                    if bandwidth < 0: 
-                        bandwidth = 0
                     self.bandwidth_usage -= self._rollback_nw_reservation(level, chosen_host, cn, bandwidth)
 
     def _rollback_volume_reservation(self, _v):
@@ -1228,8 +1194,6 @@ class Search:
                     cn = self.avail_hosts[self.node_placements[vml.node].host_name]
                     level = cn.get_common_placement(chosen_host)
                     bandwidth = vml.io_bandwidth
-                    if bandwidth < 0: 
-                        bandwidth = 0
                     self.bandwidth_usage -= self._rollback_nw_reservation(level, chosen_host, cn, bandwidth)
 
     def _rollback_vgroup_reservation(self, _v):
@@ -1245,47 +1209,35 @@ class Search:
         nw_reservation = compute_reservation("host", _level, _rsrv)
 
         if _level == "host":
-            for srk in _host1.host_avail_switches.keys():
-                sr = _host1.host_avail_switches[srk]
+            for srk, sr in _host1.host_avail_switches.iteritems():
                 sr.avail_bandwidths = [bw + _rsrv for bw in sr.avail_bandwidths]
-            for srk in _host2.host_avail_switches.keys():
-                sr = _host2.host_avail_switches[srk]
+            for srk, sr in _host2.host_avail_switches.iteritems():
                 sr.avail_bandwidths = [bw + _rsrv for bw in sr.avail_bandwidths]
         elif _level == "rack":
-            for srk in _host1.host_avail_switches.keys():
-                sr = _host1.host_avail_switches[srk]
+            for srk, sr in _host1.host_avail_switches.iteritems():
                 sr.avail_bandwidths = [bw + _rsrv for bw in sr.avail_bandwidths]
-            for srk in _host2.host_avail_switches.keys():
-                sr = _host2.host_avail_switches[srk]
+            for srk, sr in _host2.host_avail_switches.iteritems():
                 sr.avail_bandwidths = [bw + _rsrv for bw in sr.avail_bandwidths]
 
-            for srk in _host1.rack_avail_switches.keys():
-                sr = _host1.rack_avail_switches[srk]
+            for srk, sr in _host1.rack_avail_switches.iteritems():
                 sr.avail_bandwidths = [bw + _rsrv for bw in sr.avail_bandwidths]
-            for srk in _host2.rack_avail_switches.keys():
-                sr = _host2.rack_avail_switches[srk]
+            for srk, sr in _host2.rack_avail_switches.iteritems():
                 sr.avail_bandwidths = [bw + _rsrv for bw in sr.avail_bandwidths]
         elif _level == "cluster":
-            for srk in _host1.host_avail_switches.keys():
-                sr = _host1.host_avail_switches[srk]
+            for srk, sr in _host1.host_avail_switches.iteritems():
                 sr.avail_bandwidths = [bw + _rsrv for bw in sr.avail_bandwidths]
-            for srk in _host2.host_avail_switches.keys():
-                sr = _host2.host_avail_switches[srk]
+            for srk, sr in _host2.host_avail_switches.iteritems():
                 sr.avail_bandwidths = [bw + _rsrv for bw in sr.avail_bandwidths]
 
-            for srk in _host1.rack_avail_switches.keys():
-                sr = _host1.rack_avail_switches[srk]
+            for srk, sr in _host1.rack_avail_switches.iteritems():
                 sr.avail_bandwidths = [bw + _rsrv for bw in sr.avail_bandwidths]
-            for srk in _host2.rack_avail_switches.keys():
-                sr = _host2.rack_avail_switches[srk]
+            for srk, sr in _host2.rack_avail_switches.iteritems():
                 sr.avail_bandwidths = [bw + _rsrv for bw in sr.avail_bandwidths]
 
-            for srk in _host1.cluster_avail_switches.keys():
-                sr = _host1.cluster_avail_switches[srk]
+            for srk, sr in _host1.cluster_avail_switches.iteritems():
                 if sr.switch_type == "spine":
                     sr.avail_bandwidths = [bw + _rsrv for bw in sr.avail_bandwidths]
-            for srk in _host2.cluster_avail_switches.keys():
-                sr = _host2.cluster_avail_switches[srk]
+            for srk, sr in _host2.cluster_avail_switches.iteritems():
                 if sr.switch_type == "spine":
                     sr.avail_bandwidths = [bw + _rsrv for bw in sr.avail_bandwidths]
 
@@ -1295,6 +1247,7 @@ class Search:
         if _v in self.node_placements.keys():
             self.node_placements[_v].storage = None
             del self.node_placements[_v]
+
         if isinstance(_v, VGroup):
             for sg in _v.subvgroup_list:
                 self._rollback_node_placement(sg)

@@ -4,7 +4,7 @@
 #################################################################################################################
 # Author: Gueyoung Jung
 # Contact: gjung@research.att.com
-# Version 2.0.1: Dec. 7, 2015
+# Version 2.0.2: Feb. 9, 2016
 #
 # Functions 
 # - Update datacenter configuration 

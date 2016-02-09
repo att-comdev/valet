@@ -2,6 +2,8 @@
 
 #################################################################################################################
 # Author: Sander Marechal
+# Modify: Gueyoung Jung
+# Version 2.0.2: Feb. 9, 2016
 #
 #################################################################################################################
 
@@ -23,7 +25,7 @@ class Daemon:
         self.stderr = stderr
         self.pidfile = pidfile
         self.logger = logger
-	
+
     def daemonize(self):
         """
         Do the UNIX double-fork magic, see Stevens' "Advanced 
@@ -138,4 +140,6 @@ class Daemon:
         You should override this method when you subclass Daemon. 
         It will be called after the process has been daemonized by start() or restart().
         """
+
+
 

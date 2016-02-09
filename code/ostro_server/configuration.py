@@ -4,7 +4,7 @@
 #################################################################################################################
 # Author: Gueyoung Jung
 # Contact: gjung@research.att.com
-# Version 2.0.1: Jan. 20, 2016
+# Version 2.0.2: Feb. 9, 2016
 #
 # Functions 
 # - Set all configurations to run Ostro
@@ -62,14 +62,18 @@ class Config:
         self.user_name = None
         self.pw = None
 
-        self.num_of_hosts_per_rack_in_xsmall = 0
-        self.num_of_racks_in_xsmall = 0
-        self.num_of_aggregates_in_xsmall = 0
-        self.aggregated_ratio_in_xsmall = 0
+        #self.sim_duration = 0
+
+        self.num_of_hosts_per_rack = 0
+        self.num_of_racks = 0
+        self.num_of_spine_switches = 0
+        self.num_of_aggregates = 0
+        self.aggregated_ratio = 0
 
         self.cpus_per_host = 0
         self.mem_per_host = 0
         self.disk_per_host = 0
+        self.bandwidth_of_spine = 0
         self.bandwidth_of_rack = 0
         self.bandwidth_of_host = 0
 
@@ -217,20 +221,26 @@ class Config:
                 (rk, v) = line.split("=")
                 k = rk.strip()
 
-                if k == "num_of_hosts_per_rack_in_xsmall":
-                    self.num_of_hosts_per_rack_in_xsmall = int(v.strip())
-                elif k == "num_of_racks_in_xsmall":
-                    self.num_of_racks_in_xsmall = int(v.strip())
-                elif k == "num_of_aggregates_in_xsmall":
-                    self.num_of_aggregates_in_xsmall = int(v.strip())
-                elif k == "aggregated_ratio_in_xsmall":
-                    self.aggregated_ratio_in_xsmall = int(v.strip())
+                #if k == "sim_duration":
+                    #self.sim_duration = int(v.strip())
+                if k == "num_of_spine_switches":
+                    self.num_of_spine_switches = int(v.strip())
+                elif k == "num_of_hosts_per_rack":
+                    self.num_of_hosts_per_rack = int(v.strip())
+                elif k == "num_of_racks":
+                    self.num_of_racks = int(v.strip())
+                elif k == "num_of_aggregates":
+                    self.num_of_aggregates = int(v.strip())
+                elif k == "aggregated_ratio":
+                    self.aggregated_ratio = int(v.strip())
                 elif k == "cpus_per_host":
                     self.cpus_per_host = int(v.strip())
                 elif k == "mem_per_host":
                     self.mem_per_host = int(v.strip())
                 elif k == "disk_per_host":
                     self.disk_per_host = int(v.strip())
+                elif k == "bandwidth_of_spine":
+                    self.bandwidth_of_spine = int(v.strip())
                 elif k == "bandwidth_of_rack":
                     self.bandwidth_of_rack = int(v.strip())
                 elif k == "bandwidth_of_host":

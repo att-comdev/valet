@@ -4,7 +4,7 @@
 #################################################################################################################
 # Author: Gueyoung Jung
 # Contact: gjung@research.att.com
-# Version 2.0.1: Dec. 7, 2015
+# Version 2.0.2: Feb. 9, 2016
 #
 # Functions 
 # - Capture Host status and metadata from Nova
@@ -45,7 +45,7 @@ class Compute:
 
         return "success"
 
-    # TODO
+    # TODO: for logical_group, just check if there is new one or deleted one
     def _set_availability_zones(self, _hosts, _logical_groups):
         hosts_info = ""
 
@@ -82,7 +82,7 @@ class Compute:
 
         return "success"
 
-    # TODO
+    # TODO: for logical_group, just check if there is new one or deleted one
     def _set_aggregates(self, _hosts, _logical_groups):
         aggregates = ""
 
@@ -158,7 +158,7 @@ class Compute:
 
         return "success"
 
-    # TODO
+    # TODO: after checking vms, if all vms are delted from EX logical groups, delete them
     def _set_placed_vms(self, _hosts, _logical_groups):
         host_list = ""
 

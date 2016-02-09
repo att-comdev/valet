@@ -4,7 +4,7 @@
 #################################################################################################################
 # Author: Gueyoung Jung
 # Contact: gjung@research.att.com
-# Version 2.0.1: Dec. 7, 2015
+# Version 2.0.2: Feb. 9, 2016
 #
 # Functions 
 # - Update Host status, local resources, and metadata 
@@ -120,6 +120,8 @@ class ComputeManager(threading.Thread):
     def set_hosts(self):
         hosts = {}
         logical_groups = {}
+        for lgk, lg in self.resource.logical_groups.iteritems():
+            logical_groups[lgk] = lg
 
         compute = None
         if self.config.mode.startswith("sim") == True:
@@ -149,11 +151,10 @@ class ComputeManager(threading.Thread):
                 self.logger.warn("new logical group (" + lk + ") added")
 
         for rlk, rl in self.resource.logical_groups.iteritems():
-            if rl.group_type != "EX":
-                if rlk not in _logical_groups.keys():
-                    del self.resource.logical_groups[rlk]
+            if rlk not in _logical_groups.keys():
+                del self.resource.logical_groups[rlk]
 
-                    self.logger.warn("logical group (" + rlk + ") removed")
+                self.logger.warn("logical group (" + rlk + ") removed")
 
         for lk in _logical_groups.keys():
             lg = _logical_groups[lk]
@@ -173,6 +174,22 @@ class ComputeManager(threading.Thread):
             if rmdk not in _lg.metadata.keys():
                 del _rlg.metadata[rmdk]
                 metadata_updated = True
+
+        for vmk, vm_name in _lg.vms.iteritems():
+            if vmk not in _rlg.vms.keys():
+                _rlg.vms[vmk] = vm_name
+
+        for rvmk in _rlg.vms.keys():
+            if rvmk not in _lg.vms.keys():
+                del _rlg.vms[rvmk]
+
+        for volk, vol_name in _lg.volumes.iteritems():
+            if volk not in _rlg.volumes.keys():
+                _rlg.volumes[volk] = vol_name
+
+        for rvolk in _rlg.volumes.keys():
+            if rvolk not in _lg.volumes.keys():
+                del _rlg.volumes[rvolk]
 
     def _check_host_update(self, _hosts):
         for hk in _hosts.keys():

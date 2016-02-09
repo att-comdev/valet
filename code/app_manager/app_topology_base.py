@@ -4,7 +4,7 @@
 #################################################################################################################
 # Author: Gueyoung Jung
 # Contact: gjung@research.att.com
-# Version 2.0.0: Oct. 15, 2015
+# Version 2.0.2: Feb. 9, 2016
 #
 #################################################################################################################
 
@@ -66,9 +66,9 @@ class VM:
         self.host_aggregates = {}
         self.integrity_zones = {}
 
-        self.vCPUs = -1
-        self.mem = -1                 # MB
-        self.local_volume_size = -1   # GB
+        self.vCPUs = 0
+        self.mem = 0                  # MB
+        self.local_volume_size = 0    # GB
         self.nw_bandwidth = 0
         self.io_bandwidth = 0
 
@@ -79,7 +79,7 @@ class VM:
 
         self.host = None              # where this vm is placed
 
-    def set_vm_cap_properties(self, _flavor_name, _resource):
+    def set_vm_properties(self, _flavor_name, _resource):
         flavor = _resource.get_flavor(_flavor_name)
 
         if flavor == None:
@@ -90,10 +90,11 @@ class VM:
             self.local_volume_size = flavor.disk_cap
 
         if len(flavor.extra_specs) > 0:
-            logical_group_names = _resource.get_logical_groups_for_aggregate(flavor)
+            logical_group_list = _resource.get_matched_logical_groups(flavor)
 
-            for gk in logical_group_names:
-                self.host_aggregates[gk] = flavor.extra_specs
+            for lg in logical_group_list:
+                if lg.group_type == "AGGR":
+                    self.host_aggregates[lg.name] = flavor.extra_specs
 
         return True
 
@@ -116,7 +117,7 @@ class Volume:
         #self.host_aggregates = {}
         self.integrity_zones = {}
 
-        self.volume_size = -1         # GB
+        self.volume_size = 0          # GB
         self.io_bandwidth = 0       
 
         self.volume_weight = -1 
@@ -137,14 +138,14 @@ class VMLink:
 
     def __init__(self, _n):
         self.node = _n                # target VM
-        self.nw_bandwidth = -1        # Mbps
+        self.nw_bandwidth = 0         # Mbps
 
 
 class VolumeLink:
 
     def __init__(self, _n):
         self.node = _n                # target Volume
-        self.io_bandwidth = -1        # Mbps
+        self.io_bandwidth = 0         # Mbps
 
 
 

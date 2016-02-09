@@ -4,7 +4,7 @@
 #################################################################################################################
 # Author: Gueyoung Jung
 # Contact: gjung@research.att.com
-# Version 2.0.0: Oct. 15, 2015
+# Version 2.0.2: Feb. 9, 2016
 #
 # Functions 
 # - Create deamon process that starts RPC server and Ostro
@@ -38,7 +38,7 @@ class OstroDaemon(Daemon):
             rpc_server = SimpleXMLRPCServer((config.rpc_server_ip, config.rpc_server_port))
             rpc_server.register_introspection_functions()
             rpc_server.register_instance(gateway)
-            
+
             # Run the RPC server as a thread
             rpc_server_thread = threading.Thread(target=rpc_server.serve_forever)
             rpc_server_thread.start()
@@ -56,7 +56,9 @@ class OstroDaemon(Daemon):
             sys.exit(2)
 
 
+
 if __name__ == "__main__":
+    # Configuration
     config = Config()
     config_status = config.configure()
     if config_status != "success":

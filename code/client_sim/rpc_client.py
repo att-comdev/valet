@@ -4,7 +4,7 @@
 #################################################################################################################
 # Author: Gueyoung Jung
 # Contact: gjung@research.att.com
-# Version 2.0.1: Dec. 1, 2015
+# Version 2.0.2: Feb. 9, 2016
 #
 #################################################################################################################
 
@@ -37,10 +37,10 @@ if __name__ == '__main__':
     #print rpc.print_tester()
     
     time.sleep(10)
-    app_data = open("./test_app_inputs/affinity.json", 'r')
+    app_data = open("./test_app_inputs/simple_exclusivity.json", 'r')
     print rpc.place_app(app_data.read())
     
-    time.sleep(10)
-    app_data = open("./test_app_inputs/io_affinity.json", 'r')
-    print rpc.place_app(app_data.read())
+    #time.sleep(10)
+    #app_data = open("./test_app_inputs/io_affinity.json", 'r')
+    #print rpc.place_app(app_data.read())
     

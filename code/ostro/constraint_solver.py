@@ -4,7 +4,7 @@
 ################################################################################################################
 # Author: Gueyoung Jung
 # Contact: gjung@research.att.com
-# Version 2.0.1: Jan. 23, 2016
+# Version 2.0.2: Feb. 9, 2016
 #
 # Functions 
 # - Constrain the search 
@@ -70,12 +70,11 @@ class ConstraintSolver:
             if exclusivity_id == None:
                 self._constrain_non_exclusivity(_level, candidate_list)
                 if len(candidate_list) == 0:
-                    self.status = "violate non exclusivity constraint for node = " + _n.node.name
+                    self.status = "violate non-exclusivity constraint for node = " + _n.node.name
                     self.logger.error(self.status)
                     return candidate_list
         else:
-            exclusivity_level = exclusivity_id.split(":")[0]
-            self._constrain_exclusivity(_level, exclusivity_level, exclusivity_id, candidate_list)
+            self._constrain_exclusivity(_level, exclusivity_id, candidate_list)
             if len(candidate_list) == 0:
                 self.status = "violate exclusivity constraint for node = " + _n.node.name
                 self.logger.error(self.status)
@@ -95,56 +94,30 @@ class ConstraintSolver:
             if cc in _candidate_list:
                 _candidate_list.remove(cc)
 
-                debug_resource_name = None
-                if _level == "cluster":
-                    debug_resource_name = cc.cluster_name
-                elif _level == "rack":
-                    debug_resource_name = cc.rack_name
-                elif _level == "host":
-                    debug_resource_name = cc.host_name
+                debug_resource_name = cc.get_resource_name(_level)
                 self.logger.debug("violates non exclusivity in resource = " + debug_resource_name)
 
     def conflict_exclusivity(self, _level, _candidate):
         conflict = False
 
-        if _level == "host":
-            for mk in _candidate.host_memberships.keys():
-                if _candidate.host_memberships[mk] == "EX":
-                    level = mk.split(":")[0]
-                    if level == _level:
-                        conflict = True
-        elif _level == "rack":
-            for mk in _candidate.rack_memberships.keys():
-                if _candidate.rack_memberships[mk] == "EX":
-                    level = mk.split(":")[0]
-                    if level == _level:
-                        conflict = True
-        elif _level == "cluster":
-            for mk in _candidate.cluster_memberships.keys():
-                if _candidate.cluster_memberships[mk] == "EX":
-                    level = mk.split(":")[0]
-                    if level == _level:
-                        conflict = True
+        memberships = _candidate.get_memberships(_level)
+        for mk in memberships.keys():
+            if memberships[mk] == "EX" and mk.split(":")[0] == _level:
+                conflict = True
 
         return conflict
 
-    def _constrain_exclusivity(self, _level, _exclusivity_level, _exclusivity_id, _candidate_list):
+    def _constrain_exclusivity(self, _level, _exclusivity_id, _candidate_list):
         candidate_list = self._get_exclusive_candidates(_level, _exclusivity_id, _candidate_list)
         if len(candidate_list) == 0:
-            if exclusivity_level == _level:
-                candidate_list = self._get_hibernated_candidates(_exclusivity_level, _candidate_list)
+            if _exclusivity_id.split(":")[0] == _level:
+                candidate_list = self._get_hibernated_candidates(_level, _candidate_list)
 
                 for cc in _candidate_list:
                     if cc not in candidate_list:
                         _candidate_list.remove(cc)
 
-                        debug_resource_name = None
-                        if _level == "cluster":
-                            debug_resource_name = cc.cluster_name
-                        elif _level == "rack":
-                            debug_resource_name = cc.rack_name
-                        elif _level == "host":
-                            debug_resource_name = cc.host_name
+                        debug_resource_name = cc.get_resource_name(_level)
                         self.logger.debug("violates the exclusivity group in resource = " + debug_resource_name)
 
             else: # i.e., _level > exclusivity_level
@@ -154,50 +127,38 @@ class ConstraintSolver:
         candidate_list = []
 
         for r in _candidate_list:
-            if self.check_exclusivity_candidate(_level, _exclusivity_id, r) == True:
+            if self.check_exclusivity(_level, _exclusivity_id, r) == True:
                 if r not in candidate_list:
                     candidate_list.append(r)
 
         return candidate_list
 
-    def check_exclusivity_candidate(self, _level, _exclusivity_id, _candidate):
+    def check_exclusivity(self, _level, _exclusivity_id, _candidate):
         match = False
 
-        if _level == "host":
-            if _exclusivity_id in _candidate.host_memberships.keys():
-                match = True
-        elif _level == "rack":
-            if _exclusivity_id in _candidate.rack_memberships.keys():
-                match = True
-        elif _level == "cluster":
-            if _exclusivity_id in _candidate.cluster_memberships.keys():
-                match = True
+        memberships = _candidate.get_memberships(_level)
+        if _exclusivity_id in memberships.keys():
+            match = True
 
         return match
         
-    def _get_hibernated_candidates(self, _exclusivity_level, _candidate_list):
+    def _get_hibernated_candidates(self, _level, _candidate_list):
         candidate_list = []
 
         for r in _candidate_list:
-            if self.check_hibernated_candidate(_exclusivity_level, r) == True:
+            if self.check_hibernated(_level, r) == True:
                 if r not in candidate_list:
                     candidate_list.append(r)
 
         return candidate_list
 
-    def check_hibernated_candidate(self, _exclusivity_level, _candidate):
+    def check_hibernated(self, _level, _candidate):
         match = False
 
-        if _exclusivity_level == "host":
-            if _candidate.host_num_of_placed_vms == 0:
-                match = True
-        elif _exclusivity_level == "rack":
-            if _candidate.rack_num_of_placed_vms == 0:
-                match = True
-        elif _exclusivity_level == "cluster":
-            if _candidate.cluster_num_of_placed_vms == 0:
-                match = True
-
+        num_of_placed_vms = _candidate.get_num_of_placed_vms(_level)
+        if num_of_placed_vms == 0:
+            match = True
+        
         return match
         
     def _constrain_host_aggregates(self, _level, _n, _candidate_list):
@@ -212,30 +173,19 @@ class ConstraintSolver:
             if cc in _candidate_list:
                 _candidate_list.remove(cc)
 
-                debug_resource_name = None
-                if _level == "cluster":
-                    debug_resource_name = cc.cluster_name
-                elif _level == "rack":
-                    debug_resource_name = cc.rack_name
-                elif _level == "host":
-                    debug_resource_name = cc.host_name
+                debug_resource_name = cc.get_resource_name(_level)
                 self.logger.debug("violates the host aggregate in resource = " + debug_resource_name)
 
     def check_host_aggregates(self, _level, _v, _candidate):
-        if _level == "host":
-            return self._match_memberships(_v, _candidate.host_memberships)
-        elif _level == "rack":
-            return self._match_memberships(_v, _candidate.rack_memberships)
-        elif _level == "cluster":
-            return self._match_memberships(_v, _candidate.cluster_memberships)
+        return self._match_host_aggregates(_v, _candidate.get_memberships(_level))
 
-    def _match_memberships(self, _v, _target_memberships):
+    def _match_host_aggregates(self, _v, _target_memberships):
         if isinstance(_v, VM):
-            match = False
+            match = True
 
             for mk in _v.host_aggregates.keys():
-                if mk in _target_memberships.keys():
-                    match = True
+                if mk not in _target_memberships.keys():
+                    match = False
                     break
 
             return match
@@ -244,7 +194,7 @@ class ConstraintSolver:
             match = True
 
             for sg in _v.subvgroup_list:
-                match = self._match_memberships(sg, _target_memberships)
+                match = self._match_host_aggregates(sg, _target_memberships)
                 if match == False:
                     break
 
@@ -254,7 +204,7 @@ class ConstraintSolver:
         conflict_list = []
 
         for r in _candidate_list:
-            if self.check_diversity(_level, _n, _node_placements, r) == True:
+            if self.conflict_diversity(_level, _n, _node_placements, r) == True:
                 if r not in conflict_list:
                     conflict_list.append(r)
 
@@ -262,16 +212,10 @@ class ConstraintSolver:
             if cc in _candidate_list:
                 _candidate_list.remove(cc)
   
-                debug_resource_name = None
-                if _level == "cluster":
-                    debug_resource_name = cc.cluster_name
-                elif _level == "rack":
-                    debug_resource_name = cc.rack_name
-                elif _level == "host":
-                    debug_resource_name = cc.host_name
+                debug_resource_name = cc.get_resource_name(_level)
                 self.logger.debug("violates the diversity group in resource = " + debug_resource_name)
 
-    def check_diversity(self, _level, _n, _node_placements, _candidate):
+    def conflict_diversity(self, _level, _n, _node_placements, _candidate):
         conflict = False
 
         for v in _node_placements.keys(): 
@@ -306,25 +250,8 @@ class ConstraintSolver:
             if cc in _candidate_list:
                 _candidate_list.remove(cc)
 
-                debug_resource_name = None
-                avail_vCPUs = 0
-                avail_mem = 0
-                avail_local_disk = 0
-                if _level == "cluster":
-                    debug_resource_name = cc.cluster_name
-                    avail_vCPUs = cc.cluster_avail_vCPUs
-                    avail_mem = cc.cluster_avail_mem
-                    avail_local_disk = cc.cluster_avail_local_disk
-                elif _level == "rack":
-                    debug_resource_name = cc.rack_name
-                    avail_vCPUs = cc.rack_avail_vCPUs
-                    avail_mem = cc.rack_avail_mem
-                    avail_local_disk = cc.rack_avail_local_disk
-                elif _level == "host":
-                    debug_resource_name = cc.host_name
-                    avail_vCPUs = cc.host_avail_vCPUs
-                    avail_mem = cc.host_avail_mem
-                    avail_local_disk = cc.host_avail_local_disk
+                debug_resource_name = cc.get_resource_name(_level)
+                (avail_vCPUs, avail_mem, avail_local_disk) = cc.get_avail_resources(_level)
                 self.logger.debug("compute resource constrained in resource = " + debug_resource_name)
                 if _n.node.vCPUs > avail_vCPUs:
                     self.logger.debug("lack of CPU = " + str(_n.node.vCPU - avail_vCPUs))
@@ -336,21 +263,9 @@ class ConstraintSolver:
     def check_compute_availability(self, _level, _v, _ch):
         available = True
 
-        if _level == "cluster":
-            if _ch.cluster_avail_vCPUs < _v.vCPUs or \
-               _ch.cluster_avail_mem < _v.mem or \
-               _ch.cluster_avail_local_disk < _v.local_volume_size:
-                available = False
-        elif _level == "rack":
-            if _ch.rack_avail_vCPUs < _v.vCPUs or \
-               _ch.rack_avail_mem < _v.mem or \
-               _ch.rack_avail_local_disk < _v.local_volume_size:
-                available = False
-        elif _level == "host":
-            if _ch.host_avail_vCPUs < _v.vCPUs or \
-               _ch.host_avail_mem < _v.mem or \
-               _ch.host_avail_local_disk < _v.local_volume_size:
-                available = False
+        (avail_vCPUs, avail_mem, avail_local_disk) = _ch.get_avail_resources(_level)
+        if avail_vCPUs < _v.vCPUs or avail_mem < _v.mem or avail_local_disk < _v.local_volume_size:
+            available = False
 
         return available
 
@@ -365,7 +280,8 @@ class ConstraintSolver:
             if cc in _candidate_list:
                 _candidate_list.remove(cc)
 
-                debug_resource_name = None
+                debug_resource_name = cc.get_resource_name(_level)
+                avail_storages = cc.get_avail_storages(_level)
                 avail_disks = []
                 volume_classes = []
                 volume_sizes = []
@@ -378,24 +294,9 @@ class ConstraintSolver:
                     volume_sizes.append(_n.node.volume_size)
              
                 for vc in volume_classes:
-                    if _level == "cluster":
-                        debug_resource_name = cc.cluster_name
-                        for sk in cc.cluster_avail_storages.keys():
-                            s = cc.cluster_avail_storages[sk]
-                            if vc == "any" or s.storage_class == vc:
-                                avail_disks.append(s.storage_avail_disk)
-                    elif _level == "rack":
-                        debug_resource_name = cc.rack_name
-                        for sk in cc.rack_avail_storages.keys():
-                            s = cc.rack_avail_storages[sk]
-                            if vc == "any" or s.storage_class == vc:
-                                avail_disks.append(s.storage_avail_disk)
-                    elif _level == "host":
-                        debug_resource_name = cc.host_name
-                        for sk in cc.host_avail_storages.keys():
-                            s = cc.host_avail_storages[sk]
-                            if vc == "any" or s.storage_class == vc:
-                                avail_disks.append(s.storage_avail_disk)
+                    for sk, s in avail_storages.iteritems():
+                        if vc == "any" or s.storage_class == vc:
+                            avail_disks.append(s.storage_avail_disk)
 
                 self.logger.debug("storage resource constrained in resource = " + debug_resource_name)
                 #for ds in avail_disks:
@@ -413,40 +314,17 @@ class ConstraintSolver:
         else:
             volume_sizes.append((_v.volume_class, _v.volume_size))
 
+        avail_storages = _ch.get_avail_storages(_level)
         for (vc, vs) in volume_sizes:
-            if _level == "cluster":
-                for sk in _ch.cluster_avail_storages.keys():
-                    s = _ch.cluster_avail_storages[sk]
-                    if vc == "any" or s.storage_class == vc:
-                        if s.storage_avail_disk >= vs:
-                            available = True
-                            break
-                        else:
-                            available = False
-                if available == False:
-                    break
-            elif _level == "rack":
-                for sk in _ch.rack_avail_storages.keys():
-                    s = _ch.rack_avail_storages[sk]
-                    if vc == "any" or s.storage_class == vc:
-                        if s.storage_avail_disk >= vs:
-                            available = True
-                            break
-                        else:
-                            available = False
-                if available == False:
-                    break
-            elif _level == "host":
-                for sk in _ch.host_avail_storages.keys():
-                    s = _ch.host_avail_storages[sk]
-                    if vc == "any" or s.storage_class == vc:
-                        if s.storage_avail_disk >= vs:
-                            available = True
-                            break
-                        else:
-                            available = False
-                if available == False:
-                    break
+            for sk, s in avail_storages.iteritems():
+                if vc == "any" or s.storage_class == vc:
+                    if s.storage_avail_disk >= vs:
+                        available = True
+                        break
+                    else:
+                        available = False
+            if available == False:
+                break
 
         return available
 
@@ -462,24 +340,21 @@ class ConstraintSolver:
             if cc in _candidate_list:
                 _candidate_list.remove(cc)
 
-                debug_resource_name = None
-                bandwidth = None
-                if _level == "cluster":
-                    debug_resource_name = cc.cluster_name
-                    bandwidth = str(min(cc.cluster_avail_nw_bandwidths))
-                elif _level == "rack":
-                    debug_resource_name = cc.rack_name
-                    bandwidth = str(min(cc.cluster_avail_nw_bandwidths)) + "-" + \
-                                str(min(cc.rack_avail_nw_bandwidths))
-                elif _level == "host":
-                    debug_resource_name = cc.host_name
-                    bandwidth = str(min(cc.cluster_avail_nw_bandwidths)) + "-" + \
-                                str(min(cc.rack_avail_nw_bandwidths)) + "-" + \
-                                str(min(cc.host_avail_nw_bandwidths))
+                debug_resource_name = cc.get_resource_name(_level)
+                #bandwidth = None
+                #if _level == "cluster":
+                    #bandwidth = str(min(cc.cluster_avail_nw_bandwidths))
+                #elif _level == "rack":
+                    #bandwidth = str(min(cc.cluster_avail_nw_bandwidths)) + "-" + \
+                    #            str(min(cc.rack_avail_nw_bandwidths))
+                #elif _level == "host":
+                    #bandwidth = str(min(cc.cluster_avail_nw_bandwidths)) + "-" + \
+                    #            str(min(cc.rack_avail_nw_bandwidths)) + "-" + \
+                    #            str(min(cc.host_avail_nw_bandwidths))
 
                 self.logger.debug("network bandwidth constrained in resource = " + debug_resource_name)
-                self.logger.debug("avail bandwidth = " + bandwidth)
-                self.logger.debug("requested bandwidth = " + str(_n.node.nw_bandwidth))
+                #self.logger.debug("avail bandwidth = " + bandwidth)
+                #self.logger.debug("requested bandwidth = " + str(_n.node.nw_bandwidth))
 
     def check_nw_bandwidth_availability(self, _level, _n, _node_placements, _cr):
         # NOTE: 3rd entry for special node requiring bandwidth of out-going from spine switch
@@ -510,10 +385,9 @@ class ConstraintSolver:
         max_implicit_diversity = (None, 0)
 
         for vl in _link_list:
-            diversity_level = get_common_diversity(_v.diversity_groups, vl.node.diversity_groups)
+            diversity_level = _v.get_common_diversity(vl.node.diversity_groups)
             if diversity_level != "ANY" and LEVELS.index(diversity_level) >= LEVELS.index(_level):
-                for dk in vl.node.diversity_groups.keys():
-                    dl = vl.node.diversity_groups[dk]
+                for dk, dl in vl.node.diversity_groups.iteritems():
                     if LEVELS.index(dl) > LEVELS.index(diversity_level):
                         if _target_v.uuid != vl.node.uuid:
                             if dk in _target_v.diversity_groups.keys():
@@ -538,103 +412,38 @@ class ConstraintSolver:
 
         if _level == "cluster":
             cluster_avail_bandwidths = []
-            for srk in _candidate_resource.cluster_avail_switches.keys():
-                sr = _candidate_resource.cluster_avail_switches[srk]
+            for srk, sr in _candidate_resource.cluster_avail_switches.iteritems():
                 cluster_avail_bandwidths.append(max(sr.avail_bandwidths))
 
             if max(cluster_avail_bandwidths) < _req_bandwidths[1]:
                 available = False
 
-            #if avail_bandwidth < _req_bandwidths[2]:
-                #available = False
-
         elif _level == "rack":
             rack_avail_bandwidths = []
-            for srk in _candidate_resource.rack_avail_switches.keys():
-                sr = _candidate_resource.rack_avail_switches[srk]
+            for srk, sr in _candidate_resource.rack_avail_switches.iteritems():
                 rack_avail_bandwidths.append(max(sr.avail_bandwidths))
 
             if max(rack_avail_bandwidths) < _req_bandwidths[1]:
                 available = False
 
-            #if avail_bandwidth < _req_bandwidths[2]:
-                #available = False
-
         elif _level == "host":
             host_avail_bandwidths = []
-            for srk in _candidate_resource.host_avail_switches.keys():
-                sr = _candidate_resource.host_avail_switches[srk]
+            for srk, sr in _candidate_resource.host_avail_switches.iteritems():
                 host_avail_bandwidths.append(max(sr.avail_bandwidths))
 
             if max(host_avail_bandwidths) < _req_bandwidths[0]:
                 available = False
 
             rack_avail_bandwidths = []
-            for srk in _candidate_resource.rack_avail_switches.keys():
-                sr = _candidate_resource.rack_avail_switches[srk]
+            for srk, sr in _candidate_resource.rack_avail_switches.iteritems():
                 rack_avail_bandwidths.append(max(sr.avail_bandwidths))
 
             avail_bandwidth = min(max(host_avail_bandwidths), max(rack_avail_bandwidths))
             if avail_bandwidth < _req_bandwidths[1]:
                 available = False
 
-            #if avail_bandwidth < _req_bandwidths[2]:
-                #available = False
-
         return available
 
-    # Deprecated
-    #def get_req_bandwidths_old(self, _level, _placement_level, _bandwidth, _total_req_bandwidths):
-        #if _level == "cluster":
-            #if _placement_level == "cluster":
-                #_total_req_bandwidths[2] += _bandwidth
-        #elif _level == "rack":
-            #if _placement_level == "cluster":
-                #_total_req_bandwidths[2] += _bandwidth
-                #_total_req_bandwidths[1] += _bandwidth
-            #elif _placement_level == "rack":
-                #_total_req_bandwidths[1] += _bandwidth
-        #elif _level == "host":
-            #if _placement_level == "cluster":
-                #_total_req_bandwidths[2] += _bandwidth
-                #_total_req_bandwidths[1] += _bandwidth
-                #_total_req_bandwidths[0] += _bandwidth
-            #elif _placement_level == "rack":
-                #_total_req_bandwidths[1] += _bandwidth
-                #_total_req_bandwidths[0] += _bandwidth
-            #elif _placement_level == "host":
-                #_total_req_bandwidths[0] += _bandwidth
-
-    # Deprecated
-    #def _check_nw_bandwidth_availability_old(self, _level, _req_bandwidths, _candidate_resource):
-        #available = True
-
-        #if _level == "cluster":
-            #if min(_candidate_resource.cluster_avail_nw_bandwidths) < _req_bandwidths[2]:
-                #available = False
-        #elif _level == "rack":
-            #if min(_candidate_resource.rack_avail_nw_bandwidths) < _req_bandwidths[1]:
-                #available = False
-            #if _candidate_resource.cluster_name != "any":
-                #avail_bandwidth = min(min(_candidate_resource.rack_avail_nw_bandwidths), \
-                #                      min(_candidate_resource.cluster_avail_nw_bandwidths))
-                #if avail_bandwidth < _req_bandwidths[2]:
-                    #available = False
-        #elif _level == "host":
-            #if min(_candidate_resource.host_avail_nw_bandwidths) < _req_bandwidths[0]:
-                #available = False
-            #avail_bandwidth = min(min(_candidate_resource.host_avail_nw_bandwidths), \
-            #                      min(_candidate_resource.rack_avail_nw_bandwidths))
-            #if avail_bandwidth < _req_bandwidths[1]:
-                #available = False
-            #if _candidate_resource.cluster_name != "any":
-                #avail_bandwidth = min(min(_candidate_resource.host_avail_nw_bandwidths), \
-                #                      min(_candidate_resource.rack_avail_nw_bandwidths), \
-                #                      min(_candidate_resource.cluster_avail_nw_bandwidths))
-                #if avail_bandwidth < _req_bandwidths[2]:
-                    #available = False
-
-        #return available
 
 
 

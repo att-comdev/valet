@@ -4,7 +4,7 @@
 ################################################################################################################ 
 # Author: Gueyoung Jung
 # Contact: gjung@research.att.com
-# Version 2.0.1: Dec. 7, 2015
+# Version 2.0.2: Feb. 9, 2016
 #
 # Functions 
 # - Keep the latest resource status in memory (topology and metadata)
@@ -155,7 +155,7 @@ class Resource:
                 if host.last_link_update > last_ts:
                     last_ts = host.last_link_update
 
-        for hgk, host_group in self.host_groups.keys():
+        for hgk, host_group in self.host_groups.iteritems():
             if host_group.last_update > self.current_timestamp or \
                host_group.last_link_update > self.current_timestamp:
                 self.logger.debug("*** host_group name = " + host_group.name)
@@ -201,7 +201,7 @@ class Resource:
             self.logger.debug("topology update time = " + str(self.datacenter.last_update))
             self.logger.debug("topology link update time = " + str(self.datacenter.last_link_update))
 
-            for mk, m in self.datacenter.memberships.keys():
+            for mk, m in self.datacenter.memberships.iteritems():
                 self.logger.debug("datacenter logical group = " + m.name)
 
             self.logger.debug("datacenter avail vCPUs = " + str(self.datacenter.avail_vCPUs))
@@ -265,7 +265,7 @@ class Resource:
                 for vol_name in host.volume_list:
                     _host_group.volume_list.append(vol_name)
 
-        _host_group.memberships.init_memberships()
+        _host_group.init_memberships()
 
         for hk, host in _host_group.child_resources.iteritems():
             if host.check_availability() == True:
@@ -288,7 +288,7 @@ class Resource:
                 self.datacenter.local_disk_cap += resource.local_disk_cap
                 self.datacenter.avail_local_disk_cap += resource.avail_local_disk_cap
 
-                for shk, storage_host in resource.storages.keys():
+                for shk, storage_host in resource.storages.iteritems():
                     if storage_host.status == "enabled":
                         self.datacenter.storages[shk] = storage_host
 
@@ -372,23 +372,24 @@ class Resource:
 
         return flavor
 
-    def get_logical_groups_for_aggregate(self, _flavor):
-        group_names = []
+    def get_matched_logical_groups(self, _flavor):
+        logical_group_list = []
 
-        match = True
         for gk, group in self.logical_groups.iteritems():
-            if group.group_type == "AGGR":
-                for sk in _flavor.extra_specs.keys():
-                    if sk not in group.metadata.keys():
-                        match = False
-                        break
-            else:
+            if self._match_extra_specs(_flavor.extra_specs, group.metadata) == True:
+                logical_group_list.append(group)
+    
+        return logical_group_list
+
+    def _match_extra_specs(self, _specs, _metadata):
+        match = True
+
+        for sk in _specs.keys():
+            if sk not in _metadata.keys():
                 match = False
+                break
 
-            if match == True:
-                group_names.append(gk)
-
-        return group_names
+        return match
 
 
 

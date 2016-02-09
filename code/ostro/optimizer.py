@@ -4,7 +4,7 @@
 #################################################################################################################
 # Author: Gueyoung Jung
 # Contact: gjung@research.att.com
-# Version 2.0.1: Dec. 7, 2015
+# Version 2.0.2: Feb. 9, 2016
 #
 # Functions 
 # - Perform constrained optimization solving using search algorithm
@@ -69,57 +69,13 @@ class Optimizer:
             return {}
 
     def _update_resource_status(self):
-        for v in self.search.node_placements.keys():
-            np = self.search.node_placements[v]
+        for v, np in self.search.node_placements.iteritems():
 
-            if isinstance(v, VGroup):
-                if v.vgroup_type != "EX":
-                    continue
-
-                if v.level == "host":
-                    host = self.resource.hosts[np.host_name]
-                    for mk in np.host_memberships.keys():
-                        if np.host_memberships[mk] == "EX":
-                            level = mk.split(:)[0]
-                            if level == v.level:
-                                if mk not in self.resource.logical_groups.keys():
-                                    self.resource.logical_groups[mk] = LogicalGroup(mk)
-                                    self.resource.logical_groups[mk].group_type = "EX"
-                                if mk not in host.memberships.keys():
-                                    host.memberships[mk] = self.resource.logical_groups[mk]
-                                    host.last_update = time.time()
-                                    self.resource.update_rack_resource(host)
-                elif v.level == "rack":
-                    host_group = self.resource.host_groups[np.rack_name]
-                    for mk in np.rack_memberships.keys():
-                        if np.rack_memberships[mk] == "EX":
-                            level = mk.split(:)[0]
-                            if level == v.level:
-                                if mk not in self.resource.logical_groups.keys():
-                                    self.resource.logical_groups[mk] = LogicalGroup(mk)
-                                    self.resource.logical_groups[mk].group_type = "EX"
-                                if mk not in host_group.memberships.keys():
-                                    host_group.memberships[mk] = self.resource.logical_groups[mk]
-                                    host_group.last_update = time.time()
-                                    self.resource.update_cluster_resource(host_group)
-                elif v.level == "cluster":
-                    host_group = self.resource.host_groups[np.cluster_name]
-                    for mk in np.cluster_memberships.keys():
-                        if np.cluster_memberships[mk] == "EX":
-                            level = mk.split(:)[0]
-                            if level == v.level:
-                                if mk not in self.resource.logical_groups.keys():
-                                    self.resource.logical_groups[mk] = LogicalGroup(mk)
-                                    self.resource.logical_groups[mk].group_type = "EX"
-                                if mk not in host_group.memberships.keys():
-                                    host_group.memberships[mk] = self.resource.logical_groups[mk]
-                                    host_group.last_update = time.time()
-                                    self.resource.update_cluster_resource(host_group)
-
-            elif isinstance(v, VM):
+            if isinstance(v, VM):
                 host = self.resource.hosts[np.host_name]
 
                 host.vm_list.append(v.name)  # Use name, not uuid, because uuid is not recoginized later
+
                 host.avail_vCPUs -= v.vCPUs
                 host.avail_mem_cap -= v.mem
                 host.avail_local_disk_cap -= v.local_volume_size
@@ -130,9 +86,6 @@ class Optimizer:
                     placement_level = np.get_common_placement(tnp)
 
                     bandwidth = vl.nw_bandwidth
-                    if bandwidth < 0:
-                        bandwidth = 0
-
                     self._update_bandwidth_availability(host, placement_level, bandwidth)
 
                 for voll in v.volume_list:
@@ -141,10 +94,9 @@ class Optimizer:
                     placement_level = np.get_common_placement(tnp)
 
                     bandwidth = voll.io_bandwidth
-                    if bandwidth < 0:
-                        bandwidth = 0
-
                     self._update_bandwidth_availability(host, placement_level, bandwidth)
+
+                self._update_logical_grouping(np)
 
                 host.last_update = time.time()
                 self.resource.update_rack_resource(host)
@@ -165,15 +117,12 @@ class Optimizer:
                     placement_level = np.get_common_placement(tnp)
 
                     bandwidth = vl.io_bandwidth
-                    if bandwidth < 0:
-                        bandwidth = 0
-
                     self._update_bandwidth_availability(host, placement_level, bandwidth)
 
                 storage_host.last_cap_update = time.time()
 
-    # NOTE: assume the up-link of spine switch is not used except out-going from datacenter
-    # NOTE: what about peer-switches?
+    # NOTE: Assume the up-link of spine switch is not used except out-going from datacenter
+    # NOTE: What about peer-switches?
     def _update_bandwidth_availability(self, _host, _placement_level, _bandwidth):
         if _placement_level == "host":
             self._deduct_host_bandwidth(_host, _bandwidth)
@@ -194,26 +143,57 @@ class Optimizer:
             self._deduct_host_bandwidth(rack, _bandwidth)
 
             cluster = rack.parent_resource
-            for sk in cluster.switches.keys():
-                s = cluster.switches[sk]
+            for sk, s in cluster.switches.iteritems():
                 if s.switch_type == "spine":
-                    for ulk in s.up_links.keys():
-                        ul = s.up_links[ulk]
+                    for ulk, ul in s.up_links.iteritems():
                         ul.avail_nw_bandwidth -= _bandwidth
         
                     s.last_update = time.time()
 
     def _deduct_host_bandwidth(self, _host, _bandwidth):
-        for hsk in _host.switches.keys():
-            hs = _host.switches[hsk]
-            for ulk in hs.up_links.keys():
-                ul = hs.up_links[ulk]
+        for hsk, hs in _host.switches.iteritems():
+            for ulk, ul in hs.up_links.iteritems():
                 ul.avail_nw_bandwidth -= _bandwidth
 
             hs.last_update = time.time()
 
+    def _update_logical_grouping(self, _placement):
+        host = self.resource.hosts[_placement.host_name]
+        for mk in _placement.host_memberships.keys():
+            if _placement.host_memberships[mk] == "EX" and mk.split(":")[0] == "host":
+                if mk not in self.resource.logical_groups.keys():
+                    self.resource.logical_groups[mk] = LogicalGroup(mk)
+                    self.resource.logical_groups[mk].group_type = "EX"
+
+                if mk not in host.memberships.keys():
+                    host.memberships[mk] = self.resource.logical_groups[mk]
+                    host.last_update = time.time()
+                    self.resource.update_rack_resource(host)
+
+        if _placement.rack_name in self.resource.host_groups.keys():
+            rack = self.resource.host_groups[_placement.rack_name]
+            for mk in _placement.rack_memberships.keys():
+                if _placement.rack_memberships[mk] == "EX" and mk.split(":")[0] == "rack":
+                    if mk not in self.resource.logical_groups.keys():
+                        self.resource.logical_groups[mk] = LogicalGroup(mk)
+                        self.resource.logical_groups[mk].group_type = "EX"
+
+                    if mk not in rack.memberships.keys():
+                        rack.memberships[mk] = self.resource.logical_groups[mk]
+                        rack.last_update = time.time()
+                        self.resource.update_cluster_resource(rack)
+
+        if _placement.cluster_name in self.resource.host_groups.keys():
+            cluster = self.resource.host_groups[_placement.cluster_name]
+            for mk in _placement.cluster_memberships.keys():
+                if _placement.cluster_memberships[mk] == "EX" and mk.split(":")[0] == "cluster":
+                    if mk not in self.resource.logical_groups.keys():
+                        self.resource.logical_groups[mk] = LogicalGroup(mk)
+                        self.resource.logical_groups[mk].group_type = "EX"
+
+                    if mk not in cluster.memberships.keys():
+                        cluster.memberships[mk] = self.resource.logical_groups[mk]
+                        cluster.last_update = time.time()
+                        self.resource.update_cluster_resource(cluster)
 
 
-
-
-    

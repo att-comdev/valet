@@ -10,6 +10,7 @@ Prerequisites
 See ``$ALLEGRO_PATH/requirements.txt`` for full prerequisites.
 
 - Ubuntu 12 LTS and OpenStack Kilo are required at a minimum.
+- Python 2.7.9 is recommended in order to avoid SSL issues present in earlier versions.
 - `Ostro`_ is the required and only supported placement engine at this time.
 - If VM-to-VM QoS is required, install QoSLite (`Tegu`_ ).
 - If VM-to-Volume QoS is required, install `IOArbiter`_ .
@@ -33,11 +34,12 @@ Install the plugins on an OpenStack controller node containing heat-engine, nova
 
 ::
 
-   production: # pip install $ALLEGRO_PATH         # OpenStack plugins
+   production: # pip install $ALLEGRO_PATH
+   developer:  # pip install --editable $ALLEGRO_PATH
 
-   developer:  # pip install --editable $ALLEGRO_PATH         # OpenStack plugins
+It is strongly recommended to create a `virtual environment`_ (venv) for allegro-api. Ubuntu uses pecan 0.3.0, which is out of date. Updating an Ubuntu package via pip can lead to instabilities. Uninstalling the Ubuntu package can lead to instabilities in other packages that require that particular version of pecan. Ostro will also be placed in this venv. 
 
-It is strongly recommended to create a `virtual environment`_ (venv) for allegro-api. Ubuntu uses pecan 0.3.0, which is out of date. Updating an Ubuntu package via pip can lead to instabilities. Uninstalling the Ubuntu package can lead to instabilities in other packages that require that particular version of pecan. Ostro will also be placed in this venv.
+It's also possible to `install a newer version of Python in a venv`_, if necessary.
 
 Install the API on the designated allegro node (which could be the same as the controller node, but doesn't have to be). Be sure to have the venv activated before doing this.
 
@@ -45,8 +47,8 @@ Install the API on the designated allegro node (which could be the same as the c
 
    # . $PATH_TO_VENV/bin/activate
 
-   production: (VENV) # pip install $ALLEGRO_PATH\allegro # API
-   developer:  (VENV) # pip install --editable $ALLEGRO_PATH/allegro # API
+   production: (VENV) # pip install $ALLEGRO_PATH\allegro
+   developer:  (VENV) # pip install --editable $ALLEGRO_PATH/allegro
 
 Python virtual environments can be deactivated with the ``deactivate`` command.
 
@@ -293,5 +295,6 @@ Joe D'Andrea <jdandrea@research.att.com>
 .. _Tegu: https://forge.research.att.com/plugins/mediawiki/wiki/qoscloud/index.php/Tegu_Installation_and_Configuration_Guide
 .. _IOArbiter: https://forge.research.att.com/plugins/mediawiki/wiki/sds/index.php/IOArbiterInstallationGuide
 .. _virtual environment: http://docs.python-guide.org/en/latest/dev/virtualenvs/
+.. _install a newer version of Python in a venv: http://stackoverflow.com/questions/5506110/is-it-possible-to-install-another-version-of-python-to-virtualenv
 
 .. _QoSOrch Wiki: https://forge.research.att.com/plugins/mediawiki/wiki/qosorch/index.php/Main_Page

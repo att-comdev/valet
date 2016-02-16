@@ -25,13 +25,17 @@ class SimCompute():
 
         self._set_aggregates(_hosts, _logical_groups)
 
-        self._set_resources(_hosts)
-
         self._set_placed_vms(_hosts, _logical_groups)
+
+        self._set_resources(_hosts)
 
         return "success"
 
     def _set_availability_zones(self, _hosts, _logical_groups):
+        logical_group = LogicalGroup("nova")
+        logical_group.group_type = "AZ"
+        _logical_groups[logical_group.name] = logical_group
+
         num_of_non_compute_racks = self.config.num_of_racks / 2
         num_of_non_compute_hosts = 0
         if num_of_non_compute_racks == 0:
@@ -47,12 +51,9 @@ class SimCompute():
         
                 host = Host(self.config.mode + "r" + str(r_num) + "c" + str(h_num))
                 host.tag.append("nova")
- 
-                logical_group = LogicalGroup("nova")
-                logical_group.group_type = "AZ"
-                _logical_groups[logical_group.name] = logical_group
+                host.memberships["nova"] = logical_group
 
-                host.memberships[logical_group.name] = logical_group
+                logical_group.vms_per_host[host.name] = []
 
                 _hosts[host.name] = host
 
@@ -78,6 +79,12 @@ class SimCompute():
                             host = _hosts[host_name]
                             host.memberships[aggregate.name] = aggregate
 
+                            aggregate.vms_per_host[host.name] = []
+
+    # NOTE: place vms to hosts and logical_groups
+    def _set_placed_vms(self, _hosts, _logical_groups):
+        pass
+
     def _set_resources(self, _hosts):
         for r_num in range(0, self.config.num_of_racks):
             for h_num in range(0, self.config.num_of_hosts_per_rack):
@@ -90,9 +97,6 @@ class SimCompute():
                     host.avail_mem_cap = host.mem_cap
                     host.local_disk_cap = self.config.disk_per_host * self.config.disk_overbooking_ratio
                     host.avail_local_disk_cap = host.local_disk_cap
-
-    def _set_placed_vms(self, _hosts, _logical_hosts):
-        pass
 
     def set_flavors(self, _flavors):
         for f_num in range(0, self.config.num_of_basic_flavors):

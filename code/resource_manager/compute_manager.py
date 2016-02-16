@@ -93,10 +93,12 @@ class ComputeManager(threading.Thread):
 
         if self.set_hosts() == True:
             self.logger.info("trigger setting hosts")
+
             self.resource.update_topology()
 
         if self.set_flavors() == True:
             self.logger.info("trigger setting flavors")
+
             #self.resource.update_metadata()
 
         self.data_lock.release()
@@ -120,8 +122,6 @@ class ComputeManager(threading.Thread):
     def set_hosts(self):
         hosts = {}
         logical_groups = {}
-        for lgk, lg in self.resource.logical_groups.iteritems():
-            logical_groups[lgk] = lg
 
         compute = None
         if self.config.mode.startswith("sim") == True:
@@ -145,22 +145,24 @@ class ComputeManager(threading.Thread):
     def _check_logical_group_update(self, _logical_groups):
         for lk in _logical_groups.keys():
             if lk not in self.resource.logical_groups.keys():
-                logical_group = deepcopy(_logical_groups[lk])
-                self.resource.logical_groups[lk] = logical_group
+                self.resource.logical_groups[lk] = deepcopy(_logical_groups[lk])
 
                 self.logger.warn("new logical group (" + lk + ") added")
 
-        for rlk, rl in self.resource.logical_groups.iteritems():
-            if rlk not in _logical_groups.keys():
-                del self.resource.logical_groups[rlk]
+        for rlk in self.resource.logical_groups.keys():
+            rl = self.resource.logical_groups[rlk]
+            if rl.group_type != "EX" and rl.group_type != "AFF":
+                if rlk not in _logical_groups.keys():
+                    del self.resource.logical_groups[rlk]
 
-                self.logger.warn("logical group (" + rlk + ") removed")
+                    self.logger.warn("logical group (" + rlk + ") removed")
 
         for lk in _logical_groups.keys():
             lg = _logical_groups[lk]
             rlg = self.resource.logical_groups[lk]
-            if self._check_logical_group_metadata_update(lg, rlg) == True:
-                self.logger.warn("logical group (" + lk + ") updated")
+            if lg.group_type != "EX" and lg.group_type != "AFF":
+                if self._check_logical_group_metadata_update(lg, rlg) == True:
+                    self.logger.warn("logical group (" + lk + ") updated")
          
     def _check_logical_group_metadata_update(self, _lg, _rlg):
         metadata_updated = False
@@ -175,21 +177,21 @@ class ComputeManager(threading.Thread):
                 del _rlg.metadata[rmdk]
                 metadata_updated = True
 
-        for vmk, vm_name in _lg.vms.iteritems():
-            if vmk not in _rlg.vms.keys():
-                _rlg.vms[vmk] = vm_name
+        for vm_id in _lg.vm_list:
+            if _rlg.exist_vm(vm_id) == False:
+                _rlg.vm_list.append(vm_id)
 
-        for rvmk in _rlg.vms.keys():
-            if rvmk not in _lg.vms.keys():
-                del _rlg.vms[rvmk]
+        for rvm_id in _rlg.vm_list:
+            if _lg.exist_vm(rvm_id) == False:
+                _rlg.vm_list.remove(rvm_id)
 
-        for volk, vol_name in _lg.volumes.iteritems():
-            if volk not in _rlg.volumes.keys():
-                _rlg.volumes[volk] = vol_name
+        for hk in _lg.vms_per_host.keys():
+            if hk not in _rlg.vms_per_host.keys():
+                _rlg.vms_per_host[hk] = deepcopy(_lg.vms_per_host[hk])
 
-        for rvolk in _rlg.volumes.keys():
-            if rvolk not in _lg.volumes.keys():
-                del _rlg.volumes[rvolk]
+        for rhk in _rlg.vms_per_host.keys():
+            if rhk not in _lg.vms_per_host.keys():
+                del _rlg.vms_per_host[rhk]
 
     def _check_host_update(self, _hosts):
         for hk in _hosts.keys():
@@ -198,23 +200,26 @@ class ComputeManager(threading.Thread):
                 self.resource.hosts[new_host.name] = new_host
 
                 new_host.last_update = time.time()
-
                 self.logger.warn("new host (" + new_host.name + ") added")
 
-        for rhk, host in self.resource.hosts.iteritems():
-            if "nova" in host.tag:
-                if rhk not in _hosts.keys():
-                    host.tag.remove("nova")
+        for rhk, rhost in self.resource.hosts.iteritems():
+            if rhk not in _hosts.keys():
+                if "nova" in rhost.tag:
+                    rhost.tag.remove("nova")
 
-                    host.last_update = time.time()
-
-                    self.logger.warn("host (" + host.name + ") disabled")
+                    rhost.last_update = time.time()
+                    self.logger.warn("host (" + rhost.name + ") disabled")
 
         for hk in _hosts.keys():
             host = _hosts[hk]
             rhost = self.resource.hosts[hk]
             if self._check_host_config_update(host, rhost) == True:
                 rhost.last_update = time.time()
+
+        for hk, h in self.resource.hosts.iteritems():
+            if h.clean_memberships() == True:
+                h.last_update = time.time()
+                self.logger.warn("host (" + h.name + ") updated (delete EX/AFF membership)")
 
         for hk, host in self.resource.hosts.iteritems():                                                    
             if host.last_update > self.resource.current_timestamp:                               
@@ -226,33 +231,28 @@ class ComputeManager(threading.Thread):
         if "nova" not in _rhost.tag:
             _rhost.tag.append("nova")
             topology_updated = True
-
             self.logger.warn("host (" + _rhost.name + ") updated (tag added)")
 
         if _host.status != _rhost.status:
             _rhost.status = _host.status
             topology_updated = True
-
             self.logger.warn("host (" + _rhost.name + ") updated (status changed)")
 
         if _host.state != _rhost.state:
             _rhost.state = _host.state
             topology_updated = True
-
             self.logger.warn("host (" + _rhost.name + ") updated (state changed)")
 
         if _host.vCPUs != _rhost.vCPUs or _host.avail_vCPUs != _rhost.avail_vCPUs:
             _rhost.vCPUs = _host.vCPUs
             _rhost.avail_vCPUs = _host.avail_vCPUs
             topology_updated = True
-
             self.logger.warn("host (" + _rhost.name + ") updated (CPU updated)")
 
         if _host.mem_cap != _rhost.mem_cap or _host.avail_mem_cap != _rhost.avail_mem_cap:
             _rhost.mem_cap = _host.mem_cap
             _rhost.avail_mem_cap = _host.avail_mem_cap
             topology_updated = True
-
             self.logger.warn("host (" + _rhost.name + ") updated (mem updated)")
 
         if _host.local_disk_cap != _rhost.local_disk_cap or \
@@ -260,43 +260,39 @@ class ComputeManager(threading.Thread):
             _rhost.local_disk_cap = _host.local_disk_cap
             _rhost.avail_local_disk_cap = _host.avail_local_disk_cap
             topology_updated = True
-
             self.logger.warn("host (" + _rhost.name + ") updated (local disk space updated)")
-
-        for vk in _host.vm_list:
-            if vk not in _rhost.vm_list:
-                _rhost.vm_list.append(vk)
-                topology_updated = True
-
-                self.logger.warn("host (" + _rhost.name +") updated (new vm placed)")
-
-        for rvk in _rhost.vm_list:
-            if rvk not in _host.vm_list:
-                _rhost.vm_list.remove(rvk)
-                topology_updated = True
-
-                self.logger.warn("host (" + _rhost.name +") updated (vm removed)")
 
         for mk in _host.memberships.keys():
             if mk not in _rhost.memberships.keys():
                 _rhost.memberships[mk] = self.resource.logical_groups[mk]
                 topology_updated = True
-
                 self.logger.warn("host (" + _rhost.name + ") updated (new membership)")
 
-        for mk, m in _rhost.memberships.iteritems():
-            if m.group_type == "EX":
-                if len(_rhost.vm_list) == 0:
-                    del _rhost.memberships[mk]
-                    topology_updated = True
-
-                    self.logger.warn("host (" + _rhost.name + ") updated (delete EX membership)")
-            else:
+        for mk in _rhost.memberships.keys():
+            m = _rhost.memberships[mk]
+            if m.group_type != "EX" and m.group_type != "AFF":
                 if mk not in _host.memberships.keys():
                     del _rhost.memberships[mk]
                     topology_updated = True
-
                     self.logger.warn("host (" + _rhost.name + ") updated (delete membership)")
+
+        for vm_id in _host.vm_list:
+            if _rhost.exist_vm(vm_id) == False:
+                _rhost.vm_list.append(vm_id)
+
+                self.resource.add_vm_to_logical_groups(_rhost, vm_id)
+
+                topology_updated = True
+                self.logger.warn("host (" + _rhost.name +") updated (new vm placed)")
+
+        for rvm_id in _rhost.vm_list:
+            if rvm_id[2] == "none" or _host.exist_vm(rvm_id) == False:
+                _rhost.vm_list.remove(rvm_id)
+
+                self.resource.remove_vm_from_logical_groups(_rhost, rvm_id)
+
+                topology_updated = True
+                self.logger.warn("host (" + _rhost.name +") updated (vm removed)")
 
         return topology_updated
 
@@ -324,8 +320,7 @@ class ComputeManager(threading.Thread):
     def _check_flavor_update(self, _flavors):
         for fk in _flavors.keys():
             if fk not in self.resource.flavors.keys():
-                f = deepcopy(_flavors[fk])
-                self.resource.flavors[fk] = f
+                self.resource.flavors[fk] = deepcopy(_flavors[fk])
 
                 self.logger.warn("new flavor (" + fk + ") added")
 
@@ -344,6 +339,12 @@ class ComputeManager(threading.Thread):
 
     def _check_flavor_spec_update(self, _f, _rf):
         spec_updated = False
+
+        if _f.vCPUs != _rf.vCPUs or _f.mem_cap != _rf.mem_cap or _f.disk_cap != _rf.disk_cap:
+            _rf.vCPUs = _f.vCPUs
+            _rf.mem_cap = _f.mem_cap
+            _rf.disk_cap = _f.disk_cap
+            spec_updated = True
 
         for sk in _f.extra_specs.keys():
             if sk not in _rf.extra_specs.keys():

@@ -13,6 +13,7 @@
 
 
 import json
+
 from app_topology_base import VGroup, VGroupLink, VM, VMLink, Volume, VolumeLink, LEVELS
 
 
@@ -61,12 +62,10 @@ class Parser:
             if r["type"] == "OS::Nova::Server":
                 vm = VM(self.stack_id, rk)
 
-                name = None
                 if "name" in r.keys():
-                    name = r["name"]
+                    vm.name = r["name"]
                 else:
-                    name = vm.uuid
-                vm.name = name
+                    vm.name = vm.uuid
 
                 if vm.set_vm_properties(r["properties"]["flavor"], self.resource) == False:
                     self.status = "Not recognize flavor = " + r["properties"]["flavor"]
@@ -77,12 +76,10 @@ class Parser:
             elif r["type"] == "OS::Cinder::Volume":
                 volume = Volume(self.stack_id, rk)
 
-                name = None
                 if "name" in r.keys():
-                    name = r["name"]
+                    volume.name = r["name"]
                 else:
-                    name = volume.uuid
-                volume.name = name
+                    volume.name = volume.uuid
 
                 if "tier" in r['properties']['metadata']:
                     volume.volume_class = r['properties']['metadata']['tier']
@@ -98,12 +95,10 @@ class Parser:
                   r["properties"]["relationship"] == "exclusivity"):
                 vgroup = VGroup(self.stack_id, rk)
 
-                name = None
                 if "name" in r.keys():
-                    name = r["name"]
+                    vgroup.name = r["name"]
                 else:
-                    name = vgroup.uuid
-                vgroup.name = name
+                    vgroup.name = vgroup.uuid
 
                 if r["properties"]["relationship"] == "affinity":
                     vgroup.vgroup_type = "AFF"
@@ -126,7 +121,8 @@ class Parser:
 
         self._set_weight(vms, volumes)
 
-        self._merge_vgroups(_elements, vgroups, vms, volumes)
+        if self._merge_vgroups(_elements, vgroups, vms, volumes) == False:
+            return ({}, {}, {})
 
         for vgk in vgroups.keys():
             vgroup = vgroups[vgk]
@@ -185,8 +181,6 @@ class Parser:
         return True
 
     def _set_volume_attributes(self, _elements, _link_id, _link_name, _link1, _link2):
-        #piped = False
-
         for rk, r in _elements.iteritems():
             if r["type"] == "ATT::QoS::Pipe":
                 resources = r["properties"]["resources"]
@@ -195,14 +189,7 @@ class Parser:
                     if "bandwidth" in property_elements.keys():
                         _link1.io_bandwidth = r["properties"]["bandwidth"]["min"]
                         _link2.io_bandwidth = r["properties"]["bandwidth"]["min"]
-                    #piped = True
                     break
-
-        #if piped == False:
-            #self.status = "no pipe exist for volume attachment {}".format(_link_name)
-            #return False
-        #else:
-            #return True
 
     def _set_total_link_capacities(self, _vms, _volumes):
         for vmk, vm in _vms.iteritems():
@@ -298,8 +285,11 @@ class Parser:
 
     def _merge_vgroups(self, _elements, _vgroups, _vms, _volumes):
         affinity_map = {} # key is uuid of vm, volume, or vgroup & value is its parent vgroup
+
         for level in LEVELS:
+
             for rk, r in _elements.iteritems():
+
                 if r["type"] == "ATT::QoS::ResourceGroup" and \
                    (r["properties"]["relationship"] == "affinity" or \
                     r["properties"]["relationship"] == "exclusivity") and \
@@ -312,6 +302,7 @@ class Parser:
                         continue
 
                     for vk in r["properties"]["resources"]:
+
                         if vk in _vms.keys():
                             vgroup.subvgroup_list.append(_vms[vk])
                             _vms[vk].survgroup = vgroup
@@ -320,6 +311,7 @@ class Parser:
                             self._add_resource_requirements(vgroup, _vms[vk])
                             self._add_memberships(vgroup, _vms[vk])
                             del _vms[vk]
+
                         elif vk in _volumes.keys():
                             vgroup.subvgroup_list.append(_volumes[vk])
                             _volumes[vk].survgroup = vgroup
@@ -328,15 +320,23 @@ class Parser:
                             self._add_resource_requirements(vgroup, _volumes[vk])
                             self._add_memberships(vgroup, _volumes[vk])
                             del _volumes[vk]
+
                         elif vk in _vgroups.keys():
+
                             vg = _vgroups[vk]
-                            if LEVELS.index(vg.level) >= LEVELS.index(level):
+                            if LEVELS.index(vg.level) > LEVELS.index(level):
                                 vg.level = level
-                                if vg.vgroup_type == "EX" or vgroup.vgroup_type == "EX":
-                                    vg.vgroup_type = "EX"
-                                    vgroup.vgroup_type = "EX"
+
                             if self._exist_in_subgroups(vk, vgroup) == None:
-                                self._get_subgroups(vg, _elements, _vgroups, _vms, _volumes, affinity_map)
+
+                                if self._get_subgroups(vg, \
+                                                       _elements, \
+                                                       _vgroups, \
+                                                       _vms, \
+                                                       _volumes, \
+                                                       affinity_map) == False:
+                                    return False
+
                                 vgroup.subvgroup_list.append(vg)
                                 vg.survgroup = vgroup
                                 affinity_map[vk] = vgroup
@@ -344,13 +344,22 @@ class Parser:
                                 self._add_resource_requirements(vgroup, vg)
                                 self._add_memberships(vgroup, vg)
                                 del _vgroups[vk]
+
                         else: # vk belongs to the other vgroup already
+                            if vk not in affinity_map.keys():
+                                self.status = "Invalid resource = " + vk
+                                return False
+
                             if affinity_map[vk].uuid != vgroup.uuid:
                                 if self._exist_in_subgroups(vk, vgroup) == None:
                                     self._set_implicit_grouping(vk, vgroup, affinity_map, _vgroups)
 
+        return True
+
     def _get_subgroups(self, _vgroup, _elements, _vgroups, _vms, _volumes, _affinity_map):
+
         for vk in _elements[_vgroup.uuid]["properties"]["resources"]:
+
             if vk in _vms.keys():
                 _vgroup.subvgroup_list.append(_vms[vk])
                 _vms[vk].survgroup = _vgroup
@@ -359,6 +368,7 @@ class Parser:
                 self._add_resource_requirements(_vgroup, _vms[vk])
                 self._add_memberships(_vgroup, _vms[vk])
                 del _vms[vk]
+
             elif vk in _volumes.keys():
                 _vgroup.subvgroup_list.append(_volumes[vk])
                 _volumes[vk].survgroup = _vgroup
@@ -367,15 +377,18 @@ class Parser:
                 self._add_resource_requirements(_vgroup, _volumes[vk])
                 self._add_memberships(_vgroup, _volumes[vk])
                 del _volumes[vk]
+
             elif vk in _vgroups.keys():
+
                 vg = _vgroups[vk]
-                if LEVELS.index(vg.level) >= LEVELS.index(_vgroup.level):
+                if LEVELS.index(vg.level) > LEVELS.index(_vgroup.level):
                     vg.level = _vgroup.level
-                    if vg.vgroup_type == "EX" or _vgroup.vgroup_type == "EX":
-                        vg.vgroup_type = "EX"
-                        _vgroup.vgroup_type = "EX"
+
                 if self._exist_in_subgroups(vk, _vgroup) == None:
-                    self._get_subgroups(vg, _elements, _vgroups, _vms, _volumes, _affinity_map)
+
+                    if self._get_subgroups(vg, _elements, _vgroups, _vms, _volumes, _affinity_map) == False:
+                        return False
+
                     _vgroup.subvgroup_list.append(vg)
                     vg.survgroup = _vgroup
                     _affinity_map[vk] = _vgroup
@@ -384,9 +397,15 @@ class Parser:
                     self._add_memberships(_vgroup, vg)
                     del _vgroups[vk]
             else:
+                if vk not in _affinity_map.keys():
+                    self.status = "Invalid resource = " + vk
+                    return False
+
                 if _affinity_map[vk].uuid != _vgroup.uuid:
                     if self._exist_in_subgroups(vk, _vgroup) == None:
                         self._set_implicit_grouping(vk, _vgroup, _affinity_map, _vgroups)
+
+        return True
 
     def _add_implicit_diversity_groups(self, _vgroup, _diversity_groups):
         for dz in _diversity_groups.keys():
@@ -424,14 +443,14 @@ class Parser:
     # Take vk's most top parent as a s_vg's child vgroup
     def _set_implicit_grouping(self, _vk, _s_vg, _affinity_map, _vgroups):
         t_vg = _affinity_map[_vk] # where _vk currently belongs to
+
         if t_vg.uuid in _affinity_map.keys(): # if the parent belongs to the other parent vgroup
             self._set_implicit_grouping(t_vg.uuid, _s_vg, _affinity_map, _vgroups)
+
         else:
-            if LEVELS.index(t_vg.level) >= LEVELS.index(_s_vg.level):
+            if LEVELS.index(t_vg.level) > LEVELS.index(_s_vg.level):
                 t_vg.level = _s_vg.level
-                if t_vg.vgroup_type == "EX" or _s_vg.vgroup_type == "EX":
-                    t_vg.vgroup_type = "EX"
-                    _s_vg.vgroup_type = "EX"
+
             if self._exist_in_subgroups(t_vg.uuid, _s_vg) == None:
                 _s_vg.subvgroup_list.append(t_vg)
                 t_vg.survgroup = _s_vg

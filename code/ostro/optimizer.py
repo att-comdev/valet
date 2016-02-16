@@ -74,7 +74,7 @@ class Optimizer:
             if isinstance(v, VM):
                 host = self.resource.hosts[np.host_name]
 
-                host.vm_list.append(v.name)  # Use name, not uuid, because uuid is not recoginized later
+                host.vm_list.append((v.uuid, v.name, "none"))  
 
                 host.avail_vCPUs -= v.vCPUs
                 host.avail_mem_cap -= v.mem
@@ -85,18 +85,16 @@ class Optimizer:
 
                     placement_level = np.get_common_placement(tnp)
 
-                    bandwidth = vl.nw_bandwidth
-                    self._update_bandwidth_availability(host, placement_level, bandwidth)
+                    self._update_bandwidth_availability(host, placement_level, vl.nw_bandwidth)
 
                 for voll in v.volume_list:
                     tnp = self.search.node_placements[voll.node]
 
                     placement_level = np.get_common_placement(tnp)
 
-                    bandwidth = voll.io_bandwidth
-                    self._update_bandwidth_availability(host, placement_level, bandwidth)
+                    self._update_bandwidth_availability(host, placement_level, voll.io_bandwidth)
 
-                self._update_logical_grouping(np)
+                self._update_logical_grouping(v, self.search.avail_hosts[np.host_name])
 
                 host.last_update = time.time()
                 self.resource.update_rack_resource(host)
@@ -116,8 +114,7 @@ class Optimizer:
 
                     placement_level = np.get_common_placement(tnp)
 
-                    bandwidth = vl.io_bandwidth
-                    self._update_bandwidth_availability(host, placement_level, bandwidth)
+                    self._update_bandwidth_availability(host, placement_level, vl.io_bandwidth)
 
                 storage_host.last_cap_update = time.time()
 
@@ -157,43 +154,49 @@ class Optimizer:
 
             hs.last_update = time.time()
 
-    def _update_logical_grouping(self, _placement):
-        host = self.resource.hosts[_placement.host_name]
-        for mk in _placement.host_memberships.keys():
-            if _placement.host_memberships[mk] == "EX" and mk.split(":")[0] == "host":
-                if mk not in self.resource.logical_groups.keys():
-                    self.resource.logical_groups[mk] = LogicalGroup(mk)
-                    self.resource.logical_groups[mk].group_type = "EX"
+    def _update_logical_grouping(self, _v, _avail_host):
+        host = self.resource.hosts[_avail_host.host_name]
 
-                if mk not in host.memberships.keys():
-                    host.memberships[mk] = self.resource.logical_groups[mk]
-                    host.last_update = time.time()
-                    self.resource.update_rack_resource(host)
+        for lgk, lg in _avail_host.host_memberships.iteritems():
+            if lg.group_type == "EX" or lg.group_type == "AFF":
+                if lgk.split(":")[0] == "host":
+                    if lgk not in self.resource.logical_groups.keys():
+                        self.resource.logical_groups[lgk] = LogicalGroup(lgk)
+                        self.resource.logical_groups[lgk].group_type = lg.group_type
 
-        if _placement.rack_name in self.resource.host_groups.keys():
-            rack = self.resource.host_groups[_placement.rack_name]
-            for mk in _placement.rack_memberships.keys():
-                if _placement.rack_memberships[mk] == "EX" and mk.split(":")[0] == "rack":
-                    if mk not in self.resource.logical_groups.keys():
-                        self.resource.logical_groups[mk] = LogicalGroup(mk)
-                        self.resource.logical_groups[mk].group_type = "EX"
+                    if lgk not in host.memberships.keys():
+                        host.memberships[lgk] = self.resource.logical_groups[lgk]
 
-                    if mk not in rack.memberships.keys():
-                        rack.memberships[mk] = self.resource.logical_groups[mk]
-                        rack.last_update = time.time()
-                        self.resource.update_cluster_resource(rack)
+        if _avail_host.rack_name != "any":
+            for lgk, lg in _avail_host.rack_memberships.iteritems():
+                if lg.group_type == "EX" or lg.group_type == "AFF":
+                    if lgk.split(":")[0] == "rack":
+                        if lgk not in self.resource.logical_groups.keys():
+                            self.resource.logical_groups[lgk] = LogicalGroup(lgk)
+                            self.resource.logical_groups[lgk].group_type = lg.group_type
 
-        if _placement.cluster_name in self.resource.host_groups.keys():
-            cluster = self.resource.host_groups[_placement.cluster_name]
-            for mk in _placement.cluster_memberships.keys():
-                if _placement.cluster_memberships[mk] == "EX" and mk.split(":")[0] == "cluster":
-                    if mk not in self.resource.logical_groups.keys():
-                        self.resource.logical_groups[mk] = LogicalGroup(mk)
-                        self.resource.logical_groups[mk].group_type = "EX"
+                        rack = self.resource.host_groups[_avail_host.rack_name]
+                        if lgk not in rack.memberships.keys():
+                            rack.memberships[lgk] = self.resource.logical_groups[lgk]
+                            rack.last_update = time.time()
+                            self.resource.update_cluster_resource(rack)
 
-                    if mk not in cluster.memberships.keys():
-                        cluster.memberships[mk] = self.resource.logical_groups[mk]
-                        cluster.last_update = time.time()
-                        self.resource.update_cluster_resource(cluster)
+        if _avail_host.cluster_name != "any":
+            for lgk, lg in _avail_host.cluster_memberships.iteritems():
+                if lg.group_type == "EX" or lg.group_type == "AFF":
+                    if lgk.split(":")[0] == "cluster":
+                        if lgk not in self.resource.logical_groups.keys():
+                            self.resource.logical_groups[lgk] = LogicalGroup(lgk)
+                            self.resource.logical_groups[lgk].group_type = lg.group_type
+
+                        cluster = self.resource.host_groups[_avail_host.cluster_name]
+                        if lgk not in cluster.memberships.keys():
+                            cluster.memberships[lgk] = self.resource.logical_groups[lgk]
+                            cluster.last_update = time.time()
+                            self.resource.update_cluster_resource(cluster)
+
+        self.resource.add_vm_to_logical_groups(host, (_v.uuid, _v.name, "none"))
+
+
 
 

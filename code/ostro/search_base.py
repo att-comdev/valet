@@ -18,8 +18,10 @@ from app_topology_base import VGroup, VM, Volume, LEVELS
 class Resource:
 
     def __init__(self):
-        self.host_name = None               # key of this data structure
-        self.host_memberships = {}          # key=((level:)name), value=type
+        self.level = None                   # level of placement
+
+        self.host_name = None               
+        self.host_memberships = {}          # all mapped logical groups to host
         self.host_avail_vCPUs = 0
         self.host_avail_mem = 0
         self.host_avail_local_disk = 0
@@ -28,7 +30,7 @@ class Resource:
         self.host_num_of_placed_vms = 0
 
         self.rack_name = None               # where this host is located
-        self.rack_memberships = {}          # key=((level:)name), value=type
+        self.rack_memberships = {}          
         self.rack_avail_vCPUs = 0
         self.rack_avail_mem = 0
         self.rack_avail_local_disk = 0 
@@ -37,7 +39,7 @@ class Resource:
         self.rack_num_of_placed_vms = 0
 
         self.cluster_name = None            # where this host and rack are located
-        self.cluster_memberships = {}       # key=((level:)name), value=type
+        self.cluster_memberships = {}       
         self.cluster_avail_vCPUs = 0
         self.cluster_avail_mem = 0
         self.cluster_avail_local_disk = 0 
@@ -146,6 +148,16 @@ class Resource:
         return avail_switches
 
 
+class LogicalGroupResource:
+
+    def __init__(self):
+        self.name = None
+        self.group_type = "AGGR"
+
+        self.num_of_placed_vms = 0
+        self.num_of_placed_vms_per_host = {}   # key = host (i.e., id of host or rack), value = num_of_placed_vms
+
+
 # where Volume will be placed
 class StorageResource:
 
@@ -225,6 +237,14 @@ class Node:
             exc_id = self.node.level + ":" + self.node.name
 
         return exc_id
+
+    def get_affinity_id(self):
+        aff_id = None
+
+        if isinstance(self.node, VGroup) and self.node.vgroup_type == "AFF":
+            aff_id = self.node.level + ":" + self.node.name
+
+        return aff_id
 
     def get_parent_exclusivity_id(self):
         exc_id = None

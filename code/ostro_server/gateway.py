@@ -112,7 +112,16 @@ if __name__ == '__main__':
     if gw.ostro.bootstrap() == False:
         print "Error while bootstraping"
     time.sleep(1)
-    result1 = gw.place_app_file("./test_inputs/simple_mix_aggregate_exclusivity.json")
+    result1 = gw.place_app_file("./test_inputs/simple_aggregates.json")
     print result1
+    time.sleep(1)
+    result2 = gw.place_app_file("./test_inputs/simple_exclusivity.json")
+    print result2
+    time.sleep(1)
+    result3 = gw.place_app_file("./test_inputs/simple_mix_aggregate_exclusivity.json")
+    print result3
+    time.sleep(1)
+    result4 = gw.place_app_file("./test_inputs/simple_mix_affinity_exclusivity.json")
+    print result4
 
 

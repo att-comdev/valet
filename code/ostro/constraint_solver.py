@@ -25,11 +25,12 @@ class ConstraintSolver:
 
         self.status = "success"
 
-    def compute_candidate_list(self, _level, _n, _node_placements, _avail_resources):
+    def compute_candidate_list(self, _level, _n, _node_placements, _avail_resources, _avail_logical_groups):
         candidate_list = []
-        for rk in _avail_resources.keys():
-            candidate_list.append(_avail_resources[rk])
+        for rk, r in _avail_resources.iteritems():
+            candidate_list.append(r)
 
+        # Compute capacity constraint
         if isinstance(_n.node, VGroup) or isinstance(_n.node, VM):
             self._constrain_compute_capacity(_level, _n, candidate_list)
             if len(candidate_list) == 0:
@@ -37,6 +38,7 @@ class ConstraintSolver:
                 self.logger.error(self.status)
                 return candidate_list
 
+        # Storage capacity constraint
         if (isinstance(_n.node, VGroup) and len(_n.node.volume_sizes) > 0) or isinstance(_n.node, Volume):
             self._constrain_storage_capacity(_level, _n, candidate_list)
             if len(candidate_list) == 0:
@@ -44,12 +46,14 @@ class ConstraintSolver:
                 self.logger.error(self.status)
                 return candidate_list
 
+        # Network bandwidth constraint
         self._constrain_nw_bandwidth_capacity(_level, _n, _node_placements, candidate_list)
         if len(candidate_list) == 0:
             self.status = "violate nw bandwidth capacity constraint for node = " + _n.node.name
             self.logger.error(self.status)
             return candidate_list
 
+        # Host Aggregate constraint
         if len(_n.node.host_aggregates) > 0:
             self._constrain_host_aggregates(_level, _n, candidate_list)
             if len(candidate_list) == 0:
@@ -57,6 +61,7 @@ class ConstraintSolver:
                 self.logger.error(self.status)
                 return candidate_list
 
+        # Diversity constraint
         if len(_n.node.diversity_groups) > 0:
             self._constrain_diversity(_level, _n, _node_placements, candidate_list)
             if len(candidate_list) == 0:
@@ -64,6 +69,7 @@ class ConstraintSolver:
                 self.logger.error(self.status)
                 return candidate_list
 
+        # Exclusivity constraint
         exclusivity_id = _n.get_exclusivity_id()
         if exclusivity_id == None:
             exclusivity_id = _n.get_parent_exclusivity_id()
@@ -80,7 +86,41 @@ class ConstraintSolver:
                 self.logger.error(self.status)
                 return candidate_list
 
+        # Affinity constraint
+        affinity_id = _n.get_affinity_id()
+        if affinity_id != None:
+            if affinity_id in _avail_logical_groups.keys():
+                self._constrain_affinity(_level, affinity_id, candidate_list)
+                if len(candidate_list) == 0:
+                    self.status = "violate affinity constraint for node = " + _n.node.name
+                    self.logger.error(self.status)
+                    return candidate_list
+
         return candidate_list
+
+    def _constrain_affinity(self, _level, _affinity_id, _candidate_list):
+        conflict_list = []
+
+        for r in _candidate_list:
+            if self.check_affinity(_level, _affinity_id, r) == False:
+                if r not in conflict_list:
+                    conflict_list.append(r)
+
+        for cc in conflict_list:
+            if cc in _candidate_list:
+                _candidate_list.remove(cc)
+
+                debug_resource_name = cc.get_resource_name(_level)
+                self.logger.debug("violates affinity in resource = " + debug_resource_name)
+
+    def check_affinity(self, _level, _affinity_id, _candidate):
+        match = False
+
+        memberships = _candidate.get_memberships(_level)
+        if _affinity_id in memberships.keys(): 
+            match = True
+
+        return match
 
     def _constrain_non_exclusivity(self, _level, _candidate_list):
         conflict_list = []
@@ -102,7 +142,7 @@ class ConstraintSolver:
 
         memberships = _candidate.get_memberships(_level)
         for mk in memberships.keys():
-            if memberships[mk] == "EX" and mk.split(":")[0] == _level:
+            if memberships[mk].group_type == "EX" and mk.split(":")[0] == _level:
                 conflict = True
 
         return conflict

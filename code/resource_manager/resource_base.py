@@ -36,8 +36,8 @@ class Datacenter:
 
         self.resources = {}
 
-        self.vms = {}                    # a list of placed vms, key=ochestration_uuid, value=name
-        self.volumes = {}                # a list of placed volumes
+        self.vm_list = []                # a list of placed vms, (ochestration_uuid, vm_name, physical_uuid)
+        self.volume_list = []            # a list of placed volumes
 
         self.last_update = 0
         self.last_link_update = 0
@@ -75,8 +75,8 @@ class HostGroup:
         self.parent_resource = None      # e.g., datacenter
         self.child_resources = {}        # e.g., hosting servers
 
-        self.vms = {}                    # a list of placed vms
-        self.volumes = {}                # a list of placed volumes
+        self.vm_list = []                # a list of placed vms, (ochestration_uuid, vm_name, physical_uuid)
+        self.volume_list = []            # a list of placed volumes
 
         self.last_update = 0
         self.last_link_update = 0
@@ -90,17 +90,17 @@ class HostGroup:
         self.avail_local_disk_cap = 0
 
     def init_memberships(self):
-        for mk in self.memberships.keys():
-            m = self.memberships[mk]
-            if m.group_type == "EX":
-                level = m.name.split(":")[0]
+        for lgk in self.memberships.keys():
+            lg = self.memberships[lgk]
+            if lg.group_type == "EX" or lg.group_type == "AFF":
+                level = lg.name.split(":")[0]
                 if LEVELS.index(level) < LEVELS.index(self.host_type):
-                    del self.memberships[mk]
+                    del self.memberships[lgk]
                 else:
-                    if len(self.vm_list) == 0:
-                        del self.memberships[mk]
+                    if self.name not in lg.vms_per_host.keys():
+                        del self.memberships[lgk]
             else:
-                del self.memberships[mk]
+                del self.memberships[lgk]
 
     def check_availability(self):
         if self.status == "enabled":
@@ -132,11 +132,24 @@ class Host:
 
         self.host_group = None           # e.g., rack
 
-        self.vms = {}                    # a list of placed vms
-        self.volumes = {}                # a list of placed volumes
+        self.vm_list = []                # a list of placed vms, (ochestration_uuid, vm_name, physical_uuid)
+        self.volume_list = []            # a list of placed volumes
 
         self.last_update = 0
         self.last_link_update = 0
+
+    def clean_memberships(self):
+        cleaned = False
+
+        for lgk in self.memberships.keys():
+            lg = self.memberships[lgk]
+            if lg.group_type == "EX" or lg.group_type == "AFF":
+                if self.name not in lg.vms_per_host.keys():
+                    del self.memberships[lgk]
+
+                    cleaned = True
+    
+        return cleaned
 
     def check_availability(self):
         if self.status == "enabled" and self.state == "up" and \
@@ -144,6 +157,16 @@ class Host:
             return True
         else:
             return False
+
+    def exist_vm(self, _vm_id):
+        exist = False
+
+        for vm_id in self.vm_list:
+            if vm_id[1] == _vm_id[1] and vm_id[2] == _vm_id[2]: # same name and uuid
+                exist = True
+                break
+
+        return exist
 
 
 class LogicalGroup:
@@ -154,10 +177,42 @@ class LogicalGroup:
 
         self.metadata = {}               # any metadata to be matched when placing nodes
 
-        self.vms = {}                    # a list of placed vms
-        self.volumes = {}                # a list of placed volumes
+        self.vm_list = []                # a list of placed vms, (ochestration_uuid, vm_name, physical_uuid)
+        self.volume_list = []            # a list of placed volumes
+
+        self.vms_per_host = {}           # key = host_id, value = a list of placed vms
 
         #self.last_update = 0
+
+    def exist_vm(self, _vm_id):
+        exist = False
+
+        for vm_id in self.vm_list:
+            if vm_id[1] == _vm_id[1] and vm_id[2] == _vm_id[2]: # same name and uuid
+                exist = True
+                break
+
+        return exist
+
+    def add_vm(self, _vm_id, _host_id):
+        if self.exist_vm(_vm_id) == False:
+            self.vm_list.append(_vm_id)
+
+            if self.group_type == "EX" or self.group_type == "AFF":
+                if _host_id not in self.vms_per_host.keys():
+                    self.vms_per_host[_host_id] = []
+
+            self.vms_per_host[_host_id].append(_vm_id)
+
+    def remove_vm(self, _vm_id, _host_id):
+        if self.exist_vm(_vm_id) == True:
+            self.vm_list.remove(_vm_id)
+
+            self.vms_per_host[_host_id].remove(_vm_id)
+
+            if self.group_type == "EX" or self.group_type == "AFF":
+                if len(self.vms_per_host[_host_id]) == 0:
+                    del self.vms_per_host[_host_id]
 
 
 class Switch: 

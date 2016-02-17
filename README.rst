@@ -80,7 +80,7 @@ Install allegro-api in the venv on the designated allegro node (which could be t
 
   $ . $PATH_TO_VENV/bin/activate
 
-  production: (VENV) $ pip install $ALLEGRO_PATH\allegro
+  production: (VENV) $ pip install $ALLEGRO_PATH/allegro
   developer:  (VENV) $ pip install --editable $ALLEGRO_PATH/allegro
 
 It is very strongly recommended to create a python `virtual environment`_ (venv) for allegro-api.

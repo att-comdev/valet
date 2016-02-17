@@ -358,7 +358,7 @@ class Search:
                     debug_best_resource = best_resource.host_name
                 elif isinstance(n.node, Volume):
                     debug_best_resource = best_resource.host_name + "@" + best_resource.storage.storage_name
-            self.logger.debug("best resource = " + debug_best_resource)
+            self.logger.debug("best resource = " + debug_best_resource + " for node = " + n.node.name)
 
             # For VM or Volume under host level only
             self._deduct_reservation(_level, best_resource, n)
@@ -376,6 +376,10 @@ class Search:
         if len(candidate_list) == 0:
             self.status = self.constraint_solver.status
             return None
+
+        self.logger.debug("candidate list")
+        for c in candidate_list:
+            self.logger.debug("    candidate = " + c.get_resource_name(_level))
 
         (target, weight) = self.app_topology.optimization_priority[0]
         top_candidate_list = None
@@ -824,8 +828,13 @@ class Search:
                                                                   _candidate) == False:
             return False
 
-        if self.constraint_solver.check_host_aggregates(_level, _n.node, _candidate) == False:
-            return False
+        if len(_n.node.host_aggregates) > 0:
+            if self.constraint_solver.check_host_aggregates(_level, _n.node, _candidate) == False:
+                return False
+        else:
+            if _level == "host":
+                if self.constraint_solver.conflict_host_aggregates(_candidate.memberships) == True:
+                    return False
 
         if self.constraint_solver.conflict_diversity(_level, _n, self.node_placements, _candidate) == True:
             return False

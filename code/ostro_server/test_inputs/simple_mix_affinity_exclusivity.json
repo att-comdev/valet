@@ -8,7 +8,7 @@
     "vm9_uuid": {
       "name": "vm9",
       "properties": {
-        "flavor": "bflavor1"
+        "flavor": "bflavor0"
       },
       "type": "OS::Nova::Server"
     },

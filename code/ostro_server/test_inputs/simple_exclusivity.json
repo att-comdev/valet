@@ -8,21 +8,21 @@
     "vm3_uuid": {
       "name": "vm3",
       "properties": {
-        "flavor": "bflavor1"
+        "flavor": "bflavor0"
       },
       "type": "OS::Nova::Server"
     },
     "vm4_uuid": {
       "name": "vm4",
       "properties": {
-        "flavor": "bflavor1"
+        "flavor": "bflavor0"
       },
       "type": "OS::Nova::Server"
     },
     "vm5_uuid": {
       "name": "vm5",
       "properties": {
-        "flavor": "bflavor1"
+        "flavor": "bflavor0"
       },
       "type": "OS::Nova::Server"
     },

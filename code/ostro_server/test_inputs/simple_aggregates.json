@@ -8,14 +8,14 @@
     "vm0_uuid": {
       "name": "vm0",
       "properties": {
-        "flavor": "bflavor1"
+        "flavor": "bflavor0"
       },
       "type": "OS::Nova::Server"
     },
     "vm1_uuid": {
       "name": "vm1",
       "properties": {
-        "flavor": "bflavor1"
+        "flavor": "bflavor0"
       },
       "type": "OS::Nova::Server"
     },

@@ -426,7 +426,7 @@ class Resource:
 
             if isinstance(_host, Host):
                 lg.add_vm(_vm_id, _host.name)
-            else:
+            elif isinstance(_host, HostGroup):
                 if lg.group_type == "EX" or lg.group_type == "AFF":
                     if lgk.split(":")[0] == _host.host_type:
                         lg.add_vm(_vm_id, _host.name)
@@ -442,7 +442,7 @@ class Resource:
 
             if isinstance(_host, Host):
                 lg.remove_vm(_vm_id, _host.name)
-            else:
+            elif isinstance(_host, HostGroup):
                 if lg.group_type == "EX" or lg.group_type == "AFF":
                     if lgk.split(":")[0] == _host.host_type:
                         lg.remove_vm(_vm_id, _host.name)

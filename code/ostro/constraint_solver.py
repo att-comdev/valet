@@ -60,6 +60,13 @@ class ConstraintSolver:
                 self.status = "violate host aggregate constraint for node = " + _n.node.name
                 self.logger.error(self.status)
                 return candidate_list
+        else:
+            if _level == "host":
+                self._constrain_non_host_aggregates(candidate_list)
+                if len(candidate_list) == 0:
+                    self.status = "violate non host aggregate constraint for node = " + _n.node.name
+                    self.logger.error(self.status)
+                    return candidate_list
 
         # Diversity constraint
         if len(_n.node.diversity_groups) > 0:
@@ -106,12 +113,10 @@ class ConstraintSolver:
                 if r not in conflict_list:
                     conflict_list.append(r)
 
-        for cc in conflict_list:
-            if cc in _candidate_list:
-                _candidate_list.remove(cc)
+                    debug_resource_name = r.get_resource_name(_level)
+                    self.logger.debug("violates affinity in resource = " + debug_resource_name)
 
-                debug_resource_name = cc.get_resource_name(_level)
-                self.logger.debug("violates affinity in resource = " + debug_resource_name)
+        _candidate_list[:] = [c for c in _candidate_list if c not in conflict_list]
 
     def check_affinity(self, _level, _affinity_id, _candidate):
         match = False
@@ -130,12 +135,10 @@ class ConstraintSolver:
                 if r not in conflict_list:
                     conflict_list.append(r)
 
-        for cc in conflict_list:
-            if cc in _candidate_list:
-                _candidate_list.remove(cc)
+                    debug_resource_name = r.get_resource_name(_level)
+                    self.logger.debug("violates non exclusivity in resource = " + debug_resource_name)
 
-                debug_resource_name = cc.get_resource_name(_level)
-                self.logger.debug("violates non exclusivity in resource = " + debug_resource_name)
+        _candidate_list[:] = [c for c in _candidate_list if c not in conflict_list]
 
     def conflict_exclusivity(self, _level, _candidate):
         conflict = False
@@ -149,19 +152,15 @@ class ConstraintSolver:
 
     def _constrain_exclusivity(self, _level, _exclusivity_id, _candidate_list):
         candidate_list = self._get_exclusive_candidates(_level, _exclusivity_id, _candidate_list)
+
         if len(candidate_list) == 0:
             if _exclusivity_id.split(":")[0] == _level:
                 candidate_list = self._get_hibernated_candidates(_level, _candidate_list)
-
-                for cc in _candidate_list:
-                    if cc not in candidate_list:
-                        _candidate_list.remove(cc)
-
-                        debug_resource_name = cc.get_resource_name(_level)
-                        self.logger.debug("violates the exclusivity group in resource = " + debug_resource_name)
-
+                _candidate_list[:] = [x for x in _candidate_list if x in candidate_list]
             else: # i.e., _level > exclusivity_level
                 pass
+        else:
+            _candidate_list[:] = [x for x in _candidate_list if x in candidate_list]
 
     def _get_exclusive_candidates(self, _level, _exclusivity_id, _candidate_list):
         candidate_list = []
@@ -170,6 +169,9 @@ class ConstraintSolver:
             if self.check_exclusivity(_level, _exclusivity_id, r) == True:
                 if r not in candidate_list:
                     candidate_list.append(r)
+            else:
+                debug_resource_name = r.get_resource_name(_level)
+                self.logger.debug("violates the exclusivity group in resource = " + debug_resource_name)
 
         return candidate_list
 
@@ -189,6 +191,9 @@ class ConstraintSolver:
             if self.check_hibernated(_level, r) == True:
                 if r not in candidate_list:
                     candidate_list.append(r)
+            else:
+                debug_resource_name = r.get_resource_name(_level)
+                self.logger.debug("violates the hibernated group in resource = " + debug_resource_name)
 
         return candidate_list
 
@@ -201,6 +206,28 @@ class ConstraintSolver:
         
         return match
         
+    def _constrain_non_host_aggregates(self, _candidate_list):
+        conflict_list = []
+
+        for r in _candidate_list:
+            if self.conflict_host_aggregates(r.host_memberships) == True:
+                if r not in conflict_list:
+                    conflict_list.append(r)
+
+                    debug_resource_name = r.host_name
+                    self.logger.debug("violates the non host aggregate in resource = " + debug_resource_name)
+
+        _candidate_list[:] = [c for c in _candidate_list if c not in conflict_list]
+
+    def conflict_host_aggregates(self, _memberships):
+        conflict = False
+
+        for lgk, lg in _memberships.iteritems():
+            if lg.group_type == "AGGR":
+                conflict = True
+
+        return conflict
+
     def _constrain_host_aggregates(self, _level, _n, _candidate_list):
         conflict_list = []
 
@@ -209,12 +236,10 @@ class ConstraintSolver:
                 if r not in conflict_list:
                     conflict_list.append(r)
 
-        for cc in conflict_list:
-            if cc in _candidate_list:
-                _candidate_list.remove(cc)
+                    debug_resource_name = r.get_resource_name(_level)
+                    self.logger.debug("violates the host aggregate in resource = " + debug_resource_name)
 
-                debug_resource_name = cc.get_resource_name(_level)
-                self.logger.debug("violates the host aggregate in resource = " + debug_resource_name)
+        _candidate_list[:] = [c for c in _candidate_list if c not in conflict_list]
 
     def check_host_aggregates(self, _level, _v, _candidate):
         return self._match_host_aggregates(_v, _candidate.get_memberships(_level))
@@ -247,13 +272,11 @@ class ConstraintSolver:
             if self.conflict_diversity(_level, _n, _node_placements, r) == True:
                 if r not in conflict_list:
                     conflict_list.append(r)
-
-        for cc in conflict_list:
-            if cc in _candidate_list:
-                _candidate_list.remove(cc)
   
-                debug_resource_name = cc.get_resource_name(_level)
-                self.logger.debug("violates the diversity group in resource = " + debug_resource_name)
+                    debug_resource_name = r.get_resource_name(_level)
+                    self.logger.debug("violates the diversity group in resource = " + debug_resource_name)
+
+        _candidate_list[:] = [c for c in _candidate_list if c not in conflict_list]
 
     def conflict_diversity(self, _level, _n, _node_placements, _candidate):
         conflict = False
@@ -286,12 +309,8 @@ class ConstraintSolver:
             if self.check_compute_availability(_level, _n.node, ch) == False:
                 conflict_list.append(ch)
 
-        for cc in conflict_list:
-            if cc in _candidate_list:
-                _candidate_list.remove(cc)
-
-                debug_resource_name = cc.get_resource_name(_level)
-                (avail_vCPUs, avail_mem, avail_local_disk) = cc.get_avail_resources(_level)
+                debug_resource_name = ch.get_resource_name(_level)
+                (avail_vCPUs, avail_mem, avail_local_disk) = ch.get_avail_resources(_level)
                 self.logger.debug("compute resource constrained in resource = " + debug_resource_name)
                 if _n.node.vCPUs > avail_vCPUs:
                     self.logger.debug("lack of CPU = " + str(_n.node.vCPU - avail_vCPUs))
@@ -299,6 +318,8 @@ class ConstraintSolver:
                     self.logger.debug("lack of mem = " + str(_n.node.mem - avail_mem))
                 if _n.node.local_volume_size > avail_local_disk:
                     self.logger.debug("lack of local disk = " + str(_n.node.local_volume_size - avail_local_disk))
+
+        _candidate_list[:] = [c for c in _candidate_list if c not in conflict_list]
 
     def check_compute_availability(self, _level, _v, _ch):
         available = True
@@ -316,12 +337,8 @@ class ConstraintSolver:
             if self.check_storage_availability(_level, _n.node, ch) == False:
                 conflict_list.append(ch)
 
-        for cc in conflict_list:
-            if cc in _candidate_list:
-                _candidate_list.remove(cc)
-
-                debug_resource_name = cc.get_resource_name(_level)
-                avail_storages = cc.get_avail_storages(_level)
+                debug_resource_name = ch.get_resource_name(_level)
+                avail_storages = ch.get_avail_storages(_level)
                 avail_disks = []
                 volume_classes = []
                 volume_sizes = []
@@ -343,6 +360,8 @@ class ConstraintSolver:
                     #print "    disk size = ", ds
                 #for vs in volume_sizes:
                     #print "    volume size = ", vs
+
+        _candidate_list[:] = [c for c in _candidate_list if c not in conflict_list]
 
     def check_storage_availability(self, _level, _v, _ch):
         available = False
@@ -376,25 +395,23 @@ class ConstraintSolver:
                 if cr not in conflict_list:
                     conflict_list.append(cr)
 
-        for cc in conflict_list:
-            if cc in _candidate_list:
-                _candidate_list.remove(cc)
+                    debug_resource_name = cr.get_resource_name(_level)
+                    #bandwidth = None
+                    #if _level == "cluster":
+                        #bandwidth = str(min(cr.cluster_avail_nw_bandwidths))
+                    #elif _level == "rack":
+                        #bandwidth = str(min(cr.cluster_avail_nw_bandwidths)) + "-" + \
+                        #            str(min(cr.rack_avail_nw_bandwidths))
+                    #elif _level == "host":
+                        #bandwidth = str(min(cr.cluster_avail_nw_bandwidths)) + "-" + \
+                        #            str(min(cr.rack_avail_nw_bandwidths)) + "-" + \
+                        #            str(min(cr.host_avail_nw_bandwidths))
 
-                debug_resource_name = cc.get_resource_name(_level)
-                #bandwidth = None
-                #if _level == "cluster":
-                    #bandwidth = str(min(cc.cluster_avail_nw_bandwidths))
-                #elif _level == "rack":
-                    #bandwidth = str(min(cc.cluster_avail_nw_bandwidths)) + "-" + \
-                    #            str(min(cc.rack_avail_nw_bandwidths))
-                #elif _level == "host":
-                    #bandwidth = str(min(cc.cluster_avail_nw_bandwidths)) + "-" + \
-                    #            str(min(cc.rack_avail_nw_bandwidths)) + "-" + \
-                    #            str(min(cc.host_avail_nw_bandwidths))
+                    self.logger.debug("network bandwidth constrained in resource = " + debug_resource_name)
+                    #self.logger.debug("avail bandwidth = " + bandwidth)
+                    #self.logger.debug("requested bandwidth = " + str(_n.node.nw_bandwidth))
 
-                self.logger.debug("network bandwidth constrained in resource = " + debug_resource_name)
-                #self.logger.debug("avail bandwidth = " + bandwidth)
-                #self.logger.debug("requested bandwidth = " + str(_n.node.nw_bandwidth))
+        _candidate_list[:] = [c for c in _candidate_list if c not in conflict_list]
 
     def check_nw_bandwidth_availability(self, _level, _n, _node_placements, _cr):
         # NOTE: 3rd entry for special node requiring bandwidth of out-going from spine switch

@@ -123,5 +123,11 @@ if __name__ == '__main__':
     time.sleep(1)
     result4 = gw.place_app_file("./test_inputs/simple_mix_affinity_exclusivity.json")
     print result4
+    time.sleep(1)
+    result5 = gw.place_app_file("./test_inputs/simple_affinity.json")
+    print result5
+    time.sleep(1)
+    result6 = gw.place_app_file("./test_inputs/simple_mix_affinity_affinity.json")
+    print result6
 
 

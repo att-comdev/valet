@@ -30,6 +30,8 @@ setup(
     install_requires=[
         "pecan",
         "pecan-notario",
+        "simplejson",
+        "pymysql",
         "sqlalchemy",
     ],
     test_suite='allegro',

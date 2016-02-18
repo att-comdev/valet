@@ -22,7 +22,7 @@ except ImportError:
     from setuptools import setup, find_packages
 
 setup(
-    name='allegro',
+    name='allegro-api',
     version='0.1',
     description='',
     author="Joe D'Andrea",

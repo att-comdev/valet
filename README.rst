@@ -109,7 +109,7 @@ The following error might appear when installing allegro-api under python 2.7.6,
 `InsecurePlatformWarning`_ : A true SSLContext object is not available. This prevents urllib3 from configuring SSL appropriately and may cause certain SSL connections to fail.
 
 allegro-api Database Setup
----------------------------
+--------------------------
 
 Create an empty ``allegro`` database (e.g., in mysql) using a suitable password:
 

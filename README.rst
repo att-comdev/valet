@@ -62,7 +62,11 @@ Link ``ostro.auth`` from the ostro 1.5 package directory into ``/etc/ostro/ostro
   $ sudo mkdir /etc/ostro; cd /etc/ostro
   $ sudo ln -s $OSTRO_PATH/ostro.auth .
 
-Note: Ostro 1.5 requires the ``tegu_req`` command line interface. It does not call the tegu API.
+Ostro 1.5 requires the ``tegu_req`` command line interface. It does not call the tegu API. If Tegu is installed on another host, perform the following steps:
+
+* Copy ``/usr/bin/tegu_req`` and ``/usr/bin/rjprt`` from the Tegu host onto the Ostro host.
+* Install the korn shell using ``sudo apt-get install ksh``
+* Edit ``/usr/bin/tegu_req`` and change the line ``host=localhost:$port`` to use the Tegu FQDN instead of localhost.
 
 Looking forward, once ostro comes with a python setup, it will be automatically installed in the appropriate packages directory. At that time, it is recommended to uninstall this version of Ostro before proceeding. venvs may still use site-packages, however Ubuntu will likely install into dist-packages.
 

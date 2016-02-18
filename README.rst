@@ -10,7 +10,7 @@ Prerequisites
 Prior to installation:
 
 - Ubuntu 14.04 LTS
-- Python 2.7.9 with pip
+- Python 2.7.6 with pip
 - `Ostro`_ 1.5
 - `Tegu`_ (QoSLite) if VM-to-VM QoS is required
 - `IOArbiter`_ if VM-to-Volume QoS is required
@@ -87,9 +87,11 @@ It is very strongly recommended to create a python `virtual environment`_ (venv)
 
 For instance, Ubuntu 14.04 uses pecan 0.3.0, which is out of date. Updating an Ubuntu package via pip can lead to instabilities. Uninstalling an Ubuntu package can lead to instabilities in other packages that expect it. Using a venv avoids such conflicts.
 
-It's possible to `install a newer version of Python in a venv`_, if necessary. (Python 2.7.9 is recommended. Ubuntu 14.04 uses Python 2.7.6.)
-
 (Note: By way of contrast, allegro-openstack works in concert with OpenStack services, and OpenStack is not usually installed using a venv.)
+
+The following error might appear when installing allegro-api under python 2.7.6, however SSL is not currently used by allegro-api.
+
+`InsecurePlatformWarning`_ : A true SSLContext object is not available. This prevents urllib3 from configuring SSL appropriately and may cause certain SSL connections to fail.
 
 allegro-api Database Setup
 ---------------------------
@@ -143,7 +145,7 @@ Using allegro-api with apache
 
 Alternatively, allegro-api can be configured to run in apache using the Python WSGI standard. Here's how.
 
-Install apache2 and mod-wsgi:
+Install apache2 and mod-wsgi (3.4 at a minimum, 3.5 recommended by the author):
 
 ::
 
@@ -180,7 +182,7 @@ Setup allegro-api as an apache service:
 
 Note: Depending on the installation, ``$APACHE2_CONFIG_PATH`` may be ``/opt/apache2`` or ``/etc/apache2``.
 
-If a venv is being used, append ``python-path=$PATH_TO_VENV`` to ``WSGIDaemonProcess`` within ``allegro.conf``. This way Apache will use the correct python environment and libraries.
+If a venv is being used, append ``python-home$PATH_TO_VENV`` to ``WSGIDaemonProcess`` within ``allegro.conf``. This way Apache will use the correct python environment and libraries.
 
 Alternately, the following line can be added outside of the allegro ``VirtualHost`` directive. Note that this only makes sense if allegro will be the sole focal point of the apache installation as far as venvs are concerned.
 
@@ -344,7 +346,7 @@ Joe D'Andrea <jdandrea@research.att.com>
 .. _Tegu: https://forge.research.att.com/plugins/mediawiki/wiki/qoscloud/index.php/Tegu_Installation_and_Configuration_Guide
 .. _IOArbiter: https://forge.research.att.com/plugins/mediawiki/wiki/sds/index.php/IOArbiterInstallationGuide
 .. _virtual environment: http://docs.python-guide.org/en/latest/dev/virtualenvs/
+.. _InsecurePlatformWarning: https://urllib3.readthedocs.org/en/latest/security.html#insecureplatformwarning.
 .. _site-packages: https://wiki.debian.org/Python#Deviations_from_upstream
-.. _install a newer version of Python in a venv: http://stackoverflow.com/questions/5506110/is-it-possible-to-install-another-version-of-python-to-virtualenv
 .. _heat.conf: http://docs.openstack.org/kilo/config-reference/content/ch_configuring-openstack-orchestration.html
 .. _QoSOrch Wiki: https://forge.research.att.com/plugins/mediawiki/wiki/qosorch/index.php/Main_Page

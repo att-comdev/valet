@@ -33,6 +33,8 @@ All other prerequisites will be auto-installed.
 Installing Ostro
 ----------------
 
+Ostro 1.5 is to be installed on the same host and in the same environment as allegro-api.
+
 Ostro 1.5 is delivered in a tar/gzip file without a relative path. On Ubuntu, because ostro is a manual installation, unpack it in python's `site-packages`_ (vs. dist-packages),like so:
 
 ::
@@ -52,6 +54,15 @@ If a virtual environment (venv) is used for allegro-api, install ostro in the ve
 Note that the python library location may vary slightly depending on the venv setup.
 
 In both cases, should this not work for any reason, use dist-packages as a fallback location.
+
+Link ``ostro.auth`` from the ostro 1.5 package directory into ``/etc/ostro/ostro.auth`` (not ostro15.auth):
+
+::
+
+  $ sudo mkdir /etc/ostro; cd /etc/ostro
+  $ sudo ln -s $OSTRO_PATH/ostro.auth .
+
+Note: Ostro 1.5 requires the ``tegu_req`` command line interface. It does not call the tegu API.
 
 Looking forward, once ostro comes with a python setup, it will be automatically installed in the appropriate packages directory. At that time, it is recommended to uninstall this version of Ostro before proceeding. venvs may still use site-packages, however Ubuntu will likely install into dist-packages.
 

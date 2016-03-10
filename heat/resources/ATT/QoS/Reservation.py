@@ -228,9 +228,19 @@ class Reservation(resource.Resource):
         cfg.CONF.register_group(opt_group)
         cfg.CONF.register_opts(opts, group=opt_group)
 
+class ReservationDeprecated(Reservation):
+    """
+    DEPRECATED: Use ATT::CloudQoS::Reservation instead.
+    """
+
+    support_status = support.SupportStatus(
+        support.DEPRECATED,
+        _('ATT::QoS is now ATT::CloudQoS.')
+    )
 
 def resource_mapping():
     """Map names to resources."""
     return {
-        'ATT::QoS::Reservation': Reservation,
+       'ATT::QoS::Reservation': ReservationDeprecated,
+       'ATT::CloudQoS::Reservation': Reservation
     }

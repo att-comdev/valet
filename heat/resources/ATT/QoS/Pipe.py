@@ -314,9 +314,19 @@ class Pipe(resource.Resource):
         cfg.CONF.register_group(opt_group)
         cfg.CONF.register_opts(opts, group=opt_group)
 
+class PipeDeprecated(Pipe):
+    """
+    DEPRECATED: Use ATT::CloudQoS::Pipe instead.
+    """
+
+    support_status = support.SupportStatus(
+        support.DEPRECATED,
+        _('ATT::QoS is now ATT::CloudQoS.')
+    )
 
 def resource_mapping():
     """Map names to resources."""
     return {
-        'ATT::QoS::Pipe': Pipe,
+       'ATT::QoS::Pipe': PipeDeprecated,
+       'ATT::CloudQoS::Pipe': Pipe
     }

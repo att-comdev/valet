@@ -110,6 +110,19 @@ class DiversityZone(resource.Resource):
     def handle_delete(self):
         self.resource_id_set(None)
 
+class DiversityZoneDeprecated(DiversityZone):
+    """
+    DEPRECATED: Use ATT::CloudQoS::DiversityZone instead.
+    """
+
+    support_status = support.SupportStatus(
+        support.DEPRECATED,
+        _('ATT::QoS is now ATT::CloudQoS.')
+    )
+
 def resource_mapping():
     """Map names to resources."""
-    return {'ATT::QoS::DiversityZone': DiversityZone}
+    return {
+       'ATT::QoS::DiversityZone': DiversityZoneDeprecated,
+       'ATT::CloudQoS::DiversityZone': DiversityZone
+    }

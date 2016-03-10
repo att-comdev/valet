@@ -130,6 +130,19 @@ class Restarter(signal_responder.SignalResponder):
         if name == self.ALARM_URL and self.resource_id is not None:
             return unicode(self._get_signed_url())
 
+class RestarterDeprecated(Restarter):
+    """
+    DEPRECATED: Use ATT::CloudQoS::Restarter instead.
+    """
+
+    support_status = support.SupportStatus(
+        support.DEPRECATED,
+        _('ATT::QoS is now ATT::CloudQoS.')
+    )
+
 def resource_mapping():
     """Map names to resources."""
-    return {'ATT::QoS::Restarter': Restarter}
+    return {
+       'ATT::QoS::Restarter': RestarterDeprecated,
+       'ATT::CloudQoS::Restarter': Restarter
+    }

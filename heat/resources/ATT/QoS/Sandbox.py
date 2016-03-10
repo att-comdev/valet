@@ -132,7 +132,20 @@ class Sandbox(stack_resource.StackResource):
                                          self.properties[self.PARAMETERS],
                                          self.properties[self.TIMEOUT_IN_MINS])
 
+class SandboxDeprecated(Sandbox):
+    """
+    DEPRECATED: Use ATT::CloudQoS::Sandbox instead.
+    """
+
+    support_status = support.SupportStatus(
+        support.DEPRECATED,
+        _('ATT::QoS is now ATT::CloudQoS.')
+    )
+
 def resource_mapping():
     """Map names to resources."""
-    #return {'ATT::QoS::Sandbox': Sandbox}
     return
+    #return {
+    #   'ATT::QoS::Sandbox': SandboxDeprecated,
+    #   'ATT::CloudQoS::Sandbox': Sandbox
+    #}

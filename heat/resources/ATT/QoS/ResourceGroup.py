@@ -92,6 +92,19 @@ class ResourceGroup(resource.Resource):
     def handle_delete(self):
         self.resource_id_set(None)
 
+class ResourceGroupDeprecated(ResourceGroup):
+    """
+    DEPRECATED: Use ATT::CloudQoS::ResourceGroup instead.
+    """
+
+    support_status = support.SupportStatus(
+        support.DEPRECATED,
+        _('ATT::QoS is now ATT::CloudQoS.')
+    )
+
 def resource_mapping():
     """Map names to resources."""
-    return {'ATT::QoS::ResourceGroup': ResourceGroup}
+    return {
+       'ATT::QoS::ResourceGroup': ResourceGroupDeprecated,
+       'ATT::CloudQoS::ResourceGroup': ResourceGroup
+    }

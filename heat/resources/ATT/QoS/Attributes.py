@@ -131,6 +131,19 @@ class Attributes(resource.Resource):
     def handle_delete(self):
         self.resource_id_set(None)
 
+class AttributesDeprecated(Attributes):
+    """
+    DEPRECATED: Use ATT::CloudQoS::Attributes instead.
+    """ 
+    
+    support_status = support.SupportStatus(
+        support.DEPRECATED,
+        _('ATT::QoS is now ATT::CloudQoS.')
+    ) 
+        
 def resource_mapping():
     """Map names to resources."""
-    return {'ATT::QoS::Attributes': Attributes}
+    return {
+       'ATT::QoS::Attributes': AttributesDeprecated,
+       'ATT::CloudQoS::Attributes': Attributes
+    }

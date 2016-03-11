@@ -16,7 +16,9 @@
 # limitations under the License.
 from allegro import models
 from allegro.controllers import update_placements, error
-from allegro.models import Plan, Placement
+# TODO: Make this a driver plugin point instead so we can pick and choose.
+from allegro.models.music import Plan, Placement, Query
+#from allegro.models.sqlalchemy import Plan, Placement 
 from allegro.ostro_helper import Ostro
 from pecan import expose, redirect, request, response
 from pecan_notario import validate
@@ -47,9 +49,11 @@ update_schema = (
 class PlansItemController(object):
     def __init__(self, uuid4):
         self.uuid = uuid4
-        self.plan = Plan.query.filter_by(id=self.uuid).first()
+        #self.plan = Plan.query.filter_by(id=self.uuid).first()
+        self.plan = Query(Plan).filter_by(id=self.uuid).first()
         if not self.plan:
-            self.plan = Plan.query.filter_by(stack_id=self.uuid).first()
+            #self.plan = Plan.query.filter_by(stack_id=self.uuid).first()
+            self.plan = Query(Plan).filter_by(stack_id=self.uuid).first()
             if not self.plan:
                 error('/v1/errors/not_found',
                     'Plan not found')
@@ -66,6 +70,9 @@ class PlansItemController(object):
     @validate(update_schema, '/v1/errors/schema')
     def index_put(self, **kw):
         """Update a Plan"""
+        # FIXME: Possible Ostro regression or missing code for updates?
+        # New placements are not being seen in the response, so
+        # update_placements is currently failing as a result.
         kwargs = request.json
         ostro = Ostro(**kwargs)
         ostro.send()
@@ -132,7 +139,8 @@ class PlansController(object):
     def index(self):
         '''Get plans!'''
         plans_array = []
-        for plan in Plan.query.all():
+        #for plan in Plan.query.all():
+        for plan in Query(Plan).all():
             plans_array.append(plan.name)
         return plans_array
     

@@ -14,15 +14,79 @@
 # implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import time
+
 from pecan import conf
 from pecan import request, redirect
 import simplejson
 
-if str(conf.ostro.version) == '1.5':
+if str(conf.ostro.version) == '2.0':
+    from allegro.models.music import PlacementRequest
+    from allegro.models.music import PlacementResult
+    from allegro.models.music import Query
+elif str(conf.ostro.version) == '1.5':
     from ostro15.planner import Optimization
 else:
     from ostro.placement import Optimization
 
+
+class OstroMusicProxy(object):
+    testing = False
+
+    # Request is JSON
+    def place(self, stack_id, request):
+        # Place it in Music
+        self.placement_request = PlacementRequest(
+            stack_id=stack_id, request=request
+        )
+
+        # Sample result - note changes from Ostro 1.5:
+        #
+        # Status message has changed from "done" to "success"
+        # Version key has been removed
+        # resource properties use "host" instead of "availability_zone"
+        # host value reverted to host name only (Cinder results removed)
+        if self.testing:
+            placement = {
+                "status": {
+                    "message": "success",
+                    "type": "ok"
+                },
+                "resources": {
+                    "vm0_uuid": {
+                        "properties": {
+                            "host": "simr0c9"
+                        }
+                    },
+                    "vm1_uuid": {
+                        "properties": {
+                            "host": "simr0c9"
+                        }
+                    },
+                    "vm2_uuid": {
+                        "properties": {
+                            "host": "simr0c10"
+                        }
+                    }
+                }
+            }
+            placement_json = simplejson.dumps(
+                placement, sort_keys=True, indent=2 * ' '
+            )
+            self.placement_result = PlacementResult(
+                stack_id=stack_id, placement=placement_json
+            )
+
+        # Now wait for a response. Unfortunately this is blocking.
+        # TODO: This really belongs in allegro-engine once it is available..
+        while True:
+            query = Query(PlacementResult)
+            placement_result = query.filter_by(stack_id=stack_id).first()
+            if placement_result:
+                return placement_result.placement
+            else:
+                time.sleep(1)
+        
 
 class Ostro(object):
     def __init__(self, **kwargs):
@@ -112,7 +176,8 @@ class Ostro(object):
        log.close()
 
     def send(self):
-        if str(conf.ostro.version) == '1.5':
+        if str(conf.ostro.version) == '2.0' or \
+           str(conf.ostro.version) == '1.5':
             request_json = simplejson.dumps(
                 [self.request], sort_keys=True, indent=2 * ' '
             )
@@ -125,7 +190,9 @@ class Ostro(object):
             self._log(request_json, 'Payload')
 
         # TODO: Pass timeout value to optimizer
-        if str(conf.ostro.version) == '1.5':
+        if str(conf.ostro.version) == '2.0':
+            optimizer = OstroMusicProxy()
+        elif str(conf.ostro.version) == '1.5':
             optimizer = Optimization(True)
         else:
             optimizer = Optimization()
@@ -142,7 +209,10 @@ class Ostro(object):
                     }
                 }
                 return response 
-        if str(conf.ostro.version) == '1.5':
+
+        if str(conf.ostro.version) == '2.0':
+            result = optimizer.place(self.args['stack_id'], request_json)
+        elif str(conf.ostro.version) == '1.5':
             result = optimizer.place(request_json)
         else:
             result = optimizer.place(request_json, False)

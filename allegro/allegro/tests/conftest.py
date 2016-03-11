@@ -22,10 +22,13 @@ import subprocess
 from copy import deepcopy
 from pecan import conf
 from pecan import configuration
+# TODO: Make this work for music or write a separate test.
 from sqlalchemy import create_engine
 from sqlalchemy.pool import NullPool
 
-from allegro import models as _db
+# TODO: Make this a driver plugin point instead so we can pick and choose.
+#from allegro.models import music as _db
+from allegro.models import sqlalchemy as _db
 import pytest
 
 PARAMS = 'charset=utf8'

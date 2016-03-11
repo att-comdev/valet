@@ -20,7 +20,7 @@ from sqlalchemy import Column, Integer, String, Sequence
 from sqlalchemy.orm import relationship, backref
 from sqlalchemy.orm.exc import DetachedInstanceError
 
-from allegro.models import Base
+from allegro.models.sqlalchemy import Base
 
 
 class Plan(Base):

@@ -18,7 +18,9 @@ import simplejson
 
 from allegro import models
 from allegro.controllers import error
-from allegro.models import Placement
+# TODO: Make this a driver plugin point instead so we can pick and choose.
+from allegro.models.music import Placement, Query
+#from allegro.models.sqlalchemy import Placement
 from pecan import expose, redirect, request, response
 from webob.exc import status_map
 
@@ -30,7 +32,9 @@ logger = logging.getLogger(__name__)
 class PlacementsItemController(object):
     def __init__(self, orchestration_id):
         self.orchestration_id = orchestration_id
-        self.placement = Placement.query.filter_by(
+        #self.placement = Placement.query.filter_by(
+        #                     orchestration_id=self.orchestration_id).first()
+        self.placement = Query(Placement).filter_by(
                              orchestration_id=self.orchestration_id).first()
         if not self.placement:
             error('/v1/errors/not_found',
@@ -60,7 +64,8 @@ class PlacementsController(object):
     def index(self):
         '''Get placements!'''
         placements_array = []
-        for placement in Placement.query.all():
+        #for placement in Placement.query.all():
+        for placement in Query(Placement).all():
             placements_array.append(placement)
         return placements_array
     

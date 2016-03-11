@@ -1,6 +1,8 @@
 from uuid import uuid4
 
-from allegro.models import Plan, Placement
+# TODO: Make this a driver plugin point instead so we can pick and choose.
+#from allegro.models.music import Plan, Placement
+from allegro.models.sqlalchemy import Plan, Placement
 from allegro.tests.controllers import is_valid_uuid4
 
 TENANT_ID = 'e833dea42c7c47d6be25150693fe0f40'

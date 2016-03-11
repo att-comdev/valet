@@ -4,6 +4,8 @@ Allegro
 
 Allegro (part of the Valet service suite, including Ostro) gives OpenStack the ability to optimize cloud resources while simultaneously meeting a cloud application's QoS requirements. allegro provides resource plugins to OpenStack Heat for use with QoS services including Tegu and IOArbiter.
 
+NOTE: The master branch currently REQUIRES Music and Ostro 2.0.
+
 Prerequisites
 -------------
 
@@ -11,7 +13,8 @@ Prior to installation:
 
 - Ubuntu 14.04 LTS
 - Python 2.7.6 with pip
-- `Ostro`_ 1.5
+- `Ostro`_ 1.5 or 2.0
+- Music (if Ostro 2.0 is used)
 - `Tegu`_ (QoSLite) if VM-to-VM QoS is required
 - `IOArbiter`_ if VM-to-Volume QoS is required
 
@@ -29,9 +32,28 @@ ostro 1.5 requires the libcurl4-openssl-dev package, followed by pycurl.
 
 All other prerequisites will be auto-installed.
 
-
 Installing Ostro
 ----------------
+
+Ostro 1.5 and 2.0 are supported. Version 2.0 is strongly recommended.
+
+In the "ostro" section of $ALLEGRO_PATH/allegro/config.py, set the version to 1.5 or 2.0:
+
+::
+
+  ostro = {
+      'version': "2.0",
+  }
+
+
+Ostro 2.0
+---------
+
+Install Ostro 2.0 following the instructions from the CodeCloud repository.
+Music is required for Ostro 2.0.
+
+Ostro 1.5
+---------
 
 Ostro 1.5 is to be installed on the same host and in the same environment as allegro-api.
 
@@ -309,7 +331,7 @@ Edit the ``[DEFAULT]`` section of ``/etc/nova/nova.conf`` so that ``nova-schedul
 
    [DEFAULT]
    scheduler_available_filters = nova.scheduler.filters.all_filters
-   scheduler_available_filters = allegro.openstack.nova.allegro_filter.AllegroFilter
+   scheduler_available_filters = qosorch.openstack.nova.allegro_filter.AllegroFilter
    scheduler_default_filters = RetryFilter, AvailabilityZoneFilter, RamFilter, ComputeFilter, ComputeCapabilitiesFilter, ImagePropertiesFilter, ServerGroupAntiAffinityFilter, ServerGroupAffinityFilter, AllegroFilter
 
 The two ``scheduler_available_filters`` lines are deliberate. The first is required in order for nova to know where to locate its own default filters. For ``scheduler_default_filters``, ensure that ``AllegroFilter`` is placed last so that it has the final say in scheduling.

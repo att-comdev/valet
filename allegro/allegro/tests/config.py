@@ -15,7 +15,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from pecan.hooks import TransactionHook, RequestViewerHook
-from allegro import models
+
+# TODO: Make this a driver plugin point instead so we can pick and choose.
+#from allegro.models import music as models
+from allegro.models import sqlalchemy as models 
 
 
 # Server Specific Configurations

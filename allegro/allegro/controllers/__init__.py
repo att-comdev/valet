@@ -18,7 +18,9 @@ from os import path
 from pecan import conf
 from pecan import request, redirect
 
-from allegro.models import Placement
+# TODO: Make this a driver plugin point instead so we can pick and choose.
+from allegro.models.music import Placement
+#from allegro.models.sqlalchemy import Placement
 
 
 #
@@ -26,15 +28,25 @@ from allegro.models import Placement
 #
 
 def update_placements(plan, resources, placements):
+    if str(conf.ostro.version) == '2.0':
+        # Status message has changed from "done" to "success"
+        # Version key has been removed
+        # resource properties use "host" instead of "availability_zone"
+        # host value reverted to host name only (Cinder results removed)
+        location_key = 'host'
+    else:
+        location_key = 'availability_zone'
+
     for key in placements.iterkeys():
-        if str(conf.ostro.version) == '1.5':
+        if str(conf.ostro.version) == '2.0' or \
+           str(conf.ostro.version) == '1.5':
             uuid = key
             name = resources[key]['name']
         else:
             name = key
             uuid = resources[key]['uuid']
         properties = placements[key]['properties']
-        location = properties['availability_zone'].split(':')[1]
+        location = properties[location_key].split(':')[1]
         placement = Placement(
             name, uuid,
             plan=plan,

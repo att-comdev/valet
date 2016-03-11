@@ -1,5 +1,8 @@
 from pecan.hooks import TransactionHook, RequestViewerHook
-from allegro import models
+
+# TODO: Make this a driver plugin point instead so we can pick and choose.
+from allegro.models import music as models
+#from allegro.models import sqlalchemy as models
 
 
 # Server Specific Configurations
@@ -67,6 +70,12 @@ sqlalchemy = {
     'echo_pool':     True,
     'pool_recycle':  3600,
     'encoding':      'utf-8',
+}
+
+music = {
+    'host': '127.0.0.1',
+    'port': '8080',
+    'keyspace': 'valet_0_9'
 }
 
 ostro = {

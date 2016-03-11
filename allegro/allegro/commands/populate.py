@@ -17,7 +17,14 @@
 from pecan.commands.base import BaseCommand
 from pecan import conf
 
-from allegro import models
+# TODO: Make this a driver plugin point instead so we can pick and choose.
+from allegro.models import music as models
+#from allegro.models import sqlalchemy as models
+from allegro.models.music.placements import Placement
+from allegro.models.music.plans import Plan
+from allegro.models.music.ostro import Event
+from allegro.models.music.ostro import PlacementRequest
+from allegro.models.music.ostro import PlacementResult
 
 
 def out(string):
@@ -37,7 +44,14 @@ class PopulateCommand(BaseCommand):
         try:
             out("STARTING A TRANSACTION...")
             models.start()
-            models.Base.metadata.create_all(conf.sqlalchemy.engine)
+            #models.Base.metadata.create_all(conf.sqlalchemy.engine)
+
+            Placement.create_table()
+            Plan.create_table()
+
+            Event.create_table()
+            PlacementRequest.create_table()
+            PlacementResult.create_table()
         except:
             models.rollback()
             out("ROLLING BACK... ")

@@ -4,7 +4,7 @@
 #################################################################################################################
 # Author: Gueyoung Jung
 # Contact: gjung@research.att.com
-# Version 2.0.1: Dec. 7, 2015
+# Version 2.0.2: Feb. 9, 2016
 #
 # Functions 
 # - Deal with placement requests
@@ -14,26 +14,24 @@
 
 
 import threading
-import time
 import sys
-import logging
+import time
+import json
 
-#from displayer import display_dc_topology, display_app_topology
 from optimizer import Optimizer   
 
 sys.path.insert(0, '../resource_manager')
-from resource_base import Datacenter
 from resource import Resource
 from topology_manager import TopologyManager
 from compute_manager import ComputeManager
-#from test_storage import TestStorage  # TODO
+#from test_storage import TestStorage  
 #from network_manager import NetworkManager
 
 sys.path.insert(0, '../app_manager')
 from app_handler import AppHandler  
 
-#sys.path.insert(0, '../db_connect')
-#from db_connector import DatabaseConnector
+sys.path.insert(0, '../music_interface')
+from music import Music
 
 
 class Ostro:
@@ -44,85 +42,119 @@ class Ostro:
         self.logger = _logger
 
         self.db = None
+        if self.config.db_keyspace != "none":
+            self.db = self._init_db()
 
-        self.resource = None
+        self.resource = Resource(self.config, self.logger)
 
-        self.app_handler = None
-        self.optimizer = None
+        self.app_handler = AppHandler(self.resource, self.config, self.logger)
 
-        self.topology = None
-        self.compute = None
-        #self.storage = None
-        #self.network = None
-
-        self.status = "success"
-
-        self.data_lock = threading.Lock()
-        self.end_of_process = False
-
-    def run_ostro(self):
-        self.logger.info("start Ostro ......")
-    
-        #if self.config.db_keyspace != "none":
-            #self.db = DatabaseConnector(self.config.db_keyspace)
-
-        self.resource = Resource(self.db, self.logger)
-
-        self.app_handler = AppHandler(self.resource, self.db, self.logger)
         self.optimizer = Optimizer(self.resource, self.logger)
 
-        thread_list = []
-
-        if self.config.mode.startswith("sim") == True:
-            self.resource.datacenter = Datacenter(self.config.mode)
-        else: 
-            self.resource.datacenter = Datacenter(self.config.datacenter_name)
+        self.data_lock = threading.Lock()
+        self.thread_list = []
 
         self.topology = TopologyManager(1, "Topology", self.resource, self.data_lock, self.config, self.logger)
         self.compute = ComputeManager(2, "Compute", self.resource, self.data_lock, self.config, self.logger)
         #self.storage = TestStorage(3, "Storage", self.resource, self.data_lock, self.logger)
         #self.network = NetworkManager(3, "Network", self.resource, self.data_lock, self.config, self.logger)
 
-        if self._bootstrap_topology() == False:
-            return False
+        self.status = "success"
 
-        # For test
-        #display_dc_topology(self.resource)
+        self.end_of_process = False
+
+    # TODO: error checking
+    def _init_db(self):
+        db = Music(self.config.db_keyspace)
+
+        db.create_keyspace(self.config.db_keyspace)
+
+        kwargs = {
+            'keyspace': self.config.db_keyspace,
+            'table': self.config.db_request_table_name,
+            'schema': {
+                'stack_id': 'text',
+                'request': 'text',
+                'PRIMARY KEY': '(stack_id)'
+            }
+        }
+        db.create_table(**kwargs)
+
+        kwargs = {
+            'keyspace': self.config.db_keyspace,
+            'table': self.config.db_reponse_table_name,
+            'schema': {
+                'stack_id': 'text',
+                'placement': 'text',
+                'PRIMARY KEY': '(stack_id)'
+            }
+        }
+        db.create_table(**kwargs)
+
+        kwargs = {
+            'keyspace': self.config.db_keyspace,
+            'table': self.config.db_resource_table_name,
+            'schema': {
+                'update_id': 'text',
+                'resource_update': 'text',
+                'PRIMARY KEY': '(update_id)'
+            }
+        }
+        db.create_table(**kwargs)
+
+        kwargs = {
+            'keyspace': self.config.db_keyspace,
+            'table': 'resource_status',
+            'schema': {
+                'site_name': 'text',
+                'resource': 'text',
+                'PRIMARY KEY': '(site_name)'
+            }
+        }
+        db.create_table(**kwargs)
+
+        return db
+
+    def run_ostro(self):
+        self.logger.info("start Ostro ......")
 
         self.topology.start()
         self.compute.start()
         #self.storage.start()
         #self.network.start()
 
-        thread_list.append(self.topology)
-        thread_list.append(self.compute)
-        #thread_list.append(self.storage)
-        #thread_list.append(self.network)
+        self.thread_list.append(self.topology)
+        self.thread_list.append(self.compute)
+        #self.thread_list.append(self.storage)
+        #self.thread_list.append(self.network)
 
-        test_duration = 100
-        test_end = time.time() + test_duration
         while self.end_of_process == False:
             time.sleep(1)
 
             self.logger.debug("ostro running......")
-            if time.time() > test_end:
-                self.end_of_process = True
+
+            self._get_requests()
 
         self.topology.end_of_process = True
         self.compute.end_of_process = True
         #self.storage.end_of_process = True
         #self.network.end_of_process = True
 
-        time.sleep(1)
-
-        for t in thread_list:
+        for t in self.thread_list:
             t.join()
 
         self.logger.info("exit Ostro")
 
-        return True
+    def stop_ostro(self):
+        self.end_of_process = True
+       
+        while len(self.thread_list) > 0:
+            time.sleep(1)
+            for t in self.thread_list:
+                if not t.is_alive():
+                    self.thread_list.remove(t)
 
-    def _bootstrap_topology(self):
+    def bootstrap(self):
         if self._set_topology() == False:
             return False
 
@@ -138,8 +170,9 @@ class Ostro:
         if self._set_flavors() == False:
             return False
 
-        #self.resource.update_metadata()
-        self.resource.update_topology()  
+        resource_status = self.resource.update_topology()  
+        
+        self.db.create_row('resource_status', values=resource_status)
 
         return True
 
@@ -178,7 +211,46 @@ class Ostro:
                                                                                                  
         return True
 
+    def _get_requests(self):
+        resource_updates = self.db.read_all_rows(self.config.db_resource_table_name)
+        #if len(resource_updates) > 0:
+            # Update resource status
+            # Delete each row once done
+
+        requests = self.db.read_all_rows(self.config.db_request_table_name)
+        #if len(requests) > 0:
+            # Place applications
+
+    # Place an app based on the topology file, wrapper of place_app
+    def place_app_file(self, _topology_file):
+        app_graph = open(_topology_file, 'r')
+        app_data = app_graph.read()
+        if app_data == None:
+            return self._get_json_format("error", "topology file not found!", None)
+
+        return self.place_app(app_data)
+
+    # Place an app based on the app_data(a string serialization of json). 
     def place_app(self, _app_data):
+        self.logger.info("start app placement")
+
+        result = None
+
+        start_time = time.time()
+        placement_map = self._place_app(_app_data)
+        end_time = time.time()
+
+        if placement_map == None:
+            result = self._get_json_format("error", self.ostro.status, None)
+        else:
+            result = self._get_json_format("ok", "success", placement_map)
+
+        self.logger.info("total running time of place_app = " + str(end_time - start_time) + " sec")
+        self.logger.info("done app placement")
+
+        return result
+
+    def _place_app(self, _app_data):
         self.data_lock.acquire(1) 
 
         # Record the input app topology in memory
@@ -187,9 +259,6 @@ class Ostro:
             self.status = self.app_handler.status
             return None
                  
-        # For test                                                                                
-        #display_app_topology(app_topology)                                           
-                                                                                                 
         # Place application 
         placement_map = self.optimizer.place(app_topology) 
         if placement_map == None:                                                                
@@ -199,25 +268,31 @@ class Ostro:
                                                                                                  
         # Once placement is done, update the app info                                            
         self.app_handler.add_placement(placement_map, self.resource.current_timestamp)
-        #self.app_handler.store_app_placements()
 
         self.data_lock.release()
 
         return placement_map
 
+    # Return json format
+    def _get_json_format(self, _status_type, _status_message, _placement_map):
+        resources = {}
+        result = None
+
+        if _status_type != "error":
+            for v in _placement_map.keys():
+                host = _placement_map[v]
+                #resource_property = {"availability_zone":host}
+                resource_property = {"host":host}
+                properties = {"properties":resource_property}
+                resources[v.uuid] = properties
+
+        result = json.dumps({"status":{"type":_status_type, "message":_status_message}, \
+                             "resources":resources}, indent=4, separators=(',', ':'))
+
+        return result
 
 
 # Unit test
-if __name__ == "__main__":
-    logger = logging.getLogger("TestLog")
-    logger.setLevel(logging.DEBUG)
-    formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
-    handler = logging.FileHandler("../ostro_server/ostro_log/test.log")
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
-
-    ostro = Ostro(logger)
-    ostro.run_ostro()
 
     
 

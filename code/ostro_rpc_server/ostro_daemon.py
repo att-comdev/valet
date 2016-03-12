@@ -12,27 +12,48 @@
 #################################################################################################################
 
 
-import sys, logging
+import sys, os, time, logging
+import threading
+import SocketServer
+from SimpleXMLRPCServer import SimpleXMLRPCServer
+from SimpleXMLRPCServer import SimpleXMLRPCRequestHandler
 
 from daemon import Daemon   # Implemented for Python v2.x
+from gateway import Gateway
 from configuration import Config
 
-sys.path.insert(0, '../ostro')
-from ostro import Ostro
+
+class AsyncXMLRPCServer(SocketServer.ThreadingMixIn, SimpleXMLRPCServer): pass
 
 
 class OstroDaemon(Daemon):
 
     def run(self):
+        try:
+            # Create a gateway (a list of RPC functions) with db keyspace
+            gateway = Gateway(config, logger)
 
-        self.logger.info("start logging.")
+            # Create RPC server
+            #rpc_server = AsyncXMLRPCServer(("localhost", 8002), SimpleXMLRPCRequestHandler)
+            rpc_server = SimpleXMLRPCServer((config.rpc_server_ip, config.rpc_server_port))
+            rpc_server.register_introspection_functions()
+            rpc_server.register_instance(gateway)
 
-        ostro = Ostro(config, logger)
+            # Run the RPC server as a thread
+            rpc_server_thread = threading.Thread(target=rpc_server.serve_forever)
+            rpc_server_thread.start()
 
-        if ostro.bootstrap() == False:
+            # Start Ostro threads
+            if gateway.start_ostro() == False:
+                sys.exit(2)
+
+            #while True:
+                #time.sleep(1)
+
+        except:
+            e = sys.exc_info()[0]
+            self.logger.error(e)
             sys.exit(2)
-
-        self.ostro.run_ostro()
 
 
 

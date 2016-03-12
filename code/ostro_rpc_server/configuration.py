@@ -58,12 +58,6 @@ class Config:
         self.compute_trigger_freq = 0
 
         self.db_keyspace = None
-        self.db_request_table_name = None
-        self.db_request_pk_name = None
-        self.db_response_table_name = None
-        self.db_response_pk_name = None
-        self.db_resource_table_name = None
-        self.db_resource_pk_name = None
 
         self.control_loc = None
 
@@ -168,18 +162,6 @@ class Config:
                     self.compute_trigger_freq = int(v.strip())
                 elif k == "db_keyspace":
                     self.db_keyspace = v.strip()
-                elif k == "db_request_table_name":
-                    self.db_request_table_name = v.strip()
-                elif k == "db_request_pk_name":
-                    self.db_request_pk_name = v.strip()
-                elif k == "db_response_table_name":
-                    self.db_response_table_name = v.strip()
-                elif k == "db_response_pk_name":
-                    self.db_response_pk_name = v.strip()
-                elif k == "db_resource_table_name":
-                    self.db_resource_table_name = v.strip()
-                elif k == "db_resource_pk_name":
-                    self.db_resource_pk_name = v.strip()
                 elif k == "control_loc":
                     self.control_loc = v.strip()
                 elif k == "auth_loc":

@@ -4,7 +4,7 @@
 #################################################################################################################
 # Author: Gueyoung Jung
 # Contact: gjung@research.att.com
-# Version 2.0.1: Jan. 10, 2016
+# Version 2.0.2: Feb. 9, 2016
 #
 # Functions 
 # - Simulate hosts and flavors
@@ -25,47 +25,40 @@ class SimCompute():
 
         self._set_aggregates(_hosts, _logical_groups)
 
-        self._set_resources(_hosts)
-
         self._set_placed_vms(_hosts, _logical_groups)
+
+        self._set_resources(_hosts)
 
         return "success"
 
     def _set_availability_zones(self, _hosts, _logical_groups):
-        if self.config.mode == "sim_xsmall":
-            self._set_xsmall_availability_zones(_hosts, _logical_groups)
+        logical_group = LogicalGroup("nova")
+        logical_group.group_type = "AZ"
+        _logical_groups[logical_group.name] = logical_group
 
-    def _set_xsmall_availability_zones(self, _hosts, _logical_groups):
-        num_of_non_compute_racks = self.config.num_of_racks_in_xsmall / 2
+        num_of_non_compute_racks = self.config.num_of_racks / 2
         num_of_non_compute_hosts = 0
         if num_of_non_compute_racks == 0:
-            num_of_non_compute_hosts = self.config.num_of_hosts_per_rack_in_xsmall / 2 
+            num_of_non_compute_hosts = self.config.num_of_hosts_per_rack / 2 
         
-        for r_num in range(0, self.config.num_of_racks_in_xsmall):
+        for r_num in range(0, self.config.num_of_racks):
             if num_of_non_compute_racks > 0 and r_num < num_of_non_compute_racks:
                 continue
 
-            for h_num in range(0, self.config.num_of_hosts_per_rack_in_xsmall):
+            for h_num in range(0, self.config.num_of_hosts_per_rack):
                 if num_of_non_compute_hosts > 0 and h_num < num_of_non_compute_hosts:
                     continue
         
                 host = Host(self.config.mode + "r" + str(r_num) + "c" + str(h_num))
                 host.tag.append("nova")
- 
-                logical_group = LogicalGroup("nova")
-                logical_group.group_type = "AZ"
-                _logical_groups[logical_group.name] = logical_group
+                host.memberships["nova"] = logical_group
 
-                host.memberships[logical_group.name] = logical_group
+                logical_group.vms_per_host[host.name] = []
 
                 _hosts[host.name] = host
 
     def _set_aggregates(self, _hosts, _logical_groups):
-        if self.config.mode == "sim_xsmall":
-            self._set_xsmall_aggregates(_hosts, _logical_groups)
-
-    def _set_xsmall_aggregates(self, _hosts, _logical_groups):
-        for a_num in range(0, self.config.num_of_aggregates_in_xsmall):
+        for a_num in range(0, self.config.num_of_aggregates):
             metadata = {}
             #metadata["availability_zone"] = "nova"
             metadata["aggregate_sim"] = str(a_num)
@@ -76,23 +69,25 @@ class SimCompute():
         
             _logical_groups[aggregate.name] = aggregate
 
-        for a_num in range(0, self.config.num_of_aggregates_in_xsmall):
+        for a_num in range(0, self.config.num_of_aggregates):
             aggregate = _logical_groups["aggregate" + str(a_num)]
-            for r_num in range(0, self.config.num_of_racks_in_xsmall):
-                for h_num in range(0, self.config.num_of_hosts_per_rack_in_xsmall):
+            for r_num in range(0, self.config.num_of_racks):
+                for h_num in range(0, self.config.num_of_hosts_per_rack):
                     host_name = self.config.mode + "r" + str(r_num) + "c" + str(h_num)
                     if host_name in _hosts.keys():
-                        if (h_num % (self.config.aggregated_ratio_in_xsmall + a_num)) == 0:
+                        if (h_num % (self.config.aggregated_ratio + a_num)) == 0:
                             host = _hosts[host_name]
                             host.memberships[aggregate.name] = aggregate
 
-    def _set_resources(self, _hosts):
-        if self.config.mode == "sim_xsmall":
-            self._set_xsmall_resources(_hosts)
+                            aggregate.vms_per_host[host.name] = []
 
-    def _set_xsmall_resources(self, _hosts):
-        for r_num in range(0, self.config.num_of_racks_in_xsmall):
-            for h_num in range(0, self.config.num_of_hosts_per_rack_in_xsmall):
+    # NOTE: place vms to hosts and logical_groups
+    def _set_placed_vms(self, _hosts, _logical_groups):
+        pass
+
+    def _set_resources(self, _hosts):
+        for r_num in range(0, self.config.num_of_racks):
+            for h_num in range(0, self.config.num_of_hosts_per_rack):
                 host_name = self.config.mode + "r" + str(r_num) + "c" + str(h_num)
                 if host_name in _hosts.keys():
                     host = _hosts[host_name]
@@ -103,16 +98,7 @@ class SimCompute():
                     host.local_disk_cap = self.config.disk_per_host * self.config.disk_overbooking_ratio
                     host.avail_local_disk_cap = host.local_disk_cap
 
-    def _set_placed_vms(self, _hosts, _logical_hosts):
-        pass
-
     def set_flavors(self, _flavors):
-        if self.config.mode == "sim_xsmall":
-            self._set_xsmall_flavors(_flavors)
-
-        return "success"
-
-    def _set_xsmall_flavors(self, _flavors):
         for f_num in range(0, self.config.num_of_basic_flavors):
             flavor = Flavor("bflavor" + str(f_num))
             flavor.vCPUs = self.config.base_flavor_cpus * (f_num + 1)
@@ -121,17 +107,18 @@ class SimCompute():
  
             _flavors[flavor.name] = flavor
 
-        for a_num in range(0, self.config.num_of_aggregates_in_xsmall):
+        for a_num in range(0, self.config.num_of_aggregates):
             flavor = Flavor("sflavor" + str(a_num))
             flavor.vCPUs = self.config.base_flavor_cpus * (a_num + 1)
             flavor.mem_cap = self.config.base_flavor_mem * (a_num + 1)
             flavor.disk_cap = self.config.base_flavor_disk * (a_num + 1)
 
-            extra_specs = {}
-            #extra_specs["availability_zone"] = "nova"
-            extra_specs["aggregate_sim"] = str(a_num)
+            #flavor.extra_specs["availability_zone"] = "nova"
+            flavor.extra_specs["aggregate_sim"] = str(a_num)
 
             _flavors[flavor.name] = flavor
+
+        return "success"
             
 
 

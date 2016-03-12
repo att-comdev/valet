@@ -4,7 +4,7 @@
 #################################################################################################################
 # Author: Gueyoung Jung
 # Contact: gjung@research.att.com
-# Version 2.0.1: Dec. 7, 2015
+# Version 2.0.2: Feb. 9, 2016
 #
 # Functions 
 # - Capture Host status and metadata from Nova
@@ -35,17 +35,17 @@ class Compute:
         if status != "success":
             return status
 
-        status = self._set_resources(_hosts)
+        status = self._set_placed_vms(_hosts, _logical_groups)
         if status != "success":
             return status
 
-        status = self._set_placed_vms(_hosts, _logical_groups)
+        status = self._set_resources(_hosts)
         if status != "success":
             return status
 
         return "success"
 
-    # TODO
+    # TODO: register hosts to logical_groups with name & register logical_groups to hosts with name
     def _set_availability_zones(self, _hosts, _logical_groups):
         hosts_info = ""
 
@@ -82,7 +82,7 @@ class Compute:
 
         return "success"
 
-    # TODO
+    # TODO: register hosts to logical_groups with name & register logical_groups to hosts with name
     def _set_aggregates(self, _hosts, _logical_groups):
         aggregates = ""
 
@@ -112,6 +112,29 @@ class Compute:
 
         except (ValueError, KeyError, TypeError):
             return "JSON format error while setting host aggregates from Nova"
+
+        return "success"
+
+    # TODO: 
+    def _set_placed_vms(self, _hosts, _logical_groups):
+        host_list = ""
+
+        buf = StringIO.StringIO()
+        c = pycurl.Curl()
+        c.setopt(pycurl.URL, self.nova_url + "v2/" + str(self.project_token) + \
+                 "/os-hypervisors" + "/cirrus205/servers")
+        c.setopt(pycurl.HTTPHEADER, ["X-Auth-Token: " + str(self.admin_token)])
+        c.setopt(pycurl.HTTPGET, 1)
+        c.setopt(pycurl.WRITEFUNCTION, buf.write)
+        c.perform()
+        results = buf.getvalue()
+        buf.close()
+
+        try:
+            host_list = json.loads(results)
+            #print json.dumps(host_list, indent=4)
+        except (ValueError, KeyError, TypeError):
+            return "JSON format error while setting vms placed in each host from Nova"
 
         return "success"
 
@@ -155,29 +178,6 @@ class Compute:
 
         except (ValueError, KeyError, TypeError):
             return "JSON format error while setting host resources from Nova"
-
-        return "success"
-
-    # TODO
-    def _set_placed_vms(self, _hosts, _logical_groups):
-        host_list = ""
-
-        buf = StringIO.StringIO()
-        c = pycurl.Curl()
-        c.setopt(pycurl.URL, self.nova_url + "v2/" + str(self.project_token) + \
-                 "/os-hypervisors" + "/cirrus205/servers")
-        c.setopt(pycurl.HTTPHEADER, ["X-Auth-Token: " + str(self.admin_token)])
-        c.setopt(pycurl.HTTPGET, 1)
-        c.setopt(pycurl.WRITEFUNCTION, buf.write)
-        c.perform()
-        results = buf.getvalue()
-        buf.close()
-
-        try:
-            host_list = json.loads(results)
-            #print json.dumps(host_list, indent=4)
-        except (ValueError, KeyError, TypeError):
-            return "JSON format error while setting vms placed in each host from Nova"
 
         return "success"
 

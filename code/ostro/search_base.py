@@ -4,7 +4,7 @@
 #################################################################################################################
 # Author: Gueyoung Jung
 # Contact: gjung@research.att.com
-# Version 2.0.1: Dec. 7, 2015
+# Version 2.0.2: Feb. 9, 2016
 #
 #################################################################################################################
 
@@ -18,29 +18,31 @@ from app_topology_base import VGroup, VM, Volume, LEVELS
 class Resource:
 
     def __init__(self):
-        self.host_name = None               # key of this data structure
-        self.host_memberships = {}          # key=((level:)name), value=type
-        self.host_avail_vCPUs = -1
-        self.host_avail_mem = -1
-        self.host_avail_local_disk = -1
+        self.level = None                   # level of placement
+
+        self.host_name = None               
+        self.host_memberships = {}          # all mapped logical groups to host
+        self.host_avail_vCPUs = 0
+        self.host_avail_mem = 0
+        self.host_avail_local_disk = 0
         self.host_avail_switches = {}       # all mapped switches to host 
         self.host_avail_storages = {}       # all mapped storage_resources to host
         self.host_num_of_placed_vms = 0
 
         self.rack_name = None               # where this host is located
-        self.rack_memberships = {}          # key=((level:)name), value=type
-        self.rack_avail_vCPUs = -1
-        self.rack_avail_mem = -1
-        self.rack_avail_local_disk = -1 
+        self.rack_memberships = {}          
+        self.rack_avail_vCPUs = 0
+        self.rack_avail_mem = 0
+        self.rack_avail_local_disk = 0 
         self.rack_avail_switches = {}       # all mapped switches to rack
         self.rack_avail_storages = {}       # all mapped storage_resources to rack
         self.rack_num_of_placed_vms = 0
 
         self.cluster_name = None            # where this host and rack are located
-        self.cluster_memberships = {}       # key=((level:)name), value=type
-        self.cluster_avail_vCPUs = -1
-        self.cluster_avail_mem = -1
-        self.cluster_avail_local_disk = -1 
+        self.cluster_memberships = {}       
+        self.cluster_avail_vCPUs = 0
+        self.cluster_avail_mem = 0
+        self.cluster_avail_local_disk = 0 
         self.cluster_avail_switches = {}    # all mapped switches to cluster
         self.cluster_avail_storages = {}    # all mapped storage_resources to cluster
         self.cluster_num_of_placed_vms = 0
@@ -65,6 +67,96 @@ class Resource:
 
         return level
 
+    def get_resource_name(self, _level):
+        name = "unknown"
+
+        if _level == "cluster":
+            name = self.cluster_name
+        elif _level == "rack":
+            name = self.rack_name
+        elif _level == "host":
+            name = self.host_name
+
+        return name
+
+    def get_memberships(self, _level):
+        memberships = None
+
+        if _level == "cluster":
+            memberships = self.cluster_memberships
+        elif _level == "rack":
+            memberships = self.rack_memberships
+        elif _level == "host":
+            memberships = self.host_memberships
+
+        return memberships
+
+    def get_num_of_placed_vms(self, _level):
+        num_of_vms = 0
+
+        if _level == "cluster":
+            num_of_vms = self.cluster_num_of_placed_vms
+        elif _level == "rack":
+            num_of_vms = self.rack_num_of_placed_vms
+        elif _level == "host":
+            num_of_vms = self.host_num_of_placed_vms
+
+        return num_of_vms
+
+    def get_avail_resources(self, _level):
+        avail_vCPUs = 0
+        avail_mem = 0
+        avail_local_disk = 0
+
+        if _level == "cluster":
+            avail_vCPUs = self.cluster_avail_vCPUs
+            avail_mem = self.cluster_avail_mem
+            avail_local_disk = self.cluster_avail_local_disk
+        elif _level == "rack":
+            avail_vCPUs = self.rack_avail_vCPUs
+            avail_mem = self.rack_avail_mem
+            avail_local_disk = self.rack_avail_local_disk
+        elif _level == "host":
+            avail_vCPUs = self.host_avail_vCPUs
+            avail_mem = self.host_avail_mem
+            avail_local_disk = self.host_avail_local_disk
+
+        return (avail_vCPUs, avail_mem, avail_local_disk)
+
+    def get_avail_storages(self, _level):
+        avail_storages = None
+
+        if _level == "cluster":
+            avail_storages = self.cluster_avail_storages
+        elif _level == "rack":
+            avail_storages = self.rack_avail_storages
+        elif _level == "host":
+            avail_storages = self.host_avail_storages
+
+        return avail_storages
+
+    def get_avail_switches(self, _level):
+        avail_switches = None
+
+        if _level == "cluster":
+            avail_switches = self.cluster_avail_switches
+        elif _level == "rack":
+            avail_switches = self.rack_avail_switches
+        elif _level == "host":
+            avail_switches = self.host_avail_switches
+
+        return avail_switches
+
+
+class LogicalGroupResource:
+
+    def __init__(self):
+        self.name = None
+        self.group_type = "AGGR"
+
+        self.num_of_placed_vms = 0
+        self.num_of_placed_vms_per_host = {}   # key = host (i.e., id of host or rack), value = num_of_placed_vms
+
 
 # where Volume will be placed
 class StorageResource:
@@ -72,7 +164,7 @@ class StorageResource:
     def __init__(self):
         self.storage_name = None 
         self.storage_class = None
-        self.storage_avail_disk = -1
+        self.storage_avail_disk = 0
 
         self.sort_base = 0
 
@@ -121,8 +213,6 @@ class Node:
                 bandwidth = _link.io_bandwidth
         else:
             bandwidth = _link.io_bandwidth
-        if bandwidth < 0:
-            bandwidth = 0
 
         return bandwidth
 
@@ -144,9 +234,17 @@ class Node:
         exc_id = None
 
         if isinstance(self.node, VGroup) and self.node.vgroup_type == "EX":
-            exc_id = self.node.level + ":" + self.node.uuid
+            exc_id = self.node.level + ":" + self.node.name
 
         return exc_id
+
+    def get_affinity_id(self):
+        aff_id = None
+
+        if isinstance(self.node, VGroup) and self.node.vgroup_type == "AFF":
+            aff_id = self.node.level + ":" + self.node.name
+
+        return aff_id
 
     def get_parent_exclusivity_id(self):
         exc_id = None

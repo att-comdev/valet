@@ -91,15 +91,13 @@ class ComputeManager(threading.Thread):
     def _run(self):
         self.data_lock.acquire(1)
 
-        if self.set_hosts() == True:
+        triggered_host_updates = self.set_hosts()
+        triggered_flavor_updates = self.set_flavors()
+
+        if triggered_host_updates == True or triggered_flavor_updates == True:
             self.logger.info("trigger setting hosts")
 
             self.resource.update_topology()
-
-        if self.set_flavors() == True:
-            self.logger.info("trigger setting flavors")
-
-            #self.resource.update_metadata()
 
         self.data_lock.release()
 
@@ -154,7 +152,6 @@ class ComputeManager(threading.Thread):
             rl = self.resource.logical_groups[rlk]
             if rl.group_type != "EX" and rl.group_type != "AFF":
                 if rlk not in _logical_groups.keys():
-                    #del self.resource.logical_groups[rlk]
                     self.resource.logical_groups[rlk].status = "disabled"
 
                     self.resource.logical_groups[rlk].last_update = time.time()
@@ -285,7 +282,8 @@ class ComputeManager(threading.Thread):
             if _rhost.exist_vm(vm_id) == False:
                 _rhost.vm_list.append(vm_id)
 
-                self.resource.add_vm_to_logical_groups(_rhost, vm_id)
+                # NOTE: do we need this?
+                #self.resource.add_vm_to_logical_groups(_rhost, vm_id)
 
                 topology_updated = True
                 self.logger.warn("host (" + _rhost.name +") updated (new vm placed)")
@@ -308,7 +306,7 @@ class ComputeManager(threading.Thread):
         if self.config.mode.startswith("sim") == True:
             compute = SimCompute(self.config)
         else:
-            if self._set_admin_token() == False or self._set_project_token() == False:               
+            if self._set_admin_token() == False or self._set_project_token() == False:
                 return False
  
             compute = Compute(self.config, self.admin_token, self.project_token)
@@ -332,7 +330,6 @@ class ComputeManager(threading.Thread):
 
         for rfk in self.resource.flavors.keys():
             if rfk not in _flavors.keys():
-                #del self.resource.flavors[rfk]
                 self.resource.flavors[rfk].status = "disabled"
 
                 self.resource.flavors[rfk].last_update = time.time()

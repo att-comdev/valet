@@ -15,15 +15,13 @@
 
 import sys
 import json
-from os import listdir, stat
-from os.path import isfile, join
 
 from app_topology import AppTopology 
 from app_topology_base import VM, Volume
 from application import App
 
 sys.path.insert(0, '../util')
-from util import get_logfile
+from util import get_last_logfile
 
 
 class AppHandler:
@@ -36,6 +34,8 @@ class AppHandler:
 
         self.apps = {}  # Current app requested, a temporary copy
 
+        self.last_log_index = 0
+
         self.status = "success"
 
     # Record application topology
@@ -44,20 +44,9 @@ class AppHandler:
 
         app_topology = AppTopology(self.resource)
 
-        app_list = None
-        try:
-            app_list = json.loads(_app_data)
-        except (ValueError, KeyError, TypeError):
-            self.logger.error("JSON format error while reading app topology")
-            self.status = "JSON internal error"
-            return None
-
-        for app in app_list:
-            #(app_id, app_name, vgroups, vms, vols) = app_topology.set_app_topology(app)
+        for app in _app_data:
             app_id = app_topology.set_app_topology(app)
-            #self.logger.info("application: " + app_name)
 
-            #if len(vgroups) == 0 and len(vms) == 0 and len(volumes) == 0:
             if app_id == None:
                 self.logger.error(app_topology.status)
                 self.status = app_topology.status
@@ -65,11 +54,8 @@ class AppHandler:
             else:
                 self.logger.info("application: " + app_id[1])
 
-                #new_app = App(app_id, app_name)
                 new_app = App(app_id[0], app_id[1])
-                #new_app.set_app_components(vgroups, vms, vols)
 
-                #self.apps[app_id] = new_app 
                 self.apps[app_id[0]] = new_app 
 
         app_topology.set_optimization_priority()
@@ -84,15 +70,10 @@ class AppHandler:
                 self.apps[v.app_uuid].timestamp_scheduled = _timestamp
 
             if isinstance(v, VM):
-                #self.apps[v.app_uuid].vms[v.uuid]["status"] = "scheduled"
-                #self.apps[v.app_uuid].vms[v.uuid]["host"] = _placement_map[v]
                 self.apps[v.app_uuid].add_vm(v, _placement_map[v])
             elif isinstance(v, Volume):
-                #self.apps[v.app_uuid].volumes[v.uuid]["status"] = "scheduled"
-                #self.apps[v.app_uuid].volumes[v.uuid]["host"] = _placement_map[v]
                 self.apps[v.app_uuid].add_volume(v, _placement_map[v])
             else:
-                #self.apps[v.app_uuid].vgroups[v.uuid]["status"] = "scheduled"
                 if _placement_map[v] in self.resource.hosts.keys():
                     host = self.resource.hosts[_placement_map[v]]
                     if v.level == "host":
@@ -104,12 +85,14 @@ class AppHandler:
 
         self._store_app_placements()
 
-    # Need to store app in Music???
-    # Consider rollback and re-placements from history!
     def _store_app_placements(self):
-        (app_logfile, mode) = get_logfile(self.config.app_log_loc, \
-                                          self.config.max_log_size, \
-                                          self.resource.datacenter.name)
+        (app_logfile, last_index, mode) = get_last_logfile(self.config.app_log_loc, \
+                                                           self.config.max_log_size, \
+                                                           self.config.max_num_of_logs, \
+                                                           self.resource.datacenter.name, \
+                                                           self.last_log_index)
+        self.last_log_index = last_index
+
         logging = open(self.config.app_log_loc + app_logfile, mode)
 
         for appk, app in self.apps.iteritems():
@@ -120,7 +103,9 @@ class AppHandler:
             logging.write("\n")
 
         logging.close()
-        #self.db.insert("app", app_list)
+
+        if self.db != None:
+            self.db.update_app_log_index(self.resource.datacenter.name, self.last_log_index)
 
 
 

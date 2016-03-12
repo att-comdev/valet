@@ -16,8 +16,6 @@
 import sys
 import time
 import json
-from os import listdir, stat
-from os.path import isfile, join
 
 from resource_base import Datacenter, HostGroup, Host
 
@@ -25,16 +23,16 @@ sys.path.insert(0, '../app_manager')
 from app_topology_base import LEVELS
 
 sys.path.insert(0, '../util')
-from util import get_logfile
+from util import get_last_logfile
 
 
 class Resource:
 
-    def __init__(self, _config, _logger):
+    def __init__(self, _db, _config, _logger):
+        self.db = _db
+
         self.config = _config
         self.logger = _logger
-
-        self.current_timestamp = 0
 
         # Resource data
         self.datacenter = None
@@ -50,14 +48,17 @@ class Resource:
         # Metadata
         self.logical_groups = {}
         self.flavors = {}
+        self.current_timestamp = 0
+        self.last_log_index = 0
 
+        # Resource status aggregation
         self.CPU_avail = 0
         self.mem_avail = 0
         self.local_disk_avail = 0
         self.disk_avail = 0
         self.nw_bandwidth_avail = 0
 
-    # Run whenever something changed
+    # Run whenever changed
     def update_topology(self):
         self._update_topology()
 
@@ -67,9 +68,7 @@ class Resource:
         self._update_storage_avail()
         self._update_nw_bandwidth_avail()
 
-        resource_status = self._store_topology_updates()
-
-        return resource_status
+        self.current_timestamp = self._store_topology_updates()
 
     def _update_topology(self):
         for level in LEVELS:
@@ -109,7 +108,6 @@ class Resource:
                         lg.last_update = time.time()
 
             if len(lg.vms_per_host) == 0 and len(lg.vm_list) == 0 and len(lg.volume_list) == 0:
-                #del self.logical_groups[lgk]
                 self.logical_groups[lgk].status = "disabled"
 
                 self.logical_groups[lgk].last_update = time.time()
@@ -236,25 +234,27 @@ class Resource:
                     self.nw_bandwidth_avail += min(avail_nw_bandwidth_list)
 
     def _store_topology_updates(self):
+        last_update_time = self.current_timestamp
+
         flavor_updates = {}
         logical_group_updates = {}
         storage_updates = {}
         switch_updates = {}
         host_updates = {}
         host_group_updates = {}
-        datacenter_update = {}
+        datacenter_update = None
 
         for fk, flavor in self.flavors.iteritems():
             if flavor.last_update > self.current_timestamp:
                 flavor_updates[fk] = flavor.get_json_info()    
 
-                self.current_timestamp = flavor.last_update
+                last_update_time = flavor.last_update
 
         for lgk, lg in self.logical_groups.iteritems():
             if lg.last_update > self.current_timestamp:
-                logical_group_updates[lgk] = lg.get_json_info()    
+                logical_group_updates[lgk] = lg.get_json_info()   
 
-                self.current_timestamp = lg.last_update
+                last_update_time = lg.last_update
 
         for shk, storage_host in self.storage_hosts.iteritems():
             if storage_host.last_update > self.current_timestamp or \
@@ -262,24 +262,24 @@ class Resource:
                 storage_updates[shk] = storage_host.get_json_info()
 
                 if storage_host.last_update > self.current_time_stamp:
-                    self.current_timestamp = storage_host.last_update
+                    last_update_time = storage_host.last_update
                 if storage_host.last_cap_update > self.current_timestamp:
-                    self.current_timestamp = storage_host.last_cap_update
+                    last_update_time = storage_host.last_cap_update
 
         for sk, s in self.switches.iteritems():
             if s.last_update > self.current_timestamp:
                 switch_updates[sk] = s.get_json_info()
 
-                self.current_timestamp = s.last_update
+                last_update_time = s.last_update
 
         for hk, host in self.hosts.iteritems():
             if host.last_update > self.current_timestamp or host.last_link_update > self.current_timestamp:
                 host_updates[hk] = host.get_json_info()
 
                 if host.last_update > self.current_timestamp:
-                    self.current_timestamp = host.last_update
+                    last_update_time = host.last_update
                 if host.last_link_update > self.current_timestamp:
-                    self.current_timestamp = host.last_link_update
+                    last_update_time = host.last_link_update
 
         for hgk, host_group in self.host_groups.iteritems():
             if host_group.last_update > self.current_timestamp or \
@@ -287,26 +287,31 @@ class Resource:
                 host_group_updates[hgk] = host_group.get_json_info()
 
                 if host_group.last_update > self.current_timestamp:
-                    self.current_timestamp = host_group.last_update
+                    last_update_time = host_group.last_update
                 if host_group.last_link_update > self.current_timestamp:
-                    self.current_timestamp = host_group.last_link_update
+                    last_update_time = host_group.last_link_update
 
         if self.datacenter.last_update > self.current_timestamp or \
            self.datacenter.last_link_update > self.current_timestamp:
-            datacenter_update[self.datacenter.name] = self.datacenter.get_json_info()
+            datacenter_update = self.datacenter.get_json_info()
 
             if self.datacenter.last_update > self.current_timestamp:
-                self.current_timestamp = self.datacenter.last_update
+                last_update_time = self.datacenter.last_update
             if self.datacenter.last_link_update > self.current_timestamp:
-                self.current_timestamp = self.datacenter.last_link_update
+                last_update_time = self.datacenter.last_link_update
 
-        (resource_logfile, mode) = get_logfile(self.config.resource_log_loc, \
-                                               self.config.max_log_size, \
-                                               self.datacenter.name)
+        (resource_logfile, last_index, mode) = get_last_logfile(self.config.resource_log_loc, \
+                                                                self.config.max_log_size, \
+                                                                self.config.max_num_of_logs, \
+                                                                self.datacenter.name, \
+                                                                self.last_log_index)
+        self.last_log_index = last_index
+
         logging = open(self.config.resource_log_loc + resource_logfile, mode)
   
         json_logging = {}
-        json_logging['timestamp'] = self.current_timestamp
+        json_logging['timestamp'] = last_update_time
+
         if len(flavor_updates) > 0:
             json_logging['flavors'] = flavor_updates
         if len(logical_group_updates) > 0:
@@ -319,8 +324,9 @@ class Resource:
             json_logging['hosts'] = host_updates
         if len(host_group_updates) > 0:
             json_logging['host_groups'] = host_group_updates
-        if len(datacenter_update) > 0:
+        if datacenter_update != None:
             json_logging['datacenter'] = datacenter_update
+
         logged_data = json.dumps(json_logging)
 
         logging.write(logged_data)
@@ -328,39 +334,48 @@ class Resource:
 
         logging.close()
 
-        return json_logging
+        if self.db != None:
+            self.db.update_resource_status(self.datacenter.name, json_logging)
+            self.db.update_resource_log_index(self.datacenter.name, self.last_log_index)
+
+        return last_update_time
 
     def update_rack_resource(self, _host):   
         rack = _host.host_group 
-        rack.last_update = time.time()                                                         
+       
+        if rack != None:
+            rack.last_update = time.time()                                                         
                                                                                                  
-        if isinstance(rack, HostGroup):                                                           
-            self.update_cluster_resource(rack)
+            if isinstance(rack, HostGroup):                                                           
+                self.update_cluster_resource(rack)
 
     def update_cluster_resource(self, _rack):
         cluster = _rack.parent_resource
-        cluster.last_update = time.time()
+
+        if cluster != None:
+            cluster.last_update = time.time()
                                                                                                  
-        if isinstance(cluster, HostGroup):
-            self.datacenter.last_update = time.time()
+            if isinstance(cluster, HostGroup):
+                self.datacenter.last_update = time.time()
 
-    def add_vm_to_logical_groups(self, _host, _vm_id):
+    def add_vm_to_logical_groups(self, _host, _vm_id, _logical_groups_of_vm):
         for lgk in _host.memberships.keys():
-            lg = self.logical_groups[lgk]
+            if lgk in _logical_groups_of_vm:            
+                lg = self.logical_groups[lgk]
 
-            if isinstance(_host, Host):
-                if lg.add_vm(_vm_id, _host.name) == True:
-                    lg.last_update = time.time()
-            elif isinstance(_host, HostGroup):
-                if lg.group_type == "EX" or lg.group_type == "AFF":
-                    if lgk.split(":")[0] == _host.host_type:
-                        if lg.add_vm(_vm_id, _host.name) == True:
-                            lg.last_update = time.time()
+                if isinstance(_host, Host):
+                    if lg.add_vm(_vm_id, _host.name) == True:
+                        lg.last_update = time.time()
+                elif isinstance(_host, HostGroup):
+                    if lg.group_type == "EX" or lg.group_type == "AFF":
+                        if lgk.split(":")[0] == _host.host_type:
+                            if lg.add_vm(_vm_id, _host.name) == True:
+                                lg.last_update = time.time()
 
         if isinstance(_host, Host) and _host.host_group != None:
-            self.add_vm_to_logical_groups(_host.host_group, _vm_id)
+            self.add_vm_to_logical_groups(_host.host_group, _vm_id, _logical_groups_of_vm)
         elif isinstance(_host, HostGroup) and _host.parent_resource != None:
-            self.add_vm_to_logical_groups(_host.parent_resource, _vm_id)
+            self.add_vm_to_logical_groups(_host.parent_resource, _vm_id, _logical_groups_of_vm)
 
     def remove_vm_from_logical_groups(self, _host, _vm_id):
         for lgk in _host.memberships.keys():

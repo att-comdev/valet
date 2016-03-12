@@ -31,27 +31,6 @@ class App:
 
         self.status = 'requested'  # Moved to "scheduled" (and then "placed")
 
-    #def set_app_components(self, _vgroups, _vms, _vols):
-        #for v_uuid, vm in _vms.iteritems():
-            #self._set_vm(vm)
-        #for v_uuid, vol in _vols.iteritems():
-            #self._set_volume(vol)
-        #for v_uuid, vg in _vgroups.iteritems():
-            #self._set_vgroup(vg)
-
-    #def _set_vm(self, _vm):
-        #self.vms[_vm.uuid] = _vm
-        #self.vms[_vm.uuid].status = "requested"
-
-    #def _set_volume(self, _vol):
-        #self.volumes[_vol.uuid] = _vol
-        #self.volumes[_vol.uuid].status = "requested"
-
-    #def _set_vgroup(self, _vg):
-        #self.vgroups[_vg.uuid] = {}
-        #self.vgroups[_vg.uuid]["name"] = _vg.name
-        ##self.vgroups[_vg.uuid]["status"] = "requested"
-
     def add_vm(self, _vm, _host_name):
         self.vms[_vm.uuid] = _vm
         self.vms[_vm.uuid].status = "scheduled"

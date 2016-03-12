@@ -19,10 +19,62 @@
 
 '''Music Data Store API.'''
 
+# Standard library imports
+import json
 import time
 
-from rest import REST
+# Related third party imports
+import requests
 
+# Local application/library specific imports
+
+
+class REST(object):
+    '''Helper class for REST operations.'''
+
+    host = None
+    port = None
+    path = None
+
+    def __init__(self, host, port, path='/'):
+        '''Initializer. Accepts target host, port, and path.'''
+
+        self.host = host  # IP or FQDN
+        self.port = port  # Port Number
+        self.path = path  # Path starting with /
+
+    @property
+    def __url(self):
+        '''Returns a URL using the host/port/path.'''
+
+        # Must end without a slash
+        return 'http://%(host)s:%(port)s%(path)s' % {
+                'host': self.host,
+                'port': self.port,
+                'path': self.path
+            }
+
+    @staticmethod
+    def __headers(content_type='application/json'):
+        '''Returns HTTP request headers.'''
+        headers = {
+            'accept': content_type,
+            'content-type': content_type
+        }
+        return headers
+
+    def request(self, method='get', content_type='application/json',
+                path='/', data=None):
+        '''Performs HTTP request.'''
+        if method not in ('post', 'get', 'put', 'delete'):
+            raise KeyError("Method must be one of post, get, put, or delete.")
+        method_fn = getattr(requests, method)
+
+        url = self.__url + path
+        response = method_fn(url, data=json.dumps(data),
+                             headers=self.__headers(content_type))
+        response.raise_for_status()
+        return response
 
 class Music(object):
     '''Wrapper for Music API'''
@@ -32,10 +84,15 @@ class Music(object):
 
     rest = None  # API Endpoint
 
-    def __init__(self, lock_timeout=10):
+    def __init__(self, host='localhost', port='8080', lock_timeout=10):
         '''Initializer. Accepts a lock_timeout for atomic operations.'''
 
-        self.rest = REST(path='/MUSIC/rest')
+        kwargs = {
+            'host': host,
+            'port': port,
+            'path': '/MUSIC/rest'
+        }
+        self.rest = REST(**kwargs)
 
         self.lock_names = []
         self.lock_timeout = lock_timeout
@@ -45,7 +102,7 @@ class Music(object):
         data = {
             'replicationInfo': {
                 'class': 'SimpleStrategy',
-                'replication_factor': 1
+                'replication_factor': 3
             },
             'durabilityOfWrites': True,
             'consistencyInfo': {

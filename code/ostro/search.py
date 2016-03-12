@@ -129,14 +129,7 @@ class Search:
             rack = h.host_group
             if isinstance(rack, Datacenter):
                 r.rack_name = "any"
-                #r.rack_avail_vCPUs = sys.maxint
-                #r.rack_avail_mem = sys.maxint
-                #r.rack_avail_local_disk = sys.maxint
-
                 r.cluster_name = "any"
-                #r.cluster_avail_vCPUs = sys.maxint
-                #r.cluster_avail_mem = sys.maxint
-                #r.cluster_avail_local_disk = sys.maxint
             else:
                 if rack.status != "enabled":
                     continue
@@ -164,9 +157,6 @@ class Search:
                 cluster = rack.parent_resource
                 if isinstance(cluster, Datacenter):
                     r.cluster_name = "any"
-                    #r.cluster_avail_vCPUs = sys.maxint
-                    #r.cluster_avail_mem = sys.maxint
-                    #r.cluster_avail_local_disk = sys.maxint
                 else:
                     if cluster.status != "enabled":
                         continue

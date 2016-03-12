@@ -411,6 +411,7 @@ class Flavor:
 
     def __init__(self, _name):
         self.name = _name
+        self.flavor_id = None
 
         self.status = "enabled"
 

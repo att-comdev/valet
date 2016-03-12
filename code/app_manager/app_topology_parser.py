@@ -90,7 +90,7 @@ class Parser:
 
                 volumes[volume.uuid] = volume
 
-            elif r["type"] == "ATT::QoS::ResourceGroup" and \
+            elif r["type"] == "ATT::CloudQoS::ResourceGroup" and \
                  (r["properties"]["relationship"] == "affinity" or \
                   r["properties"]["relationship"] == "exclusivity"):
                 vgroup = VGroup(self.stack_id, rk)
@@ -135,7 +135,7 @@ class Parser:
 
     def _set_vm_links(self, _elements, _vms):
         for rk, r in _elements.iteritems():
-            if r["type"] == "ATT::QoS::Pipe":
+            if r["type"] == "ATT::CloudQoS::Pipe":
                 resources = r["properties"]["resources"]
                 for vk1 in resources:
                     if vk1 in _vms.keys():
@@ -182,7 +182,7 @@ class Parser:
 
     def _set_volume_attributes(self, _elements, _link_id, _link_name, _link1, _link2):
         for rk, r in _elements.iteritems():
-            if r["type"] == "ATT::QoS::Pipe":
+            if r["type"] == "ATT::CloudQoS::Pipe":
                 resources = r["properties"]["resources"]
                 if _link_id in resources:
                     property_elements = r["properties"]
@@ -204,7 +204,7 @@ class Parser:
 
     def _set_diversity_groups(self, _elements, _vgroups, _vms, _volumes):
         for rk, r in _elements.iteritems():
-            if r["type"] == "ATT::QoS::ResourceGroup" and r["properties"]["relationship"] == "diversity":
+            if r["type"] == "ATT::CloudQoS::ResourceGroup" and r["properties"]["relationship"] == "diversity":
                 level = r["properties"]["level"]
                 for vk in r["properties"]["resources"]:
                     if vk in _vms.keys():
@@ -290,7 +290,7 @@ class Parser:
 
             for rk, r in _elements.iteritems():
 
-                if r["type"] == "ATT::QoS::ResourceGroup" and \
+                if r["type"] == "ATT::CloudQoS::ResourceGroup" and \
                    (r["properties"]["relationship"] == "affinity" or \
                     r["properties"]["relationship"] == "exclusivity") and \
                    r["properties"]["level"] == level:

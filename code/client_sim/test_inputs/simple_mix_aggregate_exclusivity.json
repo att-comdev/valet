@@ -5,38 +5,38 @@
   "stack_id": "app_uuid",
   "application_name": "app",
   "resources": {
-    "vm0_uuid": {
-      "name": "vm0",
+    "vm6_uuid": {
+      "name": "vm6",
       "properties": {
-        "flavor": "bflavor1"
+        "flavor": "bflavor0"
       },
       "type": "OS::Nova::Server"
     },
-    "vm1_uuid": {
-      "name": "vm1",
+    "vm7_uuid": {
+      "name": "vm7",
       "properties": {
-        "flavor": "bflavor1"
+        "flavor": "bflavor0"
       },
       "type": "OS::Nova::Server"
     },
-    "vm2_uuid": {
-      "name": "vm2",
+    "vm8_uuid": {
+      "name": "vm8",
       "properties": {
-        "flavor": "bflavor1"
+        "flavor": "sflavor0"
       },
       "type": "OS::Nova::Server"
     },
-    "exclusivity0_uuid": {
-      "name": "exclusivity0",
+    "exclusivity1_uuid": {
+      "name": "exclusivity1",
       "properties": {
         "relationship": "exclusivity",
         "level": "host",
         "resources": [
-          "vm0_uuid",
-          "vm1_uuid"
+          "vm6_uuid",
+          "vm7_uuid"
         ]
       },
-      "type": "ATT::QoS::ResourceGroup"
+      "type": "ATT::CloudQoS::ResourceGroup"
     }
   }
 }

@@ -18,7 +18,6 @@ import time
 import threading
 
 from resource_base import Datacenter, HostGroup, Host, Switch, Link
-#from authentication import Authentication
 
 from topology import Topology
 from simulation.topology_simulator import SimTopology
@@ -39,9 +38,6 @@ class TopologyManager(threading.Thread):
         self.config = _config
 
         self.logger = _logger
-
-        #self.auth = Authentication()
-        #self.admin_token = None
 
     def run(self):
         self.logger.info("start " + self.thread_name + " ......")
@@ -94,14 +90,6 @@ class TopologyManager(threading.Thread):
             self.resource.update_topology()
         self.data_lock.release()
 
-    #def _set_admin_token(self):                                                                  
-        #self.admin_token = self.auth.get_tenant_token(self.config)
-        #if self.admin_token == None:                                                             
-            #self.logger.error(self.auth.status)                                                  
-            #return False                                                                         
-                                                                                                 
-        #return True
-
     def set_topology(self):
         datacenter = None
         host_groups = {}
@@ -112,18 +100,21 @@ class TopologyManager(threading.Thread):
         if self.config.mode.startswith("sim") == True:
             datacenter = Datacenter(self.config.mode)
             topology = SimTopology(self.config)
+
+            status = topology.set_topology(datacenter, host_groups, hosts, switches)
+            if status != "success":
+                self.logger.error(status)
+                return False
+
         else:
             datacenter = Datacenter(self.config.datacenter_name)
-
-            #if self._set_admin_token() == False:               
-                #return False
- 
             topology = Topology(self.config)
 
-        status = topology.set_topology(datacenter, host_groups, hosts, switches)
-        if status != "success":
-            self.logger.error(status)
-            return False
+            # NOTE: currently, using naming convention to set up layout & ignore networking layout
+            status = topology.set_topology(datacenter, host_groups, hosts, self.resource.hosts, switches)
+            if status != "success":
+                self.logger.error(status)
+                return False
 
         self._check_update(datacenter, host_groups, hosts, switches)
 
@@ -154,7 +145,6 @@ class TopologyManager(threading.Thread):
                 self.resource.hosts[new_host.name] = new_host
 
                 new_host.last_update = time.time()
-                #new_host.last_metadata_update = time.time()
 
                 self.logger.warn("new host (" + new_host.name + ") added from configuration")
 
@@ -174,7 +164,6 @@ class TopologyManager(threading.Thread):
                 self.resource.host_groups[new_host_group.name] = new_host_group
 
                 new_host_group.last_update = time.time()
-                #new_host_group.last_metadata_update = time.time()
 
                 self.logger.warn("new host_group (" + new_host_group.name + ") added")
 

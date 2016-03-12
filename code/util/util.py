@@ -44,3 +44,27 @@ def get_logfile(_loc, _max_log_size, _name):
     return (last_logfile, mode)
 
 
+def get_last_logfile(_loc, _max_log_size, _max_num_of_logs, _name, _last_index):
+    last_logfile = _name + "_" + str(_last_index) + ".log"
+    mode = None
+
+    if isfile(_loc + last_logfile) == True:
+        statinfo = stat(_loc + last_logfile)
+        if statinfo.st_size > _max_log_size:
+            if (_last_index + 1) < _max_num_of_logs:
+                _last_index = _last_index + 1
+            else:
+                _last_index = 0 
+          
+            last_logfile = _name + "_" + str(_last_index) + ".log"
+
+            mode = 'w'
+        else:
+            mode = 'a'
+    else:
+        mode = 'w'
+
+    return (last_logfile, _last_index, mode)
+
+
+

@@ -356,10 +356,6 @@ class ConstraintSolver:
                             avail_disks.append(s.storage_avail_disk)
 
                 self.logger.debug("storage resource constrained in resource = " + debug_resource_name)
-                #for ds in avail_disks:
-                    #print "    disk size = ", ds
-                #for vs in volume_sizes:
-                    #print "    volume size = ", vs
 
         _candidate_list[:] = [c for c in _candidate_list if c not in conflict_list]
 
@@ -396,20 +392,7 @@ class ConstraintSolver:
                     conflict_list.append(cr)
 
                     debug_resource_name = cr.get_resource_name(_level)
-                    #bandwidth = None
-                    #if _level == "cluster":
-                        #bandwidth = str(min(cr.cluster_avail_nw_bandwidths))
-                    #elif _level == "rack":
-                        #bandwidth = str(min(cr.cluster_avail_nw_bandwidths)) + "-" + \
-                        #            str(min(cr.rack_avail_nw_bandwidths))
-                    #elif _level == "host":
-                        #bandwidth = str(min(cr.cluster_avail_nw_bandwidths)) + "-" + \
-                        #            str(min(cr.rack_avail_nw_bandwidths)) + "-" + \
-                        #            str(min(cr.host_avail_nw_bandwidths))
-
                     self.logger.debug("network bandwidth constrained in resource = " + debug_resource_name)
-                    #self.logger.debug("avail bandwidth = " + bandwidth)
-                    #self.logger.debug("requested bandwidth = " + str(_n.node.nw_bandwidth))
 
         _candidate_list[:] = [c for c in _candidate_list if c not in conflict_list]
 

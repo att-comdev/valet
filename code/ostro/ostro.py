@@ -24,14 +24,12 @@ sys.path.insert(0, '../resource_manager')
 from resource import Resource
 from topology_manager import TopologyManager
 from compute_manager import ComputeManager
-#from test_storage import TestStorage  
-#from network_manager import NetworkManager
 
 sys.path.insert(0, '../app_manager')
 from app_handler import AppHandler  
 
-sys.path.insert(0, '../music_interface')
-from music import Music
+sys.path.insert(0, '../db_connect')
+from music_handler import MusicHandler
 
 
 class Ostro:
@@ -43,11 +41,12 @@ class Ostro:
 
         self.db = None
         if self.config.db_keyspace != "none":
-            self.db = self._init_db()
+            self.db = MusicHandler(self.config, self.logger)
+            self.db.init_db()
 
-        self.resource = Resource(self.config, self.logger)
+        self.resource = Resource(self.db, self.config, self.logger)
 
-        self.app_handler = AppHandler(self.resource, self.config, self.logger)
+        self.app_handler = AppHandler(self.resource, self.db, self.config, self.logger)
 
         self.optimizer = Optimizer(self.resource, self.logger)
 
@@ -56,89 +55,37 @@ class Ostro:
 
         self.topology = TopologyManager(1, "Topology", self.resource, self.data_lock, self.config, self.logger)
         self.compute = ComputeManager(2, "Compute", self.resource, self.data_lock, self.config, self.logger)
-        #self.storage = TestStorage(3, "Storage", self.resource, self.data_lock, self.logger)
-        #self.network = NetworkManager(3, "Network", self.resource, self.data_lock, self.config, self.logger)
 
         self.status = "success"
 
         self.end_of_process = False
-
-    # TODO: error checking
-    def _init_db(self):
-        db = Music(self.config.db_keyspace)
-
-        db.create_keyspace(self.config.db_keyspace)
-
-        kwargs = {
-            'keyspace': self.config.db_keyspace,
-            'table': self.config.db_request_table_name,
-            'schema': {
-                'stack_id': 'text',
-                'request': 'text',
-                'PRIMARY KEY': '(stack_id)'
-            }
-        }
-        db.create_table(**kwargs)
-
-        kwargs = {
-            'keyspace': self.config.db_keyspace,
-            'table': self.config.db_reponse_table_name,
-            'schema': {
-                'stack_id': 'text',
-                'placement': 'text',
-                'PRIMARY KEY': '(stack_id)'
-            }
-        }
-        db.create_table(**kwargs)
-
-        kwargs = {
-            'keyspace': self.config.db_keyspace,
-            'table': self.config.db_resource_table_name,
-            'schema': {
-                'update_id': 'text',
-                'resource_update': 'text',
-                'PRIMARY KEY': '(update_id)'
-            }
-        }
-        db.create_table(**kwargs)
-
-        kwargs = {
-            'keyspace': self.config.db_keyspace,
-            'table': 'resource_status',
-            'schema': {
-                'site_name': 'text',
-                'resource': 'text',
-                'PRIMARY KEY': '(site_name)'
-            }
-        }
-        db.create_table(**kwargs)
-
-        return db
 
     def run_ostro(self):
         self.logger.info("start Ostro ......")
 
         self.topology.start()
         self.compute.start()
-        #self.storage.start()
-        #self.network.start()
 
         self.thread_list.append(self.topology)
         self.thread_list.append(self.compute)
-        #self.thread_list.append(self.storage)
-        #self.thread_list.append(self.network)
 
         while self.end_of_process == False:
             time.sleep(1)
 
             self.logger.debug("ostro running......")
 
-            self._get_requests()
+            if self.config.db_keyspace != "none":
+                (event_list, request_list) = self.db.get_requests()
+
+                if len(event_list) > 0:
+                    pass
+
+                if len(request_list) > 0:
+                    result = self.place_app(request_list)
+                    self.db.put_result(result)
 
         self.topology.end_of_process = True
         self.compute.end_of_process = True
-        #self.storage.end_of_process = True
-        #self.network.end_of_process = True
 
         for t in self.thread_list:
             t.join()
@@ -155,24 +102,17 @@ class Ostro:
                     self.thread_list.remove(t)
 
     def bootstrap(self):
-        if self._set_topology() == False:
-            return False
-
         if self._set_hosts() == False:
             return False
-
-        #if self._set_network_topology() == False:
-            #return False
-
-        #if self._set_storages() == False:
-            #return False
 
         if self._set_flavors() == False:
             return False
 
-        resource_status = self.resource.update_topology()  
-        
-        self.db.create_row('resource_status', values=resource_status)
+        # NOTE: currently topology relies on hosts naming convention
+        if self._set_topology() == False:
+            return False
+
+        self.resource.update_topology()
 
         return True
 
@@ -190,20 +130,6 @@ class Ostro:
 
         return True
 
-    #def _set_storages(self):
-        #if self.storage.set_storages() == False:
-            #self.status = "OpenStack (Cinder) internal error"
-            #return False
-
-        #return True
-
-    #def _set_network_topology(self):                                                
-        #if self.network.set_network_topology() == False:
-            #self.status = "Tegu interanl error"                                          
-            #return False                                                                         
-                                                                                                 
-        #return True 
-
     def _set_flavors(self):
         if self.compute.set_flavors() == False:     
             self.status = "OpenStack (Nova) internal error"
@@ -211,26 +137,6 @@ class Ostro:
                                                                                                  
         return True
 
-    def _get_requests(self):
-        resource_updates = self.db.read_all_rows(self.config.db_resource_table_name)
-        #if len(resource_updates) > 0:
-            # Update resource status
-            # Delete each row once done
-
-        requests = self.db.read_all_rows(self.config.db_request_table_name)
-        #if len(requests) > 0:
-            # Place applications
-
-    # Place an app based on the topology file, wrapper of place_app
-    def place_app_file(self, _topology_file):
-        app_graph = open(_topology_file, 'r')
-        app_data = app_graph.read()
-        if app_data == None:
-            return self._get_json_format("error", "topology file not found!", None)
-
-        return self.place_app(app_data)
-
-    # Place an app based on the app_data(a string serialization of json). 
     def place_app(self, _app_data):
         self.logger.info("start app placement")
 
@@ -241,9 +147,9 @@ class Ostro:
         end_time = time.time()
 
         if placement_map == None:
-            result = self._get_json_format("error", self.ostro.status, None)
+            result = self._get_json_results("error", self.ostro.status, None)
         else:
-            result = self._get_json_format("ok", "success", placement_map)
+            result = self._get_json_results("ok", "success", placement_map)
 
         self.logger.info("total running time of place_app = " + str(end_time - start_time) + " sec")
         self.logger.info("done app placement")
@@ -253,41 +159,53 @@ class Ostro:
     def _place_app(self, _app_data):
         self.data_lock.acquire(1) 
 
-        # Record the input app topology in memory
         app_topology = self.app_handler.add_app(_app_data)
         if app_topology == None:                                                                 
             self.status = self.app_handler.status
             return None
                  
-        # Place application 
         placement_map = self.optimizer.place(app_topology) 
         if placement_map == None:                                                                
             self.status = self.optimizer.status
             return None
-        self.resource.update_topology()  
-                                                                                                 
-        # Once placement is done, update the app info                                            
+
+        resource_status = self.resource.update_topology()  
+
         self.app_handler.add_placement(placement_map, self.resource.current_timestamp)
 
         self.data_lock.release()
 
         return placement_map
 
-    # Return json format
-    def _get_json_format(self, _status_type, _status_message, _placement_map):
-        resources = {}
-        result = None
+    def _get_json_results(self, _status_type, _status_message, _placement_map):
+        applications = {}
+        result = {}
 
         if _status_type != "error":
             for v in _placement_map.keys():
+                resources = None
+                if v.app_uuid in applications.keys():
+                    resources = applications[v.app_uuid]
+                else:
+                    resources = {}
+                    applications[v.app_uuid] = resources
+
                 host = _placement_map[v]
-                #resource_property = {"availability_zone":host}
                 resource_property = {"host":host}
                 properties = {"properties":resource_property}
                 resources[v.uuid] = properties
 
-        result = json.dumps({"status":{"type":_status_type, "message":_status_message}, \
-                             "resources":resources}, indent=4, separators=(',', ':'))
+        for appk, app_resources in applications.iteritems():
+            app_result = {}
+
+            app_status ={}
+            app_status['type'] = _status_type
+            app_status['message'] = _status_message
+
+            app_result['status'] = app_status
+            app_result['resources'] = app_resources
+
+            result[appk] = app_result
 
         return result
 

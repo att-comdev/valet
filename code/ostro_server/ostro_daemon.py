@@ -32,7 +32,7 @@ class OstroDaemon(Daemon):
         if ostro.bootstrap() == False:
             sys.exit(2)
 
-        self.ostro.run_ostro()
+        ostro.run_ostro()
 
 
 

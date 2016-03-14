@@ -27,7 +27,6 @@ class Config:
         self.resource_log_loc = None
         self.app_log_loc = None
         self.max_log_size = 0
-        self.max_num_of_logs = 0
 
         self.process = None
 
@@ -44,7 +43,6 @@ class Config:
         self.network_control_api = None
 
         self.nova_url = None
-        self.nova_version = None
         self.nova_host_resources_api = None
         self.nova_host_zones_api = None
         self.nova_host_aggregates_api = None
@@ -54,22 +52,12 @@ class Config:
         self.memory_overbooking_ratio = 1
         self.disk_overbooking_ratio = 1
 
-        #self.static_standby_ratio = 0   # %
-
         self.topology_trigger_time = None
         self.topology_trigger_freq = 0
         self.compute_trigger_time = None
         self.compute_trigger_freq = 0
 
         self.db_keyspace = None
-        self.db_request_table = None
-        self.db_response_table = None
-        self.db_event_table = None
-        self.db_resource_table = None
-        self.db_resource_index_table = None
-        self.db_app_index_table = None
-
-        #self.replication_factor = 0
 
         self.control_loc = None
 
@@ -77,6 +65,8 @@ class Config:
         self.admin_tenant_name = None
         self.user_name = None
         self.pw = None
+
+        #self.sim_duration = 0
 
         self.num_of_hosts_per_rack = 0
         self.num_of_racks = 0
@@ -98,6 +88,7 @@ class Config:
 
     def configure(self):
         try:
+            # TODO: Allow only admin to read
             f = open("./ostro.cfg", "r")
             line = f.readline()
 
@@ -123,8 +114,6 @@ class Config:
                     self.app_log_loc = v.strip()
                 elif k == "max_log_size":
                     self.max_log_size = int(v.strip())
-                elif k == "max_num_of_logs":
-                    self.max_num_of_logs = int(v.strip())
                 elif k == "process":
                     self.process = v.strip()
                 elif k == "rpc_server_ip":
@@ -149,8 +138,6 @@ class Config:
                     self.network_control_api = v.strip()
                 elif k == "nova_url":
                     self.nova_url = v.strip()
-                elif k == "nova_version":
-                    self.nova_version = v.strip()
                 elif k == "nova_host_resources_api":
                     self.nova_host_resources_api = v.strip()
                 elif k == "nova_host_zones_api":
@@ -175,18 +162,6 @@ class Config:
                     self.compute_trigger_freq = int(v.strip())
                 elif k == "db_keyspace":
                     self.db_keyspace = v.strip()
-                elif k == "db_request_table":
-                    self.db_request_table = v.strip()
-                elif k == "db_response_table":
-                    self.db_response_table = v.strip()
-                elif k == "db_event_table":
-                    self.db_event_table = v.strip()
-                elif k == "db_resource_table":
-                    self.db_resource_table = v.strip()
-                elif k == "db_resource_index_table":
-                    self.db_resource_index_table = v.strip()
-                elif k == "db_app_index_table":
-                    self.db_app_index_table = v.strip()
                 elif k == "control_loc":
                     self.control_loc = v.strip()
                 elif k == "auth_loc":
@@ -212,6 +187,7 @@ class Config:
 
     def _set_authentication(self, _loc):
         try:
+            # TODO: Allow only admin to read
             f = open(_loc, "r")
             line = f.readline()
 
@@ -255,6 +231,8 @@ class Config:
                 (rk, v) = line.split("=")
                 k = rk.strip()
 
+                #if k == "sim_duration":
+                    #self.sim_duration = int(v.strip())
                 if k == "num_of_spine_switches":
                     self.num_of_spine_switches = int(v.strip())
                 elif k == "num_of_hosts_per_rack":
@@ -299,8 +277,5 @@ class Config:
 
 
 # Unit test
-'''
 config = Config()
 config.configure()
-'''
-

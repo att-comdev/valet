@@ -50,6 +50,39 @@ class Datacenter:
         self.local_disk_cap = 0 
         self.avail_local_disk_cap = 0
 
+    def get_json_info(self):
+        membership_list = []
+        for lgk in self.memberships.keys():
+            membership_list.append(lgk)
+
+        switch_list = []
+        for sk in self.root_switches.keys():
+            switch_list.append(sk)
+
+        storage_list = []
+        for shk in self.storages.keys():
+            storage_list.append(shk)
+
+        child_list = []
+        for ck in self.resources.keys():
+            child_list.append(ck)
+
+        return {'status':self.status, \
+                'membership_list':membership_list, \
+                'vCPUs':self.vCPUs, \
+                'avail_vCPUs':self.avail_vCPUs, \
+                'mem':self.mem_cap, \
+                'avail_mem':self.avail_mem_cap, \
+                'local_disk':self.local_disk_cap, \
+                'avail_local_disk':self.avail_local_disk_cap, \
+                'switch_list':switch_list, \
+                'storage_list':storage_list, \
+                'children':child_list, \
+                'vm_list':self.vm_list, \
+                'volume_list':self.volume_list, \
+                'last_update':self.last_update, \
+                'last_link_update':self.last_link_update}
+
 
 # Data container for rack or cluster
 class HostGroup: 
@@ -108,6 +141,41 @@ class HostGroup:
         else:
             return False
 
+    def get_json_info(self):
+        membership_list = []
+        for lgk in self.memberships.keys():
+            membership_list.append(lgk)
+
+        switch_list = []
+        for sk in self.switches.keys():
+            switch_list.append(sk)
+
+        storage_list = []
+        for shk in self.storages.keys():
+            storage_list.append(shk)
+
+        child_list = []
+        for ck in self.child_resources.keys():
+            child_list.append(ck)
+
+        return {'status':self.status, \
+                'host_type':self.host_type, \
+                'membership_list':membership_list, \
+                'vCPUs':self.vCPUs, \
+                'avail_vCPUs':self.avail_vCPUs, \
+                'mem':self.mem_cap, \
+                'avail_mem':self.avail_mem_cap, \
+                'local_disk':self.local_disk_cap, \
+                'avail_local_disk':self.avail_local_disk_cap, \
+                'switch_list':switch_list, \
+                'storage_list':storage_list, \
+                'parent':self.parent_resource.name, \
+                'children':child_list, \
+                'vm_list':self.vm_list, \
+                'volume_list':self.volume_list, \
+                'last_update':self.last_update, \
+                'last_link_update':self.last_link_update}
+
 
 class Host:
 
@@ -146,7 +214,6 @@ class Host:
             if lg.group_type == "EX" or lg.group_type == "AFF":
                 if self.name not in lg.vms_per_host.keys():
                     del self.memberships[lgk]
-
                     cleaned = True
     
         return cleaned
@@ -168,12 +235,43 @@ class Host:
 
         return exist
 
+    def get_json_info(self):
+        membership_list = []
+        for lgk in self.memberships.keys():
+            membership_list.append(lgk)
+
+        switch_list = []
+        for sk in self.switches.keys():
+            switch_list.append(sk)
+
+        storage_list = []
+        for shk in self.storages.keys():
+            storage_list.append(shk)
+
+        return {'tag':self.tag, 'status':self.status, 'state':self.state, \
+                'membership_list':membership_list, \
+                'vCPUs':self.vCPUs, \
+                'avail_vCPUs':self.avail_vCPUs, \
+                'mem':self.mem_cap, \
+                'avail_mem':self.avail_mem_cap, \
+                'local_disk':self.local_disk_cap, \
+                'avail_local_disk':self.avail_local_disk_cap, \
+                'switch_list':switch_list, \
+                'storage_list':storage_list, \
+                'parent':self.host_group.name, \
+                'vm_list':self.vm_list, \
+                'volume_list':self.volume_list, \
+                'last_update':self.last_update, \
+                'last_link_update':self.last_link_update}
+
 
 class LogicalGroup:
 
     def __init__(self, _name):
         self.name = _name
         self.group_type = "AGGR"         # AGGR, AZ, INTG, EX, or AFF
+
+        self.status = "enabled"
 
         self.metadata = {}               # any metadata to be matched when placing nodes
 
@@ -182,7 +280,7 @@ class LogicalGroup:
 
         self.vms_per_host = {}           # key = host_id, value = a list of placed vms
 
-        #self.last_update = 0
+        self.last_update = 0
 
     def exist_vm(self, _vm_id):
         exist = False
@@ -195,6 +293,8 @@ class LogicalGroup:
         return exist
 
     def add_vm(self, _vm_id, _host_id):
+        success = False
+
         if self.exist_vm(_vm_id) == False:
             self.vm_list.append(_vm_id)
 
@@ -204,7 +304,13 @@ class LogicalGroup:
 
             self.vms_per_host[_host_id].append(_vm_id)
 
+            success = True
+
+        return success
+
     def remove_vm(self, _vm_id, _host_id):
+        success = False
+
         if self.exist_vm(_vm_id) == True:
             self.vm_list.remove(_vm_id)
 
@@ -213,6 +319,18 @@ class LogicalGroup:
             if self.group_type == "EX" or self.group_type == "AFF":
                 if len(self.vms_per_host[_host_id]) == 0:
                     del self.vms_per_host[_host_id]
+        
+            success = True
+
+        return success
+
+    def get_json_info(self):
+        return {'status':self.status, \
+                'group_type':self.group_type, \
+                'metadata':self.metadata, \
+                'vm_list':self.vm_list, \
+                'vms_per_host':self.vms_per_host, \
+                'last_update':self.last_update}
 
 
 class Switch: 
@@ -229,6 +347,21 @@ class Switch:
 
         self.last_update = 0
 
+    def get_json_info(self):
+        ulinks = {}
+        for ulk, ul in self.up_links.iteritems():
+            ulinks[ulk] = ul.get_json_info()
+
+        plinks = {}
+        for plk, pl in self.peer_links.iteritems():
+            plinks[plk] = pl.get_json_info()
+
+        return {'status':self.status, \
+                'switch_type':self.switch_type, \
+                'up_links':ulinks, \
+                'peer_links':plinks, \
+                'last_update':self.last_update}
+
 
 class Link:
 
@@ -238,6 +371,11 @@ class Link:
 
         self.nw_bandwidth = 0            # Mbps
         self.avail_nw_bandwidth = 0
+
+    def get_json_info(self):
+        return {'resource':self.resource.name, \
+                'bandwidth':self.nw_bandwidth, \
+                'avail_bandwidth':self.avail_nw_bandwidth}
 
 
 # TODO: storage backend, pool, or physical storage? 
@@ -258,17 +396,41 @@ class StorageHost:
         self.last_update = 0
         self.last_cap_update = 0
 
+    def get_json_info(self):
+        return {'status':self.status, \
+                'class':self.storage_class, \
+                'host_list':self.host_list, \
+                'disk':self.disk_cap, \
+                'avail_disk':self.avail_disk_cap, \
+                'volume_list':self.volume_list, \
+                'last_update':self.last_update, \
+                'last_cap_update':self.last_cap_update}
+
 
 class Flavor:
 
     def __init__(self, _name):
         self.name = _name
+        self.flavor_id = None
+
+        self.status = "enabled"
 
         self.vCPUs = 0
         self.mem_cap = 0
         self.disk_cap = 0
 
         self.extra_specs = {}
+
+        self.last_update = 0
+
+    def get_json_info(self):
+        return {'status':self.status, \
+                'vCPUs':self.vCPUs, \
+                'mem':self.mem_cap, \
+                'disk':self.disk_cap, \
+                'extra_specs':self.extra_specs, \
+                'last_update':self.last_update}
+
 
 
 

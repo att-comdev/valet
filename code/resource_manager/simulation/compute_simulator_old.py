@@ -36,8 +36,19 @@ class SimCompute():
         logical_group.group_type = "AZ"
         _logical_groups[logical_group.name] = logical_group
 
+        num_of_non_compute_racks = self.config.num_of_racks / 2
+        num_of_non_compute_hosts = 0
+        if num_of_non_compute_racks == 0:
+            num_of_non_compute_hosts = self.config.num_of_hosts_per_rack / 2 
+        
         for r_num in range(0, self.config.num_of_racks):
+            if num_of_non_compute_racks > 0 and r_num < num_of_non_compute_racks:
+                continue
+
             for h_num in range(0, self.config.num_of_hosts_per_rack):
+                if num_of_non_compute_hosts > 0 and h_num < num_of_non_compute_hosts:
+                    continue
+        
                 host = Host(self.config.mode + "r" + str(r_num) + "c" + str(h_num))
                 host.tag.append("nova")
                 host.memberships["nova"] = logical_group
@@ -70,6 +81,7 @@ class SimCompute():
 
                             aggregate.vms_per_host[host.name] = []
 
+    # NOTE: place vms to hosts and logical_groups
     def _set_placed_vms(self, _hosts, _logical_groups):
         pass
 

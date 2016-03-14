@@ -14,26 +14,22 @@
 
 
 import threading
-import time
 import sys
-import logging
+import time
+import json
 
-#from displayer import display_dc_topology, display_app_topology
 from optimizer import Optimizer   
 
 sys.path.insert(0, '../resource_manager')
-from resource_base import Datacenter
 from resource import Resource
 from topology_manager import TopologyManager
 from compute_manager import ComputeManager
-#from test_storage import TestStorage  # TODO
-#from network_manager import NetworkManager
 
 sys.path.insert(0, '../app_manager')
 from app_handler import AppHandler  
 
-#sys.path.insert(0, '../db_connect')
-#from db_connector import DatabaseConnector
+sys.path.insert(0, '../db_connect')
+from music_handler import MusicHandler
 
 
 class Ostro:
@@ -45,26 +41,20 @@ class Ostro:
 
         self.db = None
         if self.config.db_keyspace != "none":
-            #self.db = DatabaseConnector(self.config.db_keyspace)
-            pass
+            self.db = MusicHandler(self.config, self.logger)
+            self.db.init_db()
 
-        self.resource = Resource(self.db, self.logger)
-        if self.config.mode.startswith("sim") == True:
-            self.resource.datacenter = Datacenter(self.config.mode)
-        else: 
-            self.resource.datacenter = Datacenter(self.config.datacenter_name)
+        self.resource = Resource(self.db, self.config, self.logger)
 
-        self.app_handler = AppHandler(self.resource, self.db, self.logger)
+        self.app_handler = AppHandler(self.resource, self.db, self.config, self.logger)
+
         self.optimizer = Optimizer(self.resource, self.logger)
 
         self.data_lock = threading.Lock()
-
         self.thread_list = []
 
         self.topology = TopologyManager(1, "Topology", self.resource, self.data_lock, self.config, self.logger)
         self.compute = ComputeManager(2, "Compute", self.resource, self.data_lock, self.config, self.logger)
-        #self.storage = TestStorage(3, "Storage", self.resource, self.data_lock, self.logger)
-        #self.network = NetworkManager(3, "Network", self.resource, self.data_lock, self.config, self.logger)
 
         self.status = "success"
 
@@ -75,23 +65,27 @@ class Ostro:
 
         self.topology.start()
         self.compute.start()
-        #self.storage.start()
-        #self.network.start()
 
         self.thread_list.append(self.topology)
         self.thread_list.append(self.compute)
-        #self.thread_list.append(self.storage)
-        #self.thread_list.append(self.network)
 
         while self.end_of_process == False:
             time.sleep(1)
 
             self.logger.debug("ostro running......")
 
+            if self.config.db_keyspace != "none":
+                (event_list, request_list) = self.db.get_requests()
+
+                if len(event_list) > 0:
+                    pass
+
+                if len(request_list) > 0:
+                    result = self.place_app(request_list)
+                    self.db.put_result(result)
+
         self.topology.end_of_process = True
         self.compute.end_of_process = True
-        #self.storage.end_of_process = True
-        #self.network.end_of_process = True
 
         for t in self.thread_list:
             t.join()
@@ -108,26 +102,17 @@ class Ostro:
                     self.thread_list.remove(t)
 
     def bootstrap(self):
-        if self._set_topology() == False:
-            return False
-
         if self._set_hosts() == False:
             return False
-
-        #if self._set_network_topology() == False:
-            #return False
-
-        #if self._set_storages() == False:
-            #return False
 
         if self._set_flavors() == False:
             return False
 
-        #self.resource.update_metadata()
-        self.resource.update_topology()  
+        # NOTE: currently topology relies on hosts naming convention
+        if self._set_topology() == False:
+            return False
 
-        # For test
-        #display_dc_topology(self.resource)
+        self.resource.update_topology()
 
         return True
 
@@ -145,20 +130,6 @@ class Ostro:
 
         return True
 
-    #def _set_storages(self):
-        #if self.storage.set_storages() == False:
-            #self.status = "OpenStack (Cinder) internal error"
-            #return False
-
-        #return True
-
-    #def _set_network_topology(self):                                                
-        #if self.network.set_network_topology() == False:
-            #self.status = "Tegu interanl error"                                          
-            #return False                                                                         
-                                                                                                 
-        #return True 
-
     def _set_flavors(self):
         if self.compute.set_flavors() == False:     
             self.status = "OpenStack (Nova) internal error"
@@ -167,45 +138,79 @@ class Ostro:
         return True
 
     def place_app(self, _app_data):
+        self.logger.info("start app placement")
+
+        result = None
+
+        start_time = time.time()
+        placement_map = self._place_app(_app_data)
+        end_time = time.time()
+
+        if placement_map == None:
+            result = self._get_json_results("error", self.ostro.status, None)
+        else:
+            result = self._get_json_results("ok", "success", placement_map)
+
+        self.logger.info("total running time of place_app = " + str(end_time - start_time) + " sec")
+        self.logger.info("done app placement")
+
+        return result
+
+    def _place_app(self, _app_data):
         self.data_lock.acquire(1) 
 
-        # Record the input app topology in memory
         app_topology = self.app_handler.add_app(_app_data)
         if app_topology == None:                                                                 
             self.status = self.app_handler.status
             return None
                  
-        # For test                                                                                
-        #display_app_topology(app_topology)                                           
-                                                                                                 
-        # Place application 
         placement_map = self.optimizer.place(app_topology) 
         if placement_map == None:                                                                
             self.status = self.optimizer.status
             return None
-        self.resource.update_topology()  
-                                                                                                 
-        # Once placement is done, update the app info                                            
+
+        resource_status = self.resource.update_topology()  
+
         self.app_handler.add_placement(placement_map, self.resource.current_timestamp)
-        #self.app_handler.store_app_placements()
 
         self.data_lock.release()
 
         return placement_map
 
+    def _get_json_results(self, _status_type, _status_message, _placement_map):
+        applications = {}
+        result = {}
+
+        if _status_type != "error":
+            for v in _placement_map.keys():
+                resources = None
+                if v.app_uuid in applications.keys():
+                    resources = applications[v.app_uuid]
+                else:
+                    resources = {}
+                    applications[v.app_uuid] = resources
+
+                host = _placement_map[v]
+                resource_property = {"host":host}
+                properties = {"properties":resource_property}
+                resources[v.uuid] = properties
+
+        for appk, app_resources in applications.iteritems():
+            app_result = {}
+
+            app_status ={}
+            app_status['type'] = _status_type
+            app_status['message'] = _status_message
+
+            app_result['status'] = app_status
+            app_result['resources'] = app_resources
+
+            result[appk] = app_result
+
+        return result
 
 
 # Unit test
-if __name__ == "__main__":
-    logger = logging.getLogger("TestLog")
-    logger.setLevel(logging.DEBUG)
-    formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
-    handler = logging.FileHandler("../ostro_server/ostro_log/test.log")
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
-
-    ostro = Ostro(logger)
-    ostro.run_ostro()
 
     
 

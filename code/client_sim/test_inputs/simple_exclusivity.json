@@ -1,0 +1,43 @@
+[
+{
+  "version": "0.1",
+  "action": "create",
+  "stack_id": "app_uuid",
+  "application_name": "app",
+  "resources": {
+    "vm3_uuid": {
+      "name": "vm3",
+      "properties": {
+        "flavor": "bflavor0"
+      },
+      "type": "OS::Nova::Server"
+    },
+    "vm4_uuid": {
+      "name": "vm4",
+      "properties": {
+        "flavor": "bflavor0"
+      },
+      "type": "OS::Nova::Server"
+    },
+    "vm5_uuid": {
+      "name": "vm5",
+      "properties": {
+        "flavor": "bflavor0"
+      },
+      "type": "OS::Nova::Server"
+    },
+    "exclusivity0_uuid": {
+      "name": "exclusivity0",
+      "properties": {
+        "relationship": "exclusivity",
+        "level": "host",
+        "resources": [
+          "vm3_uuid",
+          "vm4_uuid"
+        ]
+      },
+      "type": "ATT::CloudQoS::ResourceGroup"
+    }
+  }
+}
+]

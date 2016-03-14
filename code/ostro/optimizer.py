@@ -163,6 +163,7 @@ class Optimizer:
                     if lgk not in self.resource.logical_groups.keys():
                         self.resource.logical_groups[lgk] = LogicalGroup(lgk)
                         self.resource.logical_groups[lgk].group_type = lg.group_type
+                        self.resource.logical_groups[lgk].last_update = time.time()
 
                     if lgk not in host.memberships.keys():
                         host.memberships[lgk] = self.resource.logical_groups[lgk]
@@ -174,6 +175,7 @@ class Optimizer:
                         if lgk not in self.resource.logical_groups.keys():
                             self.resource.logical_groups[lgk] = LogicalGroup(lgk)
                             self.resource.logical_groups[lgk].group_type = lg.group_type
+                            self.resource.logical_groups[lgk].last_update = time.time()
 
                         rack = self.resource.host_groups[_avail_host.rack_name]
                         if lgk not in rack.memberships.keys():
@@ -188,6 +190,7 @@ class Optimizer:
                         if lgk not in self.resource.logical_groups.keys():
                             self.resource.logical_groups[lgk] = LogicalGroup(lgk)
                             self.resource.logical_groups[lgk].group_type = lg.group_type
+                            self.resource.logical_groups[lgk].last_update = time.time()
 
                         cluster = self.resource.host_groups[_avail_host.cluster_name]
                         if lgk not in cluster.memberships.keys():
@@ -195,7 +198,30 @@ class Optimizer:
                             cluster.last_update = time.time()
                             self.resource.update_cluster_resource(cluster)
 
-        self.resource.add_vm_to_logical_groups(host, (_v.uuid, _v.name, "none"))
+        vm_logical_groups = []
+        self._collect_logical_groups_of_vm(_v, vm_logical_groups)
+
+        self.resource.add_vm_to_logical_groups(host, (_v.uuid, _v.name, "none"), vm_logical_groups)
+
+    def _collect_logical_groups_of_vm(self, _v, _vm_logical_groups):
+        # availability_zone
+        # integrity_zones
+        for hgk in _v.host_aggregates.keys():
+            _vm_logical_groups.append(hgk)
+  
+        if isinstance(_v, VGroup):
+            _vm_logical_groups.append(_v.level + ":" + _v.name)
+
+        if _v.survgroup != None:
+            self._collect_logical_groups_of_vm(_v.survgroup, _vm_logical_groups)
+
+
+
+
+
+
+
+
 
 
 

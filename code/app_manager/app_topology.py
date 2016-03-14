@@ -37,8 +37,9 @@ class AppTopology:
 
         if len(vgroups) == 0 and len(vms) == 0 and len(volumes) == 0:
             self.status = self.parser.status
-            return (None, None, {}, {}, {})
-    
+            return None
+
+        # Cumulate virtual resources    
         for vgk, vgroup in vgroups.iteritems():
             self.vgroups[vgroup.uuid] = vgroup 
         for vmk, vm in vms.iteritems():
@@ -46,7 +47,7 @@ class AppTopology:
         for volk, vol in volumes.iteritems():
             self.volumes[vol.uuid] = vol
 
-        return (self.parser.stack_id, self.parser.application_name, vgroups, vms, volumes)
+        return (self.parser.stack_id, self.parser.application_name)
 
     def set_optimization_priority(self):
         app_nw_bandwidth_weight = -1

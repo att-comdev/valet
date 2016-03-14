@@ -25,7 +25,7 @@ class Authentication:
     def get_tenant_token(self, _config):
         in_data = json.dumps({"auth": {"tenantName": _config.admin_tenant_name, \
                                        "passwordCredentials": {"username": _config.user_name, \
-                                                               "password": _config.password}}})
+                                                               "password": _config.pw}}})
         buf = StringIO.StringIO()
         c = pycurl.Curl()
         keystone_url = _config.keystone_url + _config.keystone_tenant_token_api
@@ -67,7 +67,7 @@ class Authentication:
             #print json.dumps(decoded, indent=4)
             elements = decoded["projects"]
             for e in elements:
-                if e["name"] == _project_name:
+                if e["name"] == _config.project_name:
                     project_id = e["id"]
         except (ValueError, KeyError, TypeError):
             self.status = "JSON format error while getting project token"

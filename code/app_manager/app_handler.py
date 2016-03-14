@@ -20,17 +20,21 @@ from app_topology import AppTopology
 from app_topology_base import VM, Volume
 from application import App
 
+sys.path.insert(0, '../util')
+from util import get_last_logfile
+
 
 class AppHandler:
 
-    def __init__(self, _resource, _db, _logger):
-        self.apps = {}  # Current app requested, a temporary copy
-        #self.scheduled_apps = {} # pending before inserting apps into db until apps are placed in datacenter
-
+    def __init__(self, _resource, _db, _config, _logger):
         self.resource = _resource
         self.db = _db
-
+        self.config = _config
         self.logger = _logger
+
+        self.apps = {}  # Current app requested, a temporary copy
+
+        self.last_log_index = 0
 
         self.status = "success"
 
@@ -40,30 +44,19 @@ class AppHandler:
 
         app_topology = AppTopology(self.resource)
 
-        app_list = None
-        try:
-            app_list = json.loads(_app_data)
-        except (ValueError, KeyError, TypeError):
-            self.logger.error("JSON format error while reading app topology")
-            self.status = "JSON internal error"
-            return None
+        for app in _app_data:
+            app_id = app_topology.set_app_topology(app)
 
-        for app in app_list:
-            (app_id, app_name, vgroups, vms, vols) = app_topology.set_app_topology(app)
-            self.logger.info("application: " + app_name)
-
-            if len(vgroups) == 0 and len(vms) == 0 and len(volumes) == 0:
+            if app_id == None:
                 self.logger.error(app_topology.status)
                 self.status = app_topology.status
                 return None
             else:
-                new_app = App(app_id, app_name)
-                new_app.set_app_components(vgroups, vms, vols)  
+                self.logger.info("application: " + app_id[1])
 
-                self.apps[app_id] = new_app 
+                new_app = App(app_id[0], app_id[1])
 
-                # For test
-                #new_app.print_app_info()
+                self.apps[app_id[0]] = new_app 
 
         app_topology.set_optimization_priority()
 
@@ -77,24 +70,42 @@ class AppHandler:
                 self.apps[v.app_uuid].timestamp_scheduled = _timestamp
 
             if isinstance(v, VM):
-                self.apps[v.app_uuid].vms[v.uuid]["status"] = "scheduled"
-                self.apps[v.app_uuid].vms[v.uuid]["host"] = _placement_map[v]
+                self.apps[v.app_uuid].add_vm(v, _placement_map[v])
             elif isinstance(v, Volume):
-                self.apps[v.app_uuid].volumes[v.uuid]["status"] = "scheduled"
-                self.apps[v.app_uuid].volumes[v.uuid]["host"] = _placement_map[v]
-            #else:
-                #self.apps[v.app_uuid].vgroups[v.uuid]["status"] = "scheduled"
+                self.apps[v.app_uuid].add_volume(v, _placement_map[v])
+            else:
+                if _placement_map[v] in self.resource.hosts.keys():
+                    host = self.resource.hosts[_placement_map[v]]
+                    if v.level == "host":
+                        self.apps[v.app_uuid].add_vgroup(v, host.name)
+                else:
+                    hg = self.resource.host_groups[_placement_map[v]]
+                    if v.level == hg.host_type:
+                        self.apps[v.app_uuid].add_vgroup(v, hg.name)
 
-        # For test
-        #for appk in self.apps.keys():
-            #self.apps[appk].print_app_info()
+        self._store_app_placements()
 
-    def store_app_placements(self):
-        app_list = []
-        for appk in self.apps.keys():
-            app_list.append(self.apps[appk].get_info_dict())
+    def _store_app_placements(self):
+        (app_logfile, last_index, mode) = get_last_logfile(self.config.app_log_loc, \
+                                                           self.config.max_log_size, \
+                                                           self.config.max_num_of_logs, \
+                                                           self.resource.datacenter.name, \
+                                                           self.last_log_index)
+        self.last_log_index = last_index
 
-        self.db.insert("app", app_list)
+        logging = open(self.config.app_log_loc + app_logfile, mode)
+
+        for appk, app in self.apps.iteritems():
+            json_logging = app.get_json_info()
+            logged_data = json.dumps(json_logging)
+
+            logging.write(logged_data)
+            logging.write("\n")
+
+        logging.close()
+
+        if self.db != None:
+            self.db.update_app_log_index(self.resource.datacenter.name, self.last_log_index)
 
 
 

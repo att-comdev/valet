@@ -91,15 +91,13 @@ class ComputeManager(threading.Thread):
     def _run(self):
         self.data_lock.acquire(1)
 
-        if self.set_hosts() == True:
+        triggered_host_updates = self.set_hosts()
+        triggered_flavor_updates = self.set_flavors()
+
+        if triggered_host_updates == True or triggered_flavor_updates == True:
             self.logger.info("trigger setting hosts")
 
             self.resource.update_topology()
-
-        if self.set_flavors() == True:
-            self.logger.info("trigger setting flavors")
-
-            #self.resource.update_metadata()
 
         self.data_lock.release()
 
@@ -147,14 +145,16 @@ class ComputeManager(threading.Thread):
             if lk not in self.resource.logical_groups.keys():
                 self.resource.logical_groups[lk] = deepcopy(_logical_groups[lk])
 
+                self.resource.logical_groups[lk].last_update = time.time()
                 self.logger.warn("new logical group (" + lk + ") added")
 
         for rlk in self.resource.logical_groups.keys():
             rl = self.resource.logical_groups[rlk]
             if rl.group_type != "EX" and rl.group_type != "AFF":
                 if rlk not in _logical_groups.keys():
-                    del self.resource.logical_groups[rlk]
+                    self.resource.logical_groups[rlk].status = "disabled"
 
+                    self.resource.logical_groups[rlk].last_update = time.time()
                     self.logger.warn("logical group (" + rlk + ") removed")
 
         for lk in _logical_groups.keys():
@@ -162,6 +162,8 @@ class ComputeManager(threading.Thread):
             rlg = self.resource.logical_groups[lk]
             if lg.group_type != "EX" and lg.group_type != "AFF":
                 if self._check_logical_group_metadata_update(lg, rlg) == True:
+
+                    rlg.last_update = time.time()
                     self.logger.warn("logical group (" + lk + ") updated")
          
     def _check_logical_group_metadata_update(self, _lg, _rlg):
@@ -280,7 +282,8 @@ class ComputeManager(threading.Thread):
             if _rhost.exist_vm(vm_id) == False:
                 _rhost.vm_list.append(vm_id)
 
-                self.resource.add_vm_to_logical_groups(_rhost, vm_id)
+                # NOTE: do we need this?
+                #self.resource.add_vm_to_logical_groups(_rhost, vm_id)
 
                 topology_updated = True
                 self.logger.warn("host (" + _rhost.name +") updated (new vm placed)")
@@ -303,7 +306,7 @@ class ComputeManager(threading.Thread):
         if self.config.mode.startswith("sim") == True:
             compute = SimCompute(self.config)
         else:
-            if self._set_admin_token() == False or self._set_project_token() == False:               
+            if self._set_admin_token() == False or self._set_project_token() == False:
                 return False
  
             compute = Compute(self.config, self.admin_token, self.project_token)
@@ -322,12 +325,14 @@ class ComputeManager(threading.Thread):
             if fk not in self.resource.flavors.keys():
                 self.resource.flavors[fk] = deepcopy(_flavors[fk])
 
+                self.resource.flavors[fk].last_update = time.time()
                 self.logger.warn("new flavor (" + fk + ") added")
 
         for rfk in self.resource.flavors.keys():
             if rfk not in _flavors.keys():
-                del self.resource.flavors[rfk]
+                self.resource.flavors[rfk].status = "disabled"
 
+                self.resource.flavors[rfk].last_update = time.time()
                 self.logger.warn("flavor (" + rfk + ") removed")
 
         for fk in _flavors.keys():
@@ -335,6 +340,7 @@ class ComputeManager(threading.Thread):
             rf = self.resource.flavors[fk]
 
             if self._check_flavor_spec_update(f, rf) == True:
+                rf.last_update = time.time()
                 self.logger.warn("flavor (" + fk + ") spec updated")
 
     def _check_flavor_spec_update(self, _f, _rf):

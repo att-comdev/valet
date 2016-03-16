@@ -46,7 +46,10 @@ def update_placements(plan, resources, placements):
             name = key
             uuid = resources[key]['uuid']
         properties = placements[key]['properties']
-        location = properties[location_key].split(':')[1]
+        if str(conf.ostro.version) == '2.0':
+            location = properties[location_key]
+        else:
+            location = properties[location_key].split(':')[1]
         placement = Placement(
             name, uuid,
             plan=plan,

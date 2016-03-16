@@ -83,7 +83,9 @@ class OstroMusicProxy(object):
             query = Query(PlacementResult)
             placement_result = query.filter_by(stack_id=stack_id).first()
             if placement_result:
-                return placement_result.placement
+                placement = placement_result.placement
+                placement_result.delete()
+                return placement
             else:
                 time.sleep(1)
         
@@ -104,7 +106,8 @@ class Ostro(object):
             action = 'create'
             resources_update = {}
 
-        if str(conf.ostro.version) == '1.5':
+        if str(conf.ostro.version) == '1.5' or \
+           str(conf.ostro.version) == '2.0':
             mapping = self._build_uuid_map(resources)
             ostro_resources = self._map_names_to_uuids(mapping, resources)
             self._sanitize_resources(ostro_resources)
@@ -124,7 +127,8 @@ class Ostro(object):
         if ostro_resources_update:
             self.request['resources_update'] = ostro_resources_update
 
-        if str(conf.ostro.version) == '1.5':
+        if str(conf.ostro.version) == '1.5' or \
+           str(conf.ostro.version) == '2.0':
             self.request["stack_id"] = self.args['stack_id']
 
     # This is needed until we use the new version of Ostro

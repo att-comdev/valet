@@ -4,7 +4,11 @@ Allegro
 
 Allegro (part of the Valet service suite, including Ostro) gives OpenStack the ability to optimize cloud resources while simultaneously meeting a cloud application's QoS requirements. allegro provides resource plugins to OpenStack Heat for use with QoS services including Tegu and IOArbiter.
 
-NOTE: The master branch currently REQUIRES Music and Ostro 2.0.
+IMPORTANT:
+
+- The master branch currently REQUIRES Music 6.0 or higher and Ostro 2.0.
+- Please ignore any references to Ostro 1.5 and only follow those for Ostro 2.0.
+- SQLAlchemy can't be toggled at this time.
 
 Prerequisites
 -------------
@@ -14,7 +18,7 @@ Prior to installation:
 - Ubuntu 14.04 LTS
 - Python 2.7.6 with pip
 - `Ostro`_ 1.5 or 2.0
-- Music (if Ostro 2.0 is used)
+- Music 6.0 or higher (if Ostro 2.0 is used)
 - `Tegu`_ (QoSLite) if VM-to-VM QoS is required
 - `IOArbiter`_ if VM-to-Volume QoS is required
 
@@ -26,7 +30,11 @@ allegro-openstack (qosorch) requires OpenStack Kilo or higher versions of:
 - heat
 - nova
 
-allegro-api (allegro) requires ostro 1.5. It is recommended that allegro-api be installed in a python virtual environment.
+allegro-api (allegro) requires ostro 1.5.
+
+It is recommended that allegro-api be installed in a python virtual environment.
+
+allegro-openstack can be installed in a python virtual environment IF heat is in the same venv. This is not typically the case, but it is possible depending on the particular configuration of heat.
 
 ostro 1.5 requires the libcurl4-openssl-dev package, followed by pycurl.
 
@@ -50,7 +58,7 @@ Ostro 2.0
 ---------
 
 Install Ostro 2.0 following the instructions from the CodeCloud repository.
-Music is required for Ostro 2.0.
+Music 6.0 or higher is required for Ostro 2.0 as a prerequisite.
 
 Ostro 1.5
 ---------
@@ -130,8 +138,8 @@ The following error might appear when installing allegro-api under python 2.7.6,
 
 `InsecurePlatformWarning`_ : A true SSLContext object is not available. This prevents urllib3 from configuring SSL appropriately and may cause certain SSL connections to fail.
 
-allegro-api Database Setup
---------------------------
+allegro-api SQLAlchemy Setup
+----------------------------
 
 Create an empty ``allegro`` database (e.g., in mysql) using a suitable password:
 
@@ -156,7 +164,12 @@ Edit ``$ALLEGRO_PATH/allegro/config.py`` so that it has matching credentials:
       'encoding':      'utf-8',
   }
 
-Activate a venv if one is being used, then use pecan to setup the database tables on the allegro node. 
+allegro-api Data Store Initialization
+-------------------------------------
+
+These steps are used for both SQLAlchemy and Music.
+
+Activate a venv if one is being used, then use pecan to initialize data storage on the allegro node. 
 
 ::
 

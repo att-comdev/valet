@@ -65,7 +65,7 @@ logging = {
 }
 
 sqlalchemy = {
-    'url': 'mysql+pymysql://root:password@127.0.0.1/allegro?charset=utf8',
+    'url': 'mysql+pymysql://allegro:password@127.0.0.1/allegro?charset=utf8',
     'echo':          True,
     'echo_pool':     True,
     'pool_recycle':  3600,
@@ -75,9 +75,9 @@ sqlalchemy = {
 music = {
     'host': '127.0.0.1',
     'port': '8080',
-    'keyspace': 'valet_0_9'
+    'keyspace': 'valet_test'
 }
 
 ostro = {
-    'version': "1.5",
+    'version': "2.0",
 }

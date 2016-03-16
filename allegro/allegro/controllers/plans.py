@@ -47,6 +47,8 @@ update_schema = (
 
 
 class PlansItemController(object):
+    placements = None
+
     def __init__(self, uuid4):
         self.uuid = uuid4
         #self.plan = Plan.query.filter_by(id=self.uuid).first()
@@ -98,6 +100,9 @@ class PlansItemController(object):
     @index.when(method='DELETE', template='json')
     def index_delete(self, **kw):
         """Delete a Plan"""
+        import pdb; pdb.set_trace()
+        for placement in self.plan.placements():
+            placement.delete()
         self.plan.delete()
         response.status = 204
 

@@ -48,22 +48,31 @@ class ResourceGroup(resource.Resource):
     """
 
     _RELATIONSHIP_TYPES = (
-        AFFINITY, DIVERSITY,
+        AFFINITY, DIVERSITY, EXCLUSIVITY,
     ) = (
-        "affinity", "diversity",
+        "affinity", "diversity", "exclusivity",
     )
 
     PROPERTIES = (
-        RELATIONSHIP, LEVEL, RESOURCES,
+        NAME, RELATIONSHIP, LEVEL, RESOURCES,
     ) = (
-        'relationship', 'level', 'resources',
+        'name', 'relationship', 'level', 'resources',
     )
 
     properties_schema = {
+        NAME: properties.Schema(
+            properties.Schema.STRING,
+            _('Name of relationship. Required for exclusivity groups.'),
+            # TODO: Add a custom constraint that ensures a valid
+            # and allowed name when an exclusivity group is in use.
+            update_allowed=True
+        ),
         RELATIONSHIP: properties.Schema(
             properties.Schema.STRING,
             _('Grouping relationship.'),
-            constraints=[constraints.AllowedValues([AFFINITY, DIVERSITY])],
+            constraints=[
+                constraints.AllowedValues([AFFINITY, DIVERSITY, EXCLUSIVITY])
+            ],
             required=True,
             update_allowed=True
             ),

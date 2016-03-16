@@ -136,9 +136,9 @@ class Base(object):
         #object_session(self).flush([self], *args, **kwargs)
         pass
 
-    def delete(self, *args, **kwargs):
-        #object_session(self).delete(self, *args, **kwargs)
-        pass
+    #def delete(self, *args, **kwargs):
+    #    #object_session(self).delete(self, *args, **kwargs)
+    #    pass
 
     def as_dict(self):
         return dict((k, v) for k, v in self.__dict__.items()

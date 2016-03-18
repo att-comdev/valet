@@ -86,11 +86,15 @@ class AllegroAPIWrapper(object):
         # TODO: Get tenant_id from the heat stack?
         tenant_id = 'e833dea42c7c47d6be25150693fe0f40'
         url = self._api_endpoint() + '/' + tenant_id + '/placements/' + uuid
-        req = requests.get(url, headers=self.headers)
+        try:
+            req = requests.get(url, headers=self.headers)
 
-        # TODO: If not 200 or timeout, do alternate scheduling
-        #req.raise_for_status()
+            # TODO: If not 200 or timeout, do alternate scheduling
+            #req.raise_for_status()
 
-        # TODO: Test key.
-        placement = json.loads(req.text)
+            # TODO: Test key.
+            placement = json.loads(req.text)
+        except:
+            placement = None
+
         return placement

@@ -62,7 +62,7 @@ class AllegroFilter(filters.BaseHostFilter):
 
             # TODO: Ostro will give a matching format (e.g., mtmac2)
             # Nova's format is host
-            if placement.get('location'):
+            if placement and placement.get('location'):
                 location = placement['location']
 
             if not location:

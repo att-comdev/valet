@@ -349,6 +349,13 @@ Edit the ``[DEFAULT]`` section of ``/etc/nova/nova.conf`` so that ``nova-schedul
 
 The two ``scheduler_available_filters`` lines are deliberate. The first is required in order for nova to know where to locate its own default filters. For ``scheduler_default_filters``, ensure that ``AllegroFilter`` is placed last so that it has the final say in scheduling.
 
+Next, add an ``[allegro]`` section:
+
+::
+
+   [allegro]
+   allegro_api_server_url = http://$ALLEGRO_HOST:8090/v1
+
 Restart nova-scheduler:
 
 ::
@@ -366,6 +373,13 @@ Edit the ``[DEFAULT]`` section of ``/etc/cinder/cinder.conf`` so that ``cinder-s
    scheduler_default_filters = AvailabilityZoneFilter, CapacityFilter, CapabilitiesFilter, AllegroFilter
 
 Unlike nova, cinder automatically knows how to locate allegro-openstack's scheduler filter. For ``scheduler_default_filters``, ensure that ``AllegroFilter`` is placed last so that it has the final say in scheduling.
+
+Next, add an ``[allegro]`` section:
+
+::
+
+   [allegro]
+   allegro_api_server_url = http://$ALLEGRO_HOST:8090/v1
 
 Restart cinder-scheduler: 
 

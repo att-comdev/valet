@@ -49,7 +49,7 @@ Levels
 Attributes
 ----------
 
-None at this time.
+None. There is a ``show`` attribute but it is not intended for production use.
 
 Example
 -------
@@ -60,7 +60,7 @@ Given a Heat template with a server and volume resource, declare an affinity bet
 
   resources:
     qos_resource_group:
-      type: ATT::QoS::ResourceGroup
+      type: ATT::CloudQoS::ResourceGroup
       properties:
         name: my_awesome_group
         relationship: affinity
@@ -72,7 +72,7 @@ Given a Heat template with a server and volume resource, declare an affinity bet
 Proposed Notation for 'diverse-affinity'
 ----------------------------------------
 
-Note: This is a proposal and not yet implemented.
+Note: This is a proposal and not yet implemented. It is provided here to aid in open discussion.
 
 Suppose we are given a set of server/volume pairs, and we'd like to treat each pair as an affinity group, and then treat all affinity groups diversely. The following notation makes this diverse affinity pattern easier to describe and with no name repetition.
 
@@ -80,7 +80,7 @@ Suppose we are given a set of server/volume pairs, and we'd like to treat each p
 
   resources:
     qos_resource_group:
-      type: ATT::QoS::ResourceGroup
+      type: ATT::CloudQoS::ResourceGroup
       properties:
         name: my_even_awesomer_group
         relationship: diverse-affinity

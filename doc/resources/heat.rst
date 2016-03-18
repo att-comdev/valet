@@ -56,16 +56,18 @@ Example
 
 Given a Heat template with a server and volume resource, declare an affinity between them at the rack level:
 
-|  resources:
-|    qos_resource_group:
-|      type: ATT::QoS::ResourceGroup
-|      properties:
-|        name: my_awesome_group
-|        relationship: affinity
-|        level: rack
-|        resources:
-|        - {get_resource: server}
-|        - {get_resource: volume}
+::
+
+  resources:
+    qos_resource_group:
+      type: ATT::QoS::ResourceGroup
+      properties:
+        name: my_awesome_group
+        relationship: affinity
+        level: rack
+        resources:
+        - {get_resource: server}
+        - {get_resource: volume}
 
 Proposed Notation for 'diverse-affinity'
 ----------------------------------------
@@ -74,20 +76,22 @@ Note: This is a proposal and not yet implemented.
 
 Suppose we are given a set of server/volume pairs, and we'd like to treat each pair as an affinity group, and then treat all affinity groups diversely. The following notation makes this diverse affinity pattern easier to describe and with no name repetition.
 
-|  resources:
-|    qos_resource_group:
-|      type: ATT::QoS::ResourceGroup
-|      properties:
-|        name: my_even_awesomer_group
-|        relationship: diverse-affinity
-|        level: host
-|        resources:
-|        - - {get_resource: server1}
-|          - {get_resource: volume1}
-|        - - {get_resource: server2}
-|          - {get_resource: volume2}
-|        - - {get_resource: server3}
-|          - {get_resource: volume3}
+::
+
+  resources:
+    qos_resource_group:
+      type: ATT::QoS::ResourceGroup
+      properties:
+        name: my_even_awesomer_group
+        relationship: diverse-affinity
+        level: host
+        resources:
+        - - {get_resource: server1}
+          - {get_resource: volume1}
+        - - {get_resource: server2}
+          - {get_resource: volume2}
+        - - {get_resource: server3}
+          - {get_resource: volume3}
 
 In a hypothetical example of a Ceph deployment with three monitors, twelve OSDs, and one client, each paired with a volume, that means we only need 3 Heat resources instead of 18.
 
@@ -96,67 +100,69 @@ Plugin Schema
 
 Use `heat resource-type-show ATT::CloudQoS::ResourceGroup` to view the schema.
 
-|  {
-|    "support_status": {
-|      "status": "SUPPORTED", 
-|      "message": null, 
-|      "version": null, 
-|      "previous_status": null
-|    }, 
-|    "attributes": {
-|      "show": {
-|        "type": "map", 
-|        "description": "Detailed information about resource."
-|      }
-|    }, 
-|    "properties": {
-|      "resources": {
-|        "type": "list", 
-|        "required": true, 
-|        "update_allowed": true, 
-|        "description": "List of one or more resource IDs.", 
-|        "immutable": false
-|      }, 
-|      "name": {
-|        "type": "string", 
-|        "required": false, 
-|        "update_allowed": true, 
-|        "description": "Name of relationship. Required for exclusivity groups.", 
-|        "immutable": false
-|      }, 
-|      "relationship": {
-|        "description": "Grouping relationship.", 
-|        "required": true, 
-|        "update_allowed": true, 
-|        "type": "string", 
-|        "immutable": false, 
-|        "constraints": [
-|          {
-|            "allowed_values": [
-|              "affinity", 
-|              "diversity", 
-|              "exclusivity"
-|            ]
-|          }
-|        ]
-|      }, 
-|      "level": {
-|        "description": "Level of relationship between resources.", 
-|        "required": false, 
-|        "update_allowed": true, 
-|        "type": "string", 
-|        "immutable": false, 
-|        "constraints": [
-|          {
-|            "allowed_values": [
-|              "host", 
-|              "rack", 
-|              "cluster", 
-|              "any"
-|            ]
-|          }
-|        ]
-|      }
-|    }, 
-|    "resource_type": "ATT::CloudQoS::ResourceGroup"
-|  }
+::
+
+  {
+    "support_status": {
+      "status": "SUPPORTED", 
+      "message": null, 
+      "version": null, 
+      "previous_status": null
+    }, 
+    "attributes": {
+      "show": {
+        "type": "map", 
+        "description": "Detailed information about resource."
+      }
+    }, 
+    "properties": {
+      "resources": {
+        "type": "list", 
+        "required": true, 
+        "update_allowed": true, 
+        "description": "List of one or more resource IDs.", 
+        "immutable": false
+      }, 
+      "name": {
+        "type": "string", 
+        "required": false, 
+        "update_allowed": true, 
+        "description": "Name of relationship. Required for exclusivity groups.", 
+        "immutable": false
+      }, 
+      "relationship": {
+        "description": "Grouping relationship.", 
+        "required": true, 
+        "update_allowed": true, 
+        "type": "string", 
+        "immutable": false, 
+        "constraints": [
+          {
+            "allowed_values": [
+              "affinity", 
+              "diversity", 
+              "exclusivity"
+            ]
+          }
+        ]
+      }, 
+      "level": {
+        "description": "Level of relationship between resources.", 
+        "required": false, 
+        "update_allowed": true, 
+        "type": "string", 
+        "immutable": false, 
+        "constraints": [
+          {
+            "allowed_values": [
+              "host", 
+              "rack", 
+              "cluster", 
+              "any"
+            ]
+          }
+        ]
+      }
+    }, 
+    "resource_type": "ATT::CloudQoS::ResourceGroup"
+  }

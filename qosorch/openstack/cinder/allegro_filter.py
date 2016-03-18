@@ -63,7 +63,7 @@ class AllegroFilter(filters.BaseHostFilter):
 
             # TODO: Ostro will give a matching format (e.g., mtmac2@lvm#LVM)
             # Cinder's format is host@volume_group#pool
-            if placement.get('location'):
+            if placement and placement.get('location'):
                 location = placement['location']
 
             if not location:

@@ -45,11 +45,14 @@ Installing Ostro
 
 Ostro 1.5 and 2.0 are supported. Version 2.0 is strongly recommended.
 
-In the "ostro" section of $ALLEGRO_PATH/allegro/config.py, set the version to 1.5 or 2.0:
+In the "ostro" section of $ALLEGRO_PATH/allegro/config.py, set the version to 1.5 or 2.0::
 
-|  ostro = {
-|      'version': "2.0",
-|  }
+::
+
+  ostro = {
+      'version': "2.0",
+  }
+
 
 Ostro 2.0
 ---------

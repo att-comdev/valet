@@ -2,38 +2,44 @@
 {
   "version": "0.1",
   "action": "create",
-  "stack_id": "app_uuid6",
-  "application_name": "app6",
+  "stack_id": "app_uuid7",
   "resources": {
-    "vm15_uuid": {
-      "name": "vm15",
+    "vm18_uuid": {
+      "name": "vm18",
       "properties": {
         "flavor": "bflavor0"
       },
       "type": "OS::Nova::Server"
     },
-    "vm16_uuid": {
-      "name": "vm16",
+    "vm19_uuid": {
+      "name": "vm19",
       "properties": {
         "flavor": "bflavor0"
       },
       "type": "OS::Nova::Server"
     },
-    "vm17_uuid": {
-      "name": "vm17",
+    "vm20_uuid": {
+      "name": "vm20",
       "properties": {
         "flavor": "bflavor0"
       },
       "type": "OS::Nova::Server"
     },
-    "affinity1_uuid": {
-      "name": "affinity1",
+    "vol0_uuid": {
       "properties": {
-        "relationship": "affinity",
+        "size":1
+      },
+      "type": "OS::Cinder::Volume",
+      "name": "vol0"
+    },
+    "diversity0_uuid": {
+      "name": "diversity0",
+      "properties": {
+        "relationship": "diversity",
         "level": "host",
         "resources": [
-          "vm15_uuid",
-          "vm16_uuid"
+          "vm18_uuid",
+          "vm19_uuid"
         ]
       },
       "type": "ATT::CloudQoS::ResourceGroup"

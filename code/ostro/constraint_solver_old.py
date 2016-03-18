@@ -4,7 +4,7 @@
 ################################################################################################################
 # Author: Gueyoung Jung
 # Contact: gjung@research.att.com
-# Version 2.0.3: Mar. 15, 2016
+# Version 2.0.2: Feb. 9, 2016
 #
 # Functions 
 # - Constrain the search 
@@ -14,9 +14,6 @@
 
 import sys
 
-from openstack_filters import AggregateInstanceExtraSpecsFilter
-from openstack_filters import AvailabilityZoneFilter
-
 sys.path.insert(0, '../app_manager')
 from app_topology_base import VGroup, VM, Volume, VGroupLink, VMLink, VolumeLink, LEVELS
 
@@ -25,9 +22,6 @@ class ConstraintSolver:
 
     def __init__(self, _logger):
         self.logger = _logger
-
-        self.openstack_AIES = AggregateInstanceExtraSpecsFilter(self.logger)
-        self.openstack_AZ = AvailabilityZoneFilter(self.logger)
 
         self.status = "success"
 
@@ -60,22 +54,17 @@ class ConstraintSolver:
             return candidate_list
 
         # Host Aggregate constraint
-        if isinstance(_n.node, VGroup) or isinstance(_n.node, VM):
-            #if len(_n.node.host_aggregates) > 0:
-            if len(_n.node.extra_specs_list) > 0:
-                self._constrain_host_aggregates(_level, _n, candidate_list)
+        if len(_n.node.host_aggregates) > 0:
+            self._constrain_host_aggregates(_level, _n, candidate_list)
+            if len(candidate_list) == 0:
+                self.status = "violate host aggregate constraint for node = " + _n.node.name
+                self.logger.error(self.status)
+                return candidate_list
+        else:
+            if _level == "host":
+                self._constrain_non_host_aggregates(candidate_list)
                 if len(candidate_list) == 0:
-                    self.status = "violate host aggregate constraint for node = " + _n.node.name
-                    self.logger.error(self.status)
-                    return candidate_list
-
-        # Availability Zone constraint
-        if isinstance(_n.node, VGroup) or isinstance(_n.node, VM):
-            if (isinstance(_n.node, VM) and _n.node.availability_zone != None) or \
-               (isinstance(_n.node, VGroup) and len(_n.node.availability_zone_list) > 0):       
-                self._constrain_availability_zone(_level, _n, candidate_list)
-                if len(candidate_list) == 0:
-                    self.status = "violate availability zone constraint for node = " + _n.node.name
+                    self.status = "violate non host aggregate constraint for node = " + _n.node.name
                     self.logger.error(self.status)
                     return candidate_list
 
@@ -88,25 +77,21 @@ class ConstraintSolver:
                 return candidate_list
 
         # Exclusivity constraint
-        exclusivities = self.get_exclusivities(_n.node.exclusivity_groups, _level)
-
-        if len(exclusivities) > 1:
-            self.status = "violate exclusivity constraint (more than one exclusivity) for node = " + _n.node.name
-            self.logger.error(self.status)
-            return []
-        else:
-            if len(exclusivities) == 1:
-                self._constrain_exclusivity(_level, exclusivities[exclusivities.keys()[0]], candidate_list)
-                if len(candidate_list) == 0:
-                    self.status = "violate exclusivity constraint for node = " + _n.node.name
-                    self.logger.error(self.status)
-                    return candidate_list
-            else:
+        exclusivity_id = _n.get_exclusivity_id()
+        if exclusivity_id == None:
+            exclusivity_id = _n.get_parent_exclusivity_id()
+            if exclusivity_id == None:
                 self._constrain_non_exclusivity(_level, candidate_list)
                 if len(candidate_list) == 0:
                     self.status = "violate non-exclusivity constraint for node = " + _n.node.name
                     self.logger.error(self.status)
                     return candidate_list
+        else:
+            self._constrain_exclusivity(_level, exclusivity_id, candidate_list)
+            if len(candidate_list) == 0:
+                self.status = "violate exclusivity constraint for node = " + _n.node.name
+                self.logger.error(self.status)
+                return candidate_list
 
         # Affinity constraint
         affinity_id = _n.get_affinity_id()
@@ -165,15 +150,6 @@ class ConstraintSolver:
 
         return conflict
 
-    def get_exclusivities(self, _exclusivity_groups, _level):
-        exclusivities = {}
-   
-        for exk, level in _exclusivity_groups.iteritems():
-            if level.split(":")[0] == _level:
-                exclusivities[exk] = level
-
-        return exclusivities
-
     def _constrain_exclusivity(self, _level, _exclusivity_id, _candidate_list):
         candidate_list = self._get_exclusive_candidates(_level, _exclusivity_id, _candidate_list)
 
@@ -230,11 +206,33 @@ class ConstraintSolver:
         
         return match
         
+    def _constrain_non_host_aggregates(self, _candidate_list):
+        conflict_list = []
+
+        for r in _candidate_list:
+            if self.conflict_host_aggregates(r.host_memberships) == True:
+                if r not in conflict_list:
+                    conflict_list.append(r)
+
+                    debug_resource_name = r.host_name
+                    self.logger.debug("violates the non host aggregate in resource = " + debug_resource_name)
+
+        _candidate_list[:] = [c for c in _candidate_list if c not in conflict_list]
+
+    def conflict_host_aggregates(self, _memberships):
+        conflict = False
+
+        for lgk, lg in _memberships.iteritems():
+            if lg.group_type == "AGGR":
+                conflict = True
+
+        return conflict
+
     def _constrain_host_aggregates(self, _level, _n, _candidate_list):
         conflict_list = []
 
         for r in _candidate_list:
-            if self.check_host_aggregates(_level, r, _n.node) == False:
+            if self.check_host_aggregates(_level, _n.node, r) == False:
                 if r not in conflict_list:
                     conflict_list.append(r)
 
@@ -243,11 +241,9 @@ class ConstraintSolver:
 
         _candidate_list[:] = [c for c in _candidate_list if c not in conflict_list]
 
-    def check_host_aggregates(self, _level, _candidate, _v):
-        return self.openstack_AIES.host_passes(_level, _candidate, _v)
-        #return self._match_host_aggregates(_v, _candidate.get_memberships(_level))
+    def check_host_aggregates(self, _level, _v, _candidate):
+        return self._match_host_aggregates(_v, _candidate.get_memberships(_level))
 
-    '''
     def _match_host_aggregates(self, _v, _target_memberships):
         if isinstance(_v, VM):
             match = True
@@ -262,30 +258,13 @@ class ConstraintSolver:
         elif isinstance(_v, VGroup):
             match = True
 
-            for sgk, sg in _v.subvgroups.iteritems():
+            for sg in _v.subvgroup_list:
                 match = self._match_host_aggregates(sg, _target_memberships)
                 if match == False:
                     break
 
             return match
-    '''
   
-    def _constrain_availability_zone(self, _level, _n, _candidate_list):
-        conflict_list = []
-
-        for r in _candidate_list:
-            if self.check_availability_zone(_level, r, _n.node) == False:
-                if r not in conflict_list:
-                    conflict_list.append(r)
-
-                    debug_resource_name = r.get_resource_name(_level)
-                    self.logger.debug("violates the availability zone in resource = " + debug_resource_name)
-
-        _candidate_list[:] = [c for c in _candidate_list if c not in conflict_list]
-
-    def check_availability_zone(self, _level, _candidate, _v):
-        return self.openstack_AZ.host_passes(_level, _candidate, _v)
-
     def _constrain_diversity(self, _level, _n, _node_placements, _candidate_list):
         conflict_list = []
 

@@ -404,6 +404,7 @@ class Resource:
 
         return flavor
 
+    '''
     def get_matched_logical_groups(self, _flavor):
         logical_group_list = []
 
@@ -422,7 +423,7 @@ class Resource:
                 break
 
         return match
-
+    '''
 
 
 

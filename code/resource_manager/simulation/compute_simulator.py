@@ -49,7 +49,6 @@ class SimCompute():
     def _set_aggregates(self, _hosts, _logical_groups):
         for a_num in range(0, self.config.num_of_aggregates):
             metadata = {}
-            #metadata["availability_zone"] = "nova"
             metadata["aggregate_sim"] = str(a_num)
         
             aggregate = LogicalGroup("aggregate" + str(a_num))

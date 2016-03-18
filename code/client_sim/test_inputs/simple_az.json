@@ -2,27 +2,28 @@
 {
   "version": "0.1",
   "action": "create",
-  "stack_id": "app_uuid1",
-  "application_name": "app1",
+  "stack_id": "app_uuid9",
+  "application_name": "app9",
   "resources": {
-    "vm0_uuid": {
-      "name": "vm0",
+    "vm24_uuid": {
+      "name": "vm24",
       "properties": {
         "flavor": "bflavor0"
       },
       "type": "OS::Nova::Server"
     },
-    "vm1_uuid": {
-      "name": "vm1",
+    "vm25_uuid": {
+      "name": "vm25",
       "properties": {
         "flavor": "bflavor0"
       },
       "type": "OS::Nova::Server"
     },
-    "vm2_uuid": {
-      "name": "vm2",
+    "vm26_uuid": {
+      "name": "vm26",
       "properties": {
-        "flavor": "sflavor0"
+        "flavor": "bflavor0",
+        "availability_zone": "nova1"
       },
       "type": "OS::Nova::Server"
     }

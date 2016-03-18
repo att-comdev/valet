@@ -114,13 +114,13 @@ class Compute:
             aggregate_list = aggregates["aggregates"]
 
             for a in aggregate_list:
-                if a["deleted"] == "false":
+                if a["deleted"] == False:
                     aggregate = LogicalGroup(a["name"])
                     aggregate.group_type = "AGGR"
                     
                     metadata = {}
-                    for mk, mv in a.metadata.iteritems():
-                        metadata[mk] = mv
+                    for mk in a["metadata"].keys():
+                        metadata[mk] = a["metadata"][mk]
                     aggregate.metadata = metadata
 
                     _logical_groups[aggregate.name] = aggregate
@@ -374,10 +374,11 @@ if __name__ == '__main__':
     logical_groups = {}
     flavors = {}
 
-    #c._set_availability_zones(hosts, logical_groups)
-    #c._set_aggregates(hosts, logical_groups)
+    c._set_availability_zones(hosts, logical_groups)
+    #c._set_aggregates(None, logical_groups)
     #c._set_placed_vms(hosts, logical_groups)
     #c._set_resources(hosts)
-    c.set_flavors(flavors)
+    #c.set_flavors(flavors)
 '''
+
 

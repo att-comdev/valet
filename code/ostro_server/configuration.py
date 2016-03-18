@@ -66,6 +66,7 @@ class Config:
         self.db_response_table = None
         self.db_event_table = None
         self.db_resource_table = None
+        self.db_app_table=None
         self.db_resource_index_table = None
         self.db_app_index_table = None
 
@@ -183,6 +184,8 @@ class Config:
                     self.db_event_table = v.strip()
                 elif k == "db_resource_table":
                     self.db_resource_table = v.strip()
+                elif k == "db_app_table":
+                    self.db_app_table = v.strip()
                 elif k == "db_resource_index_table":
                     self.db_resource_index_table = v.strip()
                 elif k == "db_app_index_table":

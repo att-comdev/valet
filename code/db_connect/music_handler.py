@@ -57,6 +57,13 @@ class MusicHandler:
         self.music.create_table(self.config.db_keyspace, self.config.db_resource_table, schema)      
 
         schema = {
+            'stack_id': 'text',
+            'app': 'text',
+            'PRIMARY KEY': '(stack_id)'                                                         
+        }
+        self.music.create_table(self.config.db_keyspace, self.config.db_app_table, schema)      
+
+        schema = {
             'site_name': 'text',
             'app_log_index': 'text',
             'PRIMARY KEY': '(site_name)'                                                         
@@ -196,6 +203,18 @@ class MusicHandler:
         }                                                                                        
                                                                                                  
         self.music.create_row(self.config.db_keyspace, self.config.db_app_index_table, data)
+
+    def add_app(self, _k, _app_data):
+        self.music.delete_row_eventually(self.config.db_keyspace, self.config.db_app_table, 'stack_id', _k)
+        
+        data = {                                                                                 
+            'stack_id': _k,     
+            'app': json.dumps(_app_data)                                               
+        }                                                                                        
+                                                                                                 
+        self.music.create_row(self.config.db_keyspace, self.config.db_app_table, data)
+
+
 
 
 

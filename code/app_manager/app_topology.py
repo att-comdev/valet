@@ -37,7 +37,7 @@ class AppTopology:
 
         if len(vgroups) == 0 and len(vms) == 0 and len(volumes) == 0:
             self.status = self.parser.status
-            return None
+            return (self.parser.stack_id, self.parser.application_name)
 
         # Cumulate virtual resources    
         for vgk, vgroup in vgroups.iteritems():

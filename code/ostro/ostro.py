@@ -72,7 +72,7 @@ class Ostro:
         while self.end_of_process == False:
             time.sleep(1)
 
-            self.logger.debug("ostro running......")
+            #self.logger.debug("ostro running......")
 
             if self.config.db_keyspace != "none":
                 (event_list, request_list) = self.db.get_requests()
@@ -138,36 +138,37 @@ class Ostro:
         return True
 
     def place_app(self, _app_data):
-        self.logger.info("start app placement")
+        self.logger.info("--- start app placement ---")
 
         result = None
 
         start_time = time.time()
-        placement_map = self._place_app(_app_data)
+        (stack_id, placement_map) = self._place_app(_app_data)
         end_time = time.time()
 
-        if placement_map == None:
-            result = self._get_json_results("error", self.ostro.status, None)
+        if len(placement_map) == 0:
+            result = self._get_json_results("error", self.status, stack_id, placement_map)
+            self.logger.error("error while placing app = " + stack_id)
         else:
-            result = self._get_json_results("ok", "success", placement_map)
+            result = self._get_json_results("ok", "success", stack_id, placement_map)
 
         self.logger.info("total running time of place_app = " + str(end_time - start_time) + " sec")
-        self.logger.info("done app placement")
+        self.logger.info("--- done app placement ---")
 
         return result
 
     def _place_app(self, _app_data):
         self.data_lock.acquire(1) 
 
-        app_topology = self.app_handler.add_app(_app_data)
+        (stack_id, app_topology) = self.app_handler.add_app(_app_data)
         if app_topology == None:                                                                 
             self.status = self.app_handler.status
-            return None
+            return (stack_id, {})
                  
-        placement_map = self.optimizer.place(app_topology) 
-        if placement_map == None:                                                                
+        (stack_id, placement_map) = self.optimizer.place(app_topology) 
+        if len(placement_map) == 0: 
             self.status = self.optimizer.status
-            return None
+            return (stack_id, placement_map)
 
         resource_status = self.resource.update_topology()  
 
@@ -175,9 +176,9 @@ class Ostro:
 
         self.data_lock.release()
 
-        return placement_map
+        return (stack_id, placement_map)
 
-    def _get_json_results(self, _status_type, _status_message, _placement_map):
+    def _get_json_results(self, _status_type, _status_message, _stack_id, _placement_map):
         applications = {}
         result = {}
 
@@ -195,17 +196,28 @@ class Ostro:
                 properties = {"properties":resource_property}
                 resources[v.uuid] = properties
 
-        for appk, app_resources in applications.iteritems():
-            app_result = {}
+            for appk, app_resources in applications.iteritems():
+                app_result = {}
+                app_status ={}
 
+                app_status['type'] = _status_type
+                app_status['message'] = _status_message
+
+                app_result['status'] = app_status
+                app_result['resources'] = app_resources
+
+                result[appk] = app_result
+        else:
+            app_result = {}
             app_status ={}
+
             app_status['type'] = _status_type
             app_status['message'] = _status_message
 
             app_result['status'] = app_status
-            app_result['resources'] = app_resources
+            app_result['resources'] = {}
 
-            result[appk] = app_result
+            result[_stack_id] = app_result
 
         return result
 

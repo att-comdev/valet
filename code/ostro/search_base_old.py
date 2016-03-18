@@ -4,7 +4,7 @@
 #################################################################################################################
 # Author: Gueyoung Jung
 # Contact: gjung@research.att.com
-# Version 2.0.3: Mar. 15, 2016
+# Version 2.0.2: Feb. 15, 2016
 #
 #################################################################################################################
 
@@ -154,8 +154,6 @@ class LogicalGroupResource:
         self.name = None
         self.group_type = "AGGR"
 
-        self.metadata = {}
-
         self.num_of_placed_vms = 0
         self.num_of_placed_vms_per_host = {}   # key = host (i.e., id of host or rack), value = num_of_placed_vms
 
@@ -232,7 +230,6 @@ class Node:
 
         return common_level
 
-    '''
     def get_exclusivity_id(self):
         exc_id = None
 
@@ -240,7 +237,6 @@ class Node:
             exc_id = self.node.level + ":" + self.node.name
 
         return exc_id
-    '''
 
     def get_affinity_id(self):
         aff_id = None
@@ -250,7 +246,6 @@ class Node:
 
         return aff_id
 
-    '''
     def get_parent_exclusivity_id(self):
         exc_id = None
 
@@ -262,7 +257,6 @@ class Node:
                 exc_id = n.get_parent_exclusivity_id()
 
         return exc_id
-    '''
 
 
 def compute_reservation(_level, _placement_level, _bandwidth):

@@ -4,7 +4,7 @@
 #################################################################################################################
 # Author: Gueyoung Jung
 # Contact: gjung@research.att.com
-# Version 2.0.3: Mar. 15, 2016
+# Version 2.0.2: Feb. 9, 2016
 #
 # Functions
 # - Search the optimal placement
@@ -196,9 +196,6 @@ class Search:
             lgr.name = lgk
             lgr.group_type = lg.group_type
 
-            for mk, mv in lg.metadata.iteritems():
-                lgr.metadata[mk] = mv
-
             lgr.num_of_placed_vms = len(lg.vm_list)
             for hk in lg.vms_per_host.keys():
                 lgr.num_of_placed_vms_per_host[hk] = len(lg.vms_per_host[hk])
@@ -314,7 +311,6 @@ class Search:
         
     def _run_greedy(self, _open_node_list, _level, _avail_hosts):
         success = True
-        stack_id = None
 
         avail_resources = {}
         if _level == "cluster":
@@ -337,12 +333,12 @@ class Search:
         while len(_open_node_list) > 0:
             n = _open_node_list.pop(0)
 
-            self.logger.debug("level = " + _level + ", placing node = " + n.node.name)
+            self.logger.debug("level = " + _level)
+            self.logger.debug("placing node = " + n.node.name)
 
             best_resource = self._get_best_resource(n, _level, avail_resources)
             if best_resource == None:
                 success = False
-                stack_id = n.node.app_uuid
                 break
 
             debug_best_resource = None
@@ -362,7 +358,7 @@ class Search:
             # Close all types of nodes under any level, but VM or Volume with above host level
             self._close_node_placement(_level, best_resource, n.node)
 
-        return (success, stack_id)
+        return success
 
     def _get_best_resource(self, _n, _level, _avail_resources):
         candidate_list = self.constraint_solver.compute_candidate_list(_level, \
@@ -450,7 +446,7 @@ class Search:
                         if LEVELS.index(_n.node.level) < LEVELS.index(_level):
                             vgroups[_n.node.uuid] = _n.node
                         else:
-                            for sgk, sg in _n.node.subvgroups.iteritems():
+                            for sg in _n.node.subvgroup_list:
                                 if isinstance(sg, VM):
                                     vms[sg.uuid] = sg
                                 elif isinstance(sg, Volume):
@@ -478,8 +474,7 @@ class Search:
                                 avail_hosts[hk] = h
 
                     # Recursive call
-                    (success, stack_id) = self._run_greedy(open_node_list, level, avail_hosts)
-                    if success == True:
+                    if self._run_greedy(open_node_list, level, avail_hosts) == True:
                         best_resource = copy.deepcopy(cr)
                         best_resource.level = _level
                         break
@@ -684,10 +679,7 @@ class Search:
 
         candidate = copy.deepcopy(_candidate) 
 
-        exclusivity_ids = self.constraint_solver.get_exclusivities(_n.node.exclusivity_groups, _level)
-        exclusivity_id = None
-        if len(exclusivity_ids) > 0:
-            exclusivity_id = exclusivity_ids[exclusivity_ids.keys()[0]]
+        exclusivity_id = _n.get_exclusivity_id()
         temp_exclusivity_insert = False 
         if exclusivity_id != None:
             if exclusivity_id not in self.avail_logical_groups.keys():
@@ -829,31 +821,28 @@ class Search:
                                                                   _candidate) == False:
             return False
 
-        if isinstance(_n.node, VM):
-            #if len(_n.node.host_aggregates) > 0:
-            if len(_n.node.extra_specs_list) > 0:
-                if self.constraint_solver.check_host_aggregates(_level, _candidate, _n.node) == False:
-                    return False
-
-        if isinstance(_n.node, VM):
-            if _n.node.availability_zone != None:
-                if self.constraint_solver.check_availability_zone(_level, _candidate, _n.node) == False:
+        if len(_n.node.host_aggregates) > 0:
+            if self.constraint_solver.check_host_aggregates(_level, _n.node, _candidate) == False:
+                return False
+        else:
+            if _level == "host":
+                if self.constraint_solver.conflict_host_aggregates(_candidate.memberships) == True:
                     return False
 
         if self.constraint_solver.conflict_diversity(_level, _n, self.node_placements, _candidate) == True:
             return False
 
-        exclusivities = self.constraint_solver.get_exclusivities(_n.node.exclusivity_groups, _level)
-        if len(exclusivities) > 1:
-            pass
-        else:
-            if len(exclusivities) == 1:
-                exc_id = exclusivities[exclusivities.keys()[0]]    
-                if self.constraint_solver.check_exclusivity(_level, exc_id, _candidate) == False:
-                    return False
-            else:
+        exc_id = _n.get_exclusivity_id()
+        if exc_id == None:
+            exc_id = _n.get_parent_exclusivity_id()
+            if exc_id == None:
                 if self.constraint_solver.conflict_exclusivity(_level, _candidate) == True:
                     return False
+            else: # no way to check
+                pass
+        else:
+            if self.constraint_solver.check_exclusivity(_level, exc_id, _candidate) == False:
+                return False
 
         aff_id = _n.get_affinity_id()
         if aff_id != None:
@@ -916,7 +905,7 @@ class Search:
     def _check_vm_included(self, _v):
         is_vm_included = False
 
-        for svk, sv in _v.subvgroups.iteritems():
+        for sv in _v.subvgroup_list:
             if isinstance(sv, VM):
                 is_vm_included = True
                 break
@@ -978,10 +967,7 @@ class Search:
                 sr.avail_bandwidths = [bw - _rsrv[2] for bw in sr.avail_bandwidths]    
  
     def _deduct_reservation(self, _level, _best, _n):
-        exclusivities = self.constraint_solver.get_exclusivities(_n.node.exclusivity_groups, _level)
-        exclusivity_id = None
-        if len(exclusivities) == 1:
-            exclusivity_id = exclusivities[exclusivities.keys()[0]]
+        exclusivity_id = _n.get_exclusivity_id()
         if exclusivity_id != None:
             self._add_exclusivity(_level, _best, exclusivity_id)
 
@@ -1183,21 +1169,20 @@ class Search:
 
         elif isinstance(_v, VGroup):
             if _v in self.node_placements.keys():
+                if _v.vgroup_type == "EX":
+                    exclusivity_id = _v.level + ":" + _v.name
+                    chosen_host = self.avail_hosts[self.node_placements[_v].host_name]
+
+                    self._remove_exclusivity(chosen_host, exclusivity_id, self.node_placements[_v].level) 
+
                 if _v.vgroup_type == "AFF":
                     affinity_id = _v.level + ":" + _v.name
                     chosen_host = self.avail_hosts[self.node_placements[_v].host_name]
 
                     self._remove_affinity(chosen_host, affinity_id, self.node_placements[_v].level)
 
-            for vk, v in _v.subvgroups.iteritems():
+            for v in _v.subvgroup_list:
                 self._rollback_reservation(v) 
-
-        exclusivities = self.constraint_solver.get_exclusivities(_v.exclusivity_groups, \
-                                                                 self.node_placements[_v].level)
-        if len(exclusivities) == 1:
-            exclusivity_id = exclusivities[exclusivities.keys()[0]]
-            chosen_host = self.avail_hosts[self.node_placements[_v].host_name]
-            self._remove_exclusivity(chosen_host, exclusivity_id, self.node_placements[_v].level) 
 
     def _remove_exclusivity(self, _chosen_host, _exclusivity_id, _level):
         if _exclusivity_id.split(":")[0] == _level: 
@@ -1390,7 +1375,7 @@ class Search:
             del self.node_placements[_v]
 
         if isinstance(_v, VGroup):
-            for sgk, sg in _v.subvgroups.iteritems():
+            for sg in _v.subvgroup_list:
                 self._rollback_node_placement(sg)
 
 

@@ -67,6 +67,10 @@ class App:
                 'Volumes':vols, \
                 'VGroups':vgs}
 
-
+    def log_in_info(self):
+        return {'request_type':self.request_type, \
+                'timestamp':self.timestamp_scheduled, \
+                'id':self.app_id, \
+                'name':self.app_name}
 
 

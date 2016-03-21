@@ -20,25 +20,25 @@ Properties
 
 Note: Property characteristics are presently under review and may be revised.
 
-* **name** (String)
-  * Name of relationship. Required for exclusivity groups.
-  * Can be updated without replacement.
+- **name** (String)
+  - Name of relationship. Required for exclusivity groups.
+  - Can be updated without replacement.
 
-* **relationship** (String)
-  * Grouping relationship.
-  * Allowed values: affinity, diversity, exclusivity
-  * Can be updated without replacement.
-  * Required property.
+- **relationship** (String)
+  - Grouping relationship.
+  - Allowed values: affinity, diversity, exclusivity
+  - Can be updated without replacement.
+  - Required property.
 
-* **level** (String)
-  * Level of relationship between resources.
-  * See list below for allowed values.
-  * Can be updated without replacement.
+- **level** (String)
+  - Level of relationship between resources.
+  - See list below for allowed values.
+  - Can be updated without replacement.
 
-* **resources** (List)
-  * List of associated resource IDs.
-  * Can be updated without replacement.
-  * Required property.
+- **resources** (List)
+  - List of associated resource IDs.
+  - Can be updated without replacement.
+  - Required property.
 
 Levels
 ^^^^^^

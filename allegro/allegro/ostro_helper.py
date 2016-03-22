@@ -32,6 +32,8 @@ else:
 
 class OstroMusicProxy(object):
     testing = False
+    tries = 10  # Number of times to poll for placement.
+    interval = 1  # Interval in seconds to poll for placement.
 
     # Request is JSON
     def place(self, stack_id, request):
@@ -78,8 +80,8 @@ class OstroMusicProxy(object):
             )
 
         # Now wait for a response. Unfortunately this is blocking.
-        # TODO: This really belongs in allegro-engine once it is available..
-        while True:
+        # TODO: This really belongs in allegro-engine once it exists.
+        for tries in range(self.tries, 0, -1):
             query = Query(PlacementResult)
             placement_result = query.filter_by(stack_id=stack_id).first()
             if placement_result:
@@ -87,8 +89,13 @@ class OstroMusicProxy(object):
                 placement_result.delete()
                 return placement
             else:
-                time.sleep(1)
-        
+                time.sleep(self.interval)
+        return {
+            'status': {
+                'type': 'error',
+                'message': 'Timed out waiting for placement result.'
+            }
+        }
 
 class Ostro(object):
     def __init__(self, **kwargs):
@@ -201,7 +208,8 @@ class Ostro(object):
         else:
             optimizer = Optimization()
 
-        if 'update_dc_topology' in dir(optimizer):
+        if str(conf.ostro.version) == '1.5' and \
+                'update_dc_topology' in dir(optimizer):
             update_result = optimizer.update_dc_topology()
             if update_result != "done":
                 # Fake an Ostro response with an error status

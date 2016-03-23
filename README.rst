@@ -55,8 +55,8 @@ Clone the git repository from AT&T CodeCloud, using a ``$CODECLOUD_USER`` accoun
 
 ::
 
-  $ git clone https://$CODECLOUD_USER@codecloud.web.att.com/scm/st_cloudqos/allegro.git \n
-  $ cd allegro
+$ git clone https://$CODECLOUD_USER@codecloud.web.att.com/scm/st_cloudqos/allegro.git
+$ cd allegro
 
 Both allegro-openstack and allegro-api can be installed in production mode or developer mode.
 

@@ -2,13 +2,9 @@
 Allegro
 =======
 
-Allegro (part of the Valet service suite, including Ostro) gives OpenStack the ability to optimize cloud resources while simultaneously meeting a cloud application's QoS requirements. allegro provides resource plugins to OpenStack Heat for use with QoS services including Tegu and IOArbiter.
+Allegro (part of the Valet service suite, along with Ostro) gives OpenStack the ability to optimize cloud resources while simultaneously meeting a cloud application's QoS requirements. Allegro provides an api service, plus OpenStack Heat resource plugins. Allegro can also interact with QoS services including Tegu and IOArbiter.
 
-IMPORTANT:
-
-- The master branch currently REQUIRES Music 6.0 or higher and Ostro 2.0.
-- Please ignore any references to Ostro 1.5 and only follow those for Ostro 2.0.
-- SQLAlchemy can't be toggled at this time.
+**IMPORTANT**: `AT&T AIC Installation`_ is covered in a separate document.
 
 Prerequisites
 -------------
@@ -17,100 +13,56 @@ Prior to installation:
 
 - Ubuntu 14.04 LTS
 - Python 2.7.6 with pip
-- `Ostro`_ 1.5 or 2.0
-- Music 6.0 or higher (if Ostro 2.0 is used)
+- Music 6.0
+- `Ostro`_ 2.0
 - `Tegu`_ (QoSLite) if VM-to-VM QoS is required
 - `IOArbiter`_ if VM-to-Volume QoS is required
 
-Root or sudo privileges are required for some operations.
+Allegro installation consists of two components:
 
-allegro-openstack (qosorch) requires OpenStack Kilo or higher versions of:
+- allegro-openstack (formerly qosorch)
+- allegro-api (formerly allegro)
+::
 
-- cinder
-- heat
-- nova
 
-allegro-api (allegro) requires ostro 1.5.
 
-It is recommended that allegro-api be installed in a python virtual environment.
+Allegro is compatible with OpenStack heat-kilo, cinder-juno, and nova-juno.
 
-allegro-openstack can be installed in a python virtual environment IF heat is in the same venv. This is not typically the case, but it is possible depending on the particular configuration of heat.
+Throughout this document, the following installation-specific items are used:
 
-ostro 1.5 requires the libcurl4-openssl-dev package, followed by pycurl.
+- ``$ALLEGRO_HOST``: allegro-api hostname or FQDN
+- ``$ALLEGRO_PATH``: Allegro git repository filesystem path
+- ``$ALLEGRO_DBPASS``: Allegro database password
+- ``$APACHE2_CONFIG_PATH``: apache2 httpd server configuration path
+- ``$CODECLOUD_USER``: AT&T CodeCloud user id
+- ``$CONTROLLER``: OpenStack controller node hostname or FQDN
+- ``$DESIRED_ID``: Desired allegro Ubuntu user and group id
+- ``$IOARBITER_HOST``: IOArbiter API hostname or FQDN
+- ``$PATH_TO_VENV``: Allegro API virtual environment path
+- ``$TEGU_HOST``: Tegu API hostname or FQDN
+
+Root or sudo privileges are required for some steps.
+
+A Note About Python Virtual Environments
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+It is recommended to install allegro-api within a python `virtual environment`_ (venv). This avoids instabilities and conflicts within the default Python environment.
+
+As allegro-openstack works in concert with OpenStack services, it must be installed in the same venv used by heat, cinder, and nova, if any. If no venv is used, there is no choice but to install allegro-openstack in the default Python environment.
 
 All other prerequisites will be auto-installed.
-
-Installing Ostro
-----------------
-
-Ostro 1.5 and 2.0 are supported. Version 2.0 is strongly recommended.
-
-In the "ostro" section of $ALLEGRO_PATH/allegro/config.py, set the version to 1.5 or 2.0::
-
-::
-
-  ostro = {
-      'version': "2.0",
-  }
-
-
-Ostro 2.0
----------
-
-Install Ostro 2.0 following the instructions from the CodeCloud repository.
-Music 6.0 or higher is required for Ostro 2.0 as a prerequisite.
-
-Ostro 1.5
----------
-
-Ostro 1.5 is to be installed on the same host and in the same environment as allegro-api.
-
-Ostro 1.5 is delivered in a tar/gzip file without a relative path. On Ubuntu, because ostro is a manual installation, unpack it in python's `site-packages`_ (vs. dist-packages),like so:
-
-::
-
-  $ cd /usr/local/lib/python2.7/site-packages
-  $ sudo mkdir ostro15
-  $ sudo tar -C ostro15 -xzf $ARCHIVE_PATH/ostro15.tgz
-
-If a virtual environment (venv) is used for allegro-api, install ostro in the venv's site-packages directory instead:
-
-::
-
-  $ cd $VENV_PATH/local/lib/python2.7/site-packages
-  $ mkdir ostro15
-  $ sudo tar -C ostro15 -xzf $ARCHIVE_PATH/ostro15.tgz
-
-Note that the python library location may vary slightly depending on the venv setup.
-
-In both cases, should this not work for any reason, use dist-packages as a fallback location.
-
-Link ``ostro.auth`` from the ostro 1.5 package directory into ``/etc/ostro/ostro.auth`` (not ostro15.auth):
-
-::
-
-  $ sudo mkdir /etc/ostro; cd /etc/ostro
-  $ sudo ln -s $OSTRO_PATH/ostro.auth .
-
-Ostro 1.5 requires the ``tegu_req`` command line interface. It does not call the tegu API. If Tegu is installed on another host, perform the following steps:
-
-* Copy ``/usr/bin/tegu_req`` and ``/usr/bin/rjprt`` from the Tegu host onto the Ostro host.
-* Install the korn shell using ``sudo apt-get install ksh``
-* Edit ``/usr/bin/tegu_req`` and change the line ``host=localhost:$port`` to use the Tegu FQDN instead of localhost.
-
-Looking forward, once ostro comes with a python setup, it will be automatically installed in the appropriate packages directory. At that time, it is recommended to uninstall this version of Ostro before proceeding. venvs may still use site-packages, however Ubuntu will likely install into dist-packages.
 
 Installing Allegro
 ------------------
 
-Clone the git repository from AT&T CodeCloud, using a ``$CODECLOUD_USER`` with appropriate credentials:
+Clone the git repository from AT&T CodeCloud, using a ``$CODECLOUD_USER`` account with appropriate credentials:
 
 ::
 
   $ git clone https://$CODECLOUD_USER@codecloud.web.att.com/scm/st_cloudqos/allegro.git
   $ cd allegro # this is $ALLEGRO_PATH
 
-Both allegro-openstack (qosorch) and allegro-api (allegro) can be installed in production or developer (editable) mode. pip will install any python dependencies required by each.
+Both allegro-openstack and allegro-api can be installed in production mode or developer mode.
 
 Install allegro-openstack on an OpenStack controller node containing heat-engine, nova-scheduler, and cinder-scheduler.
 
@@ -128,18 +80,14 @@ Install allegro-api in the venv on the designated allegro node (which could be t
   production: (VENV) $ pip install $ALLEGRO_PATH/allegro
   developer:  (VENV) $ pip install --editable $ALLEGRO_PATH/allegro
 
-It is very strongly recommended to create a python `virtual environment`_ (venv) for allegro-api.
-
-For instance, Ubuntu 14.04 uses pecan 0.3.0, which is out of date. Updating an Ubuntu package via pip can lead to instabilities. Uninstalling an Ubuntu package can lead to instabilities in other packages that expect it. Using a venv avoids such conflicts.
-
-(Note: By way of contrast, allegro-openstack works in concert with OpenStack services, and OpenStack is not usually installed using a venv.)
-
-The following error might appear when installing allegro-api under python 2.7.6, however SSL is not currently used by allegro-api.
+While the following error might appear when installing allegro-api under python 2.7.6, note that SSL is not currently used by allegro-api.
 
 `InsecurePlatformWarning`_ : A true SSLContext object is not available. This prevents urllib3 from configuring SSL appropriately and may cause certain SSL connections to fail.
 
 allegro-api SQLAlchemy Setup
 ----------------------------
+
+**IMPORTANT**: SQLAlchemy can't be used as an ORM engine at this time. This will be re-enabled in the future. It is ok to skip this section.
 
 Create an empty ``allegro`` database (e.g., in mysql) using a suitable password:
 
@@ -181,7 +129,10 @@ Activate a venv if one is being used, then use pecan to initialize data storage 
 Starting allegro-api
 --------------------
 
-allegro-api can be started on the allegro node using pecan via the command line. This method is only recommended for development use. Activate a venv first if necessary.
+Development Mode
+^^^^^^^^^^^^^^^^
+
+Activate a venv first if necessary, then issue the ``pecan serve`` command:
 
 ::
 
@@ -190,10 +141,10 @@ allegro-api can be started on the allegro node using pecan via the command line.
   (VENV) $ cd $ALLEGRO_PATH/allegro
   (VENV) $ pecan serve config.py
 
-Using allegro-api with apache
------------------------------
+Production Mode
+^^^^^^^^^^^^^^^
 
-Alternatively, allegro-api can be configured to run in apache using the Python WSGI standard. Here's how.
+In production, run allegro-api in a WSGI-compatible environment. The following instructions illustrate this using apache2 httpd.
 
 Install apache2 and mod-wsgi (3.4 at a minimum, 3.5 recommended by the author):
 
@@ -230,9 +181,9 @@ Setup allegro-api as an apache service:
    $ sudo cp -p $ALLEGRO_PATH/allegro/app.apache2 allegro.conf
    $ sudo chown root:root allegro.conf
 
-Note: Depending on the installation, ``$APACHE2_CONFIG_PATH`` may be ``/opt/apache2`` or ``/etc/apache2``.
+Note: ``$APACHE2_CONFIG_PATH`` may be ``/opt/apache2`` or ``/etc/apache2`` depending on the installation.
 
-If a venv is being used, append ``python-home$PATH_TO_VENV`` to ``WSGIDaemonProcess`` within ``allegro.conf``. This way Apache will use the correct python environment and libraries.
+If allegro-api is installed in a venv, append ``python-home=$PATH_TO_VENV`` to ``WSGIDaemonProcess`` within ``allegro.conf``. Apache will then use the correct python environment and libraries.
 
 Alternately, the following line can be added outside of the allegro ``VirtualHost`` directive. Note that this only makes sense if allegro will be the sole focal point of the apache installation as far as venvs are concerned.
 
@@ -240,7 +191,7 @@ Alternately, the following line can be added outside of the allegro ``VirtualHos
 
    WSGIPythonHome $VENV_PATH
 
-Enable allegro-api in apache, Test apache to make sure the configuration is valid, then restart:
+Enable allegro-api in apache, test apache to make sure the configuration syntax is valid, then restart:
 
 ::
 
@@ -253,7 +204,7 @@ Enable allegro-api in apache, Test apache to make sure the configuration is vali
 Verify allegro-api
 ------------------
 
-Visit ``http://$CONTROLLER:8090/`` to check for a response.
+Visit ``http://$ALLEGRO_HOST:8090/v1/`` to check for a response from allegro-api:
 
 ::
 
@@ -262,19 +213,16 @@ Visit ``http://$CONTROLLER:8090/`` to check for a response.
            "status": "CURRENT",
            "id": "v1.0",
            "links": [{
-               "href": "http://$CONTROLLER:8090/v1/",
+               "href": "http://$ALLEGRO_HOST:8090/v1/",
                "rel": "self"
            }]
        }]
    }
 
-OpenStack Configuration
------------------------
+Postman users can import the included Postman collection of sample API calls, located in ``$ALLEGRO_PATH/allegro/allegro/tests/Allegro.json.postman_collection``. Change the URL targets to match ``$ALLEGRO_HOST``.
 
-allegro-openstack requires adjustments in the heat, nova, and cinder configuration files. This is in relation to the heat-engine, nova-scheduler, and cinder-scheduler services, specifically. It's possible that these services are not all running on the same host. In that case, allegro-openstack should be installed on all relevant hosts. The OpenStack services can then be configured as needed on each.
-
-Heat Configuration
-------------------
+Resource Plugin Directory
+-------------------------
 
 Link to the allegro-openstack resource plugin directory so that heat can locate the allegro plugins:
 
@@ -283,23 +231,42 @@ Link to the allegro-openstack resource plugin directory so that heat can locate 
   production: # ln -s /usr/local/etc/heat/resources /usr/lib/heat
   developer:  # ln -s $ALLEGRO_PATH/heat/resources /usr/lib/heat
 
-Alternatively, set the ``plugin_dirs`` option in the ``[DEFAULT]`` section of ``/etc/heat/heat.conf``:
+Alternatively, the heat configuration file can be changed. See the next section.
+
+OpenStack Configuration
+-----------------------
+
+allegro-openstack requires edits to the heat, nova, and cinder configuration files, specifically in relation to the heat-engine, nova-scheduler, and cinder-scheduler. It's possible that these services are not all running on the same host. In that case, install allegro-openstack all relevant hosts, editing configuration files as needed on each.
+
+heat.conf
+^^^^^^^^^
+
+If the allegro-openstack resource plugin directory is not linked through the filesystem, set the ``plugin_dirs`` option in the ``[DEFAULT]`` section of ``/etc/heat/heat.conf``:
+
+In production mode:
 
 ::
 
-  production: plugin_dirs = /usr/local/etc/heat/resources
-  developer:  plugin_dirs = $ALLEGRO_PATH/heat/resources
+  [DEFAULT]
+  plugin_dirs = /usr/local/etc/heat/resources
 
-When using plugin_dirs, take care to include all directories being used for plugins, separated by commas. See the OpenStack `heat.conf`_ documentation for more information.
+In development mode:
 
-Enable stack (lifecycle) scheduler hints under the ``[DEFAULT]`` section of ``/etc/heat/heat.conf``:
+::
+
+  [DEFAULT]
+  plugin_dirs = $ALLEGRO_PATH/heat/resources
+
+When using plugin_dirs, take care to include *all* directories being used for plugins, separated by commas. See the OpenStack `heat.conf`_ documentation for more information.
+
+Enable stack lifecycle scheduler hints:
 
 ::
 
    [DEFAULT]
    stack_scheduler_hints = True
 
-Add two new sections to the end of ``/etc/heat/heat.conf``: one to let the ``ATT::QoS::Pipe`` plugin know where to look for Tegu and IOArbiter, and one to let the allegro-openstack lifecycle plugin know where to find allegro-api.
+If Tegu and IOArbiter are being used, add the following ``[att_qos_pipe]`` section. This will be used by ``ATT::QoS::Pipe`` plugin:
 
 ::
 
@@ -307,36 +274,40 @@ Add two new sections to the end of ``/etc/heat/heat.conf``: one to let the ``ATT
    tegu_uri=http://$TEGU_HOST:29444/tegu/api
    ioarbiter_uri=http://$IOARBITER_HOST:7999/v1/ctrl/0/policy
 
+Add an ``[allegro]`` section. This will be used by the allegro-openstack lifecycle plugin:
+
+::
+
    [allegro]
    allegro_api_server_url = http://$ALLEGRO_HOST:8090/v1
 
-Restart heat-engine:
+Restart heat-engine
 
 ::
 
    $ sudo service heat-engine restart
 
-Examine ``/var/log/heat/heat-engine.log``. The ``ATT::QoS`` plugins should be found and registered:
+Examine ``/var/log/heat/heat-engine.log``. The ``ATT::CloudQoS`` plugins should be found and registered:
 
 ::
 
-   INFO heat.engine.environment [-] Registering ATT::QoS::Pipe -> <class 'heat.engine.plugins.resources.ATT.QoS.Reservation.Pipe'>
-   INFO heat.engine.environment [-] Registering ATT::QoS::ResourceGroup -> <class 'heat.engine.plugins.resources.ATT.QoS.ResourceGroup.ResourceGroup'>
+   INFO heat.engine.environment [-] Registering ATT::CloudQoS::Pipe -> <class 'heat.engine.plugins.resources.ATT.CloudQoS.Reservation.Pipe'>
+   INFO heat.engine.environment [-] Registering ATT::CloudQoS::ResourceGroup -> <class 'heat.engine.plugins.resources.ATT.CloudQoS.ResourceGroup.ResourceGroup'>
 
-The heat command line interface (python-heatclient) can also be used to verify that the plugins are available.
+The heat command line interface (python-heatclient) can also be used to verify that the plugins are available:
 
 ::
 
    $ heat resource-type-list | grep ATT
-   | ATT::QoS::Pipe                           |
-   | ATT::QoS::ResourceGroup                  |
+   | ATT::CloudQoS::Pipe                      |
+   | ATT::CloudQoS::ResourceGroup             |
 
 Other ATT plugins will be visible as well. ``ATT::QoS::Pipe`` and ``ATT::QoS::ResourceGroup`` are the plugins most often used.
 
 Note: In future revisions of OpenStack, the heat cli will be superceded by the OpenStack cli (python-openstackclient).
 
-Nova Configuration
-------------------
+nova.conf
+^^^^^^^^^
 
 Edit the ``[DEFAULT]`` section of ``/etc/nova/nova.conf`` so that ``nova-scheduler`` knows how to locate and to use allegro-openstack's scheduler filter.
 
@@ -362,8 +333,8 @@ Restart nova-scheduler:
 
    $ sudo service nova-scheduler restart
 
-Cinder Configuration
---------------------
+cinder.conf
+^^^^^^^^^^^
 
 Edit the ``[DEFAULT]`` section of ``/etc/cinder/cinder.conf`` so that ``cinder-scheduler`` knows to use allegro's scheduler filter.
 
@@ -390,7 +361,7 @@ Restart cinder-scheduler:
 Try It Out
 ----------
 
-Tire-kick things using these example templates:
+Tire-kick things using these example heat templates:
 
 ::
 
@@ -399,18 +370,15 @@ Tire-kick things using these example templates:
 
 The flavor, ssh key, image, net/subnet IDs, mtu adjustment requirement, and security groups are all specific to the OpenStack installation. It will be necessary to edit various parameters to suit the environment in question.
 
-Please see the `QoSOrch Wiki`_ for more information, presentations, and resource plugin documentation.
-
 Contact
 -------
 
 Joe D'Andrea <jdandrea@research.att.com>
 
+.. _AT&T AIC Installation: https://codecloud.web.att.com/plugins/servlet/readmeparser/display/ST_CLOUDQOS/allegro/atRef/refs/heads/master/renderFile/doc/aic/README.rst
 .. _Ostro: https://codecloud.web.att.com/plugins/servlet/readmeparser/display/ST_CLOUDQOS/ostro/atRef/refs/heads/master/renderFile/README
 .. _Tegu: https://forge.research.att.com/plugins/mediawiki/wiki/qoscloud/index.php/Tegu_Installation_and_Configuration_Guide
 .. _IOArbiter: https://forge.research.att.com/plugins/mediawiki/wiki/sds/index.php/IOArbiterInstallationGuide
 .. _virtual environment: http://docs.python-guide.org/en/latest/dev/virtualenvs/
 .. _InsecurePlatformWarning: https://urllib3.readthedocs.org/en/latest/security.html#insecureplatformwarning.
-.. _site-packages: https://wiki.debian.org/Python#Deviations_from_upstream
 .. _heat.conf: http://docs.openstack.org/kilo/config-reference/content/ch_configuring-openstack-orchestration.html
-.. _QoSOrch Wiki: https://forge.research.att.com/plugins/mediawiki/wiki/qosorch/index.php/Main_Page

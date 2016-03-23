@@ -51,9 +51,7 @@ All other prerequisites will be auto-installed.
 Installing Allegro
 ------------------
 
-Clone the git repository from AT&T CodeCloud, using a ``$CODECLOUD_USER`` account with appropriate credentials:
-
-::
+Clone the git repository from AT&T CodeCloud, using a ``$CODECLOUD_USER`` account with appropriate credentials::
 
     $ git clone https://$CODECLOUD_USER@codecloud.web.att.com/scm/st_cloudqos/allegro.git
     $ cd allegro

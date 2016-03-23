@@ -74,7 +74,9 @@ class Parser:
                     return ({}, {}, {})
 
                 if "availability_zone" in r["properties"].keys():
-                    vm.availability_zone = r["properties"]["availability_zone"]
+                    az = r["properties"]["availability_zone"]
+                    # NOTE: do not allow to specify a certain host name here
+                    vm.availability_zone = az.split(":")[0]
   
                 vms[vm.uuid] = vm
 

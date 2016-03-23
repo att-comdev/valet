@@ -114,28 +114,30 @@ class Compute:
             aggregate_list = aggregates["aggregates"]
 
             for a in aggregate_list:
-                if a["deleted"] == False:
-                    aggregate = LogicalGroup(a["name"])
-                    aggregate.group_type = "AGGR"
+                aggregate = LogicalGroup(a["name"])
+                aggregate.group_type = "AGGR"
+                if a["deleted"] != False:
+                    aggregate.status = "disabled"
                     
-                    metadata = {}
-                    for mk in a["metadata"].keys():
-                        metadata[mk] = a["metadata"][mk]
-                    aggregate.metadata = metadata
+                metadata = {}
+                for mk in a["metadata"].keys():
+                    metadata[mk] = a["metadata"][mk]
+                aggregate.metadata = metadata
 
-                    _logical_groups[aggregate.name] = aggregate
+                _logical_groups[aggregate.name] = aggregate
 
-                    for hn in a["hosts"]:
-                        host = _hosts[hn]
-                        host.memberships[aggregate.name] = aggregate
+                for hn in a["hosts"]:
+                    host = _hosts[hn]
+                    host.memberships[aggregate.name] = aggregate
 
-                        aggregate.vms_per_host[host.name] = []
+                    aggregate.vms_per_host[host.name] = []
 
         except (ValueError, KeyError, TypeError):
             return "JSON format error while setting host aggregates from Nova"
 
         return "success"
 
+    # NOTE: do not set any info in _logical_groups
     def _set_placed_vms(self, _hosts, _logical_groups):
         error_status = None
 
@@ -145,7 +147,7 @@ class Compute:
         
             if result_status == "success":    
                 for vm_uuid in vm_uuid_list:
-                    vm_detail = []
+                    vm_detail = []    # (vm_name, az, metadata, status)
                     result_status_detail = self._get_vm_detail(vm_uuid, vm_detail)
                 
                     if result_status_detail == "success":
@@ -153,8 +155,8 @@ class Compute:
                         vm_id = ("none", vm_detail[0], vm_uuid)
                         _hosts[hk].vm_list.append(vm_id)
 
-                        _logical_groups[vm_detail[1]].vm_list.append(vm_id)
-                        _logical_groups[vm_detail[1]].vms_per_host[hk].append(vm_id)
+                        #_logical_groups[vm_detail[1]].vm_list.append(vm_id)
+                        #_logical_groups[vm_detail[1]].vms_per_host[hk].append(vm_id)
                     else:
                         error_status = result_status_detail
                         break
@@ -186,9 +188,11 @@ class Compute:
         try:
             servers = json.loads(results)
             #print json.dumps(servers, indent=4)
-            server_list = servers["hypervisors"][0]["servers"]
-            for s in server_list:
-                _vm_list.append(s["uuid"])
+            hypervisor_list = servers["hypervisors"]
+            for hv in hypervisor_list:
+                server_list = hv["servers"]
+                for s in server_list:
+                    _vm_list.append(s["uuid"])
 
         except (ValueError, KeyError, TypeError):
             return "JSON format error while getting existing vms"
@@ -303,6 +307,10 @@ class Compute:
             for f in flavor_list:
                 flavor = Flavor(f["name"])
                 flavor.flavor_id = f["id"]
+                if "OS-FLV-DISABLED:disabled" in f.keys():
+                    if f["OS-FLV-DISABLED:disabled"] != False:
+                        flavor.status = "disabled"
+
                 flavor.vCPUs = f["vcpus"]
                 flavor.mem_cap = f["ram"]
                 flavor.disk_cap = f["disk"]
@@ -374,11 +382,12 @@ if __name__ == '__main__':
     logical_groups = {}
     flavors = {}
 
-    c._set_availability_zones(hosts, logical_groups)
+    #c._set_availability_zones(hosts, logical_groups)
     #c._set_aggregates(None, logical_groups)
     #c._set_placed_vms(hosts, logical_groups)
+    #c._get_vms_of_host("qos101", None)
+    #c._get_vm_detail("20b2890b-81bb-4942-94bf-c6bee29630bb", None)
     #c._set_resources(hosts)
-    #c.set_flavors(flavors)
+    c._set_flavors(flavors)
 '''
-
 

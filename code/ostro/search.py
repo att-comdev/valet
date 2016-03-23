@@ -98,35 +98,33 @@ class Search:
         self.disk_weight = -1
 
     def _create_avail_hosts(self):
-        for hk, h in self.resource.hosts.iteritems():
+        for hk, host in self.resource.hosts.iteritems():
 
-            if h.status != "enabled" or h.state != "up":
-                continue
-            if ("nova" not in h.tag) or ("infra" not in h.tag):
+            if host.check_availability() == False:
                 continue
 
             r = Resource()
             r.host_name = hk
 
-            for mk in h.memberships.keys():
+            for mk in host.memberships.keys():
                 if mk in self.avail_logical_groups.keys():
                     r.host_memberships[mk] = self.avail_logical_groups[mk]
 
-            for sk in h.storages.keys():
+            for sk in host.storages.keys():
                 if sk in self.avail_storage_hosts.keys():
                     r.host_avail_storages[sk] = self.avail_storage_hosts[sk]
 
-            for sk in h.switches.keys():
+            for sk in host.switches.keys():
                 if sk in self.avail_switches.keys():
                     r.host_avail_switches[sk] = self.avail_switches[sk]
 
-            r.host_avail_vCPUs = h.avail_vCPUs
-            r.host_avail_mem = h.avail_mem_cap
-            r.host_avail_local_disk = h.avail_local_disk_cap
+            r.host_avail_vCPUs = host.avail_vCPUs
+            r.host_avail_mem = host.avail_mem_cap
+            r.host_avail_local_disk = host.avail_local_disk_cap
 
-            r.host_num_of_placed_vms = len(h.vm_list)
+            r.host_num_of_placed_vms = len(host.vm_list)
 
-            rack = h.host_group
+            rack = host.host_group
             if isinstance(rack, Datacenter):
                 r.rack_name = "any"
                 r.cluster_name = "any"
@@ -202,6 +200,24 @@ class Search:
             lgr.num_of_placed_vms = len(lg.vm_list)
             for hk in lg.vms_per_host.keys():
                 lgr.num_of_placed_vms_per_host[hk] = len(lg.vms_per_host[hk])
+
+            for hk in lg.vms_per_host.keys():                                                    
+                if hk in self.resource.hosts.keys():                                                      
+                    host = self.resource.hosts[hk]                                                        
+                    if host.check_availability() == False:                                       
+                        for vm_id in host.vm_list:                                               
+                            if lg.exist_vm(vm_id) == True: 
+                                lgr.num_of_placed_vms -= 1  
+                        if hk in lgr.num_of_placed_vms_per_host.keys():                                    
+                            del lgr.num_of_plaed_vms_per_host[hk]                                                  
+                elif hk in self.resource.host_groups.keys():                                              
+                    host_group = self.resource.host_groups[hk]                                            
+                    if host_group.check_availability() == False:                                 
+                        for vm_id in host_group.vm_list:                                         
+                            if lg.exist_vm(vm_id) == True:                                       
+                                lgr.num_of_placed_vms -= 1                                        
+                        if hk in lgr.num_of_placed_vms_per_host.keys():                                    
+                            del lg.num_of_plaed_vms_per_host[hk]                                       
 
             self.avail_logical_groups[lgk] = lgr
 
@@ -314,7 +330,6 @@ class Search:
         
     def _run_greedy(self, _open_node_list, _level, _avail_hosts):
         success = True
-        stack_id = None
 
         avail_resources = {}
         if _level == "cluster":
@@ -342,7 +357,6 @@ class Search:
             best_resource = self._get_best_resource(n, _level, avail_resources)
             if best_resource == None:
                 success = False
-                stack_id = n.node.app_uuid
                 break
 
             debug_best_resource = None
@@ -362,7 +376,7 @@ class Search:
             # Close all types of nodes under any level, but VM or Volume with above host level
             self._close_node_placement(_level, best_resource, n.node)
 
-        return (success, stack_id)
+        return success
 
     def _get_best_resource(self, _n, _level, _avail_resources):
         candidate_list = self.constraint_solver.compute_candidate_list(_level, \
@@ -478,8 +492,7 @@ class Search:
                                 avail_hosts[hk] = h
 
                     # Recursive call
-                    (success, stack_id) = self._run_greedy(open_node_list, level, avail_hosts)
-                    if success == True:
+                    if self._run_greedy(open_node_list, level, avail_hosts) == True:
                         best_resource = copy.deepcopy(cr)
                         best_resource.level = _level
                         break

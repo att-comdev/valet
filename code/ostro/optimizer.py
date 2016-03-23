@@ -40,7 +40,7 @@ class Optimizer:
 
     def _place_nodes(self, _app_topology):
         start_ts = time.time() 
-        (success, stack_id) = self.search.place_nodes(_app_topology, self.resource)
+        success = self.search.place_nodes(_app_topology, self.resource)
         end_ts = time.time()
 
         if success == True:
@@ -58,11 +58,11 @@ class Optimizer:
             
             self._update_resource_status()
 
-            return (None, placement_map)
+            return placement_map
 
         else:
             self.status = self.search.status
-            return (stack_id, {})
+            return {}
 
     def _update_resource_status(self):
         for v, np in self.search.node_placements.iteritems():
@@ -203,26 +203,25 @@ class Optimizer:
         self.resource.add_vm_to_logical_groups(host, (_v.uuid, _v.name, "none"), vm_logical_groups)
 
     def _collect_logical_groups_of_vm(self, _v, _vm_logical_groups):
-        '''
-        for hgk in _v.host_aggregates.keys():
-            _vm_logical_groups.append(hgk)
-        '''
-        for es in _v.extra_specs_list:
-            if "host_aggregates" in es.keys():
-                lg_list = es["host_aggregates"]
-                for lgk in lg_list:
-                    if lgk not in _vm_logical_groups:
-                        _vm_logical_groups.append(lgk)
-
         if isinstance(_v, VM):
-            if _v.availability_zone != None:
-                if _v.availability_zone not in _vm_logical_groups:
-                    _vm_logical_groups.append(_v.availability_zone)
+            for es in _v.extra_specs_list:
+                if "host_aggregates" in es.keys():
+                    lg_list = es["host_aggregates"]
+                    for lgk in lg_list:
+                        if lgk not in _vm_logical_groups:
+                            _vm_logical_groups.append(lgk)
 
+            if _v.availability_zone != None:
+                az = _v.availability_zone.split(":")[0]
+                if az not in _vm_logical_groups:
+                    _vm_logical_groups.append(az)
+   
+        '''
         if isinstance(_v, VGroup):
             for az in _v.availability_zone_list:
                 if az not in _vm_logical_groups:
                     _vm_logical_groups.append(az)
+        '''
   
         for exk, level in _v.exclusivity_groups.iteritems():
             if level not in _vm_logical_groups:
@@ -233,7 +232,7 @@ class Optimizer:
         if isinstance(_v, VGroup):
             name = _v.level + ":" + _v.name
             if name not in _vm_logical_groups:
-                _vm_logical_groups.append(_v.level + ":" + _v.name)
+                _vm_logical_groups.append(name)
 
         if _v.survgroup != None:
             self._collect_logical_groups_of_vm(_v.survgroup, _vm_logical_groups)

@@ -23,7 +23,7 @@
       "name": "vm26",
       "properties": {
         "flavor": "bflavor0",
-        "availability_zone": "nova1"
+        "availability_zone": "nova"
       },
       "type": "OS::Nova::Server"
     }

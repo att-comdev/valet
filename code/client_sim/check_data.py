@@ -38,6 +38,9 @@ class MusicClient:
     def get_requests(self):
         return self.music.read_all_rows(self.config.db_keyspace, self.config.db_request_table)
 
+    def get_responses(self):
+        return self.music.read_all_rows(self.config.db_keyspace, self.config.db_response_table)
+
 
 # Unit test
 if __name__ == '__main__':
@@ -54,4 +57,18 @@ if __name__ == '__main__':
         print "Requests"
         for rowk, row in results.iteritems():
             placement = json.loads(row['request'])
+            print json.dumps(placement, indent=4)
+
+    results = mc.get_responses()
+    if results != None:
+        print "Responses"
+        for rowk, row in results.iteritems():
+            placement = json.loads(row['placement'])
+            print json.dumps(placement, indent=4)
+
+    results = mc.get_apps()
+    if results != None:
+        print "Apps"
+        for rowk, row in results.iteritems():
+            placement = json.loads(row['app'])
             print json.dumps(placement, indent=4)

@@ -40,20 +40,24 @@ class AggregateInstanceExtraSpecsFilter:
 
         # If 'extra_specs' is not present or extra_specs are empty then we
         # need not proceed further
-        if len(_v.extra_specs_list) == 0:
+        extra_specs_list = []
+        for extra_specs in _v.extra_specs_list:
+            if "host_aggregates" not in extra_specs.keys():
+                extra_specs_list.append(extra_specs)
+
+        if len(extra_specs_list) == 0:
             return True
 
         metadatas = openstack_utils.aggregate_metadata_get_by_host(_level, _host)
 
         matched_logical_group_list = []
-        for extra_specs in _v.extra_specs_list:
+        for extra_specs in extra_specs_list:
             for lgk, metadata in metadatas.iteritems():
                 if self._match_metadata(_host.get_resource_name(_level), lgk, extra_specs, metadata) == True:
                     matched_logical_group_list.append(lgk)
                     break
             else:
                 return False
-
 
         for extra_specs in _v.extra_specs_list:
             if "host_aggregates" in extra_specs.keys():

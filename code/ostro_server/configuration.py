@@ -54,7 +54,9 @@ class Config:
         self.memory_overbooking_ratio = 1
         self.disk_overbooking_ratio = 1
 
-        #self.static_standby_ratio = 0   # %
+        self.static_cpu_standby_ratio = 0         # %
+        self.static_mem_standby_ratio = 0         # %
+        self.static_local_disk_standby_ratio = 0   # %
 
         self.topology_trigger_time = None
         self.topology_trigger_freq = 0
@@ -166,6 +168,12 @@ class Config:
                     self.memory_overbooking_ratio = float(v.strip())
                 elif k == "local_disk_overbooking_ratio":
                     self.disk_overbooking_ratio = int(v.strip())
+                elif k == "static_cpu_standby_ratio":
+                    self.static_cpu_standby_ratio = int(v.strip())
+                elif k == "static_mem_standby_ratio":
+                    self.static_mem_standby_ratio = int(v.strip())
+                elif k == "static_local_disk_standby_ratio":
+                    self.static_local_disk_standby_ratio = int(v.strip())
                 elif k == "topology_trigger_time":
                     self.topology_trigger_time = v.strip()
                 elif k == "topology_trigger_frequency":

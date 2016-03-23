@@ -41,7 +41,6 @@ class AppHandler:
     # Record application topology
     def add_app(self, _app_data):
         self.apps.clear()
-        stack_id = None
 
         app_topology = AppTopology(self.resource)
 
@@ -51,18 +50,17 @@ class AppHandler:
             if app_topology.status != "success":
                 self.logger.error(app_topology.status)
                 self.status = app_topology.status
-                return (app_id[0], None)
+                return None
             else:
                 self.logger.info("application: " + app_id[1])
 
                 new_app = App(app_id[0], app_id[1])
 
                 self.apps[app_id[0]] = new_app
-                stack_id = app_id[0] 
 
         app_topology.set_optimization_priority()
 
-        return (stack_id, app_topology)
+        return app_topology
 
     # Add placement of an app
     def add_placement(self, _placement_map, _timestamp):
@@ -94,6 +92,8 @@ class AppHandler:
                                                            self.resource.datacenter.name, \
                                                            self.last_log_index)
         self.last_log_index = last_index
+
+        # TODO: error handling
 
         logging = open(self.config.app_log_loc + app_logfile, mode)
 

@@ -86,7 +86,6 @@ class TopologyManager(threading.Thread):
     def _run(self):
         self.data_lock.acquire(1)
         if self.set_topology() == True:
-            self.logger.info("trigger setting topology")
             self.resource.update_topology()
         self.data_lock.release()
 

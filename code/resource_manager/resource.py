@@ -61,8 +61,7 @@ class Resource:
     # Run whenever changed
     def update_topology(self):
         self._update_topology()
-
-        self._update_logical_groups()
+        #self._update_logical_groups()
 
         self._update_compute_avail()
         self._update_storage_avail()
@@ -79,49 +78,6 @@ class Resource:
 
         if self.datacenter.last_update > self.current_timestamp:
             self._update_datacenter_topology()
-
-    def _update_logical_groups(self):
-        for lgk in self.logical_groups.keys():
-            lg = self.logical_groups[lgk]
-
-            for hk in lg.vms_per_host.keys():
-                if hk in self.hosts.keys():
-                    host = self.hosts[hk]
-                    if host.check_availability() == False:
-                        for vm_id in host.vm_list:
-                            if lg.exist_vm(vm_id) == True:
-                                lg.vm_list.remove(vm_id)
-                        del lg.vms_per_host[hk]
-                        lg.last_update = time.time()
-                elif hk in self.host_groups.keys(): 
-                    host_group = self.host_groups[hk]
-                    if host_group.check_availability() == False:
-                        for vm_id in host_group.vm_list:
-                            if lg.exist_vm(vm_id) == True:
-                                lg.vm_list.remove(vm_id)
-                        del lg.vms_per_host[hk]
-                        lg.last_update = time.time()
-
-                if lg.group_type == "EX" or lg.group_type == "AFF":
-                    if len(lg.vms_per_host[hk]) == 0:
-                        del lg.vms_per_host[hk]
-                        lg.last_update = time.time()
-
-            if len(lg.vms_per_host) == 0 and len(lg.vm_list) == 0 and len(lg.volume_list) == 0:
-                self.logical_groups[lgk].status = "disabled"
-
-                self.logical_groups[lgk].last_update = time.time()
-                self.logger.warn("logical group (" + lgk + ") removed")
-
-        for hk, h in self.hosts.iteritems():
-            for lgk in h.memberships.keys():
-                if lgk not in self.logical_groups.keys():
-                    del h.memberships[lgk]
-
-        for hgk, hg in self.host_groups.iteritems():
-            for lgk in hg.memberships.keys():
-                if lgk not in self.logical_groups.keys():
-                    del hg.memberships[lgk]
 
     def _update_host_group_topology(self, _host_group):
         _host_group.init_resources()
@@ -183,6 +139,52 @@ class Resource:
 
                 for mk in resource.memberships.keys():
                     self.datacenter.memberships[mk] = resource.memberships[mk]
+
+    def _update_logical_groups(self):
+        for lgk in self.logical_groups.keys():
+            lg = self.logical_groups[lgk]
+
+            for hk in lg.vms_per_host.keys():
+                '''
+                if hk in self.hosts.keys():
+                    host = self.hosts[hk]
+                    if host.check_availability() == False:
+                        for vm_id in host.vm_list:
+                            if lg.exist_vm(vm_id) == True:
+                                lg.vm_list.remove(vm_id)
+                        del lg.vms_per_host[hk]
+                        lg.last_update = time.time()
+                elif hk in self.host_groups.keys(): 
+                    host_group = self.host_groups[hk]
+                    if host_group.check_availability() == False:
+                        for vm_id in host_group.vm_list:
+                            if lg.exist_vm(vm_id) == True:
+                                lg.vm_list.remove(vm_id)
+                        del lg.vms_per_host[hk]
+                        lg.last_update = time.time()
+                '''
+                if lg.group_type == "EX" or lg.group_type == "AFF":
+                    if len(lg.vms_per_host[hk]) == 0:
+                        del lg.vms_per_host[hk]
+                        lg.last_update = time.time()
+
+            '''
+            if len(lg.vms_per_host) == 0 and len(lg.vm_list) == 0 and len(lg.volume_list) == 0:
+                self.logical_groups[lgk].status = "disabled"
+
+                self.logical_groups[lgk].last_update = time.time()
+                self.logger.warn("logical group (" + lgk + ") removed")
+            '''
+
+        for hk, h in self.hosts.iteritems():
+            for lgk in h.memberships.keys():
+                if lgk not in self.logical_groups.keys():
+                    del h.memberships[lgk]
+
+        for hgk, hg in self.host_groups.iteritems():
+            for lgk in hg.memberships.keys():
+                if lgk not in self.logical_groups.keys():
+                    del hg.memberships[lgk]
 
     def _update_compute_avail(self):
         self.CPU_avail = self.datacenter.avail_vCPUs

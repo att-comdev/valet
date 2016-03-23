@@ -72,8 +72,6 @@ class Ostro:
         while self.end_of_process == False:
             time.sleep(1)
 
-            #self.logger.debug("ostro running......")
-
             if self.config.db_keyspace != "none":
                 (event_list, request_list) = self.db.get_requests()
 
@@ -81,8 +79,7 @@ class Ostro:
                     pass
 
                 if len(request_list) > 0:
-                    result = self.place_app(request_list)
-                    self.db.put_result(result)
+                    self.place_app(request_list)
 
         self.topology.end_of_process = True
         self.compute.end_of_process = True
@@ -138,51 +135,54 @@ class Ostro:
         return True
 
     def place_app(self, _app_data):
+        self.data_lock.acquire(1) 
+
         self.logger.info("--- start app placement ---")
 
         result = None
 
         start_time = time.time()
-        (stack_id, placement_map) = self._place_app(_app_data)
+        placement_map = self._place_app(_app_data)
         end_time = time.time()
 
         if len(placement_map) == 0:
-            result = self._get_json_results("error", self.status, stack_id, placement_map)
-            self.logger.error("error while placing app = " + stack_id)
+            result = self._get_json_results("error", self.status, placement_map)
+
+            self.logger.error("error while placing the following app(s)")
+            for appk in result.keys():
+                self.logger.error("    app uuid = " + appk)
         else:
-            result = self._get_json_results("ok", "success", stack_id, placement_map)
+            result = self._get_json_results("ok", "success", placement_map)
+
+        self.db.put_result(result)
 
         self.logger.info("total running time of place_app = " + str(end_time - start_time) + " sec")
         self.logger.info("--- done app placement ---")
 
-        return result
+        self.data_lock.release()
 
     def _place_app(self, _app_data):
-        self.data_lock.acquire(1) 
-
-        (stack_id, app_topology) = self.app_handler.add_app(_app_data)
+        app_topology = self.app_handler.add_app(_app_data)
         if app_topology == None:                                                                 
             self.status = self.app_handler.status
-            return (stack_id, {})
+            return {}
                  
-        (stack_id, placement_map) = self.optimizer.place(app_topology) 
+        placement_map = self.optimizer.place(app_topology) 
         if len(placement_map) == 0: 
             self.status = self.optimizer.status
-            return (stack_id, placement_map)
+            return placement_map
 
         resource_status = self.resource.update_topology()  
 
         self.app_handler.add_placement(placement_map, self.resource.current_timestamp)
 
-        self.data_lock.release()
+        return placement_map
 
-        return (stack_id, placement_map)
-
-    def _get_json_results(self, _status_type, _status_message, _stack_id, _placement_map):
-        applications = {}
+    def _get_json_results(self, _status_type, _status_message, _placement_map):
         result = {}
 
         if _status_type != "error":
+            applications = {}
             for v in _placement_map.keys():
                 resources = None
                 if v.app_uuid in applications.keys():
@@ -208,16 +208,17 @@ class Ostro:
 
                 result[appk] = app_result
         else:
-            app_result = {}
-            app_status ={}
+            for appk in self.app_handler.apps.keys():
+                app_result = {}
+                app_status ={}
 
-            app_status['type'] = _status_type
-            app_status['message'] = _status_message
+                app_status['type'] = _status_type
+                app_status['message'] = _status_message
 
-            app_result['status'] = app_status
-            app_result['resources'] = {}
+                app_result['status'] = app_status
+                app_result['resources'] = {}
 
-            result[_stack_id] = app_result
+                result[appk] = app_result
 
         return result
 

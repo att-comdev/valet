@@ -103,12 +103,16 @@ class MusicHandler:
             }                                                                                    
                                                                                                  
             self.music.create_row(self.config.db_keyspace, self.config.db_response_table, data)
+
+        self.logger.info("db: placement result added")
                                                                                                  
         for appk in _result.keys(): 
             self.music.delete_row_eventually(self.config.db_keyspace, \
                                              self.config.db_request_table, \
                                              'stack_id', \
                                              appk)
+
+        self.logger.info("db: placement request deleted")
 
     def update_resource_status(self, _k, _status):                                                  
         row = self.music.read_row(self.config.db_keyspace, self.config.db_resource_table, 'site_name', _k)
@@ -180,7 +184,7 @@ class MusicHandler:
                                                                                                  
         self.music.create_row(self.config.db_keyspace, self.config.db_resource_table, data)
 
-        self.logger.info("resource status updated")
+        self.logger.info("db: resource status updated")
 
     def update_resource_log_index(self, _k, _index):
         self.music.delete_row_eventually(self.config.db_keyspace, \
@@ -194,6 +198,8 @@ class MusicHandler:
                                                                                                  
         self.music.create_row(self.config.db_keyspace, self.config.db_resource_index_table, data)
 
+        self.logger.info("db: resource log index updated")
+
     def update_app_log_index(self, _k, _index):
         self.music.delete_row_eventually(self.config.db_keyspace, self.config.db_app_index_table, 'site_name', _k)
 
@@ -204,6 +210,8 @@ class MusicHandler:
                                                                                                  
         self.music.create_row(self.config.db_keyspace, self.config.db_app_index_table, data)
 
+        self.logger.info("db: app log index updated")
+
     def add_app(self, _k, _app_data):
         self.music.delete_row_eventually(self.config.db_keyspace, self.config.db_app_table, 'stack_id', _k)
         
@@ -213,6 +221,8 @@ class MusicHandler:
         }                                                                                        
                                                                                                  
         self.music.create_row(self.config.db_keyspace, self.config.db_app_table, data)
+
+        self.logger.info("db: app added")
 
 
 

@@ -91,13 +91,18 @@ class ComputeManager(threading.Thread):
     def _run(self):
         self.data_lock.acquire(1)
 
+        self.logger.info("start compute_nodes status update ...")
+
         triggered_host_updates = self.set_hosts()
         triggered_flavor_updates = self.set_flavors()
 
-        if triggered_host_updates == True or triggered_flavor_updates == True:
-            self.logger.info("trigger setting hosts")
-
+        if triggered_host_updates == True and triggered_flavor_updates == True:
             self.resource.update_topology()
+        else:
+            # TODO: error handling, e.g., 3 times failure then stop Ostro
+            pass
+
+        self.logger.info("done compute_nodes status update")
 
         self.data_lock.release()
 
@@ -165,9 +170,13 @@ class ComputeManager(threading.Thread):
 
                     rlg.last_update = time.time()
                     self.logger.warn("logical group (" + lk + ") updated")
-         
+        
     def _check_logical_group_metadata_update(self, _lg, _rlg):
         metadata_updated = False
+
+        if _lg.status != _rlg.status:
+            _rlg.status = _lg.status
+            metadata_updated = True
 
         for mdk in _lg.metadata.keys():
             if mdk not in _rlg.metadata.keys():
@@ -179,13 +188,17 @@ class ComputeManager(threading.Thread):
                 del _rlg.metadata[rmdk]
                 metadata_updated = True
 
+        '''
         for vm_id in _lg.vm_list:
             if _rlg.exist_vm(vm_id) == False:
                 _rlg.vm_list.append(vm_id)
+                metadata_updated = True
 
         for rvm_id in _rlg.vm_list:
             if _lg.exist_vm(rvm_id) == False:
                 _rlg.vm_list.remove(rvm_id)
+                metadata_updated = True
+        '''
 
         for hk in _lg.vms_per_host.keys():
             if hk not in _rlg.vms_per_host.keys():
@@ -279,6 +292,13 @@ class ComputeManager(threading.Thread):
                     self.logger.warn("host (" + _rhost.name + ") updated (delete membership)")
 
         for vm_id in _host.vm_list:
+            if vm_id[0] == "none":
+                for rvm_id in _rhost.vm_list:
+                    if vm_id[1] == rvm_id[1] and vm_id[2] == rvm_id[2]:
+                        if rvm_id[0] != "none":
+                            vm_id[0] = rvm_id[0]
+                        break
+
             if _rhost.exist_vm(vm_id) == False:
                 _rhost.vm_list.append(vm_id)
 
@@ -345,6 +365,10 @@ class ComputeManager(threading.Thread):
 
     def _check_flavor_spec_update(self, _f, _rf):
         spec_updated = False
+
+        if _f.status != _rf.status:
+            _rf.status = _f.status
+            spec_updated = True
 
         if _f.vCPUs != _rf.vCPUs or _f.mem_cap != _rf.mem_cap or _f.disk_cap != _rf.disk_cap:
             _rf.vCPUs = _f.vCPUs

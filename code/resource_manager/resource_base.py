@@ -211,10 +211,10 @@ class Host:
 
         for lgk in self.memberships.keys():
             lg = self.memberships[lgk]
-            if lg.group_type == "EX" or lg.group_type == "AFF":
-                if self.name not in lg.vms_per_host.keys():
-                    del self.memberships[lgk]
-                    cleaned = True
+            #if lg.group_type == "EX" or lg.group_type == "AFF":  # NOTE: needed?
+            if self.name not in lg.vms_per_host.keys():
+                del self.memberships[lgk]
+                cleaned = True
     
         return cleaned
 
@@ -229,11 +229,24 @@ class Host:
         exist = False
 
         for vm_id in self.vm_list:
-            if vm_id[1] == _vm_id[1] and vm_id[2] == _vm_id[2]: # same name and uuid
+            if vm_id[0] == _vm_id[0] and vm_id[1] == _vm_id[1] and vm_id[2] == _vm_id[2]: 
                 exist = True
                 break
 
         return exist
+
+    '''
+    def get_orch_vm_id(self, _vm_id):
+        orch_vm_id = "none"
+
+        for vm_id in self.vm_list:
+            if vm_id[1] == _vm_id[1] and vm_id[2] == _vm_id[2]: 
+                if vm_id[0] != "none":
+                    orch_vm_id = vm_id[0]
+                break
+
+        return orch_vm_id
+    '''
 
     def get_json_info(self):
         membership_list = []
@@ -286,7 +299,7 @@ class LogicalGroup:
         exist = False
 
         for vm_id in self.vm_list:
-            if vm_id[1] == _vm_id[1] and vm_id[2] == _vm_id[2]: # same name and uuid
+            if vm_id[0] == _vm_id[0] and vm_id[1] == _vm_id[1] and vm_id[2] == _vm_id[2]:
                 exist = True
                 break
 
@@ -385,7 +398,7 @@ class StorageHost:
         self.name = _name                
         self.storage_class = None        # tiering, e.g., platinum, gold, silver 
   
-        self.status = None
+        self.status = "enabled"
         self.host_list = []  
 
         self.disk_cap = 0                # GB

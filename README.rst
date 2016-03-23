@@ -6,6 +6,8 @@ Allegro (part of the Valet service suite, along with Ostro) gives OpenStack the 
 
 **IMPORTANT**: `AT&T AIC Installation`_ is covered in a separate document.
 
+.. NOTE:: The use of superfluous :: characters is necessary as a workaround for a CodeCloud reStructuredText markup parsing bug.
+
 Prerequisites
 -------------
 
@@ -51,9 +53,14 @@ All other prerequisites will be auto-installed.
 Installing Allegro
 ------------------
 
-Clone the git repository from AT&T CodeCloud, using a ``$CODECLOUD_USER`` account with appropriate credentials::
+Clone the git repository from AT&T CodeCloud, using a ``$CODECLOUD_USER`` account with appropriate credentials:
+
+::
 
     $ git clone https://$CODECLOUD_USER@codecloud.web.att.com/scm/st_cloudqos/allegro.git
+
+::
+
     $ cd allegro
 
 Both allegro-openstack and allegro-api can be installed in production mode or developer mode.

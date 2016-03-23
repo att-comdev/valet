@@ -6,7 +6,7 @@ Allegro (part of the Valet service suite, along with Ostro) gives OpenStack the 
 
 **IMPORTANT**: `AT&T AIC Installation`_ is covered in a separate document.
 
-.. NOTE:: The use of superfluous :: characters is necessary as a workaround for a CodeCloud reStructuredText markup parsing bug.
+.. _NOTE: The use of superfluous :: characters is necessary as a workaround for a CodeCloud reStructuredText markup parsing bug.
 
 Prerequisites
 -------------

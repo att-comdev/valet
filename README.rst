@@ -24,7 +24,7 @@ Allegro installation consists of two components:
 
 Allegro is compatible with OpenStack heat-kilo, cinder-juno, and nova-juno.
 
-Throughout this document, the following installation-specific items are used:
+Throughout this document, the following installation-specific terms are used:
 
 - ``$ALLEGRO_HOST``: allegro-api hostname or FQDN
 - ``$ALLEGRO_PATH``: Allegro git repository filesystem path
@@ -55,10 +55,8 @@ Clone the git repository from AT&T CodeCloud, using a ``$CODECLOUD_USER`` accoun
 
 ::
 
-$ git clone https://$CODECLOUD_USER@codecloud.web.att.com/scm/st_cloudqos/allegro.git
-::
-
-$ cd allegro
+    $ git clone https://$CODECLOUD_USER@codecloud.web.att.com/scm/st_cloudqos/allegro.git
+    $ cd allegro
 
 Both allegro-openstack and allegro-api can be installed in production mode or developer mode.
 
@@ -67,6 +65,8 @@ Install allegro-openstack on an OpenStack controller node containing heat-engine
 ::
 
   production: $ sudo pip install $ALLEGRO_PATH
+
+::
   developer:  $ sudo pip install --editable $ALLEGRO_PATH
 
 Install allegro-api in the venv on the designated allegro node (which could be the same as the controller node, but doesn't have to be):
@@ -75,7 +75,12 @@ Install allegro-api in the venv on the designated allegro node (which could be t
 
   $ . $PATH_TO_VENV/bin/activate
 
+::
+
   production: (VENV) $ pip install $ALLEGRO_PATH/allegro
+
+::
+
   developer:  (VENV) $ pip install --editable $ALLEGRO_PATH/allegro
 
 While the following error might appear when installing allegro-api under python 2.7.6, note that SSL is not currently used by allegro-api.
@@ -92,10 +97,25 @@ Create an empty ``allegro`` database (e.g., in mysql) using a suitable password:
 ::
 
   $ mysql -u root -p
+
+::
+
   mysql> CREATE DATABASE allegro;
+
+::
+
   mysql> GRANT ALL PRIVILEGES ON allegro.* TO 'allegro'@'localhost' \
+
+::
+
   IDENTIFIED BY '$ALLEGRO_DBPASS';
+
+::
+
   mysql> GRANT ALL PRIVILEGES ON allegro.* TO 'allegro'@'%' \
+
+::
+
   IDENTIFIED BY '$ALLEGRO_DBPASS';
 
 Edit ``$ALLEGRO_PATH/allegro/config.py`` so that it has matching credentials:
@@ -103,11 +123,29 @@ Edit ``$ALLEGRO_PATH/allegro/config.py`` so that it has matching credentials:
 ::
 
   sqlalchemy = {
+
+::
+
       'url': 'mysql+pymysql://allegro:$ALLEGRO_DBPASS@$CONTROLLER/allegro?charset=utf8',
+
+::
+
       'echo':          True,
+
+::
+
       'echo_pool':     True,
+
+::
+
       'pool_recycle':  3600,
+
+::
+
       'encoding':      'utf-8',
+
+::
+
   }
 
 allegro-api Data Store Initialization
@@ -121,7 +159,12 @@ Activate a venv if one is being used, then use pecan to initialize data storage 
 
   $ . $PATH_TO_VENV/bin/activate
 
+::
+
   (VENV) $ cd $ALLEGRO_PATH/allegro
+
+::
+
   (VENV) $ pecan populate config.py
 
 Starting allegro-api
@@ -136,7 +179,12 @@ Activate a venv first if necessary, then issue the ``pecan serve`` command:
 
   $ . $PATH_TO_VENV/bin/activate
 
+::
+
   (VENV) $ cd $ALLEGRO_PATH/allegro
+
+::
+
   (VENV) $ pecan serve config.py
 
 Production Mode
@@ -167,17 +215,32 @@ Set up allegro/apache-related directories and ownership:
 ::
 
   $ sudo mkdir /var/www/allegro
+
+::
+
   $ sudo mkdir /var/log/apache2/allegro
+
+::
+
   $ sudo chown -R allegro:allegro /var/log/apache2/allegro /var/www/allegro
+
+::
+
   $ sudo cp -p $ALLEGRO_PATH/allegro/app.wsgi $ALLEGRO_PATH/allegro/config.py /var/www/allegro
 
 Setup allegro-api as an apache service:
 
 ::
 
-   $ sudo cd $APACHE2_CONFIG_PATH/sites-available
-   $ sudo cp -p $ALLEGRO_PATH/allegro/app.apache2 allegro.conf
-   $ sudo chown root:root allegro.conf
+  $ sudo cd $APACHE2_CONFIG_PATH/sites-available
+
+::
+
+  $ sudo cp -p $ALLEGRO_PATH/allegro/app.apache2 allegro.conf
+
+::
+
+  $ sudo chown root:root allegro.conf
 
 Note: ``$APACHE2_CONFIG_PATH`` may be ``/opt/apache2`` or ``/etc/apache2`` depending on the installation.
 
@@ -187,17 +250,29 @@ Alternately, the following line can be added outside of the allegro ``VirtualHos
 
 ::
 
-   WSGIPythonHome $VENV_PATH
+  WSGIPythonHome $VENV_PATH
 
 Enable allegro-api in apache, test apache to make sure the configuration syntax is valid, then restart:
 
 ::
 
-   $ cd $APACHE2_CONFIG_PATH/sites-enabled
-   $ sudo ln -s ../sites-available/allegro.conf .
-   $ sudo apachectl -t
-   Syntax OK
-   $ sudo apachectl graceful
+  $ cd $APACHE2_CONFIG_PATH/sites-enabled
+
+::
+
+  $ sudo ln -s ../sites-available/allegro.conf .
+
+::
+
+  $ sudo apachectl -t
+
+::
+
+  Syntax OK
+
+::
+
+  $ sudo apachectl graceful
 
 Verify allegro-api
 ------------------
@@ -206,16 +281,43 @@ Visit ``http://$ALLEGRO_HOST:8090/v1/`` to check for a response from allegro-api
 
 ::
 
-   {
-       "versions": [{
-           "status": "CURRENT",
-           "id": "v1.0",
-           "links": [{
-               "href": "http://$ALLEGRO_HOST:8090/v1/",
-               "rel": "self"
-           }]
-       }]
-   }
+  {
+
+::
+
+      "versions": [{
+
+::
+
+          "status": "CURRENT",
+
+::
+
+          "id": "v1.0",
+
+::
+
+          "links": [{
+
+::
+
+              "href": "http://$ALLEGRO_HOST:8090/v1/",
+
+::
+
+              "rel": "self"
+
+::
+
+          }]
+
+::
+
+      }]
+
+::
+
+  }
 
 Postman users can import the included Postman collection of sample API calls, located in ``$ALLEGRO_PATH/allegro/allegro/tests/Allegro.json.postman_collection``. Change the URL targets to match ``$ALLEGRO_HOST``.
 
@@ -227,6 +329,9 @@ Link to the allegro-openstack resource plugin directory so that heat can locate 
 ::
 
   production: # ln -s /usr/local/etc/heat/resources /usr/lib/heat
+
+::
+
   developer:  # ln -s $ALLEGRO_PATH/heat/resources /usr/lib/heat
 
 Alternatively, the heat configuration file can be changed. See the next section.
@@ -246,6 +351,9 @@ In production mode:
 ::
 
   [DEFAULT]
+
+::
+
   plugin_dirs = /usr/local/etc/heat/resources
 
 In development mode:
@@ -253,6 +361,9 @@ In development mode:
 ::
 
   [DEFAULT]
+
+::
+
   plugin_dirs = $ALLEGRO_PATH/heat/resources
 
 When using plugin_dirs, take care to include *all* directories being used for plugins, separated by commas. See the OpenStack `heat.conf`_ documentation for more information.
@@ -261,44 +372,65 @@ Enable stack lifecycle scheduler hints:
 
 ::
 
-   [DEFAULT]
-   stack_scheduler_hints = True
+  [DEFAULT]
+
+::
+
+  stack_scheduler_hints = True
 
 If Tegu and IOArbiter are being used, add the following ``[att_qos_pipe]`` section. This will be used by ``ATT::QoS::Pipe`` plugin:
 
 ::
 
-   [att_qos_pipe]
-   tegu_uri=http://$TEGU_HOST:29444/tegu/api
-   ioarbiter_uri=http://$IOARBITER_HOST:7999/v1/ctrl/0/policy
+  [att_qos_pipe]
+
+::
+
+  tegu_uri=http://$TEGU_HOST:29444/tegu/api
+
+::
+
+  ioarbiter_uri=http://$IOARBITER_HOST:7999/v1/ctrl/0/policy
 
 Add an ``[allegro]`` section. This will be used by the allegro-openstack lifecycle plugin:
 
 ::
 
-   [allegro]
-   allegro_api_server_url = http://$ALLEGRO_HOST:8090/v1
+  [allegro]
+
+::
+
+  allegro_api_server_url = http://$ALLEGRO_HOST:8090/v1
 
 Restart heat-engine
 
 ::
 
-   $ sudo service heat-engine restart
+  $ sudo service heat-engine restart
 
 Examine ``/var/log/heat/heat-engine.log``. The ``ATT::CloudQoS`` plugins should be found and registered:
 
 ::
 
-   INFO heat.engine.environment [-] Registering ATT::CloudQoS::Pipe -> <class 'heat.engine.plugins.resources.ATT.CloudQoS.Reservation.Pipe'>
-   INFO heat.engine.environment [-] Registering ATT::CloudQoS::ResourceGroup -> <class 'heat.engine.plugins.resources.ATT.CloudQoS.ResourceGroup.ResourceGroup'>
+  INFO heat.engine.environment [-] Registering ATT::CloudQoS::Pipe -> <class 'heat.engine.plugins.resources.ATT.CloudQoS.Reservation.Pipe'>
+
+::
+
+  INFO heat.engine.environment [-] Registering ATT::CloudQoS::ResourceGroup -> <class 'heat.engine.plugins.resources.ATT.CloudQoS.ResourceGroup.ResourceGroup'>
 
 The heat command line interface (python-heatclient) can also be used to verify that the plugins are available:
 
 ::
 
-   $ heat resource-type-list | grep ATT
-   | ATT::CloudQoS::Pipe                      |
-   | ATT::CloudQoS::ResourceGroup             |
+  $ heat resource-type-list | grep ATT
+
+::
+
+  | ATT::CloudQoS::Pipe                      |
+
+::
+
+  | ATT::CloudQoS::ResourceGroup             |
 
 Other ATT plugins will be visible as well. ``ATT::QoS::Pipe`` and ``ATT::QoS::ResourceGroup`` are the plugins most often used.
 
@@ -311,10 +443,19 @@ Edit the ``[DEFAULT]`` section of ``/etc/nova/nova.conf`` so that ``nova-schedul
 
 ::
 
-   [DEFAULT]
-   scheduler_available_filters = nova.scheduler.filters.all_filters
-   scheduler_available_filters = qosorch.openstack.nova.allegro_filter.AllegroFilter
-   scheduler_default_filters = RetryFilter, AvailabilityZoneFilter, RamFilter, ComputeFilter, ComputeCapabilitiesFilter, ImagePropertiesFilter, ServerGroupAntiAffinityFilter, ServerGroupAffinityFilter, AllegroFilter
+  [DEFAULT]
+
+::
+
+  scheduler_available_filters = nova.scheduler.filters.all_filters
+
+::
+
+  scheduler_available_filters = qosorch.openstack.nova.allegro_filter.AllegroFilter
+
+::
+
+  scheduler_default_filters = RetryFilter, AvailabilityZoneFilter, RamFilter, ComputeFilter, ComputeCapabilitiesFilter, ImagePropertiesFilter, ServerGroupAntiAffinityFilter, ServerGroupAffinityFilter, AllegroFilter
 
 The two ``scheduler_available_filters`` lines are deliberate. The first is required in order for nova to know where to locate its own default filters. For ``scheduler_default_filters``, ensure that ``AllegroFilter`` is placed last so that it has the final say in scheduling.
 
@@ -322,14 +463,17 @@ Next, add an ``[allegro]`` section:
 
 ::
 
-   [allegro]
-   allegro_api_server_url = http://$ALLEGRO_HOST:8090/v1
+  [allegro]
+
+::
+
+  allegro_api_server_url = http://$ALLEGRO_HOST:8090/v1
 
 Restart nova-scheduler:
 
 ::
 
-   $ sudo service nova-scheduler restart
+  $ sudo service nova-scheduler restart
 
 cinder.conf
 ^^^^^^^^^^^
@@ -338,8 +482,11 @@ Edit the ``[DEFAULT]`` section of ``/etc/cinder/cinder.conf`` so that ``cinder-s
 
 ::
 
-   [DEFAULT]
-   scheduler_default_filters = AvailabilityZoneFilter, CapacityFilter, CapabilitiesFilter, AllegroFilter
+  [DEFAULT]
+
+::
+
+  scheduler_default_filters = AvailabilityZoneFilter, CapacityFilter, CapabilitiesFilter, AllegroFilter
 
 Unlike nova, cinder automatically knows how to locate allegro-openstack's scheduler filter. For ``scheduler_default_filters``, ensure that ``AllegroFilter`` is placed last so that it has the final say in scheduling.
 
@@ -347,14 +494,17 @@ Next, add an ``[allegro]`` section:
 
 ::
 
-   [allegro]
-   allegro_api_server_url = http://$ALLEGRO_HOST:8090/v1
+  [allegro]
+
+::
+
+  allegro_api_server_url = http://$ALLEGRO_HOST:8090/v1
 
 Restart cinder-scheduler: 
 
 ::
 
-   $ sudo service cinder-scheduler restart
+  $ sudo service cinder-scheduler restart
 
 Try It Out
 ----------
@@ -363,8 +513,11 @@ Tire-kick things using these example heat templates:
 
 ::
 
-   production: /usr/local/etc/heat/examples
-   developer:  $ALLEGRO_PATH/heat/examples
+  production: /usr/local/etc/heat/examples
+
+::
+
+  developer:  $ALLEGRO_PATH/heat/examples
 
 The flavor, ssh key, image, net/subnet IDs, mtu adjustment requirement, and security groups are all specific to the OpenStack installation. It will be necessary to edit various parameters to suit the environment in question.
 

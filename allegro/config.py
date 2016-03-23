@@ -77,7 +77,3 @@ music = {
     'port': '8080',
     'keyspace': 'valet_test'
 }
-
-ostro = {
-    'version': "2.0",
-}

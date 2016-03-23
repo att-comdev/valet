@@ -528,6 +528,28 @@ Tire-kick things using these example heat templates:
 
 The flavor, ssh key, image, net/subnet IDs, mtu adjustment requirement, and security groups are all specific to the OpenStack installation. It will be necessary to edit various parameters to suit the environment in question.
 
+Uninstallation
+--------------
+
+Activate a venv first if necessary. Use ``pip uninstall`` to uninstall allegro-api and allegro-openstack (same command for development or production modes). In this example, allegro-api is installed in a venv, while allegro-openstack is not. Note that venv activation is only during the uninstallation of allegro-api.
+
+::
+
+  $ . $PATH_TO_VENV/bin/activate
+
+::
+
+  (VENV) $ pip uninstall allegro-api
+
+::
+
+  (VENV) $ deactivate
+::
+
+  $ pip uninstall allegro-openstack
+
+Remove previously made configuration file changes, symbolic filesystem links, database configurations, user accounts, and other settings as needed.
+
 Contact
 -------
 

@@ -19,12 +19,8 @@ Prior to installation:
 - `IOArbiter`_ if VM-to-Volume QoS is required
 
 Allegro installation consists of two components:
-
 - allegro-openstack (formerly qosorch)
 - allegro-api (formerly allegro)
-::
-
-
 
 Allegro is compatible with OpenStack heat-kilo, cinder-juno, and nova-juno.
 
@@ -59,7 +55,7 @@ Clone the git repository from AT&T CodeCloud, using a ``$CODECLOUD_USER`` accoun
 
 ::
 
-  $ git clone https://$CODECLOUD_USER@codecloud.web.att.com/scm/st_cloudqos/allegro.git
+  $ git clone https://$CODECLOUD_USER@codecloud.web.att.com/scm/st_cloudqos/allegro.git <br>
   $ cd allegro # this is $ALLEGRO_PATH
 
 Both allegro-openstack and allegro-api can be installed in production mode or developer mode.

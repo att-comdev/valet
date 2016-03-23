@@ -6,19 +6,17 @@ Heat Resources
 
 The following is current as of Valet Release 1.0.
 
+.. _NOTE: The use of superfluous :: characters is necessary as a workaround for a CodeCloud reStructuredText markup parsing bug.
+
 ATT::CloudQoS::ResourceGroup
 ----------------------------
 
-*Note: The name of this resource may change to OS::Valet::ResourceGroup in the future.*
-
-Use this to declare one or more deployable resources (currently Servers and other Resource Groups) as being related through affinity, diversity, or exclusivity. While Resource Groups can include other groups, no circular references are permitted.
+CloudQoS Resource Groups declare one or more deployable resources (currently Servers and other Resource Groups) as being related through affinity, diversity, or exclusivity. While Resource Groups can include other groups, no circular references are permitted.
 
 This resource is purely informational in nature and makes no changes to heat, nova, or cinder. The Valet Heat Lifecycle Plugin passes this information to the optimizer.
 
 Properties
 ----------
-
-Note: Property characteristics are presently under review and may be revised.
 
 - **name** (String)
   - Name of relationship. Required for exclusivity groups.
@@ -61,14 +59,41 @@ Given a Heat template with two server resources, declare an affinity between the
 ::
 
   resources:
+
+::
+
     qos_resource_group:
+
+::
+
       type: ATT::CloudQoS::ResourceGroup
+
+::
+
       properties:
+
+::
+
         name: my_awesome_group
+
+::
+
         relationship: affinity
+
+::
+
         level: rack
+
+::
+
         resources:
+
+::
+
         - {get_resource: server1}
+
+::
+
         - {get_resource: server2}
 
 Plugin Schema
@@ -79,80 +104,273 @@ Use the OpenStack Heat CLI command `heat resource-type-show ATT::CloudQoS::Resou
 ::
 
   {
+
+::
+
     "support_status": {
+
+::
+
       "status": "SUPPORTED", 
+
+::
+
       "message": null, 
+
+::
+
       "version": null, 
+
+::
+
       "previous_status": null
+
+::
+
     }, 
+
+::
+
     "attributes": {
+
+::
+
       "show": {
+
+::
+
         "type": "map", 
+
+::
+
         "description": "Detailed information about resource."
+
+::
+
       }
+
+::
+
     }, 
+
+::
+
     "properties": {
+
+::
+
       "resources": {
+
+::
+
         "type": "list", 
+
+::
+
         "required": true, 
+
+::
+
         "update_allowed": true, 
+
+::
+
         "description": "List of one or more resource IDs.", 
+
+::
+
         "immutable": false
+
+::
+
       }, 
+
+::
+
       "name": {
+
+::
+
         "type": "string", 
+
+::
+
         "required": false, 
+
+::
+
         "update_allowed": true, 
+
+::
+
         "description": "Name of relationship. Required for exclusivity groups.", 
+
+::
+
         "immutable": false
+
+::
+
       }, 
+
+::
+
       "relationship": {
+
+::
+
         "description": "Grouping relationship.", 
+
+::
+
         "required": true, 
+
+::
+
         "update_allowed": true, 
+
+::
+
         "type": "string", 
+
+::
+
         "immutable": false, 
+
+::
+
         "constraints": [
+
+::
+
           {
+
+::
+
             "allowed_values": [
+
+::
+
               "affinity", 
+
+::
+
               "diversity", 
+
+::
+
               "exclusivity"
+
+::
+
             ]
+
+::
+
           }
+
+::
+
         ]
+
+::
+
       }, 
+
+::
+
       "level": {
+
+::
+
         "description": "Level of relationship between resources.", 
+
+::
+
         "required": false, 
+
+::
+
         "update_allowed": true, 
+
+::
+
         "type": "string", 
+
+::
+
         "immutable": false, 
+
+::
+
         "constraints": [
+
+::
+
           {
+
+::
+
             "allowed_values": [
+
+::
+
               "host", 
+
+::
+
               "rack"
+
+::
+
             ]
+
+::
+
           }
+
+::
+
         ]
+
+::
+
       }
+
+::
+
     }, 
+
+::
+
     "resource_type": "ATT::CloudQoS::ResourceGroup"
+
+::
+
   }
 
 Future Work
 -----------
 
-The following sections are proposals and NOT implemented. It is provided to aid in ongoing open discussion.
+The following sections are proposals and *not* implemented. It is provided to aid in ongoing open discussion.
+
+Resource Namespace Changes
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The resource namespace may change to ``OS::Valet`` in future releases.
+
+Resource Properties
+^^^^^^^^^^^^^^^^^^^
+
+Resource property characteristics are under ongoing review and subject to revision.
 
 Volume Resource Support
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-Future placement support will include block storage services (e.g., Cinder).
+Future placement support will formally include block storage services (e.g., Cinder).
 
-Additional Levels
-^^^^^^^^^^^^^^^^^
+Additional Scheduling Levels
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Future levels could include:
 
@@ -162,23 +380,62 @@ Future levels could include:
 Proposed Notation for 'diverse-affinity'
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Suppose we are given a set of server/volume pairs, and we'd like to treat each pair as an affinity group, and then treat all affinity groups diversely. The following notation makes this diverse affinity pattern easier to describe and with no name repetition.
+Suppose we are given a set of server/volume pairs, and we'd like to treat each pair as an affinity group, and then treat all affinity groups diversely. The following notation makes this diverse affinity pattern easier to describe, with no name repetition.
 
 ::
 
   resources:
+
+::
+
     qos_resource_group:
+
+::
+
       type: ATT::CloudQoS::ResourceGroup
+
+::
+
       properties:
+
+::
+
         name: my_even_awesomer_group
+
+::
+
         relationship: diverse-affinity
+
+::
+
         level: host
+
+::
+
         resources:
+
+::
+
         - - {get_resource: server1}
+
+::
+
           - {get_resource: volume1}
+
+::
+
         - - {get_resource: server2}
+
+::
+
           - {get_resource: volume2}
+
+::
+
         - - {get_resource: server3}
+
+::
+
           - {get_resource: volume3}
 
 In this example, server1/volume1, server2/volume2, and server3/volume3 are each treated as their own affinity group. Then, each of these affinity groups is treated as a diversity group. The dash notation is specific to YAML (a superset of JSON and the markup language used by Heat).

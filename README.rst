@@ -57,11 +57,11 @@ Clone the git repository from AT&T CodeCloud, using a ``$CODECLOUD_USER`` accoun
 
 ::
 
-    $ git clone https://$CODECLOUD_USER@codecloud.web.att.com/scm/st_cloudqos/allegro.git
+  $ git clone https://$CODECLOUD_USER@codecloud.web.att.com/scm/st_cloudqos/allegro.git
 
 ::
 
-    $ cd allegro
+   $ cd allegro
 
 Both allegro-openstack and allegro-api can be installed in production mode or developer mode.
 
@@ -72,6 +72,7 @@ Install allegro-openstack on an OpenStack controller node containing heat-engine
   production: $ sudo pip install $ALLEGRO_PATH
 
 ::
+
   developer:  $ sudo pip install --editable $ALLEGRO_PATH
 
 Install allegro-api in the venv on the designated allegro node (which could be the same as the controller node, but doesn't have to be):

@@ -17,7 +17,7 @@
 from pecan import expose
 from pecan import request
         
-from allegro.controllers import plans, placements
+from allegro.controllers import plans, placements, groups, optimizers
     
 import logging
 
@@ -27,6 +27,8 @@ logger = logging.getLogger(__name__)
 class TenantController(object):
     plans = plans.PlansController()
     placements = placements.PlacementsController()
+    groups = groups.GroupsController()
+    optimizers = optimizers.OptimizersController()
 
     def __init__(self, tenant_id):
         self.tenant_id = tenant_id
@@ -41,6 +43,14 @@ class TenantController(object):
               "status": "CURRENT",
               "id": "v1.0",
               "links": [
+                {
+                  "href": request.application_url + "/v1/{tenant_id}/groups/",
+                  "rel": "self"
+                },
+                {
+                  "href": request.application_url + "/v1/{tenant_id}/optimizers/",
+                  "rel": "self"
+                },
                 {
                   "href": request.application_url + "/v1/{tenant_id}/plans/",
                   "rel": "self"

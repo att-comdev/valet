@@ -14,6 +14,7 @@
 # implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
 import simplejson
 
 from allegro import models
@@ -32,9 +33,7 @@ logger = logging.getLogger(__name__)
 class PlacementsItemController(object):
     def __init__(self, orchestration_id):
         self.orchestration_id = orchestration_id
-        #self.placement = Placement.query.filter_by(
-        #                     orchestration_id=self.orchestration_id).first()
-        self.placement = Query(Placement).filter_by(
+        self.placement = Placement.query.filter_by(
                              orchestration_id=self.orchestration_id).first()
         if not self.placement:
             error('/v1/errors/not_found',
@@ -46,9 +45,6 @@ class PlacementsItemController(object):
         if request.method == 'POST':
             error('/v1/errors/not_allowed',
                   'POST requests to this url are not allowed')
-        #elif request.method == 'DELETE':
-        #    error('/v1/errors/not_allowed',
-        #          'DELETE requests to this url are not allowed')
         return self.placement
 
     @index.when(method='DELETE', template='json')
@@ -64,8 +60,7 @@ class PlacementsController(object):
     def index(self):
         '''Get placements!'''
         placements_array = []
-        #for placement in Placement.query.all():
-        for placement in Query(Placement).all():
+        for placement in Placement.query.all():
             placements_array.append(placement)
         return placements_array
     

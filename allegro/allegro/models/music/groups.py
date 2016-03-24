@@ -14,6 +14,8 @@
 # implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+import simplejson
 #import uuid
 
 #from sqlalchemy import Column, Integer, String, Sequence
@@ -24,12 +26,14 @@ from allegro.models.music import Base, Query
 #from allegro.models.sqlalchemy import Base
 
 
-class Plan(Base):
-    __tablename__ = 'plans'
+class Group(Base):
+    __tablename__ = 'groups'
 
     id = None
     name = None
-    stack_id = None
+    description = None
+    group_type = None
+    members = None
 
     @classmethod
     def schema(cls):
@@ -37,7 +41,9 @@ class Plan(Base):
         schema = {
             'id': 'text',
             'name': 'text',
-            'stack_id': 'text',
+            'description': 'text',
+            'type': 'text',
+            'members': 'text',
             'PRIMARY KEY': '(id)'
         }
         return schema
@@ -52,45 +58,31 @@ class Plan(Base):
     def values(self):
         return {
             'name': self.name,
-            'stack_id': self.stack_id,
+            'description': self.description,
+            'type': self.group_type,
+            'members': self.members
         }
 
-    def __init__(self, name, stack_id, _insert=True):
-        super(Plan, self).__init__()
+    def __init__(self, name, description, group_type, members, _insert=True):
+        super(Group, self).__init__()
         self.name = name
-        self.stack_id = stack_id
+        self.description = description
+        self.group_type = group_type
+        self.members = members
         if _insert:
             self.insert()
 
-    def placements(self):
-        all_results = Query("Placement").all()
-        results = []
-        for placement in all_results:
-            if placement.plan_id == self.id:
-                results.append(placement)
-        return results
-
-    @property
-    def orchestration_ids(self):
-        #return list(set([p.orchestration_id for p in self.placements.all()]))
-        return list(set([p.orchestration_id for p in self.placements()]))
-
     def __repr__(self):
         try:
-            return '<Plan %r>' % self.name
+            return '<Group %r>' % self.name
         except DetachedInstanceError:
-            return '<Plan detached>'
+            return '<Group detached>'
 
     def __json__(self):
         json_ = {}
         json_['id'] = self.id
-        json_['stack_id'] = self.stack_id
         json_['name'] = self.name
-        json_['placements'] = {}
-        #for placement in self.placements.all():
-        for placement in self.placements():
-            json_['placements'][placement.orchestration_id] = dict(
-                name=placement.name,
-                location=placement.location
-            )
+        json_['description'] = self.description
+        json_['type'] = self.group_type
+        json_['members'] = self.members
         return json_

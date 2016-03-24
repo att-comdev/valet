@@ -64,6 +64,7 @@ class Placement(Base):
 
     def __init__(self, name, orchestration_id, plan=None,
                  plan_id=None, location=None, _insert=True):
+        super(Placement, self).__init__()
         self.name = name
         self.orchestration_id = orchestration_id
         if plan_id:

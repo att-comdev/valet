@@ -14,12 +14,14 @@
 # implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
 from pecan.commands.base import BaseCommand
 from pecan import conf
 
 # TODO: Make this a driver plugin point instead so we can pick and choose.
 from allegro.models import music as models
 #from allegro.models import sqlalchemy as models
+from allegro.models.music.groups import Group
 from allegro.models.music.placements import Placement
 from allegro.models.music.plans import Plan
 from allegro.models.music.ostro import Event
@@ -46,9 +48,12 @@ class PopulateCommand(BaseCommand):
             models.start()
             #models.Base.metadata.create_all(conf.sqlalchemy.engine)
 
+            # Allegro
+            Group.create_table()
             Placement.create_table()
             Plan.create_table()
 
+            # Ostro
             Event.create_table()
             PlacementRequest.create_table()
             PlacementResult.create_table()

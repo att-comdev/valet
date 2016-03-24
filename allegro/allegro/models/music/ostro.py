@@ -48,6 +48,7 @@ class PlacementRequest(Base):
         }
 
     def __init__(self, request, stack_id=None, _insert=True):
+        super(PlacementRequest, self).__init__()
         self.stack_id = stack_id
         self.request = request
         if _insert:
@@ -94,6 +95,7 @@ class PlacementResult(Base):
         }
 
     def __init__(self, placement, stack_id=None, _insert=True):
+        super(PlacementResult, self).__init__()
         self.stack_id = stack_id
         self.placement = placement
         if _insert:
@@ -141,6 +143,7 @@ class Event(Base):
         }
 
     def __init__(self, event, event_id=None, _insert=True):
+        super(Event, self).__init__()
         self.event_id = event_id
         self.event = event
         if _insert:

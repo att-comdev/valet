@@ -14,6 +14,7 @@
 # implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
 from allegro import models
 from allegro.controllers import update_placements, error
 # TODO: Make this a driver plugin point instead so we can pick and choose.
@@ -51,11 +52,9 @@ class PlansItemController(object):
 
     def __init__(self, uuid4):
         self.uuid = uuid4
-        #self.plan = Plan.query.filter_by(id=self.uuid).first()
-        self.plan = Query(Plan).filter_by(id=self.uuid).first()
+        self.plan = Plan.query.filter_by(id=self.uuid).first()
         if not self.plan:
-            #self.plan = Plan.query.filter_by(stack_id=self.uuid).first()
-            self.plan = Query(Plan).filter_by(stack_id=self.uuid).first()
+            self.plan = Plan.query.filter_by(stack_id=self.uuid).first()
             if not self.plan:
                 error('/v1/errors/not_found',
                     'Plan not found')
@@ -143,8 +142,7 @@ class PlansController(object):
     def index(self):
         '''Get plans!'''
         plans_array = []
-        #for plan in Plan.query.all():
-        for plan in Query(Plan).all():
+        for plan in Plan.query.all():
             plans_array.append(plan.name)
         return plans_array
     

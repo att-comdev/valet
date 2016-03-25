@@ -24,9 +24,14 @@ class Parser:
     def __init__(self, _resource):
         self.resource = _resource
 
+        self.high_level_allowed = True
+        if "none" in self.resource.datacenter.region_code_list:
+            self.high_level_allowed = False
+
         self.format_version = None
-        self.stack_id = None  # used as application id
+        self.stack_id = None          # used as application id
         self.application_name = None
+        self.action = None            # [create|update|ping]
 
         self.total_nw_bandwidth = 0
         self.total_CPU = 0
@@ -52,7 +57,15 @@ class Parser:
         else:
             self.application_name = "none"
 
-        return self._set_topology(_graph["resources"])
+        if "action" in _graph.keys():
+            self.action = _graph["action"]
+        else:
+            self.action = "any"
+
+        if self.action == "ping":
+            return ({}, {}, {})
+        else:
+            return self._set_topology(_graph["resources"])
 
     def _set_topology(self, _elements):
         vgroups = {}
@@ -70,7 +83,7 @@ class Parser:
                     vm.name = vm.uuid
 
                 if vm.set_vm_properties(r["properties"]["flavor"], self.resource) == False:
-                    self.status = "Not recognize flavor = " + r["properties"]["flavor"]
+                    self.status = "not recognize flavor = " + r["properties"]["flavor"]
                     return ({}, {}, {})
 
                 if "availability_zone" in r["properties"].keys():
@@ -112,6 +125,12 @@ class Parser:
                 #vgroup.vgroup_type = "AFF"
                   
                 vgroup.level = r["properties"]["level"]
+        
+                if vgroup.level != "host":
+                    if self.high_level_allowed == False:
+                        self.status = "only host level of affinity group allowed in this site " + \
+                                      "due to the mis-match of host naming convention"
+                        return ({}, {}, {})
 
                 vgroups[vgroup.uuid] = vgroup
 
@@ -171,6 +190,13 @@ class Parser:
                 '''
 
                 level = r["properties"]["level"]
+
+                if level != "host":
+                    if self.high_level_allowed == False:
+                        self.status = "only host level of diversity group allowed in this site " + \
+                                      "due to the mis-match of host naming convention"
+                        return False
+
                 for vk in r["properties"]["resources"]:
                     if vk in _vms.keys():
                         vm = _vms[vk]
@@ -197,7 +223,7 @@ class Parser:
 
                 group_name = None
                 if "name" not in r.keys():
-                    self.status = "Missing the name of Exclusivity group"
+                    self.status = "missing the name of exclusivity group"
                     return False
                 else:
                     group_name = r["name"]
@@ -215,6 +241,13 @@ class Parser:
                 '''
 
                 level = r["properties"]["level"]
+
+                if level != "host":
+                    if self.high_level_allowed == False:
+                        self.status = "only host level of exclusivity group allowed in this site " + \
+                                      "due to the mis-match of host naming convention"
+                        return False
+
                 for vk in r["properties"]["resources"]:
                     if vk in _vms.keys():
                         vm = _vms[vk]

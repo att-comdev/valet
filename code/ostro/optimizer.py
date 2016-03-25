@@ -36,17 +36,15 @@ class Optimizer:
         self.status = "success"
 
     def place(self, _app_topology): 
-        return self._place_nodes(_app_topology)
-
-    def _place_nodes(self, _app_topology):
         start_ts = time.time() 
         success = self.search.place_nodes(_app_topology, self.resource)
         end_ts = time.time()
 
         if success == True:
-            self.logger.info("--search running time = " + str(end_ts - start_ts) + " sec")
-            self.logger.info("--total bandwidth reservation to be made = " + str(self.search.bandwidth_usage))
-            self.logger.info("--total number of hosts to be used = " + str(self.search.num_of_hosts))
+
+            self.logger.debug("stat: search running time = " + str(end_ts - start_ts) + " sec")
+            self.logger.debug("stat: total bandwidth reservation to be made = " + str(self.search.bandwidth_usage))
+            self.logger.debug("stat: total number of hosts to be used = " + str(self.search.num_of_hosts))
 
             placement_map = {}
             for v in self.search.node_placements.keys(): 
@@ -55,6 +53,7 @@ class Optimizer:
                 if isinstance(v, Volume):
                     placement_map[v] = self.search.node_placements[v].host_name + "@" + \
                                        self.search.node_placements[v].storage.storage_name
+                self.logger.debug("    vm (" + v.name + ") placed in " + placement_map[v])
             
             self._update_resource_status()
 
@@ -62,7 +61,7 @@ class Optimizer:
 
         else:
             self.status = self.search.status
-            return {}
+            return None
 
     def _update_resource_status(self):
         for v, np in self.search.node_placements.iteritems():
@@ -75,6 +74,11 @@ class Optimizer:
                 host.avail_vCPUs -= v.vCPUs
                 host.avail_mem_cap -= v.mem
                 host.avail_local_disk_cap -= v.local_volume_size
+
+                host.vCPUs_used += v.vCPUs
+                host.free_mem_mb -= v.mem
+                host.free_disk_gb -= v.local_volume_size
+                host.disk_available_least -= v.local_volume_size
 
                 for vl in v.vm_list:
                     tnp = self.search.node_placements[vl.node]

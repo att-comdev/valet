@@ -59,12 +59,16 @@ class Search:
         self.status = "success"
 
     def place_nodes(self, _app_topology, _resource):
+        self._init_placements()
+
         self.app_topology = _app_topology
+
+        if self.app_topology.optimization_priority == None:
+            return True
+
         self.resource = _resource
 
         self.constraint_solver = ConstraintSolver(self.logger)
-
-        self._init_placements()
 
         self.logger.info("start search")
 
@@ -118,8 +122,11 @@ class Search:
                 if sk in self.avail_switches.keys():
                     r.host_avail_switches[sk] = self.avail_switches[sk]
 
+            r.host_vCPUs = host.original_vCPUs
             r.host_avail_vCPUs = host.avail_vCPUs
+            r.host_mem = host.original_mem_cap
             r.host_avail_mem = host.avail_mem_cap
+            r.host_local_disk = host.original_local_disk_cap
             r.host_avail_local_disk = host.avail_local_disk_cap
 
             r.host_num_of_placed_vms = len(host.vm_list)
@@ -146,8 +153,11 @@ class Search:
                     if rsk in self.avail_switches.keys():
                         r.rack_avail_switches[rsk] = self.avail_switches[rsk]
 
+                r.rack_vCPUs = rack.original_vCPUs
                 r.rack_avail_vCPUs = rack.avail_vCPUs
+                r.rack_mem = rack.original_mem_cap
                 r.rack_avail_mem = rack.avail_mem_cap
+                r.rack_local_disk = rack.original_local_disk_cap
                 r.rack_avail_local_disk = rack.avail_local_disk_cap
 
                 r.rack_num_of_placed_vms = len(rack.vm_list)
@@ -173,8 +183,11 @@ class Search:
                         if csk in self.avail_switches.keys():
                             r.cluster_avail_switches[csk] = self.avail_switches[csk]
 
+                    r.cluster_vCPUs = cluster.original_vCPUs
                     r.cluster_avail_vCPUs = cluster.avail_vCPUs
+                    r.cluster_mem = cluster.original_mem_cap
                     r.cluster_avail_mem = cluster.avail_mem_cap
+                    r.cluster_local_disk = cluster.original_local_disk_cap
                     r.cluster_avail_local_disk = cluster.avail_local_disk_cap
 
                     r.cluster_num_of_placed_vms = len(cluster.vm_list)
@@ -826,13 +839,19 @@ class Search:
 
     def _check_availability(self, _level, _n, _candidate):
         if isinstance(_n.node, VM):
-            if self.constraint_solver.check_compute_availability(_level, _n.node, _candidate) == False:
+            if self.constraint_solver.check_cpu_capacity(_level, _n.node, _candidate) == False:
+                return False
+            if self.constraint_solver.check_mem_capacity(_level, _n.node, _candidate) == False:
+                return False
+            if self.constraint_solver.check_local_disk_capacity(_level, _n.node, _candidate) == False:
                 return False
         elif isinstance(_n.node, Volume):
             if self.constraint_solver.check_storage_availability(_level, _n.node, _candidate) == False:
                 return False
         else:
-            if self.constraint_solver.check_compute_availability(_level, _n.node, _candidate) == False or \
+            if self.constraint_solver.check_cpu_capacity(_level, _n.node, _candidate) == False or \
+               self.constraint_solver.check_mem_capacity(_level, _n.node, _candidate) == False or \
+               self.constraint_solver.check_local_disk_capacity(_level, _n.node, _candidate) == False or \
                self.constraint_solver.check_storage_availability(_level, _n.node, _candidate) == False:
                 return False
 
@@ -843,7 +862,6 @@ class Search:
             return False
 
         if isinstance(_n.node, VM):
-            #if len(_n.node.host_aggregates) > 0:
             if len(_n.node.extra_specs_list) > 0:
                 if self.constraint_solver.check_host_aggregates(_level, _candidate, _n.node) == False:
                     return False

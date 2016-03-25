@@ -16,6 +16,9 @@ import sys
 
 from openstack_filters import AggregateInstanceExtraSpecsFilter
 from openstack_filters import AvailabilityZoneFilter
+from openstack_filters import RamFilter
+from openstack_filters import CoreFilter
+from openstack_filters import DiskFilter
 
 sys.path.insert(0, '../app_manager')
 from app_topology_base import VGroup, VM, Volume, VGroupLink, VMLink, VolumeLink, LEVELS
@@ -26,8 +29,11 @@ class ConstraintSolver:
     def __init__(self, _logger):
         self.logger = _logger
 
-        self.openstack_AIES = AggregateInstanceExtraSpecsFilter(self.logger)
         self.openstack_AZ = AvailabilityZoneFilter(self.logger)
+        self.openstack_AIES = AggregateInstanceExtraSpecsFilter(self.logger)
+        self.openstack_R = RamFilter(self.logger)
+        self.openstack_C = CoreFilter(self.logger)
+        self.openstack_D = DiskFilter(self.logger)
 
         self.status = "success"
 
@@ -35,39 +41,6 @@ class ConstraintSolver:
         candidate_list = []
         for rk, r in _avail_resources.iteritems():
             candidate_list.append(r)
-
-        # Compute capacity constraint
-        if isinstance(_n.node, VGroup) or isinstance(_n.node, VM):
-            self._constrain_compute_capacity(_level, _n, candidate_list)
-            if len(candidate_list) == 0:
-                self.status = "violate compute capacity constraint for node = " + _n.node.name
-                self.logger.error(self.status)
-                return candidate_list
-
-        # Storage capacity constraint
-        if (isinstance(_n.node, VGroup) and len(_n.node.volume_sizes) > 0) or isinstance(_n.node, Volume):
-            self._constrain_storage_capacity(_level, _n, candidate_list)
-            if len(candidate_list) == 0:
-                self.status = "violate storage capacity constraint for node = " + _n.node.name
-                self.logger.error(self.status)
-                return candidate_list
-
-        # Network bandwidth constraint
-        self._constrain_nw_bandwidth_capacity(_level, _n, _node_placements, candidate_list)
-        if len(candidate_list) == 0:
-            self.status = "violate nw bandwidth capacity constraint for node = " + _n.node.name
-            self.logger.error(self.status)
-            return candidate_list
-
-        # Host Aggregate constraint
-        if isinstance(_n.node, VGroup) or isinstance(_n.node, VM):
-            #if len(_n.node.host_aggregates) > 0:
-            if len(_n.node.extra_specs_list) > 0:
-                self._constrain_host_aggregates(_level, _n, candidate_list)
-                if len(candidate_list) == 0:
-                    self.status = "violate host aggregate constraint for node = " + _n.node.name
-                    self.logger.error(self.status)
-                    return candidate_list
 
         # Availability Zone constraint
         if isinstance(_n.node, VGroup) or isinstance(_n.node, VM):
@@ -78,6 +51,68 @@ class ConstraintSolver:
                     self.status = "violate availability zone constraint for node = " + _n.node.name
                     self.logger.error(self.status)
                     return candidate_list
+                else:
+                    self.logger.debug("done availability_zone constraint")
+
+        # Host Aggregate constraint
+        if isinstance(_n.node, VGroup) or isinstance(_n.node, VM):
+            if len(_n.node.extra_specs_list) > 0:
+                self._constrain_host_aggregates(_level, _n, candidate_list)
+                if len(candidate_list) == 0:
+                    self.status = "violate host aggregate constraint for node = " + _n.node.name
+                    self.logger.error(self.status)
+                    return candidate_list
+                else:
+                    self.logger.debug("done host_aggregate constraint")
+
+        # CPU capacity constraint
+        if isinstance(_n.node, VGroup) or isinstance(_n.node, VM):
+            self._constrain_cpu_capacity(_level, _n, candidate_list)
+            if len(candidate_list) == 0:
+                self.status = "violate cpu capacity constraint for node = " + _n.node.name
+                self.logger.error(self.status)
+                return candidate_list
+            else:
+                self.logger.debug("done cpu capacity constraint")
+
+        # Memory capacity constraint
+        if isinstance(_n.node, VGroup) or isinstance(_n.node, VM):
+            self._constrain_mem_capacity(_level, _n, candidate_list)
+            if len(candidate_list) == 0:
+                self.status = "violate memory capacity constraint for node = " + _n.node.name
+                self.logger.error(self.status)
+                return candidate_list
+            else:
+                self.logger.debug("done memory capacity constraint")
+
+        # Local disk capacity constraint
+        if isinstance(_n.node, VGroup) or isinstance(_n.node, VM):
+            self._constrain_local_disk_capacity(_level, _n, candidate_list)
+            if len(candidate_list) == 0:
+                self.status = "violate local disk capacity constraint for node = " + _n.node.name
+                self.logger.error(self.status)
+                return candidate_list
+            else:
+                self.logger.debug("done local disk capacity constraint")
+
+        # Storage capacity constraint
+        if (isinstance(_n.node, VGroup) and len(_n.node.volume_sizes) > 0) or isinstance(_n.node, Volume):
+            self._constrain_storage_capacity(_level, _n, candidate_list)
+            if len(candidate_list) == 0:
+                self.status = "violate storage capacity constraint for node = " + _n.node.name
+                self.logger.error(self.status)
+                return candidate_list
+            else:
+                self.logger.debug("done storage capacity constraint")
+
+        # Network bandwidth constraint
+        self._constrain_nw_bandwidth_capacity(_level, _n, _node_placements, candidate_list)
+        if len(candidate_list) == 0:
+            self.status = "violate nw bandwidth capacity constraint for node = " + _n.node.name
+            self.logger.error(self.status)
+            return candidate_list
+        else:
+            self.logger.debug("done bandwidth capacity constraint")
 
         # Diversity constraint
         if len(_n.node.diversity_groups) > 0:
@@ -86,6 +121,8 @@ class ConstraintSolver:
                 self.status = "violate diversity constraint for node = " + _n.node.name
                 self.logger.error(self.status)
                 return candidate_list
+            else:
+                self.logger.debug("done diversity_group constraint")
 
         # Exclusivity constraint
         exclusivities = self.get_exclusivities(_n.node.exclusivity_groups, _level)
@@ -101,12 +138,16 @@ class ConstraintSolver:
                     self.status = "violate exclusivity constraint for node = " + _n.node.name
                     self.logger.error(self.status)
                     return candidate_list
+                else:
+                    self.logger.debug("done exclusivity_group constraint")
             else:
                 self._constrain_non_exclusivity(_level, candidate_list)
                 if len(candidate_list) == 0:
                     self.status = "violate non-exclusivity constraint for node = " + _n.node.name
                     self.logger.error(self.status)
                     return candidate_list
+                else:
+                    self.logger.debug("done non-exclusivity_group constraint")
 
         # Affinity constraint
         affinity_id = _n.get_affinity_id()
@@ -117,6 +158,8 @@ class ConstraintSolver:
                     self.status = "violate affinity constraint for node = " + _n.node.name
                     self.logger.error(self.status)
                     return candidate_list
+                else:
+                    self.logger.debug("done affinity_group constraint")
 
         return candidate_list
 
@@ -245,31 +288,7 @@ class ConstraintSolver:
 
     def check_host_aggregates(self, _level, _candidate, _v):
         return self.openstack_AIES.host_passes(_level, _candidate, _v)
-        #return self._match_host_aggregates(_v, _candidate.get_memberships(_level))
 
-    '''
-    def _match_host_aggregates(self, _v, _target_memberships):
-        if isinstance(_v, VM):
-            match = True
-
-            for mk in _v.host_aggregates.keys():
-                if mk not in _target_memberships.keys():
-                    match = False
-                    break
-
-            return match
-
-        elif isinstance(_v, VGroup):
-            match = True
-
-            for sgk, sg in _v.subvgroups.iteritems():
-                match = self._match_host_aggregates(sg, _target_memberships)
-                if match == False:
-                    break
-
-            return match
-    '''
-  
     def _constrain_availability_zone(self, _level, _n, _candidate_list):
         conflict_list = []
 
@@ -323,14 +342,31 @@ class ConstraintSolver:
 
         return conflict
 
-    def _constrain_compute_capacity(self, _level, _n, _candidate_list):
+    def _constrain_cpu_capacity(self, _level, _n, _candidate_list):
         conflict_list = []
 
         for ch in _candidate_list:
-            if self.check_compute_availability(_level, _n.node, ch) == False:
+            if self.check_cpu_capacity(_level, _n.node, ch) == False:
                 conflict_list.append(ch)
 
                 debug_resource_name = ch.get_resource_name(_level)
+                self.logger.debug("lack of cpu in " + debug_resource_name)
+
+        _candidate_list[:] = [c for c in _candidate_list if c not in conflict_list]
+
+    def check_cpu_capacity(self, _level, _v, _candidate):
+        return self.openstack_C.host_passes(_level, _candidate, _v)
+
+    def _constrain_mem_capacity(self, _level, _n, _candidate_list):
+        conflict_list = []
+
+        for ch in _candidate_list:
+            if self.check_mem_capacity(_level, _n.node, ch) == False:
+                conflict_list.append(ch)
+
+                debug_resource_name = ch.get_resource_name(_level)
+                self.logger.debug("lack of mem in " + debug_resource_name)
+                '''
                 (avail_vCPUs, avail_mem, avail_local_disk) = ch.get_avail_resources(_level)
                 self.logger.debug("compute resource constrained in resource = " + debug_resource_name)
                 if _n.node.vCPUs > avail_vCPUs:
@@ -339,17 +375,27 @@ class ConstraintSolver:
                     self.logger.debug("lack of mem = " + str(_n.node.mem - avail_mem))
                 if _n.node.local_volume_size > avail_local_disk:
                     self.logger.debug("lack of local disk = " + str(_n.node.local_volume_size - avail_local_disk))
+                '''
 
         _candidate_list[:] = [c for c in _candidate_list if c not in conflict_list]
 
-    def check_compute_availability(self, _level, _v, _ch):
-        available = True
+    def check_mem_capacity(self, _level, _v, _candidate):
+        return self.openstack_R.host_passes(_level, _candidate, _v)
 
-        (avail_vCPUs, avail_mem, avail_local_disk) = _ch.get_avail_resources(_level)
-        if avail_vCPUs < _v.vCPUs or avail_mem < _v.mem or avail_local_disk < _v.local_volume_size:
-            available = False
+    def _constrain_local_disk_capacity(self, _level, _n, _candidate_list):
+        conflict_list = []
 
-        return available
+        for ch in _candidate_list:
+            if self.check_local_disk_capacity(_level, _n.node, ch) == False:
+                conflict_list.append(ch)
+
+                debug_resource_name = ch.get_resource_name(_level)
+                self.logger.debug("lack of local disk in " + debug_resource_name)
+
+        _candidate_list[:] = [c for c in _candidate_list if c not in conflict_list]
+
+    def check_local_disk_capacity(self, _level, _v, _candidate):
+        return self.openstack_D.host_passes(_level, _candidate, _v)
 
     def _constrain_storage_capacity(self, _level, _n, _candidate_list):
         conflict_list = []

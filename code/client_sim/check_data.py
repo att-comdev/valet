@@ -66,9 +66,11 @@ if __name__ == '__main__':
             placement = json.loads(row['placement'])
             print json.dumps(placement, indent=4)
 
+    '''
     results = mc.get_apps()
     if results != None:
         print "Apps"
         for rowk, row in results.iteritems():
             placement = json.loads(row['app'])
             print json.dumps(placement, indent=4)
+    '''

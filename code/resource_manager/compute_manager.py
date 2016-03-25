@@ -91,7 +91,7 @@ class ComputeManager(threading.Thread):
     def _run(self):
         self.data_lock.acquire(1)
 
-        self.logger.info("start compute_nodes status update ...")
+        self.logger.info("--- start compute_nodes status update ---")
 
         triggered_host_updates = self.set_hosts()
         triggered_flavor_updates = self.set_flavors()
@@ -102,7 +102,7 @@ class ComputeManager(threading.Thread):
             # TODO: error handling, e.g., 3 times failure then stop Ostro
             pass
 
-        self.logger.info("done compute_nodes status update")
+        self.logger.info("--- done compute_nodes status update ---")
 
         self.data_lock.release()
 
@@ -140,10 +140,75 @@ class ComputeManager(threading.Thread):
             self.logger.error(status)
             return False
 
+        self._compute_avail_host_resources(hosts)
+
         self._check_logical_group_update(logical_groups)
         self._check_host_update(hosts)
 
         return True
+
+    def _compute_avail_host_resources(self, _hosts):
+        for hk, host in _hosts.iteritems():
+            ram_allocation_ratio_list = []
+            cpu_allocation_ratio_list = []
+            disk_allocation_ratio_list = []
+
+            for lgk, lg in host.memberships.iteritems():
+                if lg.group_type == "AGGR":
+                    if "ram_allocation_ratio" in lg.metadata.keys():
+                        ram_allocation_ratio_list.append(float(lg.metadata["ram_allocation_ratio"])) 
+                    if "cpu_allocation_ratio" in lg.metadata.keys():
+                        cpu_allocation_ratio_list.append(float(lg.metadata["cpu_allocation_ratio"])) 
+                    if "disk_allocation_ratio" in lg.metadata.keys():
+                        disk_allocation_ratio_list.append(float(lg.metadata["disk_allocation_ratio"])) 
+
+            ram_allocation_ratio = 1.0
+            if len(ram_allocation_ratio_list) > 0:
+                ram_allocation_ratio = min(ram_allocation_ratio_list)
+            else:
+                if self.config.default_ram_allocation_ratio > 0:
+                    ram_allocation_ratio = self.config.default_ram_allocation_ratio
+
+            static_ram_standby_ratio = 0
+            if self.config.static_mem_standby_ratio > 0:
+                static_ram_standby_ratio = float(self.config.static_mem_standby_ratio) / float(100)
+
+            host.compute_avail_mem(ram_allocation_ratio, static_ram_standby_ratio)
+            
+            self.logger.debug("host (" + hk + ")'s total_mem = " + str(host.mem_cap) + \
+                              ", avail_mem = " + str(host.avail_mem_cap))
+
+            cpu_allocation_ratio = 1.0
+            if len(cpu_allocation_ratio_list) > 0:
+                cpu_allocation_ratio = min(cpu_allocation_ratio_list)
+            else:
+                if self.config.default_cpu_allocation_ratio > 0:
+                    cpu_allocation_ratio = self.config.default_cpu_allocation_ratio
+
+            static_cpu_standby_ratio = 0
+            if self.config.static_cpu_standby_ratio > 0:
+                static_cpu_standby_ratio = float(self.config.static_cpu_standby_ratio) / float(100)
+
+            host.compute_avail_vCPUs(cpu_allocation_ratio, static_cpu_standby_ratio)
+            
+            self.logger.debug("host (" + hk + ")'s total_vCPUs = " + str(host.vCPUs) + \
+                              ", avail_vCPUs = " + str(host.avail_vCPUs))
+
+            disk_allocation_ratio = 1.0
+            if len(disk_allocation_ratio_list) > 0:
+                disk_allocation_ratio = min(disk_allocation_ratio_list)
+            else:
+                if self.config.default_disk_allocation_ratio > 0:
+                    disk_allocation_ratio = self.config.default_disk_allocation_ratio
+
+            static_disk_standby_ratio = 0
+            if self.config.static_local_disk_standby_ratio > 0:
+                static_disk_standby_ratio = float(self.config.static_local_disk_standby_ratio) / float(100)
+
+            host.compute_avail_disk(disk_allocation_ratio, static_disk_standby_ratio)
+            
+            self.logger.debug("host (" + hk + ")'s total_local_disk = " + str(host.local_disk_cap) + \
+                              ", avail_local_disk = " + str(host.avail_local_disk_cap))
 
     def _check_logical_group_update(self, _logical_groups):
         for lk in _logical_groups.keys():
@@ -258,24 +323,43 @@ class ComputeManager(threading.Thread):
             topology_updated = True
             self.logger.warn("host (" + _rhost.name + ") updated (state changed)")
 
-        if _host.vCPUs != _rhost.vCPUs or _host.avail_vCPUs != _rhost.avail_vCPUs:
+        if _host.vCPUs != _rhost.vCPUs or \
+           _host.original_vCPUs != _rhost.original_vCPUs or \
+           _host.avail_vCPUs != _rhost.avail_vCPUs:
             _rhost.vCPUs = _host.vCPUs
+            _rhost.original_vCPUs = _host.original_vCPUs
             _rhost.avail_vCPUs = _host.avail_vCPUs
             topology_updated = True
             self.logger.warn("host (" + _rhost.name + ") updated (CPU updated)")
 
-        if _host.mem_cap != _rhost.mem_cap or _host.avail_mem_cap != _rhost.avail_mem_cap:
+        if _host.mem_cap != _rhost.mem_cap or \
+           _host.original_mem_cap != _rhost.original_mem_cap or \
+           _host.avail_mem_cap != _rhost.avail_mem_cap:
             _rhost.mem_cap = _host.mem_cap
+            _rhost.original_mem_cap = _host.original_mem_cap
             _rhost.avail_mem_cap = _host.avail_mem_cap
             topology_updated = True
             self.logger.warn("host (" + _rhost.name + ") updated (mem updated)")
 
         if _host.local_disk_cap != _rhost.local_disk_cap or \
+           _host.original_local_disk_cap != _rhost.original_local_disk_cap or \
            _host.avail_local_disk_cap != _rhost.avail_local_disk_cap:
             _rhost.local_disk_cap = _host.local_disk_cap
+            _rhost.original_local_disk_cap = _host.original_local_disk_cap
             _rhost.avail_local_disk_cap = _host.avail_local_disk_cap
             topology_updated = True
             self.logger.warn("host (" + _rhost.name + ") updated (local disk space updated)")
+
+        if _host.vCPUs_used != _rhost.vCPUs_used or \
+           _host.free_mem_mb != _rhost.free_mem_mb or \
+           _host.free_disk_gb != _rhost.free_disk_gb or \
+           _host.disk_available_least != _rhost.disk_available_least:
+            _rhost.vCPUs_used = _host.vCPUs_used
+            _rhost.free_mem_mb = _host.free_mem_mb
+            _rhost.free_disk_gb = _host.free_disk_gb
+            _rhost.disk_available_least = _host.disk_available_least
+            topology_updated = True
+            self.logger.warn("host (" + _rhost.name + ") updated (other resource numbers)")
 
         for mk in _host.memberships.keys():
             if mk not in _rhost.memberships.keys():

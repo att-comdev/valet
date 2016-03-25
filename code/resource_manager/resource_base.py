@@ -19,16 +19,21 @@ class Datacenter:
 
     def __init__(self, _name):
         self.name = _name
+        
+        self.region_code_list = []
 
         self.status = "enabled"
 
         self.memberships = {}            # all available logical groups (e.g., aggregate) in the datacenter
 
         self.vCPUs = 0
+        self.original_vCPUs = 0
         self.avail_vCPUs = 0
         self.mem_cap = 0                 # MB
+        self.original_mem_cap = 0
         self.avail_mem_cap = 0
-        self.local_disk_cap = 0          # GB
+        self.local_disk_cap = 0          # GB, ephemeral
+        self.original_local_disk_cap = 0
         self.avail_local_disk_cap = 0
 
         self.root_switches = {}
@@ -44,10 +49,13 @@ class Datacenter:
 
     def init_resources(self):
         self.vCPUs = 0
+        self.original_vCPUs = 0
         self.avail_vCPUs = 0
-        self.mem_cap = 0  
+        self.mem_cap = 0                 # MB
+        self.original_mem_cap = 0
         self.avail_mem_cap = 0
-        self.local_disk_cap = 0 
+        self.local_disk_cap = 0          # GB, ephemeral
+        self.original_local_disk_cap = 0
         self.avail_local_disk_cap = 0
 
     def get_json_info(self):
@@ -68,12 +76,16 @@ class Datacenter:
             child_list.append(ck)
 
         return {'status':self.status, \
+                'region_code_list':self.region_code_list, \
                 'membership_list':membership_list, \
                 'vCPUs':self.vCPUs, \
+                'original_vCPUs':self.original_vCPUs, \
                 'avail_vCPUs':self.avail_vCPUs, \
                 'mem':self.mem_cap, \
+                'original_mem':self.original_mem_cap, \
                 'avail_mem':self.avail_mem_cap, \
                 'local_disk':self.local_disk_cap, \
+                'original_local_disk':self.original_local_disk_cap, \
                 'avail_local_disk':self.avail_local_disk_cap, \
                 'switch_list':switch_list, \
                 'storage_list':storage_list, \
@@ -96,10 +108,13 @@ class HostGroup:
         self.memberships = {}            # all available logical groups (e.g., aggregate) in this group
 
         self.vCPUs = 0
+        self.original_vCPUs = 0
         self.avail_vCPUs = 0
         self.mem_cap = 0                 # MB
+        self.original_mem_cap = 0
         self.avail_mem_cap = 0
-        self.local_disk_cap = 0          # GB
+        self.local_disk_cap = 0          # GB, ephemeral
+        self.original_local_disk_cap = 0
         self.avail_local_disk_cap = 0
 
         self.switches = {}               # ToRs
@@ -116,10 +131,13 @@ class HostGroup:
 
     def init_resources(self):
         self.vCPUs = 0
+        self.original_vCPUs = 0
         self.avail_vCPUs = 0
-        self.mem_cap = 0  
+        self.mem_cap = 0                 # MB
+        self.original_mem_cap = 0
         self.avail_mem_cap = 0
-        self.local_disk_cap = 0 
+        self.local_disk_cap = 0          # GB, ephemeral
+        self.original_local_disk_cap = 0
         self.avail_local_disk_cap = 0
 
     def init_memberships(self):
@@ -162,10 +180,13 @@ class HostGroup:
                 'host_type':self.host_type, \
                 'membership_list':membership_list, \
                 'vCPUs':self.vCPUs, \
+                'original_vCPUs':self.original_vCPUs, \
                 'avail_vCPUs':self.avail_vCPUs, \
                 'mem':self.mem_cap, \
+                'original_mem':self.original_mem_cap, \
                 'avail_mem':self.avail_mem_cap, \
                 'local_disk':self.local_disk_cap, \
+                'original_local_disk':self.original_local_disk_cap, \
                 'avail_local_disk':self.avail_local_disk_cap, \
                 'switch_list':switch_list, \
                 'storage_list':storage_list, \
@@ -189,11 +210,19 @@ class Host:
         self.memberships = {}            # logical group (e.g., aggregate) this hosting server is involved in
 
         self.vCPUs = 0
+        self.original_vCPUs = 0
         self.avail_vCPUs = 0
         self.mem_cap = 0                 # MB
+        self.original_mem_cap = 0
         self.avail_mem_cap = 0
         self.local_disk_cap = 0          # GB, ephemeral
+        self.original_local_disk_cap = 0
         self.avail_local_disk_cap = 0
+
+        self.vCPUs_used = 0
+        self.free_mem_mb = 0
+        self.free_disk_gb = 0
+        self.disk_available_least = 0
      
         self.switches = {}               # leaf
         self.storages = {} 
@@ -235,6 +264,29 @@ class Host:
 
         return exist
 
+    def compute_avail_vCPUs(self, _overcommit_ratio, _standby_ratio):  
+        self.vCPUs = self.original_vCPUs * _overcommit_ratio * (1.0 - _standby_ratio)
+
+        self.avail_vCPUs = self.vCPUs - self.vCPUs_used
+
+    def compute_avail_mem(self, _overcommit_ratio, _standby_ratio):   
+        self.mem_cap = self.original_mem_cap * _overcommit_ratio * (1.0 - _standby_ratio)
+
+        used_mem_mb = self.original_mem_cap - self.free_mem_mb
+
+        self.avail_mem_cap = self.mem_cap - used_mem_mb
+
+    def compute_avail_disk(self, _overcommit_ratio, _standby_ratio):   
+        self.local_disk_cap = self.original_local_disk_cap * _overcommit_ratio * (1.0 - _standby_ratio)
+
+        free_disk_cap = self.free_disk_gb
+        if self.disk_available_least > 0:
+            free_disk_cap = min(self.free_disk_gb, self.disk_available_least)
+
+        used_disk_cap = self.original_local_disk_cap - free_disk_cap
+
+        self.avail_local_disk_cap = self.local_disk_cap - used_disk_cap
+
     '''
     def get_orch_vm_id(self, _vm_id):
         orch_vm_id = "none"
@@ -264,11 +316,18 @@ class Host:
         return {'tag':self.tag, 'status':self.status, 'state':self.state, \
                 'membership_list':membership_list, \
                 'vCPUs':self.vCPUs, \
+                'original_vCPUs':self.original_vCPUs, \
                 'avail_vCPUs':self.avail_vCPUs, \
                 'mem':self.mem_cap, \
+                'original_mem':self.original_mem_cap, \
                 'avail_mem':self.avail_mem_cap, \
                 'local_disk':self.local_disk_cap, \
+                'original_local_disk':self.original_local_disk_cap, \
                 'avail_local_disk':self.avail_local_disk_cap, \
+                'vCPUs_used':self.vCPUs_used, \
+                'free_mem_mb':self.free_mem_mb, \
+                'free_disk_gb':self.free_disk_gb, \
+                'disk_available_least':self.disk_available_least, \
                 'switch_list':switch_list, \
                 'storage_list':storage_list, \
                 'parent':self.host_group.name, \
@@ -428,9 +487,9 @@ class Flavor:
 
         self.status = "enabled"
 
-        self.vCPUs = 0
-        self.mem_cap = 0
-        self.disk_cap = 0
+        self.vCPUs = 0       
+        self.mem_cap = 0        # MB
+        self.disk_cap = 0       # including ephemeral (GB) and swap (MB)
 
         self.extra_specs = {}
 

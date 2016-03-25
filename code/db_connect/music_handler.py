@@ -87,8 +87,13 @@ class MusicHandler:
             # Delete each row once done                                                          
                                                                                                  
         requests = self.music.read_all_rows(self.config.db_keyspace, self.config.db_request_table)
+
         if len(requests) > 0:                                                                    
-            for rowk, row in requests.iteritems():                                               
+            self.logger.info("db: placement request arrived")
+
+            for rowk, row in requests.iteritems():  
+                self.logger.info("    request_id = " + row['stack_id'])
+                                             
                 r_list = json.loads(row['request'])                                              
                 for r in r_list:                                                                 
                     request_list.append(r)                                                       

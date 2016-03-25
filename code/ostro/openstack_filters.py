@@ -155,6 +155,111 @@ class AvailabilityZoneFilter:
         '''
 
 
+class RamFilter:
+
+    def __init__(self, _logger):
+        self.logger = _logger
+
+    def host_passes(self, _level, _host, _v):
+        """Only return hosts with sufficient available RAM."""
+        requested_ram = _v.mem   # MB
+        #free_ram_mb = host_state.free_ram_mb
+        #total_usable_ram_mb = host_state.total_usable_ram_mb
+        (total_ram, usable_ram) = _host.get_mem(_level)
+
+        # Do not allow an instance to overcommit against itself, only against other instances.
+        if not total_ram >= requested_ram:
+            self.logger.debug("requested mem (" + str(requested_ram) + ") more than total mem (" + \
+                              str(total_ram) + ") in host (" + _host.get_resource_name(_level) + ")")
+            return False
+
+        #ram_allocation_ratio = self._get_ram_allocation_ratio(host_state, spec_obj)
+
+        #memory_mb_limit = total_usable_ram_mb * ram_allocation_ratio
+        #used_ram_mb = total_usable_ram_mb - free_ram_mb
+        #usable_ram = memory_mb_limit - used_ram_mb
+
+        if not usable_ram >= requested_ram:
+            self.logger.debug("requested mem (" + str(requested_ram) + ") more than avail mem (" + \
+                              str(usable_ram) + ") in host (" + _host.get_resource_name(_level) + ")")
+            return False
+
+        # save oversubscription limit for compute node to test against:
+        #host_state.limits['memory_mb'] = memory_mb_limit
+        return True
+
+
+class CoreFilter:
+
+    def __init__(self, _logger):
+        self.logger = _logger
+
+    def host_passes(self, _level, _host, _v):
+        """Return True if host has sufficient CPU cores."""
+        (vCPUs, avail_vCPUs) = _host.get_vCPUs(_level)
+        '''
+        if avail_vcpus == 0:
+            # Fail safe
+            LOG.warning(_LW("VCPUs not set; assuming CPU collection broken"))
+            return True
+        '''
+
+        instance_vCPUs = _v.vCPUs
+        #cpu_allocation_ratio = self._get_cpu_allocation_ratio(host_state, spec_obj)
+        #vcpus_total = host_state.vcpus_total * cpu_allocation_ratio
+
+        # Only provide a VCPU limit to compute if the virt driver is reporting
+        # an accurate count of installed VCPUs. (XenServer driver does not)
+        '''
+        if vcpus_total > 0:
+            host_state.limits['vcpu'] = vcpus_total
+        '''
+
+        # Do not allow an instance to overcommit against itself, only against other instances.
+        if instance_vCPUs > vCPUs:
+            self.logger.debug("requested vCPUs (" + str(instance_vCPUs) + ") more than total vCPUs (" + \
+                              str(vCPUs) + ") in host (" + _host.get_resource_name(_level) + ")")
+            return False
+
+        #free_vcpus = vcpus_total - host_state.vcpus_used
+        if avail_vCPUs < instance_vCPUs:
+            self.logger.debug("requested vCPUs (" + str(instance_vCPUs) + ") more than avail vCPUs (" + \
+                              str(avail_vCPUs) + ") in host (" + _host.get_resource_name(_level) + ")")
+            return False
+
+        return True
+
+
+class DiskFilter:
+
+    def __init__(self, _logger):
+        self.logger = _logger
+
+    def host_passes(self, _level, _host, _v):
+        """Filter based on disk usage."""
+        #requested_disk = (1024 * (spec_obj.root_gb + spec_obj.ephemeral_gb) + spec_obj.swap)
+        requested_disk = _v.local_volume_size
+        (total_disk, usable_disk) = _host.get_local_disk(_level)
+
+        #free_disk_mb = host_state.free_disk_mb
+        #total_usable_disk_mb = host_state.total_usable_disk_gb * 1024
+
+        #disk_allocation_ratio = self._get_disk_allocation_ratio(host_state, spec_obj)
+
+        #disk_mb_limit = total_usable_disk_mb * disk_allocation_ratio
+        #used_disk_mb = total_usable_disk_mb - free_disk_mb
+        #usable_disk_mb = disk_mb_limit - used_disk_mb
+
+        if not usable_disk >= requested_disk:
+            self.logger.debug("requested disk (" + str(requested_disk) + ") more than avail disk (" + \
+                              str(usable_disk) + ") in host (" + _host.get_resource_name(_level) + ")")
+            return False
+
+        #disk_gb_limit = disk_mb_limit / 1024
+        #host_state.limits['disk_gb'] = disk_gb_limit
+        return True
+
+
 
 # Unit test
 

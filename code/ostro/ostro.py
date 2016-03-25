@@ -99,6 +99,8 @@ class Ostro:
                     self.thread_list.remove(t)
 
     def bootstrap(self):
+        self.logger.info("--- start bootstrap ---")
+
         if self._set_hosts() == False:
             return False
 
@@ -111,12 +113,16 @@ class Ostro:
 
         self.resource.update_topology()
 
+        self.logger.info("--- done bootstrap ---")
+
         return True
 
     def _set_topology(self):
         if self.topology.set_topology() == False:
-            self.status = "Datacenter configuration error"
+            self.status = "datacenter configuration error"
             return False
+            
+        self.logger.debug("done topology bootstrap")
 
         return True
 
@@ -124,6 +130,8 @@ class Ostro:
         if self.compute.set_hosts() == False:
             self.status = "OpenStack (Nova) internal error"
             return False
+            
+        self.logger.debug("done hosts & groups bootstrap")
 
         return True
 
@@ -132,6 +140,8 @@ class Ostro:
             self.status = "OpenStack (Nova) internal error"
             return False                                                                        
                                                                                                  
+        self.logger.debug("done flavors bootstrap")
+
         return True
 
     def place_app(self, _app_data):
@@ -145,18 +155,20 @@ class Ostro:
         placement_map = self._place_app(_app_data)
         end_time = time.time()
 
-        if len(placement_map) == 0:
+        if placement_map == None:
             result = self._get_json_results("error", self.status, placement_map)
 
-            self.logger.error("error while placing the following app(s)")
+            self.logger.debug("error while placing the following app(s)")
             for appk in result.keys():
-                self.logger.error("    app uuid = " + appk)
+                self.logger.debug("    app uuid = " + appk)
         else:
             result = self._get_json_results("ok", "success", placement_map)
 
+            self.logger.debug("successful placement decision")
+
         self.db.put_result(result)
 
-        self.logger.info("total running time of place_app = " + str(end_time - start_time) + " sec")
+        self.logger.info("stat: total running time of place_app = " + str(end_time - start_time) + " sec")
         self.logger.info("--- done app placement ---")
 
         self.data_lock.release()
@@ -165,16 +177,23 @@ class Ostro:
         app_topology = self.app_handler.add_app(_app_data)
         if app_topology == None:                                                                 
             self.status = self.app_handler.status
-            return {}
+
+            self.logger.debug("error while register requested apps:" + self.status)
+
+            return None
                  
         placement_map = self.optimizer.place(app_topology) 
-        if len(placement_map) == 0: 
+        if placement_map == None: 
             self.status = self.optimizer.status
-            return placement_map
 
-        resource_status = self.resource.update_topology()  
+            self.logger.debug("error while optimizing app placement:" + self.status)
 
-        self.app_handler.add_placement(placement_map, self.resource.current_timestamp)
+            return None
+
+        if len(placement_map) > 0:
+            resource_status = self.resource.update_topology()  
+
+            self.app_handler.add_placement(placement_map, self.resource.current_timestamp)
 
         return placement_map
 
@@ -207,6 +226,20 @@ class Ostro:
                 app_result['resources'] = app_resources
 
                 result[appk] = app_result
+
+            for appk, app in self.app_handler.apps.iteritems():
+                if app.request_type == "ping":
+                    app_result = {}
+                    app_status ={}
+
+                    app_status['type'] = _status_type
+                    app_status['message'] = "ping"
+
+                    app_result['status'] = app_status
+                    app_result['resources'] = {"ip":self.config.ip}
+
+                    result[appk] = app_result
+
         else:
             for appk in self.app_handler.apps.keys():
                 app_result = {}

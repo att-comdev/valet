@@ -44,7 +44,7 @@ class MusicClient:
         results = self.music.read_all_rows(self.config.db_keyspace, self.config.db_response_table)
         
         if len(results) > 0:
-            self._remove_old_placements(results)
+            #self._remove_old_placements(results)
 
             return results
         else:
@@ -76,23 +76,6 @@ if __name__ == '__main__':
     mc = MusicClient(config)
 
     time.sleep(5)
-    mc.set_request("app_uuid", "./test_inputs/simple.json")
-    time.sleep(5)
-    #results = mc.get_placements()
-    #if results != None:
-        #print "Placement result"
-        #for rowk, row in results.iteritems():
-            #placement = json.loads(row['placement'])
-            #print json.dumps(placement, indent=4)
-    #status = mc.get_resource_status()
-    #print "Resource status"
-    #for rowk, row in status.iteritems():
-        #resource = json.loads(row['resource'])
-        #print json.dumps(resource, indent=4)
-
-
-    '''
-    time.sleep(5)
     mc.set_request("app_uuid1", "./test_inputs/simple_aggregates.json")
     time.sleep(5)
     results = mc.get_placements()
@@ -107,6 +90,22 @@ if __name__ == '__main__':
         resource = json.loads(row['resource'])
         print json.dumps(resource, indent=4)
 
+    time.sleep(5)
+    mc.set_request("ping_uuid1", "./test_inputs/simple_ping.json")
+    time.sleep(5)
+    results = mc.get_placements()
+    if results != None:
+        print "Placement result"
+        for rowk, row in results.iteritems():
+            placement = json.loads(row['placement'])
+            print json.dumps(placement, indent=4)
+    status = mc.get_resource_status()
+    print "Resource status"
+    for rowk, row in status.iteritems():
+        resource = json.loads(row['resource'])
+        print json.dumps(resource, indent=4)
+
+    '''
     time.sleep(5)
     mc.set_request("app_uuid2", "./test_inputs/simple_exclusivity.json")
     time.sleep(5)
@@ -211,6 +210,7 @@ if __name__ == '__main__':
     for rowk, row in status.iteritems():
         resource = json.loads(row['resource'])
         print json.dumps(resource, indent=4)
+    '''
 
     time.sleep(5)
     mc.set_request("app_uuid9", "./test_inputs/simple_az.json")
@@ -226,7 +226,6 @@ if __name__ == '__main__':
     for rowk, row in status.iteritems():
         resource = json.loads(row['resource'])
         print json.dumps(resource, indent=4)
-    '''
 
     apps = mc.get_apps()
     print "Applications"

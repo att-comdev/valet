@@ -88,10 +88,13 @@ class Resource:
         for hk, host in _host_group.child_resources.iteritems():
             if host.check_availability() == True:
                 _host_group.vCPUs += host.vCPUs
+                _host_group.original_vCPUs += host.original_vCPUs
                 _host_group.avail_vCPUs += host.avail_vCPUs
                 _host_group.mem_cap += host.mem_cap
+                _host_group.original_mem_cap += host.original_mem_cap
                 _host_group.avail_mem_cap += host.avail_mem_cap
                 _host_group.local_disk_cap += host.local_disk_cap
+                _host_group.original_local_disk_cap += host.original_local_disk_cap
                 _host_group.avail_local_disk_cap += host.avail_local_disk_cap
 
                 for shk, storage_host in host.storages.iteritems():
@@ -121,10 +124,13 @@ class Resource:
         for rk, resource in self.datacenter.resources.iteritems():
             if resource.check_availability() == True:
                 self.datacenter.vCPUs += resource.vCPUs
+                self.datacenter.original_vCPUs += resource.original_vCPUs
                 self.datacenter.avail_vCPUs += resource.avail_vCPUs
                 self.datacenter.mem_cap += resource.mem_cap
+                self.datacenter.original_mem_cap += resource.original_mem_cap
                 self.datacenter.avail_mem_cap += resource.avail_mem_cap
                 self.datacenter.local_disk_cap += resource.local_disk_cap
+                self.datacenter.original_local_disk_cap += resource.original_local_disk_cap
                 self.datacenter.avail_local_disk_cap += resource.avail_local_disk_cap
 
                 for shk, storage_host in resource.storages.iteritems():
@@ -336,6 +342,8 @@ class Resource:
 
         logging.close()
 
+        self.logger.info("log: resource status timestamp in " + resource_logfile)
+
         if self.db != None:
             self.db.update_resource_status(self.datacenter.name, json_logging)
             self.db.update_resource_log_index(self.datacenter.name, self.last_log_index)
@@ -406,26 +414,6 @@ class Resource:
 
         return flavor
 
-    '''
-    def get_matched_logical_groups(self, _flavor):
-        logical_group_list = []
-
-        for gk, group in self.logical_groups.iteritems():
-            if self._match_extra_specs(_flavor.extra_specs, group.metadata) == True:
-                logical_group_list.append(group)
-    
-        return logical_group_list
-
-    def _match_extra_specs(self, _specs, _metadata):
-        match = True
-
-        for sk in _specs.keys():
-            if sk not in _metadata.keys():
-                match = False
-                break
-
-        return match
-    '''
 
 
 

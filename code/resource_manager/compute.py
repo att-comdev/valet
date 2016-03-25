@@ -254,12 +254,13 @@ class Compute:
                     host = _hosts[hv["service"]["host"]]
                     host.status = hv["status"]
                     host.state = hv["state"]
-                    host.vCPUs = hv["vcpus"] * self.config.vcpus_overbooking_per_core # TODO:
-                    host.avail_vCPUs = host.vCPUs - hv["vcpus_used"]
-                    host.mem_cap = float(hv["memory_mb"]) * self.config.memory_overbooking_ratio # TODO
-                    host.avail_mem_cap = host.mem_cap - float(hv["memory_mb_used"])
-                    host.local_disk_cap = hv["local_gb"] * self.config.disk_overbooking_ratio # TODO
-                    host.avail_local_disk_cap = host.local_disk_cap - hv["local_gb_used"]
+                    host.original_vCPUs = float(hv["vcpus"]) 
+                    host.vCPUs_used = float(hv["vcpus_used"])
+                    host.original_mem_cap = float(hv["memory_mb"])
+                    host.free_mem_mb = float(hv["free_ram_mb"]) 
+                    host.original_local_disk_cap = float(hv["local_gb"])
+                    host.free_disk_gb = float(hv["free_disk_gb"])
+                    host.disk_available_least = float(hv["disk_available_least"]) 
 
         except (ValueError, KeyError, TypeError):
             return "JSON format error while setting host resources from Nova"
@@ -311,9 +312,13 @@ class Compute:
                     if f["OS-FLV-DISABLED:disabled"] != False:
                         flavor.status = "disabled"
 
-                flavor.vCPUs = f["vcpus"]
-                flavor.mem_cap = f["ram"]
-                flavor.disk_cap = f["disk"]
+                flavor.vCPUs = float(f["vcpus"])
+                flavor.mem_cap = float(f["ram"])
+
+                root_gb = f["disk"]
+                ephemeral_gb = f["OS-FLV-EXT-DATA:ephemeral"]
+                swap_mb = f["swap"]
+                flavor.disk_cap = float(root_gb) + float(ephemeral_gb) + float(swap_mb)/float(1024) 
 
                 _flavors[flavor.name] = flavor
 

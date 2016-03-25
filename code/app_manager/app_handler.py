@@ -42,21 +42,30 @@ class AppHandler:
     def add_app(self, _app_data):
         self.apps.clear()
 
+        if len(self.apps) > 0:
+            self.logger.error("cannot clear prior requested apps")
+            # TODO
+
         app_topology = AppTopology(self.resource)
 
         for app in _app_data:
             app_id = app_topology.set_app_topology(app)
 
-            if app_topology.status != "success":
+            if app_id == None:
                 self.logger.error(app_topology.status)
                 self.status = app_topology.status
                 return None
             else:
-                self.logger.info("application: " + app_id[1])
+                self.logger.info("application: " + app_id[1] + " with action = " + app_id[2])
 
-                new_app = App(app_id[0], app_id[1])
+                new_app = App(app_id[0], app_id[1], app_id[2])
 
                 self.apps[app_id[0]] = new_app
+
+        if len(app_topology.vgroups) > 0 or \
+           len(app_topology.vms) > 0 or \
+           len(app_topology.volumes) > 0:
+            self.logger.debug("virtual resources are captured")
 
         app_topology.set_optimization_priority()
 
@@ -105,6 +114,8 @@ class AppHandler:
             logging.write("\n")
 
         logging.close()
+
+        self.logger.info("log: app placement timestamp in " + app_logfile)
 
         if self.db != None:
             self.db.update_app_log_index(self.resource.datacenter.name, self.last_log_index)

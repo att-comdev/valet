@@ -35,6 +35,7 @@ class Topology:
 
         return "success"
 
+    # NOTE: currently, the hosts are copied from Nova
     def _set_host_topology(self, _datacenter, _host_groups, _hosts, _rhosts):
         for rhk, rh in _rhosts.iteritems():
             h = copy.deepcopy(rh)
@@ -42,24 +43,51 @@ class Topology:
             if "infra" not in h.tag:
                 h.tag.append("infra")
 
-            # TODO: naming convention
-            if (_datacenter.name + "r0") not in _host_groups.keys():
-                host_group = HostGroup(_datacenter.name + "r0")                          
+            (region_name, rack_name, node_type, status) = self._set_layout_by_name(rhk)
+            if status != "success":
+                self.logger.warn(status + "  while parsing host_name (" + rhk + ")")
+
+            if region_name not in _datacenter.region_code_list:
+                _datacenter.region_code_list.append(region_name)
+                
+            '''
+            if status == "success":
+                if _datacenter.region_code != None:
+                    if _datacenter.region_code == "none":
+                        pass
+                    else:
+                        if _datacenter.region_code != region_name:
+                            _datacenter.region_code = "none"
+                else:
+                    _datacenter.region_code = region_name
+            else:
+                self.logger.warn(status + "  while parsing host_name (" + rhk + ")")
+                _datacenter.region_code = region_name
+            '''
+
+            if (rack_name) not in _host_groups.keys():
+                host_group = HostGroup(rack_name)                          
                 host_group.host_type = "rack"                                                        
                 _host_groups[host_group.name] = host_group
 
-            h.host_group = _host_groups[_datacenter.name + "r0"]
+            h.host_group = _host_groups[rack_name]
 
             _hosts[h.name] = h
 
         for hgk, hg in _host_groups.iteritems():
             hg.parent_resource = _datacenter
 
-            # TODO: naming convention
             for hk, h in _hosts.iteritems():
-                hg.child_resources[h.name] = h
+                if h.host_group.name == hgk:
+                    hg.child_resources[h.name] = h
 
             _datacenter.resources[hgk] = hg
+
+        if len(_datacenter.region_code_list) > 1:
+            self.logger.warn("more than one region code")
+
+        if "none" in _host_groups.keys():
+            self.logger.warn("some hosts are into unknown rack")
 
         return "success"
 
@@ -98,6 +126,86 @@ class Topology:
                 _switches[leaf_switch.name] = leaf_switch
 
         return "success"
+
+    def _set_layout_by_name(self, _host_name):
+        region_name = None
+        rack_name = None
+        node_type = None
+        status = "success"
+
+        validated_name = True
+
+        num_of_fields = 0
+
+        index = 0
+        end_of_region_index = 0
+        end_of_rack_index = 0
+        index_of_node_type = 0
+
+        for c in _host_name:
+            if index >= self.config.num_of_region_chars:
+                if c == '0' or c == '1' or c == '2' or c == '3' or c == '4' or c == '5' or \
+                   c == '6' or c == '7' or c == '8' or c == '9': 
+                    pass
+                else:
+                    if index == self.config.num_of_region_chars:
+                        status = "invalid region name = " + _host_name[:index] + c
+                        validated_name = False
+                        break
+
+                    if end_of_region_index == 0:
+                        if c not in self.config.rack_code_list:
+                            status = "invalid rack_char = " + c
+                            validated_name = False
+                            break
+
+                        end_of_region_index = index
+                        num_of_fields += 1
+
+                    if index == (end_of_region_index + 1):
+                        status = "invalid rack name = " + _host_name[:index] + c
+                        validated_name = False
+                        break
+
+                    if end_of_rack_index == 0 and index > (end_of_region_index + 1):
+                        end_of_rack_index = index
+                        num_of_fields += 1
+
+                    if node_type == None and end_of_rack_index > 0:
+                        node_type = c
+                        if node_type not in self.config.node_code_list:
+                            status = "invalid node_char = " + c
+                            validated_name = False
+                            break
+                        index_of_node_type = index
+                        num_of_fields += 1
+
+                    if index_of_node_type > 0 and index > index_of_node_type:
+                        num_of_fields += 1
+                        #self.logger.debug("too many fields = " + str(num_of_fields))
+                        #validated_name = False
+                        break
+
+            index += 1
+
+        if not index > (index_of_node_type + 1):                                                         
+            status = "invalid node name = " + _host_name[:index]
+            validated_name = False
+
+        if num_of_fields != 3:
+            status = "invalid number of identification fields = " + str(num_of_fields)
+            validated_name = False
+
+        if validated_name == False:
+            region_name = "none"
+            rack_name = "none"
+        else:
+            region_name = _host_name[:end_of_region_index]
+            rack_name = _host_name[:end_of_rack_index]
+
+        return (region_name, rack_name, node_type, status)
+
+
 
 
 

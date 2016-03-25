@@ -119,6 +119,25 @@ class MusicHandler:
 
         self.logger.info("db: placement request deleted")
 
+    def get_resource_status(self, _k):                                                  
+        json_resource = {} 
+ 
+        row = self.music.read_row(self.config.db_keyspace, self.config.db_resource_table, 'site_name', _k)
+ 
+        if len(row) > 0:
+            str_resource = row[row.keys()[0]]['resource']
+            json_resource = json.loads(str_resource)
+
+            '''
+            self.music.delete_row_eventually(self.config.db_keyspace, \
+                                             self.config.db_resource_table, \
+                                             'site_name', _k)
+            '''
+       
+            self.logger.info("db: get resource status")
+
+        return json_resource
+
     def update_resource_status(self, _k, _status):                                                  
         row = self.music.read_row(self.config.db_keyspace, self.config.db_resource_table, 'site_name', _k)
  

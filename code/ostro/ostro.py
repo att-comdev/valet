@@ -44,6 +44,8 @@ class Ostro:
             self.db = MusicHandler(self.config, self.logger)
             self.db.init_db()
 
+            self.logger.debug("done init music")
+
         self.resource = Resource(self.db, self.config, self.logger)
 
         self.app_handler = AppHandler(self.resource, self.db, self.config, self.logger)
@@ -59,6 +61,8 @@ class Ostro:
         self.status = "success"
 
         self.end_of_process = False
+
+        self.logger.debug("done init datacenter, resource, app_handler, optimizer, resource managers")
 
     def run_ostro(self):
         self.logger.info("start Ostro ......")
@@ -101,17 +105,27 @@ class Ostro:
     def bootstrap(self):
         self.logger.info("--- start bootstrap ---")
 
-        if self._set_hosts() == False:
-            return False
+        resource_status = self.db.get_resource_status(self.resource.datacenter.name)
+        if len(resource_status) > 0:
+            self.logger.info("bootstrap from db")
 
-        if self._set_flavors() == False:
-            return False
+            if self.resource.bootstrap_from_db(resource_status) == False:
+                return False            
 
-        # NOTE: currently topology relies on hosts naming convention
-        if self._set_topology() == False:
-            return False
+        else:
+            self.logger.info("bootstrap from OpenStack")
 
-        self.resource.update_topology()
+            if self._set_hosts() == False:
+                return False
+
+            if self._set_flavors() == False:
+                return False
+
+            # NOTE: currently topology relies on hosts naming convention
+            if self._set_topology() == False:
+                return False
+
+            self.resource.update_topology()
 
         self.logger.info("--- done bootstrap ---")
 

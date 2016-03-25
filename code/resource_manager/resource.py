@@ -17,7 +17,7 @@ import sys
 import time
 import json
 
-from resource_base import Datacenter, HostGroup, Host
+from resource_base import Datacenter, HostGroup, Host, LogicalGroup, Flavor, Switch, Link, StorageHost
 
 sys.path.insert(0, '../app_manager')
 from app_topology_base import LEVELS
@@ -48,6 +48,7 @@ class Resource:
         # Metadata
         self.logical_groups = {}
         self.flavors = {}
+
         self.current_timestamp = 0
         self.last_log_index = 0
 
@@ -57,6 +58,232 @@ class Resource:
         self.local_disk_avail = 0
         self.disk_avail = 0
         self.nw_bandwidth_avail = 0
+
+    def bootstrap_from_db(self, _resource_status):
+        logical_groups = _resource_status["logical_groups"]
+        for lgk, lg in logical_groups.iteritems():
+            logical_group = LogicalGroup(lgk)
+            logical_group.group_type = lg["group_type"]
+            logical_group.status = lg["status"]
+            logical_group.metadata = lg["metadata"]
+            logical_group.vm_list = lg["vm_list"]
+            logical_group.volume_list = lg["volume_list"]
+            logical_group.vms_per_host = lg["vms_per_host"]
+
+            self.logical_groups[lgk] = logical_group
+
+        if len(self.logical_groups) > 0:
+            self.logger.debug("logical_groups loaded")
+        else:
+            self.logger.warn("no logical_groups")
+
+        flavors = _resource_status["flavors"]
+        for fk, f in flavors.iteritems():
+            flavor = Flavor(fk)
+            flavor.flavor_id = f["flavor_id"] 
+            flavor.status = f["status"] 
+            flavor.vCPUs = f["vCPUs"]
+            flavor.mem_cap = f["mem"]
+            flavor.disk_cap = f["disk"]
+            flavor.extra_specs = f["extra_specs"]
+
+            self.flavors[fk] = flavor
+
+        if len(self.flavors) > 0:
+            self.logger.debug("flavors loaded")
+        else:
+            self.logger.error("fail loading flavors")
+            return False
+
+        switches = _resource_status["switches"]
+        for sk, s in switches.iteritems():
+            switch = Switch(sk)
+            switch.switch_type = s["switch_type"]
+            switch.status = s["status"]
+
+            self.switches[sk] = switch
+
+        if len(self.switches) > 0:
+            self.logger.debug("switches loaded")
+        else:
+            self.logger.error("fail loading switches")
+            return False
+
+        for sk, s in switches.iteritems():
+            switch = self.switches[sk]
+
+            up_links = {}
+            uls = s["up_links"]
+            for ulk, ul in uls.iteritems():
+                ulink = Link(ulk)
+                ulink.resource = self.switches[ul["resource"]]
+                ulink.nw_bandwidth = ul["bandwidth"]
+                ulink.avail_nw_bandwidth = ul["avail_bandwidth"]
+
+                up_links[ulk] = ulink
+
+            switch.up_links = up_links
+
+            peer_links = {}
+            pls = s["peer_links"]
+            for plk, pl in pls.iteritems():
+                plink = Link(plk)
+                plink.resource = self.switches[pl["resource"]]
+                plink.nw_bandwidth = pl["bandwidth"]
+                plink.avail_nw_bandwidth = pl["avail_bandwidth"]
+
+                peer_links[plk] = plink
+
+            switch.peer_links = peer_links
+
+        self.logger.debug("switch links loaded")
+
+        # TODO: storage_hosts
+
+        hosts = _resource_status["hosts"]
+        for hk, h in hosts.iteritems():
+            host = Host(hk)
+            host.tag = h["tag"]
+            host.status = h["status"]
+            host.state = h["state"]
+            host.vCPUs = h["vCPUs"]
+            host.original_vCPUs = h["original_vCPUs"]
+            host.avail_vCPUs = h["avail_vCPUs"]
+            host.mem_cap = h["mem"]
+            host.original_mem_cap = h["original_mem"]
+            host.avail_mem_cap = h["avail_mem"]
+            host.local_disk_cap = h["local_disk"]
+            host.original_local_disk_cap = h["original_local_disk"]
+            host.avail_local_disk_cap = h["avail_local_disk"]
+            host.vCPUs_used = h["vCPUs_used"]
+            host.free_mem_mb = h["free_mem_mb"]
+            host.free_disk_gb = h["free_disk_gb"]
+            host.disk_available_least = h["disk_available_least"]
+            host.vm_list = h["vm_list"]
+            host.volume_list = h["volume_list"]
+
+            for lgk in h["membership_list"]:
+                host.memberships[lgk] = self.logical_groups[lgk]
+
+            for sk in h["switch_list"]:
+                host.switches[sk] = self.switches[sk]
+
+            # TODO: host.storages
+
+            self.hosts[hk] = host
+                
+        if len(self.hosts) > 0:
+            self.logger.debug("hosts loaded")
+        else:
+            self.logger.error("fail loading hosts")
+            return False
+
+        host_groups = _resource_status["host_groups"]
+        for hgk, hg in host_groups.iteritems():
+            host_group = HostGroup(hgk)
+            host_group.host_type = hg["host_type"]
+            host_group.status = hg["status"]
+            host_group.vCPUs = hg["vCPUs"]
+            host_group.original_vCPUs = hg["original_vCPUs"]
+            host_group.avail_vCPUs = hg["avail_vCPUs"]
+            host_group.mem_cap = hg["mem"]
+            host_group.original_mem_cap = hg["original_mem"]
+            host_group.avail_mem_cap = hg["avail_mem"]
+            host_group.local_disk_cap = hg["local_disk"]
+            host_group.original_local_disk_cap = hg["original_local_disk"]
+            host_group.avail_local_disk_cap = hg["avail_local_disk"]
+            host_group.vm_list = hg["vm_list"]
+            host_group.volume_list = hg["volume_list"]
+
+            for lgk in hg["membership_list"]:
+                host_group.memberships[lgk] = self.logical_groups[lgk]
+
+            for sk in hg["switch_list"]:
+                host_group.switches[sk] = self.switches[sk]
+
+            # TODO: host.storages
+
+            self.host_groups[hgk] = host_group
+
+        if len(self.host_groups) > 0:
+            self.logger.debug("host_groups loaded")
+        else:
+            self.logger.error("fail loading host_groups")
+            return False
+
+        dc = _resource_status["datacenter"]
+        self.datacenter.name = dc["name"]
+        self.datacenter.region_code_list = dc["region_code_list"]
+        self.datacenter.status = dc["status"]
+        self.datacenter.vCPUs = dc["vCPUs"]
+        self.datacenter.original_vCPUs = dc["original_vCPUs"]
+        self.datacenter.avail_vCPUs = dc["avail_vCPUs"]
+        self.datacenter.mem_cap = dc["mem"]
+        self.datacenter.original_mem_cap = dc["original_mem"]
+        self.datacenter.avail_mem_cap = dc["avail_mem"]
+        self.datacenter.local_disk_cap = dc["local_disk"]
+        self.datacenter.original_local_disk_cap = dc["original_local_disk"]
+        self.datacenter.avail_local_disk_cap = dc["avail_local_disk"]
+        self.datacenter.vm_list = dc["vm_list"]
+        self.datacenter.volume_list = dc["volume_list"]
+
+        for lgk in dc["membership_list"]:
+            self.datacenter.memberships[lgk] = self.logical_groups[lgk]
+
+        for sk in dc["switch_list"]:
+            self.datacenter.root_switches[sk] = self.switches[sk]
+
+        # TODO: host.storages
+
+        for ck in dc["children"]:
+            if ck in self.host_groups.keys():
+                self.datacenter.resources[ck] = self.host_groups[ck]
+            elif ck in self.hosts.keys():
+                self.datacenter.resources[ck] = self.hosts[ck]
+  
+        if len(self.datacenter.resources) > 0:
+            self.logger.debug("datacenter loaded")
+        else:
+            self.logger.error("fail loading datacenter")
+            return False
+
+        hgs = _resource_status["host_groups"]
+        for hgk, hg in hgs.iteritems():
+            host_group = self.host_groups[hgk]
+
+            pk = hg["parent"]
+            if pk == self.datacenter.name:
+                host_group.parent_resource = self.datacenter
+            elif pk in self.host_groups.keys():
+                host_group.parent_resource = self.host_groups[pk]
+
+            for ck in hg["children"]:
+                if ck in self.hosts.keys():
+                    host_group.child_resources[ck] = self.hosts[ck]
+                elif ck in self.host_groups.keys():
+                    host_group.child_resources[ck] = self.host_groups[ck]
+        
+        self.logger.debug("host_groups'layout loaded")
+
+        hs = _resource_status["hosts"]
+        for hk, h in hs.iteritems():
+            host = self.hosts[hk]
+
+            pk = h["parent"]
+            if pk == self.datacenter.name:
+                host.host_group = self.datacenter
+            elif pk in self.host_groups.keys():
+                host.host_group = self.host_groups[pk]
+           
+        self.logger.debug("hosts'layout loaded")
+
+        self._update_compute_avail()
+        self._update_storage_avail()
+        self._update_nw_bandwidth_avail()
+         
+        self.logger.debug("resource availability updated")
+
+        return True
 
     # Run whenever changed
     def update_topology(self):

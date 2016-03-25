@@ -76,6 +76,7 @@ class Datacenter:
             child_list.append(ck)
 
         return {'status':self.status, \
+                'name':self.name, \
                 'region_code_list':self.region_code_list, \
                 'membership_list':membership_list, \
                 'vCPUs':self.vCPUs, \
@@ -401,6 +402,7 @@ class LogicalGroup:
                 'group_type':self.group_type, \
                 'metadata':self.metadata, \
                 'vm_list':self.vm_list, \
+                'volume_list':self.volume_list, \
                 'vms_per_host':self.vms_per_host, \
                 'last_update':self.last_update}
 
@@ -497,6 +499,7 @@ class Flavor:
 
     def get_json_info(self):
         return {'status':self.status, \
+                'flavor_id':self.flavor_id, \
                 'vCPUs':self.vCPUs, \
                 'mem':self.mem_cap, \
                 'disk':self.disk_cap, \

@@ -75,7 +75,8 @@ class PlansItemController(object):
         # New placements are not being seen in the response, so
         # update_placements is currently failing as a result.
         kwargs = request.json
-        ostro = Ostro(**kwargs)
+        ostro = Ostro()
+        ostro.request(**kwargs)
         ostro.send()
 
         status_type = ostro.response['status']['type']
@@ -151,7 +152,8 @@ class PlansController(object):
     def index_post(self, **kw):
         """Create a Plan"""
         kwargs = request.json
-        ostro = Ostro(**kwargs)
+        ostro = Ostro()
+        ostro.request(**kwargs)
         ostro.send()
 
         status_type = ostro.response['status']['type']

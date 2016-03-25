@@ -32,7 +32,7 @@ class Group(Base):
     id = None
     name = None
     description = None
-    group_type = None
+    type = None
     members = None
 
     @classmethod
@@ -59,18 +59,22 @@ class Group(Base):
         return {
             'name': self.name,
             'description': self.description,
-            'type': self.group_type,
+            'type': self.type,
             'members': self.members
         }
 
-    def __init__(self, name, description, group_type, members, _insert=True):
+    def __init__(self, name, description, type, members, _insert=True):
         super(Group, self).__init__()
         self.name = name
         self.description = description
-        self.group_type = group_type
-        self.members = members
+        self.type = type
         if _insert:
+            # TODO: Support lists in Music
+            self.members = simplejson.dumps(members)
             self.insert()
+            self.members = members
+        else:
+            self.members = simplejson.loads(members)
 
     def __repr__(self):
         try:
@@ -83,6 +87,6 @@ class Group(Base):
         json_['id'] = self.id
         json_['name'] = self.name
         json_['description'] = self.description
-        json_['type'] = self.group_type
+        json_['type'] = self.type
         json_['members'] = self.members
         return json_

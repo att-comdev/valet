@@ -15,6 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from allegro.controllers import error
 from allegro.ostro_helper import Ostro
 from pecan import expose, redirect, request, response
 from pecan_notario import validate
@@ -29,21 +30,18 @@ logger = logging.getLogger(__name__)
 
 class OptimizersController(object):
 
-    # Dictionary of all registered optimizers
-    #
-    #   {
-    #     "e624474b-fc80-4053-ab5f-45cc1030e692": {
-    #       "name": "ostro",
-    #       "version": "2.0",
-    #       "ping": "ok"
-    #     }
-    #   }
-
-    # GET /v1/TENANT_ID/optimizers
-
     @expose(generic=True, template='json')
     def index(self):
-        '''Get optimizers!'''
-        optimizers_array = []
-        # TODO: Enumerate the optimizers.
-        return optimizers_array
+        '''Ping the optimizer.'''
+        ostro = Ostro()
+        ostro.ping()
+        ostro.send()
+
+        status_type = ostro.response['status']['type']
+        if status_type != 'ok':
+            message = ostro.response['status']['message']
+            error('/v1/errors/invalid',
+                  'Ostro error: %s' % message)
+
+        response.status = 200
+        return ostro.response

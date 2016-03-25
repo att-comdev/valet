@@ -16,6 +16,7 @@
 # limitations under the License.
 
 import time
+import uuid
 
 import simplejson
 
@@ -27,42 +28,15 @@ from allegro.models.music import Query
 class Ostro(object):
     '''Ostro optimization engine helper class.'''
 
-    def __init__(self, **kwargs):
-        self.args = kwargs
-        self.response = None
+    args = None
+    request = None
+    response = None
 
-        self.tries = 10  # Number of times to poll for placement.
-        self.interval = 1  # Interval in seconds to poll for placement.
+    tries = 10  # Number of times to poll for placement.
+    interval = 1  # Interval in seconds to poll for placement.
 
-        self.debug = True
-        self.debug_file = '/tmp/allegro-dump.txt'
-
-        resources = self.args['resources']
-        if 'resources_update' in self.args:
-            action = 'update'
-            resources_update = self.args['resources_update']
-        else:
-            action = 'create'
-            resources_update = {}
-
-        mapping = self._build_uuid_map(resources)
-        ostro_resources = self._map_names_to_uuids(mapping, resources)
-        self._sanitize_resources(ostro_resources)
-
-        mapping = self._build_uuid_map(resources_update)
-        ostro_resources_update = \
-            self._map_names_to_uuids(mapping, resources_update)
-        self._sanitize_resources(ostro_resources_update)
-
-        self.request = {
-            "version": "0.1",
-            "action": action,
-            "resources": ostro_resources
-        }
-        if ostro_resources_update:
-            self.request['resources_update'] = ostro_resources_update
-
-        self.request["stack_id"] = self.args['stack_id']
+    debug = True
+    debug_file = '/tmp/allegro-dump.txt'
 
     def _build_uuid_map(self, resources):
         '''Build a dict mapping names to UUIDs.'''
@@ -96,9 +70,17 @@ class Ostro(object):
         print >>log, text
         log.close()
 
+    def _sanitize_resources(self, resources):
+        '''Ensure lowercase keys at the top level of each resource.'''
+        for res in resources.itervalues():
+            for key in list(res.keys()):
+                if not key.islower():
+                    res[key.lower()] = res.pop(key)
+        return resources
+
     # TODO: This really belongs in allegro-engine once it exists.
-    def _place(self, stack_id, request):
-        ''''Place resources.'''
+    def _send(self, stack_id, request):
+        ''''Send request.'''
 
         # Creating the placement request effectively enqueues it.
         placement_request = PlacementRequest(
@@ -122,16 +104,49 @@ class Ostro(object):
             } \
         }'
 
-    def _sanitize_resources(self, resources):
-        '''Ensure lowercase keys at the top level of each resource.'''
-        for res in resources.itervalues():
-            for key in list(res.keys()):
-                if not key.islower():
-                    res[key.lower()] = res.pop(key)
-        return resources
+    def ping(self):
+        '''Send a ping request and obtain a response.'''
+        stack_id = str(uuid.uuid4())
+        self.args = { 'stack_id': stack_id }
+        self.request = {
+            "version": "0.1",
+            "action": "ping",
+            "stack_id": stack_id
+        }
+
+    def request(self, **kwargs):
+        self.args = kwargs
+        self.response = None
+
+        resources = self.args['resources']
+        if 'resources_update' in self.args:
+            action = 'update'
+            resources_update = self.args['resources_update']
+        else:
+            action = 'create'
+            resources_update = {}
+
+        mapping = self._build_uuid_map(resources)
+        ostro_resources = self._map_names_to_uuids(mapping, resources)
+        self._sanitize_resources(ostro_resources)
+
+        mapping = self._build_uuid_map(resources_update)
+        ostro_resources_update = \
+            self._map_names_to_uuids(mapping, resources_update)
+        self._sanitize_resources(ostro_resources_update)
+
+        self.request = {
+            "version": "0.1",
+            "action": action,
+            "resources": ostro_resources
+        }
+        if ostro_resources_update:
+            self.request['resources_update'] = ostro_resources_update
+
+        self.request["stack_id"] = self.args['stack_id']
 
     def send(self):
-        '''Send the planning request and obtain a response.'''
+        '''Send the request and obtain a response.'''
         request_json = simplejson.dumps(
             [self.request], sort_keys=True, indent=2 * ' '
         )
@@ -140,7 +155,7 @@ class Ostro(object):
             self._log(request_json, 'Payload')
 
         # TODO: Pass timeout value
-        result = self._place(self.args['stack_id'], request_json)
+        result = self._send(self.args['stack_id'], request_json)
 
         if self.debug:
             self._log(result, 'Result', append=True)

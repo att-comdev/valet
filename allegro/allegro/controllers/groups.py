@@ -114,7 +114,7 @@ class GroupsController(object):
         '''Get groups!'''
         groups_array = []
         for group in Group.query.all():
-            groups_array.append(group.name)
+            groups_array.append(group.id)
         return groups_array
 
     @index.when(method='POST', template='json')

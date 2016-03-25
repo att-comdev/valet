@@ -315,10 +315,18 @@ class Compute:
                 flavor.vCPUs = float(f["vcpus"])
                 flavor.mem_cap = float(f["ram"])
 
-                root_gb = f["disk"]
-                ephemeral_gb = f["OS-FLV-EXT-DATA:ephemeral"]
-                swap_mb = f["swap"]
-                flavor.disk_cap = float(root_gb) + float(ephemeral_gb) + float(swap_mb)/float(1024) 
+                root_gb = float(f["disk"])
+
+                ephemeral_gb = 0.0
+                if "OS-FLV-EXT-DATA:ephemeral" in f.keys():
+                    ephemeral_gb = float(f["OS-FLV-EXT-DATA:ephemeral"])
+
+                swap_mb = 0.0
+                if "swap" in f.keys():
+                    if f["swap"] != '':            
+                        swap_mb = float(f["swap"])
+
+                flavor.disk_cap = root_gb + ephemeral_gb + swap_mb/float(1024) 
 
                 _flavors[flavor.name] = flavor
 

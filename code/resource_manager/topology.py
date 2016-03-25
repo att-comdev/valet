@@ -20,8 +20,9 @@ from resource_base import HostGroup, Switch, Link
 
 class Topology:
 
-    def __init__(self, _config):
+    def __init__(self, _config, _logger):
         self.config = _config
+        self.logger = _logger
 
     # Triggered by rhosts change
     def set_topology(self, _datacenter, _host_groups, _hosts, _rhosts, _switches):
@@ -45,7 +46,7 @@ class Topology:
 
             (region_name, rack_name, node_type, status) = self._set_layout_by_name(rhk)
             if status != "success":
-                self.logger.warn(status + "  while parsing host_name (" + rhk + ")")
+                self.logger.warn(status + " in host_name (" + rhk + ")")
 
             if region_name not in _datacenter.region_code_list:
                 _datacenter.region_code_list.append(region_name)

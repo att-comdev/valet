@@ -105,7 +105,7 @@ class TopologyManager(threading.Thread):
         if self.config.mode.startswith("sim") == True:
             datacenter = Datacenter(self.config.mode)
             #topology = SimTopology(self.config)
-            topology = Topology(self.config)
+            topology = Topology(self.config, self.logger)
 
             #status = topology.set_topology(datacenter, host_groups, hosts, switches)
             status = topology.set_topology(datacenter, host_groups, hosts, self.resource.hosts, switches)
@@ -115,7 +115,7 @@ class TopologyManager(threading.Thread):
 
         else:
             datacenter = Datacenter(self.config.datacenter_name)
-            topology = Topology(self.config)
+            topology = Topology(self.config, self.logger)
 
             # NOTE: currently, using naming convention to set up layout & ignore networking layout
             status = topology.set_topology(datacenter, host_groups, hosts, self.resource.hosts, switches)

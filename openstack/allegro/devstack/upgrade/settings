@@ -1,7 +1,0 @@
-register_project_for_upgrade allegro
-
-devstack_localrc base enable_plugin allegro git://git.openstack.org/openstack/allegro
-devstack_localrc base enable_service allegro-acompute allegro-acentral allegro-aipmi allegro-anotification allegro-collector allegro-api allegro-alarm-notifier allegro-alarm-evaluator tempest
-
-devstack_localrc target enable_plugin allegro git://git.openstack.org/openstack/allegro
-devstack_localrc target enable_service allegro-acompute allegro-acentral allegro-aipmi allegro-anotification allegro-collector allegro-api allegro-alarm-notifier allegro-alarm-evaluator tempest

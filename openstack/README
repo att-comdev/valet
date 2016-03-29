@@ -1,9 +1,9 @@
-This directory is to contain the version of Allegro intended for
+This directory is to contain the version of Valet intended for
 open source release under the OpenStack Big Tent. It uses Ceilometer
 as a baseline model of CLI/API/Engine architecture, and matches on
 the API front (both use Pecan).
 
-In the process of renaming things to use allegro, note that the
+In the process of renaming things to use valet, note that the
 .rst and .po files have not been altered.
 
 Contact: "Joe D'Andrea" <jdandrea@research.att.com>

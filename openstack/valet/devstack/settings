@@ -1,0 +1,52 @@
+# turn on all the valet services by default
+# Pollsters
+enable_service valet-acompute valet-acentral valet-aipmi
+# Notification Agent
+enable_service valet-anotification
+# Data Collector
+enable_service valet-collector
+# API service
+enable_service valet-api
+# Alarming
+enable_service valet-alarm-notifier valet-alarm-evaluator
+
+# Default directories
+VALET_DIR=$DEST/valet
+VALET_CONF_DIR=/etc/valet
+VALET_CONF=$VALET_CONF_DIR/valet.conf
+VALET_API_LOG_DIR=/var/log/valet-api
+VALET_AUTH_CACHE_DIR=${VALET_AUTH_CACHE_DIR:-/var/cache/valet}
+VALET_WSGI_DIR=${VALET_WSGI_DIR:-/var/www/valet}
+
+# Set up database backend
+VALET_BACKEND=${VALET_BACKEND:-mysql}
+
+# Valet connection info.
+VALET_SERVICE_PROTOCOL=http
+VALET_SERVICE_HOST=$SERVICE_HOST
+VALET_SERVICE_PORT=${VALET_SERVICE_PORT:-8777}
+VALET_USE_MOD_WSGI=${VALET_USE_MOD_WSGI:-${ENABLE_HTTPD_MOD_WSGI_SERVICES}}
+
+# To enable OSprofiler change value of this variable to "notifications,profiler"
+VALET_NOTIFICATION_TOPICS=${VALET_NOTIFICATION_TOPICS:-notifications}
+VALET_EVENTS=${VALET_EVENTS:-True}
+
+VALET_COORDINATION_URL=${VALET_COORDINATION_URL:-}
+VALET_PIPELINE_INTERVAL=${VALET_PIPELINE_INTERVAL:-}
+
+VALET_EVENT_ALARM=${VALET_EVENT_ALARM:-False}
+
+# Tell Tempest this project is present
+TEMPEST_SERVICES+=,valet
+
+# Set up default directories for client and middleware
+GITREPO["python-valetclient"]=${VALETCLIENT_REPO:-${GIT_BASE}/openstack/python-valetclient.git}
+GITBRANCH["python-valetclient"]=${VALETCLIENT_BRANCH:-master}
+GITDIR["python-valetclient"]=$DEST/python-valetclient
+GITDIR["valetmiddleware"]=$DEST/valetmiddleware
+
+# Get rid of this before done.
+# Tell emacs to use shell-script-mode
+## Local variables:
+## mode: shell-script
+## End:

@@ -43,13 +43,18 @@ class OptimizersController(object):
                   'Ostro error: %s' % message)
         return ostro.response
 
+    @expose(generic=True, template='json')
+    def index(self):
+        message = 'The %s method is not allowed.' % request.method
+        error('/v1/errors/not_allowed', message)
+
     @index.when(method='HEAD', template='json')
-    def index_head(self, **kw):
+    def index_head(self):
         ostro_response = self._ping()
         response.status = 200
 
-    @expose(generic=True, template='json')
-    def index(self):
+    @index.when(method='GET', template='json')
+    def index_get(self):
         ostro_response = self._ping()
         response.status = 200
         return ostro_response

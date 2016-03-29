@@ -14,6 +14,7 @@
 # implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
 try:
     from setuptools import setup, find_packages
 except ImportError:
@@ -23,7 +24,7 @@ except ImportError:
 
 setup(
     name='allegro-api',
-    version='0.1',
+    version='1.0',
     description='',
     author="Joe D'Andrea",
     author_email='jdandrea@research.att.com',

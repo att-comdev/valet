@@ -20,7 +20,7 @@ import simplejson
 from allegro import models
 from allegro.controllers import error
 # TODO: Make this a driver plugin point instead so we can pick and choose.
-from allegro.models.music import Placement, Query
+from allegro.models.music import Placement
 #from allegro.models.sqlalchemy import Placement
 from pecan import expose, redirect, request, response
 from webob.exc import status_map

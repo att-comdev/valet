@@ -30,8 +30,7 @@ logger = logging.getLogger(__name__)
 
 class OptimizersController(object):
 
-    @expose(generic=True, template='json')
-    def index(self):
+    def _ping(self):
         '''Ping the optimizer.'''
         ostro = Ostro()
         ostro.ping()
@@ -42,6 +41,15 @@ class OptimizersController(object):
             message = ostro.response['status']['message']
             error('/v1/errors/invalid',
                   'Ostro error: %s' % message)
-
-        response.status = 200
         return ostro.response
+
+    @index.when(method='HEAD', template='json')
+    def index_head(self, **kw):
+        ostro_response = self._ping()
+        response.status = 200
+
+    @expose(generic=True, template='json')
+    def index(self):
+        ostro_response = self._ping()
+        response.status = 200
+        return ostro_response

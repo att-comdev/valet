@@ -18,7 +18,7 @@
 from allegro import models
 from allegro.controllers import error
 # TODO: Make this a driver plugin point instead so we can pick and choose.
-from allegro.models.music import Group, Query
+from allegro.models.music import Group
 #from allegro.models.sqlalchemy import Group
 from pecan import expose, redirect, request, response
 from pecan_notario import validate

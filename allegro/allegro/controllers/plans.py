@@ -18,7 +18,7 @@
 from allegro import models
 from allegro.controllers import update_placements, error
 # TODO: Make this a driver plugin point instead so we can pick and choose.
-from allegro.models.music import Plan, Placement, Query
+from allegro.models.music import Plan, Placement
 #from allegro.models.sqlalchemy import Plan, Placement 
 from allegro.ostro_helper import Ostro
 from pecan import expose, redirect, request, response

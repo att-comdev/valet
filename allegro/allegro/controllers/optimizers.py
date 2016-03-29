@@ -51,7 +51,7 @@ class OptimizersController(object):
     @index.when(method='HEAD', template='json')
     def index_head(self):
         ostro_response = self._ping()
-        response.status = 200
+        response.status = 204
 
     @index.when(method='GET', template='json')
     def index_get(self):

@@ -162,8 +162,7 @@ class Base(object):
 
     @classmethod
     def filter_by(cls, **kwargs):
-        #return cls.query.filter_by(**kwargs)
-        return Query(cls).filter_by(**kwargs)
+        return cls.query.filter_by(**kwargs)
 
     def flush(self, *args, **kwargs):
         #object_session(self).flush([self], *args, **kwargs)

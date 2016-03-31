@@ -56,11 +56,12 @@ class Group(Base):
         return self.id
 
     def values(self):
+        # TODO: Support lists in Music (e.g., members)
         return {
             'name': self.name,
             'description': self.description,
             'type': self.type,
-            'members': self.members
+            'members': simplejson.dumps(self.members)
         }
 
     def __init__(self, name, description, type, members, _insert=True):
@@ -69,11 +70,9 @@ class Group(Base):
         self.description = description
         self.type = type
         if _insert:
-            # TODO: Support lists in Music
-            self.members = simplejson.dumps(members)
             self.insert()
-            self.members = members
         else:
+            # TODO: Support lists in Music
             self.members = simplejson.loads(members)
 
     def __repr__(self):

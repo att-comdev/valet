@@ -30,103 +30,168 @@ from webob.exc import status_map
 
 logger = logging.getLogger(__name__)
 
-create_schema = (
+groups_schema = (
     ('description', types.string),
-    ('members', types.array),
     ('name', types.string),
     (decorators.optional('type'), types.string)
 )
 
-update_schema = (
-    ('description', types.string),
-    ('members', types.array),
-    ('name', types.string),
+update_groups_schema = (
+    (decorators.optional('description'), types.string),
+    (decorators.optional('name'), types.string),
     (decorators.optional('type'), types.string)
 )
 
+members_schema = (
+    ('members', types.array)
+)
 
-class GroupsItemController(object):
-    placements = None
 
-    def __init__(self, uuid4):
-        self.uuid = uuid4
-        self.group = Group.query.filter_by(id=self.uuid).first()
-        if not self.group:
-            error('/v1/errors/not_found', 'Group not found')
-        request.context['group_id'] = self.group.id
+class MembersItemController(object):
+    def __init__(self, member_id):
+        """Initialize group member"""
+        group = request.context['group']
+        if not member_id in group.members:
+            error('/v1/errors/not_found', 'Member not found in group')
+        request.context['member_id'] = member_id
 
+    # GET /v1/TENANT_ID/groups/GROUP_ID/members/MEMBER_ID
     @expose(generic=True, template='json')
     def index(self):
-        if request.method == 'POST':
-            error('/v1/errors/not_allowed',
-                  'POST requests to this url are not allowed')
-        return self.group
+        '''Verify group member'''
+        response.status = 204
 
-    @index.when(method='PUT', template='json')
-    @validate(update_schema, '/v1/errors/schema')
+    # DELETE /v1/TENANT_ID/groups/GROUP_ID/members/MEMBER_ID
+    @index.when(method='DELETE', template='json')
     def index_put(self, **kw):
-        """Update a Group"""
-        kwargs = request.json
+        """Delete group member"""
+        group = request.context['group']
+        member_id = request.context['member_id']
+        group.members.remove(member_id)
+        group.update()
+        response.status = 204
 
-        group_name = kwargs['name']
-        description = kwargs['description']
-        group_type = kwargs['type']
-        members = kwargs['members']
+class MembersController(object):
+    # GET /v1/TENANT_ID/groups/GROUP_ID/members
+    @expose(generic=True, template='json')
+    def index(self):
+        '''List group members'''
+        group = request.context['group']
+        return group.members
 
-        # TODO: Update the group
+    # POST /v1/TENANT_ID/groups/GROUP_ID/members
+    @index.when(method='POST', template='json')
+    @validate(members_schema, '/v1/errors/schema')
+    def index_post(self, **kwargs):
+        """Set/replace all group members"""
+        new_members = kwargs.get('members', [])
+
+        group = request.context['group']
+        group.members = new_members
+        group.update()
         response.status = 201
 
         # Flush so that the DB is current.
-        self.group.flush()
-        return self.group
+        group.flush()
+        return group
 
+    # UPDATE /v1/TENANT_ID/groups/GROUP_ID/members
+    @index.when(method='PUT', template='json')
+    @validate(members_schema, '/v1/errors/schema')
+    def index_post(self, **kwargs):
+        """Add one or more members to a group"""
+        new_members = kwargs.get('members', None)
+
+        group = request.context['group']
+        group.members = list(set(group.members + new_members))
+        group.update()
+        response.status = 201
+
+        # Flush so that the DB is current.
+        group.flush()
+        return group
+
+    # DELETE /v1/TENANT_ID/groups/GROUP_ID/members
     @index.when(method='DELETE', template='json')
-    def index_delete(self, **kw):
-        """Delete a Group"""
-        self.group.delete()
+    def index_put(self, **kw):
+        """Delete all group members"""
+        group = request.context['group']
+        group.members = []
+        group.update()
+        response.status = 204
+
+    @expose()
+    def _lookup(self, member_id, *remainder):
+        return MembersItemController(member_id), remainder
+
+class GroupsItemController(object):
+    #members = None  # Deferred controller instantiation
+    members = MembersController()
+
+    def __init__(self, group_id):
+        """Initialize group"""
+        group = Group.query.filter_by(id=group_id).first()
+        if not group:
+            error('/v1/errors/not_found', 'Group not found')
+        request.context['group'] = group
+        #self.members = MembersController(group.id)
+
+    # GET /v1/TENANT_ID/groups/GROUP_ID
+    @expose(generic=True, template='json')
+    def index(self):
+        """Display a group"""
+        if request.method == 'POST':
+            error('/v1/errors/not_allowed',
+                  'POST requests to this url are not allowed')
+        return request.context['group']
+
+    # UPDATE /v1/TENANT_ID/groups/GROUP_ID
+    @index.when(method='PUT', template='json')
+    @validate(update_groups_schema, '/v1/errors/schema')
+    def index_put(self, **kwargs):
+        """Update a group"""
+        # Members are updated in the /v1/groups/members controller.
+        group = request.context['group']
+        group.name = \
+            kwargs.get('name', group.name)
+        group.description = \
+            kwargs.get('description', group.description)
+        group.type = \
+            kwargs.get('type', group.type)
+        group.update()
+        response.status = 201
+
+        # Flush so that the DB is current.
+        group.flush()
+        return group
+
+    # DELETE /v1/TENANT_ID/groups/GROUP_ID
+    @index.when(method='DELETE', template='json')
+    def index_delete(self):
+        """Delete a group"""
+        group = request.context['group']
+        group.delete()
         response.status = 204
 
 class GroupsController(object):
-
-    # Dictionary of all groups
-    # Type can be exclusivity, affinity, or diversity
-    #
-    #   {
-    #     "c7a6014f-b348-4a1f-a08a-fe02786b2936": {
-    #       "name": "group",
-    #       "description": "My Awesome Group",
-    #       "type": "exclusivity",
-    #       "members": [
-    #         "922c5cab-6a1b-4e1e-bb10-331633090c41",
-    #         "b71bedad-dd57-4942-a7bd-ab074b72d652"
-    #       ]
-    #     }
-    #   }
-
-    # POST /v1/TENANT_ID/groups
     # GET /v1/TENANT_ID/groups
-    # GET /v1/TENANT_ID/groups/GROUP_ID
-    # UPDATE /v1/TENANT_ID/groups/GROUP_ID
-    # DELETE /v1/TENANT_ID/groups/GROUP_ID
-
     @expose(generic=True, template='json')
     def index(self):
-        '''Get groups!'''
+        '''List groups'''
         groups_array = []
         for group in Group.query.all():
             groups_array.append(group.id)
         return groups_array
 
+    # POST /v1/TENANT_ID/groups
     @index.when(method='POST', template='json')
-    @validate(create_schema, '/v1/errors/schema')
-    def index_post(self, **kw):
+    @validate(groups_schema, '/v1/errors/schema')
+    def index_post(self, **kwargs):
         """Create a group"""
-        kwargs = request.json
-
-        group_name = kwargs['name']
-        description = kwargs['description']
-        group_type = kwargs['type']
-        members = kwargs['members']
+        group_name = kwargs.get('name', None)
+        description = kwargs.get('description', None)
+        group_type = kwargs.get('type', None)
+        members = []  # Use /v1/groups/members endpoint to add members
 
         group = Group(group_name, description, group_type, members)
         if group:
@@ -140,5 +205,5 @@ class GroupsController(object):
                   'Unable to create Group.')
 
     @expose()
-    def _lookup(self, uuid4, *remainder):
-        return GroupsItemController(uuid4), remainder
+    def _lookup(self, group_id, *remainder):
+        return GroupsItemController(group_id), remainder

@@ -64,6 +64,14 @@ logging = {
     }
 }
 
+keystone_authtoken = {
+    'auth_uri': 'http://qos101.research.att.com:5000/v2.0',
+    'identity_uri': 'http://qos101.research.att.com:35357',
+    'admin_tenant_name': 'service',
+    'admin_user': 'allegro',
+    'admin_password': 'allegro',
+}
+
 sqlalchemy = {
     'url': 'mysql+pymysql://allegro:password@127.0.0.1/allegro?charset=utf8',
     'echo':          True,
@@ -75,5 +83,5 @@ sqlalchemy = {
 music = {
     'host': '127.0.0.1',
     'port': '8080',
-    'keyspace': 'valet_test'
+    'keyspace': 'valet_test',
 }

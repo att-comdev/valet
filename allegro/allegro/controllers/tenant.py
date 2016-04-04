@@ -32,35 +32,28 @@ class TenantController(object):
     optimizers = optimizers.OptimizersController()
 
     def __init__(self, tenant_id):
-        self.tenant_id = tenant_id
-        # TODO: Tie to Keystone
-        assert self.tenant_id
+        assert tenant_id
+        request.context['tenant_id'] = tenant_id
 
     @expose(generic=True, template='json')
     def index(self):
+        endpoints = ["groups", "optimizers", "plans", "placements"]
+        links = []
+        for endpoint in endpoints:
+            links.append({
+                "href": "%(url)s/v1/%(tenant_id)s/%(endpoint)s/" % { 
+                         'url': request.application_url,
+                         'tenant_id': request.context['tenant_id'],
+                         'endpoint': endpoint
+                },
+                "rel": "self"
+            })
         ver = {
           "versions": [
             {
               "status": "CURRENT",
               "id": "v1.0",
-              "links": [
-                {
-                  "href": request.application_url + "/v1/{tenant_id}/groups/",
-                  "rel": "self"
-                },
-                {
-                  "href": request.application_url + "/v1/{tenant_id}/optimizers/",
-                  "rel": "self"
-                },
-                {
-                  "href": request.application_url + "/v1/{tenant_id}/plans/",
-                  "rel": "self"
-                },
-                {
-                  "href": request.application_url + "/v1/{tenant_id}/placements/",
-                  "rel": "self"
-                }
-              ]
+              "links": links
             }
           ]
         }

@@ -18,8 +18,7 @@
 from pecan import expose
 from pecan import request
         
-from allegro.controllers import errors
-from allegro.controllers import tenant
+from allegro.controllers import errors, tenant
     
 import logging
 
@@ -29,19 +28,29 @@ logger = logging.getLogger(__name__)
 class V1Controller(object):
     errors = errors.ErrorsController()
 
+    def __init__(self):
+        # TODO: Obtain tenant ID from Keystone credentials
+
+        # TODO: Find out why this fails for a legit controller.
+        # request.context['tenant_id'] = "{tenant_id}"
+        self.tenant_id = "{tenant_id}"
+
     @expose(generic=True, template='json')
     def index(self):
+        links = []
+        links.append({
+            "href": "%(url)s/v1/%(tenant_id)s/" % {
+                     'url': request.application_url,
+                     'tenant_id': self.tenant_id
+            },
+            "rel": "self"
+        })
         ver = {
           "versions": [
             {
               "status": "CURRENT",
               "id": "v1.0",
-              "links": [
-                {
-                  "href": request.application_url + "/v1/{tenant_id}/",
-                  "rel": "self"
-                }
-              ]
+              "links": links
             }
           ]
         }

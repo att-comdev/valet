@@ -64,7 +64,7 @@ logging = {
     }
 }
 
-keystone_authtoken = {
+keystone = {
     'auth_uri': 'http://qos101.research.att.com:5000/v2.0',
     'identity_uri': 'http://qos101.research.att.com:35357',
     'admin_tenant_name': 'service',

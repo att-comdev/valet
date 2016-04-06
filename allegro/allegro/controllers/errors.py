@@ -19,26 +19,31 @@ from pecan import expose, response, request
 
 
 def error_wrapper(func):
+    '''Modeled after Apple's error APIs'''
     def func_wrapper(self, **kwargs):
+        # Call the controller method
         kwargs = func(self, **kwargs)
-        message = kwargs.get('message', 'undocumented error')
-        status = kwargs.get('status', None)
-        internalMessage = None
-        if not status:
-           status = response.status_code
-           internalMessage = response.status
+
+        # Prep the actual error
+        message = kwargs.get('message', 'Undocumented error')
+        internalMessage = kwargs.get('internal', response.status)
+        status = kwargs.get('status', response.status_code)
+        info = kwargs.get('info', 'No remediation available')
+
+        # TODO: Support multiple errors?
         return {
             "errors": [{
                 "userMessage": message,
                 "internalMessage": internalMessage,
                 "code": status,
-                "info": None,
+                "info": info,
             }]
         }
     return func_wrapper
 
+# TODO: Pass in the rest of kwargs along with the message
 class ErrorsController(object):
-
+    '''Error handling controller'''
     @expose('json')
     @error_wrapper
     def schema(self, **kw):
@@ -84,6 +89,16 @@ class ErrorsController(object):
             'resource was not found'
         )
         response.status = 404
+        return dict(message=msg)
+
+    @expose('json')
+    @error_wrapper
+    def server_error(self, **kw):
+        msg = kw.get(
+            'error_message',
+            'server error',
+        )
+        response.status = 500
         return dict(message=msg)
 
     @expose('json')

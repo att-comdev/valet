@@ -97,12 +97,13 @@ class Ostro(object):
                 return placement
             else:
                 time.sleep(self.interval)
-        return '{ \
-            "status": { \
-                "type": "error", \
-                "message": "Timed out waiting for placement result." \
-            } \
-        }'
+        response = {
+            'status': {
+                'type': 'error',
+                'message': 'Timed out waiting for placement result.',
+            }
+        }
+        return simplejson.dumps(response)
 
     def ping(self):
         '''Send a ping request and obtain a response.'''

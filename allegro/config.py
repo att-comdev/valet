@@ -64,12 +64,13 @@ logging = {
     }
 }
 
-keystone = {
-    'auth_uri': 'http://qos101.research.att.com:5000/v2.0',
-    'identity_uri': 'http://qos101.research.att.com:35357',
-    'admin_tenant_name': 'service',
-    'admin_user': 'allegro',
-    'admin_password': 'allegro',
+identity = {
+    'config': {
+        'username': 'allegro',
+        'password': 'password',
+        'project_name': 'service',
+        'auth_url': 'http://qos101.research.att.com:5000/v2.0',
+    }
 }
 
 sqlalchemy = {
@@ -83,5 +84,5 @@ sqlalchemy = {
 music = {
     'host': '127.0.0.1',
     'port': '8080',
-    'keyspace': 'valet_test',
+    'keyspace': 'valet',
 }

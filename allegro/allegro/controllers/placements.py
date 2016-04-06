@@ -54,7 +54,7 @@ class PlacementsItemController(object):
         response.status = 204
 
 class PlacementsController(object):
-    # Get all the placements /v1/{tenant_id}/placements
+    # Get all the placements /v1/PROJECT_ID/placements
 
     @expose(generic=True, template='json')
     def index(self):

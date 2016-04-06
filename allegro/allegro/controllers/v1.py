@@ -18,7 +18,7 @@
 from pecan import expose
 from pecan import request
         
-from allegro.controllers import errors, tenant
+from allegro.controllers import errors, project
     
 import logging
 
@@ -29,19 +29,16 @@ class V1Controller(object):
     errors = errors.ErrorsController()
 
     def __init__(self):
-        # TODO: Obtain tenant ID from Keystone credentials
-
-        # TODO: Find out why this fails for a legit controller.
-        # request.context['tenant_id'] = "{tenant_id}"
-        self.tenant_id = "{tenant_id}"
+        # TODO: No need to respond to this endpoint. Throw a 404.
+        self.project_id = "{project_id}"
 
     @expose(generic=True, template='json')
     def index(self):
         links = []
         links.append({
-            "href": "%(url)s/v1/%(tenant_id)s/" % {
+            "href": "%(url)s/v1/%(project_id)s/" % {
                      'url': request.application_url,
-                     'tenant_id': self.tenant_id
+                     'project_id': self.project_id
             },
             "rel": "self"
         })
@@ -58,5 +55,5 @@ class V1Controller(object):
         return ver
 
     @expose()
-    def _lookup(self, tenant_id, *remainder):
-        return tenant.TenantController(tenant_id), remainder
+    def _lookup(self, project_id, *remainder):
+        return project.ProjectController(project_id), remainder

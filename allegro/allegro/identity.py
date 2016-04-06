@@ -12,90 +12,120 @@
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
 # implied.
+#
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+"""Identity library"""
+
 from datetime import datetime
-import iso8601
-import json
-import pytz
+#import json
+import os
+import sys
 import time
 
+import iso8601
+# https://github.com/openstack/python-keystoneclient/blob/
+#         master/keystoneclient/v2_0/client.py
+from keystoneauth1.identity import v2
+from keystoneauth1 import session
 from keystoneclient.v2_0 import client
 from keystoneclient.exceptions import AuthorizationFailure, Unauthorized
+from pecan import conf
+import pytz
 
- 
+
 def utcnow():
+    """Returns the time (UTC)"""
     return datetime.now(tz=pytz.utc)
- 
-class Keystone(object):
-    AUTH_URL = 'auth_url'
-    PASSWORD = 'password'
-    USERNAME = 'username'
-    TENANT_NAME = 'tenant_name'
+
+class Identity(object):
+    """Convenience library for all identity service-related queries."""
+    _args = None
+    _client = None
 
     def __init__(self, **kwargs):
-        self.auth_url = kwargs.get('auth_url', 'http://mtmac1:5000/v2.0')
-        self.password = kwargs.get('password', 'password')
-        self.username = kwargs.get('username', 'allegro')
-        self.tenant_name = kwargs.get('tenant_name', 'service')
+        """Initializer."""
+        self._args = kwargs
         self._client = None
 
     @property
-    def client(self):
-        # TODO: Or if token is expired.
+    def _client_expired(self):
+        """Returns True if cached client's token is expired."""
         if not self._client:
-            kwargs = {
-                'auth_url': self.auth_url,
-                'username': self.username,
-                'password': self.password,
-                'tenant_name': self.tenant_name,
-            }
-            self._client = client.Client(**kwargs)
-        return self._client
-
-    @property
-    def expired(self):
+            return True
         timestamp = self._client.auth_ref['token']['expires']
         return iso8601.parse_date(timestamp) <= utcnow()
 
-if __name__ == "__main__":
-    import sys
+    @property
+    def client(self):
+        """Returns an identity client."""
+        if not self._client or self._client_expired:
+            auth = v2.Password(**self._args)
+            sess = session.Session(auth=auth)
+            self._client = client.Client(session=sess)
+            self._client.auth_url = self._args.get('auth_url')
+        return self._client
 
+def init_identity():
+    """Initialize the identity engine and place in the config."""
+    config = conf.identity.config
+    engine = _identity_engine_from_config(config)
+    conf.identity.engine = engine
+
+def _identity_engine_from_config(config):
+    """Initialize the identity engine based on supplied config."""
+    # Using tenant_name instead of project name due to keystone v2
+    kwargs = {
+        'username': config.get('username'),
+        'password': config.get('password'),
+        'tenant_name': config.get('project_name'),
+        'auth_url': config.get('auth_url'),
+    }
+    engine = Identity(**kwargs)
+    return engine
+
+def main():
+    """Used for ad hoc testing."""
     if len(sys.argv) < 2:
-        print("Please provide a Keystone token. Example syntax:")
-        print("keystone token-get 2>/dev/null | grep ' id ' | awk '{print $4}'")
+        print "Please provide a Keystone token. Example syntax:"
+        print "keystone token-get 2>/dev/null | " \
+              "grep ' id ' | awk '{print $4}'"
         exit(1)
 
-    kwargs = {}
-    keystone = Keystone(**kwargs)
-    client = keystone.client
-
     auth_token = sys.argv[1]
-    tenant_id = 'e833dea42c7c47d6be25150693fe0f40'
+    tenant_id = os.environ.get('OS_TENANT_ID')
+    kwargs = {
+        'token': auth_token,
+        'tenant_id': tenant_id,
+    }
 
-    print('Client Auth Token: %s' % client.auth_token)
-    print('User Auth Token: %s' % auth_token)
+    init_identity()
+    engine = conf.identity.engine
+
+    print 'Client Auth Token: %s' % engine.client.auth_token
+    print 'User Auth Token: %s' % auth_token
+    print 'Tenant ID: %s' % tenant_id
     print
 
     while True:
-        if keystone.expired:
-            print "Client expired!"
-            exit(1)
-
         try:
-            auth_result = client.tokens.authenticate(token=auth_token,
-                                                     tenant_id=tenant_id)
+            auth_result = engine.client.tokens.authenticate(**kwargs)
             if auth_result:
                 #print json.dumps(auth_result.to_dict())
-                print('The user auth token is valid')
-                print('Token expiration: %s' % (auth_result.expires))
+                print 'The user auth token is valid'
+                print 'Token expiration: %s' % (auth_result.expires)
 
                 timenow = utcnow().isoformat()
-                print('Time now: %s' % (timenow))
-        except:
-            print('The user auth token is invalid or has expired.')
+                print 'Time now: %s' % (timenow)
+        except (AuthorizationFailure, Unauthorized):
+            print 'User token is invalid or expired.'
+            print 'This should never happen though.'
             exit(1)
 
-        print('Sleeping for 60 seconds.')
+        print 'Sleeping for 60 seconds.'
         time.sleep(60)
         print
+
+if __name__ == "__main__":
+    main()

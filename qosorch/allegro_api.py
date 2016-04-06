@@ -35,10 +35,11 @@ class AllegroAPIWrapper(object):
         self.opt_name_str = 'allegro_api_server_url'
         self._register_opts()
 
-    def _api_endpoint(self):
+    def _api_endpoint(self, tenant_id='e833dea42c7c47d6be25150693fe0f40'):
+        # TODO: Require tenant id, else honk
         try:
             opt = getattr(cfg.CONF, self.opt_group_str)
-            endpoint = opt[self.opt_name_str]
+            endpoint = opt[self.opt_name_str] + '/' + tenant_id
             if endpoint:
                 return endpoint
             else:
@@ -57,39 +58,57 @@ class AllegroAPIWrapper(object):
         cfg.CONF.register_group(opt_group)
         cfg.CONF.register_opts(opts, group=opt_group)
 
-    def plans_create(self, stack, plan):
-        payload = json.dumps(plan)
-        url = self._api_endpoint() + '/' + stack.tenant_id + '/plans/'
-        try:
-            req = requests.post(url, data=payload, headers=self.headers)
-            req.raise_for_status()
-        except requests.exceptions.HTTPError as e:
-            # TODO: Move this into allegro proper and don't raise for status?
-            exc_class, exc, traceback = sys.exc_info()
+    def _exception(self, e, exc_info, req):
+        # TODO: Move into allegro proper and don't raise for status?
+        exc_class, exc, traceback = exc_info
+        response = json.loads(req.text)
+        errors = response.get('errors')
+        if errors and len(errors) > 0:
+            error = errors[0]
+            msg = "%(userMessage)s (allegro-api: %(internalMessage)s)" % {
+                  'userMessage': error.get('userMessage'),
+                  'internalMessage': error.get('internalMessage')
+            }
+            my_exc = AllegroAPIWrapperError(msg)
+        else:
             msg = "%s for %s %s with body %s" % \
                   (exc, e.request.method, e.request.url, e.request.body)
             my_exc = AllegroAPIWrapperError(msg)
             # traceback can be added to the end of the raise
-            raise my_exc.__class__, my_exc
+        raise my_exc.__class__, my_exc
 
-    def plans_delete(self, stack):
+    def plans_create(self, stack, plan, tenant_id=None, auth_token=None):
+        try:
+            url = self._api_endpoint(tenant_id) + '/plans/'
+            payload = json.dumps(plan)
+            self.headers['X-Auth-Token'] = auth_token
+            req = requests.post(url, data=payload, headers=self.headers)
+            req.raise_for_status()
+        except requests.exceptions.HTTPError as e:
+            self._exception(e, sys.exc_info(), req)
+
+    def plans_delete(self, stack, tenant_id=None, auth_token=None):
         # FIXME: Must put trailing slash on end or else
         # Allegro does a 302 redirect and then a _GET_ vs a DELETE.
         # When we try this with Postman the redirect remains a DELETE.
-        url = self._api_endpoint() + '/' + stack.tenant_id + \
-              '/plans/' + stack.id + '/'
-        req = requests.delete(url)
-
-    def placement(self, uuid):
-        """Call Allegro API to get placement for an Orchestration ID."""
-
-        # TODO: Get tenant_id from the heat stack?
-        tenant_id = 'e833dea42c7c47d6be25150693fe0f40'
-        url = self._api_endpoint() + '/' + tenant_id + '/placements/' + uuid
         try:
+            url = self._api_endpoint(tenant_id) + '/plans/' + \
+                  stack.id + '/'
+            self.headers['X-Auth-Token'] = auth_token
+            req = requests.delete(url, headers=self.headers)
+            # TODO: Do not raise for status just yet.
+            #req.raise_for_status()
+        except requests.exceptions.HTTPError as e:
+            self._exception(e, sys.exc_info(), req)
+
+    def placement(self, uuid, tenant_id=None, auth_token=None):
+        """Call Allegro API to get placement for an Orchestration ID."""
+        try:
+            url = self._api_endpoint(tenant_id) + '/placements/' + uuid
+            self.headers['X-Auth-Token'] = auth_token
             req = requests.get(url, headers=self.headers)
 
-            # TODO: If not 200 or timeout, do alternate scheduling
+            # TODO: If not 200 or timeout, honk
             #req.raise_for_status()
 
             # TODO: Test key.

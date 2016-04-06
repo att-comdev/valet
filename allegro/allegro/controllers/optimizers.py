@@ -39,7 +39,7 @@ class OptimizersController(object):
         status_type = ostro.response['status']['type']
         if status_type != 'ok':
             message = ostro.response['status']['message']
-            error('/v1/errors/invalid',
+            error('/v1/errors/server_error',
                   'Ostro error: %s' % message)
         return ostro.response
 

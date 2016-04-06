@@ -106,7 +106,7 @@ class PlansItemController(object):
         response.status = 204
 
 class PlansController(object):
-    # Get all the plans /v1/{tenant_id}/plans
+    # Get all the plans /v1/PROJECT_ID/plans
 
     # Proposed body
     # {
@@ -159,7 +159,7 @@ class PlansController(object):
         status_type = ostro.response['status']['type']
         if status_type != 'ok':
             message = ostro.response['status']['message']
-            error('/v1/errors/invalid',
+            error('/v1/errors/server_error',
                   'Ostro error: %s' % message)
 
         plan_name = kwargs['plan_name']
@@ -176,7 +176,7 @@ class PlansController(object):
             plan.flush()
             return plan
         else:
-            error('/v1/errors/invalid',
+            error('/v1/errors/server_error',
                   'Unable to create Plan.')
 
     @expose()

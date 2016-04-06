@@ -25,15 +25,15 @@ import logging
 logger = logging.getLogger(__name__)
     
         
-class TenantController(object):
+class ProjectController(object):
     plans = plans.PlansController()
     placements = placements.PlacementsController()
     groups = groups.GroupsController()
     optimizers = optimizers.OptimizersController()
 
-    def __init__(self, tenant_id):
-        assert tenant_id
-        request.context['tenant_id'] = tenant_id
+    def __init__(self, project_id):
+        assert project_id
+        request.context['project_id'] = project_id
 
     @expose(generic=True, template='json')
     def index(self):
@@ -41,9 +41,9 @@ class TenantController(object):
         links = []
         for endpoint in endpoints:
             links.append({
-                "href": "%(url)s/v1/%(tenant_id)s/%(endpoint)s/" % { 
+                "href": "%(url)s/v1/%(project_id)s/%(endpoint)s/" % { 
                          'url': request.application_url,
-                         'tenant_id': request.context['tenant_id'],
+                         'project_id': request.context['project_id'],
                          'endpoint': endpoint
                 },
                 "rel": "self"

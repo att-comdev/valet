@@ -34,6 +34,7 @@ class RootController(object):
     def __init__(self):
         return
 
+    # TODO: No need to respond to this endpont. Throw a 404.
     @expose(generic=True, template='json')
     def index(self):
         ver = {

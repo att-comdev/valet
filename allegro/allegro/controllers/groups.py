@@ -12,6 +12,7 @@
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
 # implied.
+#
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
@@ -20,7 +21,8 @@ from allegro.controllers import error
 # TODO: Make this a driver plugin point instead so we can pick and choose.
 from allegro.models.music import Group
 #from allegro.models.sqlalchemy import Group
-from pecan import expose, redirect, request, response
+from pecan import conf, expose, redirect, request, response
+from pecan.secure import SecureController, secure
 from pecan_notario import validate
 
 import logging
@@ -55,13 +57,13 @@ class MembersItemController(object):
             error('/v1/errors/not_found', 'Member not found in group')
         request.context['member_id'] = member_id
 
-    # GET /v1/TENANT_ID/groups/GROUP_ID/members/MEMBER_ID
+    # GET /v1/PROJECT_ID/groups/GROUP_ID/members/MEMBER_ID
     @expose(generic=True, template='json')
     def index(self):
         '''Verify group member'''
         response.status = 204
 
-    # DELETE /v1/TENANT_ID/groups/GROUP_ID/members/MEMBER_ID
+    # DELETE /v1/PROJECT_ID/groups/GROUP_ID/members/MEMBER_ID
     @index.when(method='DELETE', template='json')
     def index_put(self, **kw):
         """Delete group member"""
@@ -72,14 +74,14 @@ class MembersItemController(object):
         response.status = 204
 
 class MembersController(object):
-    # GET /v1/TENANT_ID/groups/GROUP_ID/members
+    # GET /v1/PROJECT_ID/groups/GROUP_ID/members
     @expose(generic=True, template='json')
     def index(self):
         '''List group members'''
         group = request.context['group']
         return group.members
 
-    # POST /v1/TENANT_ID/groups/GROUP_ID/members
+    # POST /v1/PROJECT_ID/groups/GROUP_ID/members
     @index.when(method='POST', template='json')
     @validate(members_schema, '/v1/errors/schema')
     def index_post(self, **kwargs):
@@ -95,7 +97,7 @@ class MembersController(object):
         group.flush()
         return group
 
-    # UPDATE /v1/TENANT_ID/groups/GROUP_ID/members
+    # UPDATE /v1/PROJECT_ID/groups/GROUP_ID/members
     @index.when(method='PUT', template='json')
     @validate(members_schema, '/v1/errors/schema')
     def index_post(self, **kwargs):
@@ -111,7 +113,7 @@ class MembersController(object):
         group.flush()
         return group
 
-    # DELETE /v1/TENANT_ID/groups/GROUP_ID/members
+    # DELETE /v1/PROJECT_ID/groups/GROUP_ID/members
     @index.when(method='DELETE', template='json')
     def index_put(self, **kw):
         """Delete all group members"""
@@ -136,7 +138,7 @@ class GroupsItemController(object):
         request.context['group'] = group
         #self.members = MembersController(group.id)
 
-    # GET /v1/TENANT_ID/groups/GROUP_ID
+    # GET /v1/PROJECT_ID/groups/GROUP_ID
     @expose(generic=True, template='json')
     def index(self):
         """Display a group"""
@@ -145,7 +147,7 @@ class GroupsItemController(object):
                   'POST requests to this url are not allowed')
         return request.context['group']
 
-    # UPDATE /v1/TENANT_ID/groups/GROUP_ID
+    # UPDATE /v1/PROJECT_ID/groups/GROUP_ID
     @index.when(method='PUT', template='json')
     @validate(update_groups_schema, '/v1/errors/schema')
     def index_put(self, **kwargs):
@@ -165,7 +167,7 @@ class GroupsItemController(object):
         group.flush()
         return group
 
-    # DELETE /v1/TENANT_ID/groups/GROUP_ID
+    # DELETE /v1/PROJECT_ID/groups/GROUP_ID
     @index.when(method='DELETE', template='json')
     def index_delete(self):
         """Delete a group"""
@@ -173,8 +175,24 @@ class GroupsItemController(object):
         group.delete()
         response.status = 204
 
-class GroupsController(object):
-    # GET /v1/TENANT_ID/groups
+class GroupsController(SecureController):
+    @classmethod
+    def check_permissions(cls):
+        # FIXME: This does not work if adminurl is unreachable
+        return True
+
+        token = request.headers.get('X-Auth-Token')
+        project_id = request.context.get('project_id')
+        kwargs = {
+            'token': token,
+            'tenant_id': project_id,
+        }
+        # TODO: Put this in the identity module
+        client = conf.identity.engine.client
+        auth_result = client.tokens.authenticate(**kwargs)
+        return True
+
+    # GET /v1/PROJECT_ID/groups
     @expose(generic=True, template='json')
     def index(self):
         '''List groups'''
@@ -183,7 +201,7 @@ class GroupsController(object):
             groups_array.append(group.id)
         return groups_array
 
-    # POST /v1/TENANT_ID/groups
+    # POST /v1/PROJECT_ID/groups
     @index.when(method='POST', template='json')
     @validate(groups_schema, '/v1/errors/schema')
     def index_post(self, **kwargs):
@@ -201,7 +219,7 @@ class GroupsController(object):
             group.flush()
             return group
         else:
-            error('/v1/errors/invalid',
+            error('/v1/errors/server_error',
                   'Unable to create Group.')
 
     @expose()

@@ -22,7 +22,6 @@ from allegro.controllers import error
 from allegro.models.music import Group
 #from allegro.models.sqlalchemy import Group
 from pecan import conf, expose, redirect, request, response
-from pecan.secure import SecureController, secure
 from pecan_notario import validate
 
 import logging
@@ -54,7 +53,8 @@ class MembersItemController(object):
         """Initialize group member"""
         group = request.context['group']
         if not member_id in group.members:
-            error('/v1/errors/not_found', 'Member not found in group')
+            error('/v1/errors/not_found',
+                  'Member not found in group')
         request.context['member_id'] = member_id
 
     # GET /v1/PROJECT_ID/groups/GROUP_ID/members/MEMBER_ID
@@ -88,6 +88,10 @@ class MembersController(object):
         """Set/replace all group members"""
         new_members = kwargs.get('members', [])
 
+        if not conf.identity.engine.is_tenant_list_valid(new_members):
+            error('/v1/errors/conflict',
+                  'Member list contains invalid tenant IDs')
+
         group = request.context['group']
         group.members = new_members
         group.update()
@@ -103,6 +107,10 @@ class MembersController(object):
     def index_post(self, **kwargs):
         """Add one or more members to a group"""
         new_members = kwargs.get('members', None)
+
+        if not conf.identity.engine.is_tenant_list_valid(new_members):
+            error('/v1/errors/conflict',
+                  'Member list contains invalid tenant IDs')
 
         group = request.context['group']
         group.members = list(set(group.members + new_members))
@@ -127,7 +135,6 @@ class MembersController(object):
         return MembersItemController(member_id), remainder
 
 class GroupsItemController(object):
-    #members = None  # Deferred controller instantiation
     members = MembersController()
 
     def __init__(self, group_id):
@@ -136,7 +143,6 @@ class GroupsItemController(object):
         if not group:
             error('/v1/errors/not_found', 'Group not found')
         request.context['group'] = group
-        #self.members = MembersController(group.id)
 
     # GET /v1/PROJECT_ID/groups/GROUP_ID
     @expose(generic=True, template='json')
@@ -172,26 +178,13 @@ class GroupsItemController(object):
     def index_delete(self):
         """Delete a group"""
         group = request.context['group']
+        if type(group.members) is list and len(group.members) > 0:
+            error('/v1/errors/conflict',
+                  'Unable to delete a Group with members.')
         group.delete()
         response.status = 204
 
-class GroupsController(SecureController):
-    @classmethod
-    def check_permissions(cls):
-        # FIXME: This does not work if adminurl is unreachable
-        return True
-
-        token = request.headers.get('X-Auth-Token')
-        project_id = request.context.get('project_id')
-        kwargs = {
-            'token': token,
-            'tenant_id': project_id,
-        }
-        # TODO: Put this in the identity module
-        client = conf.identity.engine.client
-        auth_result = client.tokens.authenticate(**kwargs)
-        return True
-
+class GroupsController(object):
     # GET /v1/PROJECT_ID/groups
     @expose(generic=True, template='json')
     def index(self):

@@ -32,27 +32,36 @@ import requests
 class REST(object):
     '''Helper class for REST operations.'''
 
-    host = None
+    hosts = None
     port = None
     path = None
+    timeout = None
 
-    def __init__(self, host, port, path='/'):
-        '''Initializer. Accepts target host, port, and path.'''
+    _urls = None
 
-        self.host = host  # IP or FQDN
+    def __init__(self, hosts, port, path='/', timeout='10'):
+        '''Initializer. Accepts target host list, port, and path.'''
+
+        self.hosts = hosts  # List of IP or FQDNs
         self.port = port  # Port Number
         self.path = path  # Path starting with /
+        self.timeout = float(timeout)  # REST request timeout in seconds
 
     @property
-    def __url(self):
-        '''Returns a URL using the host/port/path.'''
+    def urls(self):
+        '''Returns list of URLs using each host, plus the port/path.'''
 
-        # Must end without a slash
-        return 'http://%(host)s:%(port)s%(path)s' % {
-                'host': self.host,
-                'port': self.port,
-                'path': self.path
-            }
+        if not self._urls:
+            urls = []
+            for host in self.hosts:
+                # Must end without a slash
+                urls.append('http://%(host)s:%(port)s%(path)s' % {
+                    'host': host,
+                    'port': self.port,
+                    'path': self.path
+                })
+            self._urls = urls
+        return self._urls
 
     @staticmethod
     def __headers(content_type='application/json'):
@@ -67,14 +76,20 @@ class REST(object):
                 path='/', data=None):
         '''Performs HTTP request.'''
         if method not in ('post', 'get', 'put', 'delete'):
-            raise KeyError("Method must be one of post, get, put, or delete.")
+            raise KeyError("Method must be one of post, get, " \
+                           "put, or delete.")
         method_fn = getattr(requests, method)
 
-        url = self.__url + path
-        response = method_fn(url, data=json.dumps(data),
-                             headers=self.__headers(content_type))
-        response.raise_for_status()
-        return response
+        for url in self.urls:
+            # Try each url in turn. First one to succeed wins.
+            try:
+                response = method_fn(url + path, data=json.dumps(data),
+                                     headers=self.__headers(content_type),
+                                     timeout = self.timeout)
+                response.raise_for_status()
+                return response
+            except requests.exceptions.RequestException as e:
+                pass
 
 class Music(object):
     '''Wrapper for Music API'''
@@ -84,11 +99,16 @@ class Music(object):
 
     rest = None  # API Endpoint
 
-    def __init__(self, host='localhost', port='8080', lock_timeout=10):
+    def __init__(self, host=None, hosts=['localhost'],
+                 port='8080', lock_timeout=10):
         '''Initializer. Accepts a lock_timeout for atomic operations.'''
 
+        # If one host is provided, that overrides the list
+        if host:
+            hosts = [host]
+
         kwargs = {
-            'host': host,
+            'hosts': hosts,
             'port': port,
             'path': '/MUSIC/rest'
         }

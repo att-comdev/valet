@@ -30,7 +30,9 @@ import iso8601
 from keystoneauth1.identity import v2
 from keystoneauth1 import session
 from keystoneclient.v2_0 import client
-from keystoneclient.exceptions import AuthorizationFailure, Unauthorized
+from keystoneclient.exceptions import AuthorizationFailure
+from keystoneclient.exceptions import NotFound
+from keystoneclient.exceptions import Unauthorized
 from pecan import conf
 import pytz
 
@@ -43,18 +45,25 @@ class Identity(object):
     """Convenience library for all identity service-related queries."""
     _args = None
     _client = None
+    _interface = None
 
-    def __init__(self, **kwargs):
+    def __init__(self, interface='admin', **kwargs):
         """Initializer."""
+        self._interface = interface
         self._args = kwargs
         self._client = None
 
     @property
     def _client_expired(self):
         """Returns True if cached client's token is expired."""
-        if not self._client:
+        if not self._client or not self._client.auth_ref:
             return True
-        timestamp = self._client.auth_ref['token']['expires']
+        token = self._client.auth_ref.get('token')
+        if not token:
+            return True
+        timestamp = token,get('expires')
+        if not timestamp:
+            return True
         return iso8601.parse_date(timestamp) <= utcnow()
 
     @property
@@ -63,9 +72,35 @@ class Identity(object):
         if not self._client or self._client_expired:
             auth = v2.Password(**self._args)
             sess = session.Session(auth=auth)
-            self._client = client.Client(session=sess)
-            self._client.auth_url = self._args.get('auth_url')
+            self._client = client.Client(session=sess,
+                           interface=self._interface)
         return self._client
+
+    def is_admin(self, auth_token):
+        """Returns true if auth_token has an admin role"""
+        kwargs = {
+            'token': auth_token,
+        }
+        token = self.client.tokens.validate(**kwargs)
+        for role in token.user.get('roles', []):
+            if role.get('name') == 'admin':
+                return True
+        return False
+
+    def is_tenant_list_valid(self, tenant_list):
+        """Returns true if tenant list contains valid tenant IDs"""
+        tenants = self.client.tenants.list()
+        if type(tenant_list) is list:
+            for tenant_id in tenant_list:
+                found = False
+                for tenant in tenants:
+                    if tenant_id == tenant.id:
+                        found = True
+                        break
+                if not found:
+                    return False
+            return True
+        return False
 
 def init_identity():
     """Initialize the identity engine and place in the config."""
@@ -82,7 +117,8 @@ def _identity_engine_from_config(config):
         'tenant_name': config.get('project_name'),
         'auth_url': config.get('auth_url'),
     }
-    engine = Identity(**kwargs)
+    interface = config.get('interface')
+    engine = Identity(interface, **kwargs)
     return engine
 
 def main():

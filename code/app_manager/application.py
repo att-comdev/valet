@@ -17,11 +17,11 @@ from app_topology_base import VM, Volume
 
 class App:
 
-    def __init__(self, _app_id, _app_name):
+    def __init__(self, _app_id, _app_name, _action):
         self.app_id = _app_id
         self.app_name = _app_name
 
-        self.request_type = "create"   # create, update, or delete
+        self.request_type = _action   # create, update, or ping
 
         self.timestamp_scheduled = 0
 
@@ -42,9 +42,9 @@ class App:
         self.vms[_vol.uuid].storage_host = _host_name
 
     def add_vgroup(self, _vg, _host_name):
-        self.vms[_vg.uuid] = _vg
-        self.vms[_vg.uuid].status = "scheduled"
-        self.vms[_vg.uuid].host = _host_name
+        self.vgroups[_vg.uuid] = _vg
+        self.vgroups[_vg.uuid].status = "scheduled"
+        self.vgroups[_vg.uuid].host = _host_name
 
     def get_json_info(self):
         vms = {}
@@ -59,14 +59,18 @@ class App:
         for vgk, vg in self.vgroups.iteritems():
             vgs[vgk] = vg.get_json_info()
 
-        return {'request_type':self.request_type, \
+        return {'action':self.request_type, \
                 'timestamp':self.timestamp_scheduled, \
-                'id':self.app_id, \
+                'stack_id':self.app_id, \
                 'name':self.app_name, \
                 'VMs':vms, \
                 'Volumes':vols, \
                 'VGroups':vgs}
 
-
+    def log_in_info(self):
+        return {'action':self.request_type, \
+                'timestamp':self.timestamp_scheduled, \
+                'stack_id':self.app_id, \
+                'name':self.app_name}
 
 

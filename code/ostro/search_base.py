@@ -4,7 +4,7 @@
 #################################################################################################################
 # Author: Gueyoung Jung
 # Contact: gjung@research.att.com
-# Version 2.0.2: Feb. 9, 2016
+# Version 2.0.3: Mar. 15, 2016
 #
 #################################################################################################################
 
@@ -22,26 +22,35 @@ class Resource:
 
         self.host_name = None               
         self.host_memberships = {}          # all mapped logical groups to host
-        self.host_avail_vCPUs = 0
-        self.host_avail_mem = 0
-        self.host_avail_local_disk = 0
+        self.host_vCPUs = 0                 # original total vCPUs before overcommit
+        self.host_avail_vCPUs = 0           # remaining vCPUs after overcommit
+        self.host_mem = 0                   # original total mem cap before overcommit
+        self.host_avail_mem = 0             # remaining mem cap after 
+        self.host_local_disk = 0            # original total local disk cap before overcommit
+        self.host_avail_local_disk = 0      # remaining local disk cap after overcommit
         self.host_avail_switches = {}       # all mapped switches to host 
         self.host_avail_storages = {}       # all mapped storage_resources to host
-        self.host_num_of_placed_vms = 0
+        self.host_num_of_placed_vms = 0     # the number of vms currently placed in this host
 
         self.rack_name = None               # where this host is located
-        self.rack_memberships = {}          
+        self.rack_memberships = {}
+        self.rack_vCPUs = 0          
         self.rack_avail_vCPUs = 0
+        self.rack_mem = 0
         self.rack_avail_mem = 0
+        self.rack_local_disk = 0
         self.rack_avail_local_disk = 0 
         self.rack_avail_switches = {}       # all mapped switches to rack
         self.rack_avail_storages = {}       # all mapped storage_resources to rack
         self.rack_num_of_placed_vms = 0
 
         self.cluster_name = None            # where this host and rack are located
-        self.cluster_memberships = {}       
+        self.cluster_memberships = {}
+        self.cluster_vCPUs = 0       
         self.cluster_avail_vCPUs = 0
+        self.cluster_mem = 0
         self.cluster_avail_mem = 0
+        self.cluster_local_disk = 0
         self.cluster_avail_local_disk = 0 
         self.cluster_avail_switches = {}    # all mapped switches to cluster
         self.cluster_avail_storages = {}    # all mapped storage_resources to cluster
@@ -123,6 +132,54 @@ class Resource:
 
         return (avail_vCPUs, avail_mem, avail_local_disk)
 
+    def get_local_disk(self, _level):
+        local_disk = 0
+        avail_local_disk = 0
+
+        if _level == "cluster":
+            local_disk = self.cluster_local_disk
+            avail_local_disk = self.cluster_avail_local_disk
+        elif _level == "rack":
+            local_disk = self.rack_local_disk
+            avail_local_disk = self.rack_avail_local_disk
+        elif _level == "host":
+            local_disk = self.host_local_disk
+            avail_local_disk = self.host_avail_local_disk
+
+        return (local_disk, avail_local_disk)
+
+    def get_vCPUs(self, _level):
+        vCPUs = 0
+        avail_vCPUs = 0
+
+        if _level == "cluster":
+            vCPUs = self.cluster_vCPUs
+            avail_vCPUs = self.cluster_avail_vCPUs
+        elif _level == "rack":
+            vCPUs = self.rack_vCPUs
+            avail_vCPUs = self.rack_avail_vCPUs
+        elif _level == "host":
+            vCPUs = self.host_vCPUs
+            avail_vCPUs = self.host_avail_vCPUs
+
+        return (vCPUs, avail_vCPUs)
+
+    def get_mem(self, _level):
+        mem = 0
+        avail_mem = 0
+
+        if _level == "cluster":
+            mem = self.cluster_mem
+            avail_mem = self.cluster_avail_mem
+        elif _level == "rack":
+            mem = self.rack_mem
+            avail_mem = self.rack_avail_mem
+        elif _level == "host":
+            mem = self.host_mem
+            avail_mem = self.host_avail_mem
+
+        return (mem, avail_mem)
+
     def get_avail_storages(self, _level):
         avail_storages = None
 
@@ -153,6 +210,8 @@ class LogicalGroupResource:
     def __init__(self):
         self.name = None
         self.group_type = "AGGR"
+
+        self.metadata = {}
 
         self.num_of_placed_vms = 0
         self.num_of_placed_vms_per_host = {}   # key = host (i.e., id of host or rack), value = num_of_placed_vms
@@ -230,6 +289,7 @@ class Node:
 
         return common_level
 
+    '''
     def get_exclusivity_id(self):
         exc_id = None
 
@@ -237,6 +297,7 @@ class Node:
             exc_id = self.node.level + ":" + self.node.name
 
         return exc_id
+    '''
 
     def get_affinity_id(self):
         aff_id = None
@@ -246,6 +307,7 @@ class Node:
 
         return aff_id
 
+    '''
     def get_parent_exclusivity_id(self):
         exc_id = None
 
@@ -257,6 +319,7 @@ class Node:
                 exc_id = n.get_parent_exclusivity_id()
 
         return exc_id
+    '''
 
 
 def compute_reservation(_level, _placement_level, _bandwidth):

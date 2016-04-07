@@ -67,27 +67,29 @@ class Compute:
         try:
             hosts_info = json.loads(results)
             #print json.dumps(hosts_info, indent=4)
-            host_list = hosts_info["hosts"]
+            if "hosts" in hosts_info.keys():
+                host_list = hosts_info["hosts"]
 
-            for h in host_list:
-                if h["service"] == "compute":
-                    host = Host(h["host_name"])
-                    host.tag.append("nova")
+                for h in host_list:
+                    if "service" in h.keys():
+                        if h["service"] == "compute":
+                            host = Host(h["host_name"])
+                            host.tag.append("nova")
      
-                    logical_group = None
-                    if h["zone"] not in _logical_groups.keys():
-                        logical_group = LogicalGroup(h["zone"])
-                        logical_group.group_type = "AZ"
-                        _logical_groups[logical_group.name] = logical_group
-                    else:
-                        logical_group = _logical_groups[h["zone"]]
+                            logical_group = None
+                            if h["zone"] not in _logical_groups.keys():
+                                logical_group = LogicalGroup(h["zone"])
+                                logical_group.group_type = "AZ"
+                                _logical_groups[logical_group.name] = logical_group
+                            else:
+                                logical_group = _logical_groups[h["zone"]]
 
-                    host.memberships[logical_group.name] = logical_group
+                            host.memberships[logical_group.name] = logical_group
 
-                    if host.name not in logical_group.vms_per_host.keys():
-                        logical_group.vms_per_host[host.name] = []
+                            if host.name not in logical_group.vms_per_host.keys():
+                                logical_group.vms_per_host[host.name] = []
 
-                    _hosts[host.name] = host
+                            _hosts[host.name] = host
 
         except (ValueError, KeyError, TypeError):
             return "JSON format error while setting host zones from Nova"
@@ -111,16 +113,18 @@ class Compute:
         try:
             aggregates = json.loads(results)
             #print json.dumps(aggregates, indent=4)
-            aggregate_list = aggregates["aggregates"]
+            if "aggregates" in aggregates.keys():
+                aggregate_list = aggregates["aggregates"]
 
-            for a in aggregate_list:
-                if a["deleted"] == "false":
+                for a in aggregate_list:
                     aggregate = LogicalGroup(a["name"])
                     aggregate.group_type = "AGGR"
+                    if a["deleted"] != False:
+                        aggregate.status = "disabled"
                     
                     metadata = {}
-                    for mk, mv in a.metadata.iteritems():
-                        metadata[mk] = mv
+                    for mk in a["metadata"].keys():
+                        metadata[mk] = a["metadata"][mk]
                     aggregate.metadata = metadata
 
                     _logical_groups[aggregate.name] = aggregate
@@ -136,6 +140,7 @@ class Compute:
 
         return "success"
 
+    # NOTE: do not set any info in _logical_groups
     def _set_placed_vms(self, _hosts, _logical_groups):
         error_status = None
 
@@ -145,7 +150,7 @@ class Compute:
         
             if result_status == "success":    
                 for vm_uuid in vm_uuid_list:
-                    vm_detail = []
+                    vm_detail = []    # (vm_name, az, metadata, status)
                     result_status_detail = self._get_vm_detail(vm_uuid, vm_detail)
                 
                     if result_status_detail == "success":
@@ -153,8 +158,8 @@ class Compute:
                         vm_id = ("none", vm_detail[0], vm_uuid)
                         _hosts[hk].vm_list.append(vm_id)
 
-                        _logical_groups[vm_detail[1]].vm_list.append(vm_id)
-                        _logical_groups[vm_detail[1]].vms_per_host[hk].append(vm_id)
+                        #_logical_groups[vm_detail[1]].vm_list.append(vm_id)
+                        #_logical_groups[vm_detail[1]].vms_per_host[hk].append(vm_id)
                     else:
                         error_status = result_status_detail
                         break
@@ -186,9 +191,13 @@ class Compute:
         try:
             servers = json.loads(results)
             #print json.dumps(servers, indent=4)
-            server_list = servers["hypervisors"][0]["servers"]
-            for s in server_list:
-                _vm_list.append(s["uuid"])
+            if "hypervisors" in servers.keys():
+                hypervisor_list = servers["hypervisors"]
+                for hv in hypervisor_list:
+                    if "servers" in hv.keys():
+                        server_list = hv["servers"]
+                        for s in server_list:
+                            _vm_list.append(s["uuid"])
 
         except (ValueError, KeyError, TypeError):
             return "JSON format error while getting existing vms"
@@ -250,12 +259,13 @@ class Compute:
                     host = _hosts[hv["service"]["host"]]
                     host.status = hv["status"]
                     host.state = hv["state"]
-                    host.vCPUs = hv["vcpus"] * self.config.vcpus_overbooking_per_core # TODO:
-                    host.avail_vCPUs = host.vCPUs - hv["vcpus_used"]
-                    host.mem_cap = float(hv["memory_mb"]) * self.config.memory_overbooking_ratio # TODO
-                    host.avail_mem_cap = host.mem_cap - float(hv["memory_mb_used"])
-                    host.local_disk_cap = hv["local_gb"] * self.config.disk_overbooking_ratio # TODO
-                    host.avail_local_disk_cap = host.local_disk_cap - hv["local_gb_used"]
+                    host.original_vCPUs = float(hv["vcpus"]) 
+                    host.vCPUs_used = float(hv["vcpus_used"])
+                    host.original_mem_cap = float(hv["memory_mb"])
+                    host.free_mem_mb = float(hv["free_ram_mb"]) 
+                    host.original_local_disk_cap = float(hv["local_gb"])
+                    host.free_disk_gb = float(hv["free_disk_gb"])
+                    host.disk_available_least = float(hv["disk_available_least"]) 
 
         except (ValueError, KeyError, TypeError):
             return "JSON format error while setting host resources from Nova"
@@ -303,9 +313,25 @@ class Compute:
             for f in flavor_list:
                 flavor = Flavor(f["name"])
                 flavor.flavor_id = f["id"]
-                flavor.vCPUs = f["vcpus"]
-                flavor.mem_cap = f["ram"]
-                flavor.disk_cap = f["disk"]
+                if "OS-FLV-DISABLED:disabled" in f.keys():
+                    if f["OS-FLV-DISABLED:disabled"] != False:
+                        flavor.status = "disabled"
+
+                flavor.vCPUs = float(f["vcpus"])
+                flavor.mem_cap = float(f["ram"])
+
+                root_gb = float(f["disk"])
+
+                ephemeral_gb = 0.0
+                if "OS-FLV-EXT-DATA:ephemeral" in f.keys():
+                    ephemeral_gb = float(f["OS-FLV-EXT-DATA:ephemeral"])
+
+                swap_mb = 0.0
+                if "swap" in f.keys():
+                    if f["swap"] != '':            
+                        swap_mb = float(f["swap"])
+
+                flavor.disk_cap = root_gb + ephemeral_gb + swap_mb/float(1024) 
 
                 _flavors[flavor.name] = flavor
 
@@ -375,9 +401,10 @@ if __name__ == '__main__':
     flavors = {}
 
     #c._set_availability_zones(hosts, logical_groups)
-    #c._set_aggregates(hosts, logical_groups)
+    #c._set_aggregates(None, logical_groups)
     #c._set_placed_vms(hosts, logical_groups)
-    #c._set_resources(hosts)
-    c.set_flavors(flavors)
+    #c._get_vms_of_host("qos101", None)
+    #c._get_vm_detail("20b2890b-81bb-4942-94bf-c6bee29630bb", None)
+    c._set_resources(hosts)
+    #c._set_flavors(flavors)
 '''
-

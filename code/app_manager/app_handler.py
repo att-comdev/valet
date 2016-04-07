@@ -42,6 +42,11 @@ class AppHandler:
     def add_app(self, _app_data):
         self.apps.clear()
 
+        '''
+        if len(self.apps) > 0:
+            self.logger.error("cannot clear prior requested apps")
+        '''
+
         app_topology = AppTopology(self.resource)
 
         for app in _app_data:
@@ -52,11 +57,16 @@ class AppHandler:
                 self.status = app_topology.status
                 return None
             else:
-                self.logger.info("application: " + app_id[1])
+                self.logger.info("application: " + app_id[1] + " with action = " + app_id[2])
 
-                new_app = App(app_id[0], app_id[1])
+                new_app = App(app_id[0], app_id[1], app_id[2])
 
-                self.apps[app_id[0]] = new_app 
+                self.apps[app_id[0]] = new_app
+
+        if len(app_topology.vgroups) > 0 or \
+           len(app_topology.vms) > 0 or \
+           len(app_topology.volumes) > 0:
+            self.logger.debug("virtual resources are captured")
 
         app_topology.set_optimization_priority()
 
@@ -93,19 +103,48 @@ class AppHandler:
                                                            self.last_log_index)
         self.last_log_index = last_index
 
+        # TODO: error handling
+
         logging = open(self.config.app_log_loc + app_logfile, mode)
 
         for appk, app in self.apps.iteritems():
-            json_logging = app.get_json_info()
-            logged_data = json.dumps(json_logging)
+            json_log = app.log_in_info()
+            log_data = json.dumps(json_log)
 
-            logging.write(logged_data)
+            logging.write(log_data)
             logging.write("\n")
 
         logging.close()
 
+        self.logger.info("log: app placement timestamp in " + app_logfile)
+
         if self.db != None:
             self.db.update_app_log_index(self.resource.datacenter.name, self.last_log_index)
+   
+            for appk, app in self.apps.iteritems():
+                json_info = app.get_json_info()
+                self.db.add_app(appk, json_info)
+
+    def get_vm_info(self, _s_uuid, _h_uuid, _host):
+        vm_info = {}
+
+        if _h_uuid != None and _h_uuid != "none" and \
+           _s_uuid != None and _s_uuid != "none":
+            vm_info = self.db.get_vm_info(_s_uuid, _h_uuid, _host)
+            
+        return vm_info
+
+    def update_vm_info(self, _s_uuid, _h_uuid):
+        if _h_uuid != None and _h_uuid != "none" and \
+           _s_uuid != None and _s_uuid != "none":
+            self.db.update_vm_info(_s_uuid, _h_uuid)
+
+
+
+
+
+
+
 
 
 

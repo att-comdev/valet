@@ -85,9 +85,14 @@ class TopologyManager(threading.Thread):
 
     def _run(self):
         self.data_lock.acquire(1)
+
+        self.logger.info("--- start topology status update ---")
+
         if self.set_topology() == True:
-            self.logger.info("trigger setting topology")
             self.resource.update_topology()
+
+        self.logger.info("--- done topology status update ---")
+
         self.data_lock.release()
 
     def set_topology(self):
@@ -99,16 +104,18 @@ class TopologyManager(threading.Thread):
         topology = None
         if self.config.mode.startswith("sim") == True:
             datacenter = Datacenter(self.config.mode)
-            topology = SimTopology(self.config)
+            #topology = SimTopology(self.config)
+            topology = Topology(self.config, self.logger)
 
-            status = topology.set_topology(datacenter, host_groups, hosts, switches)
+            #status = topology.set_topology(datacenter, host_groups, hosts, switches)
+            status = topology.set_topology(datacenter, host_groups, hosts, self.resource.hosts, switches)
             if status != "success":
                 self.logger.error(status)
                 return False
 
         else:
             datacenter = Datacenter(self.config.datacenter_name)
-            topology = Topology(self.config)
+            topology = Topology(self.config, self.logger)
 
             # NOTE: currently, using naming convention to set up layout & ignore networking layout
             status = topology.set_topology(datacenter, host_groups, hosts, self.resource.hosts, switches)
@@ -441,6 +448,18 @@ class TopologyManager(threading.Thread):
     def _check_datacenter_update(self, _datacenter):
         updated = False
         link_updated = False
+
+        for rc in _datacenter.region_code_list:
+            if rc not in self.resource.datacenter.region_code_list:
+                self.resource.datacenter.region_code_list.append(rc)
+                updated = True
+                self.logger.warn("datacenter updated (new region code, " + rc + ")")
+      
+        for rrc in self.resource.datacenter.region_code_list:
+            if rrc not in _datacenter.region_code_list:
+                self.resource.datacenter.region_code_list.remove(rrc)
+                updated = True
+                self.logger.warn("datacenter updated (region code, " + rrc + ", removed)")
 
         for rk in _datacenter.resources.keys():
             exist = False

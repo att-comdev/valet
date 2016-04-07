@@ -1,0 +1,7 @@
+{
+          'args': ['6517b742-e5f5-4d83-bf77-5c14bb54a819'],
+          'kwargs': {},
+          'objmethod': 'get_by_instance_uuid',
+          'objname': 'InstancePCIRequests',
+          'objver': '1.1'
+}

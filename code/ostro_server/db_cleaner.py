@@ -54,7 +54,7 @@ class DBCleaner:
             for rowk, row in results.iteritems():
                 self.music.delete_row_eventually(self.config.db_keyspace, \
                                                  self.config.db_event_table, \
-                                                 'event_id', row['event_id'])
+                                                 'timestamp', row['timestamp'])
 
         results = self.music.read_all_rows(self.config.db_keyspace, self.config.db_resource_index_table)
         if len(results) > 0:
@@ -69,6 +69,20 @@ class DBCleaner:
                 self.music.delete_row_eventually(self.config.db_keyspace, \
                                                  self.config.db_app_index_table, \
                                                  'site_name', row['site_name'])
+
+        results = self.music.read_all_rows(self.config.db_keyspace, self.config.db_app_table)
+        if len(results) > 0:
+            for rowk, row in results.iteritems():
+                self.music.delete_row_eventually(self.config.db_keyspace, \
+                                                 self.config.db_app_table, \
+                                                 'stack_id', row['stack_id'])
+
+        results = self.music.read_all_rows(self.config.db_keyspace, self.config.db_uuid_table)
+        if len(results) > 0:
+            for rowk, row in results.iteritems():
+                self.music.delete_row_eventually(self.config.db_keyspace, \
+                                                 self.config.db_uuid_table, \
+                                                 'uuid', row['uuid'])
 
     def check_db_tables(self):
         results = self.music.read_all_rows(self.config.db_keyspace, self.config.db_resource_table)
@@ -107,8 +121,19 @@ class DBCleaner:
         else:
             print "app log index table cleaned"
 
+        results = self.music.read_all_rows(self.config.db_keyspace, self.config.db_app_table)
+        if len(results) > 0:
+            print "app log table not cleaned "
+        else:
+            print "app log table cleaned"
 
-# Unit test
+        results = self.music.read_all_rows(self.config.db_keyspace, self.config.db_uuid_table)
+        if len(results) > 0:
+            print "uuid table not cleaned "
+        else:
+            print "uuid table cleaned"
+
+
 if __name__ == '__main__':
     config = Config()
     config_status = config.configure()

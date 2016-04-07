@@ -135,6 +135,29 @@ class Daemon:
         self.stop()
         self.start()
 
+    def status(self):
+        """                                                                                      
+        returns instance's priority                                                              
+        """                                                                                      
+        # Check for a pidfile to see if the daemon already runs                                  
+        try:                                                                                     
+            pf = file(self.pidfile,'r')                                                          
+            pid = int(pf.read().strip())                                                         
+            pf.close()                                                                           
+        except IOError:                                                                          
+            pid = None                                                                           
+                                                                                                 
+        status = 0                                                                               
+                                                                                                 
+        if pid:                                                                                  
+            message = "status: pidfile %s exist. Daemon is running\n"                            
+            status = self.priority                                                               
+        else:                                                                                    
+            message = "status: pidfile %s does not exist. Daemon is not running\n"               
+                                                                                                 
+        sys.stderr.write(message % self.pidfile)                                                 
+        return status
+
     def run(self):
         """
         You should override this method when you subclass Daemon. 

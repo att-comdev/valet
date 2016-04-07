@@ -91,13 +91,18 @@ class ComputeManager(threading.Thread):
     def _run(self):
         self.data_lock.acquire(1)
 
+        self.logger.info("--- start compute_nodes status update ---")
+
         triggered_host_updates = self.set_hosts()
         triggered_flavor_updates = self.set_flavors()
 
-        if triggered_host_updates == True or triggered_flavor_updates == True:
-            self.logger.info("trigger setting hosts")
-
+        if triggered_host_updates == True and triggered_flavor_updates == True:
             self.resource.update_topology()
+        else:
+            # TODO: error handling, e.g., 3 times failure then stop Ostro?
+            pass
+
+        self.logger.info("--- done compute_nodes status update ---")
 
         self.data_lock.release()
 
@@ -135,10 +140,16 @@ class ComputeManager(threading.Thread):
             self.logger.error(status)
             return False
 
+        self._compute_avail_host_resources(hosts)
+
         self._check_logical_group_update(logical_groups)
         self._check_host_update(hosts)
 
         return True
+
+    def _compute_avail_host_resources(self, _hosts):
+        for hk, host in _hosts.iteritems():
+            self.resource.compute_avail_resources(hk, host)
 
     def _check_logical_group_update(self, _logical_groups):
         for lk in _logical_groups.keys():
@@ -165,9 +176,13 @@ class ComputeManager(threading.Thread):
 
                     rlg.last_update = time.time()
                     self.logger.warn("logical group (" + lk + ") updated")
-         
+        
     def _check_logical_group_metadata_update(self, _lg, _rlg):
         metadata_updated = False
+
+        if _lg.status != _rlg.status:
+            _rlg.status = _lg.status
+            metadata_updated = True
 
         for mdk in _lg.metadata.keys():
             if mdk not in _rlg.metadata.keys():
@@ -179,13 +194,17 @@ class ComputeManager(threading.Thread):
                 del _rlg.metadata[rmdk]
                 metadata_updated = True
 
+        '''
         for vm_id in _lg.vm_list:
             if _rlg.exist_vm(vm_id) == False:
                 _rlg.vm_list.append(vm_id)
+                metadata_updated = True
 
         for rvm_id in _rlg.vm_list:
             if _lg.exist_vm(rvm_id) == False:
                 _rlg.vm_list.remove(rvm_id)
+                metadata_updated = True
+        '''
 
         for hk in _lg.vms_per_host.keys():
             if hk not in _rlg.vms_per_host.keys():
@@ -230,6 +249,16 @@ class ComputeManager(threading.Thread):
     def _check_host_config_update(self, _host, _rhost):
         topology_updated = False
 
+        topology_updated = self._check_host_status(_host, _rhost)
+        topology_updated = self._check_host_resources(_host, _rhost)
+        topology_updated = self._check_host_memberships(_host, _rhost)
+        topology_updated = self._check_host_vms(_host, _rhost)
+
+        return topology_updated
+
+    def _check_host_status(self, _host, _rhost):
+        topology_updated = False
+
         if "nova" not in _rhost.tag:
             _rhost.tag.append("nova")
             topology_updated = True
@@ -245,24 +274,53 @@ class ComputeManager(threading.Thread):
             topology_updated = True
             self.logger.warn("host (" + _rhost.name + ") updated (state changed)")
 
-        if _host.vCPUs != _rhost.vCPUs or _host.avail_vCPUs != _rhost.avail_vCPUs:
+        return topology_updated
+
+    def _check_host_resources(self, _host, _rhost):
+        topology_updated = False
+
+        if _host.vCPUs != _rhost.vCPUs or \
+           _host.original_vCPUs != _rhost.original_vCPUs or \
+           _host.avail_vCPUs != _rhost.avail_vCPUs:
             _rhost.vCPUs = _host.vCPUs
+            _rhost.original_vCPUs = _host.original_vCPUs
             _rhost.avail_vCPUs = _host.avail_vCPUs
             topology_updated = True
             self.logger.warn("host (" + _rhost.name + ") updated (CPU updated)")
 
-        if _host.mem_cap != _rhost.mem_cap or _host.avail_mem_cap != _rhost.avail_mem_cap:
+        if _host.mem_cap != _rhost.mem_cap or \
+           _host.original_mem_cap != _rhost.original_mem_cap or \
+           _host.avail_mem_cap != _rhost.avail_mem_cap:
             _rhost.mem_cap = _host.mem_cap
+            _rhost.original_mem_cap = _host.original_mem_cap
             _rhost.avail_mem_cap = _host.avail_mem_cap
             topology_updated = True
             self.logger.warn("host (" + _rhost.name + ") updated (mem updated)")
 
         if _host.local_disk_cap != _rhost.local_disk_cap or \
+           _host.original_local_disk_cap != _rhost.original_local_disk_cap or \
            _host.avail_local_disk_cap != _rhost.avail_local_disk_cap:
             _rhost.local_disk_cap = _host.local_disk_cap
+            _rhost.original_local_disk_cap = _host.original_local_disk_cap
             _rhost.avail_local_disk_cap = _host.avail_local_disk_cap
             topology_updated = True
             self.logger.warn("host (" + _rhost.name + ") updated (local disk space updated)")
+
+        if _host.vCPUs_used != _rhost.vCPUs_used or \
+           _host.free_mem_mb != _rhost.free_mem_mb or \
+           _host.free_disk_gb != _rhost.free_disk_gb or \
+           _host.disk_available_least != _rhost.disk_available_least:
+            _rhost.vCPUs_used = _host.vCPUs_used
+            _rhost.free_mem_mb = _host.free_mem_mb
+            _rhost.free_disk_gb = _host.free_disk_gb
+            _rhost.disk_available_least = _host.disk_available_least
+            topology_updated = True
+            self.logger.warn("host (" + _rhost.name + ") updated (other resource numbers)")
+
+        return topology_updated
+
+    def _check_host_memberships(self, _host, _rhost):
+        topology_updated = False
 
         for mk in _host.memberships.keys():
             if mk not in _rhost.memberships.keys():
@@ -278,8 +336,23 @@ class ComputeManager(threading.Thread):
                     topology_updated = True
                     self.logger.warn("host (" + _rhost.name + ") updated (delete membership)")
 
+        return topology_updated
+
+    def _check_host_vms(self, _host, _rhost): 
+        topology_updated = False
+
+        # Clean up VMs
+        for rvm_id in _rhost.vm_list:
+            if rvm_id[2] == "none":
+                _rhost.vm_list.remove(rvm_id)
+
+                topology_updated = True
+                self.logger.warn("host (" + _rhost.name +") updated (none vm removed)")
+
+        self.resource.clean_none_vms_from_logical_groups(_rhost)
+
         for vm_id in _host.vm_list:
-            if _rhost.exist_vm(vm_id) == False:
+            if _rhost.exist_vm_by_uuid(vm_id[2]) == False:
                 _rhost.vm_list.append(vm_id)
 
                 # NOTE: do we need this?
@@ -289,10 +362,10 @@ class ComputeManager(threading.Thread):
                 self.logger.warn("host (" + _rhost.name +") updated (new vm placed)")
 
         for rvm_id in _rhost.vm_list:
-            if rvm_id[2] == "none" or _host.exist_vm(rvm_id) == False:
+            if _host.exist_vm_by_uuid(rvm_id[2]) == False:
                 _rhost.vm_list.remove(rvm_id)
 
-                self.resource.remove_vm_from_logical_groups(_rhost, rvm_id)
+                self.resource.remove_vm_by_uuid_from_logical_groups(_rhost, rvm_id[2])
 
                 topology_updated = True
                 self.logger.warn("host (" + _rhost.name +") updated (vm removed)")
@@ -345,6 +418,10 @@ class ComputeManager(threading.Thread):
 
     def _check_flavor_spec_update(self, _f, _rf):
         spec_updated = False
+
+        if _f.status != _rf.status:
+            _rf.status = _f.status
+            spec_updated = True
 
         if _f.vCPUs != _rf.vCPUs or _f.mem_cap != _rf.mem_cap or _f.disk_cap != _rf.disk_cap:
             _rf.vCPUs = _f.vCPUs

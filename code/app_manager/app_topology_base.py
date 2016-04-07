@@ -4,7 +4,7 @@
 #################################################################################################################
 # Author: Gueyoung Jung
 # Contact: gjung@research.att.com
-# Version 2.0.2: Feb. 9, 2016
+# Version 2.0.3: Mar. 15, 2016
 #
 #################################################################################################################
 
@@ -14,7 +14,7 @@
 LEVELS = ["host", "rack", "cluster"]
 
 
-# Affinity or Exclusive group
+# Affinity group
 class VGroup:
 
     def __init__(self, _app_uuid, _uuid):
@@ -24,18 +24,20 @@ class VGroup:
 
         self.status = "requested"
 
-        self.vgroup_type = "AFF"       # affinity (AFF) or exclusivity (EX)
+        self.vgroup_type = "AFF"       # Support Affinity group at this version   
         self.level = None              # host, rack, or cluster
 
         self.survgroup = None          # where this vgroup belong to 
-        self.subvgroup_list = []       # child vgroups
+        self.subvgroups = {}       # child vgroups
 
         self.vgroup_list = []          # a list of links to VMs or Volumes
 
         self.diversity_groups = {}     # cumulative diversity groups over this level. key=name, value=level
-        self.availability_zones = {}
-        self.host_aggregates = {}      # cumulative aggregates
-        self.integrity_zones = {}      # cumulative security zones
+        self.exclusivity_groups = {}   # cumulative exclusivity groups over this level. key=name, value=level
+
+        self.availability_zone_list = []
+        #self.host_aggregates = {}      # cumulative aggregates
+        self.extra_specs_list = []      # cumulative extra_specs
 
         self.vCPUs = 0
         self.mem = 0                   # MB
@@ -60,24 +62,18 @@ class VGroup:
             survgroup_id = self.survgroup.uuid
 
         subvgroup_list = []
-        for vg in self.subvgroup_list:
-            subvgroup_list.append(vg.uuid)
+        for vk in self.subvgroups.keys():
+            subvgroup_list.append(vk)
 
         link_list = []
         for l in self.vgroup_list:
             link_list.append(l.get_json_info())
 
-        availability_zones = []
-        for azk in self.availability_zones.keys():
-            availability_zones.append(azk)
-
+        '''
         host_aggregates = []
         for hak in self.host_aggregates.keys():
             host_aggregates.append(hak)
-
-        integrity_zones = []
-        for ik in self.integrity_zones.keys():
-            integrity_zones.append(ik)
+        '''
 
         return {'name':self.name, \
                 'status':self.status, \
@@ -87,9 +83,10 @@ class VGroup:
                 'subvgroup_list':subvgroup_list, \
                 'link_list':link_list, \
                 'diversity_groups':self.diversity_groups, \
-                'availability_zones':availability_zones, \
-                'host_aggregates':host_aggregates, \
-                'integrity_zones':integrity_zones, \
+                'exclusivity_groups':self.exclusivity_groups, \
+                'availability_zones':self.availability_zone_list, \
+                #'host_aggregates':host_aggregates, \
+                'extra_specs_list':self.extra_specs_list, \
                 'cpus':self.vCPUs, \
                 'mem':self.mem, \
                 'local_volume':self.local_volume_size, \
@@ -119,9 +116,11 @@ class VM:
         self.vm_list = []              # a list of links to VMs
 
         self.diversity_groups = {}
+        self.exclusivity_groups = {}
+
         self.availability_zone = None
-        self.host_aggregates = {}
-        self.integrity_zones = {}
+        #self.host_aggregates = {}
+        self.extra_specs_list = []
 
         self.vCPUs = 0
         self.mem = 0                  # MB
@@ -147,11 +146,18 @@ class VM:
             self.local_volume_size = flavor.disk_cap
 
         if len(flavor.extra_specs) > 0:
+            extra_specs = {}
+            for mk, mv in flavor.extra_specs.iteritems():
+                extra_specs[mk] = mv
+            self.extra_specs_list.append(extra_specs)
+
+            '''
             logical_group_list = _resource.get_matched_logical_groups(flavor)
 
             for lg in logical_group_list:
                 if lg.group_type == "AGGR":
                     self.host_aggregates[lg.name] = flavor.extra_specs
+            '''
 
         return True
 
@@ -176,13 +182,11 @@ class VM:
         else:
             availability_zone = self.availability_zone
 
+        '''
         host_aggregates = []
         for hak in self.host_aggregates.keys():
             host_aggregates.append(hak)
-
-        integrity_zones = []
-        for ik in self.integrity_zones.keys():
-            integrity_zones.append(ik)
+        '''
 
         return {'name':self.name, \
                 'status':self.status, \
@@ -190,9 +194,10 @@ class VM:
                 'vm_list':vm_list, \
                 'volume_list':vol_list, \
                 'diversity_groups':self.diversity_groups, \
+                'exclusivity_groups':self.exclusivity_groups, \
                 'availability_zones':availability_zone, \
-                'host_aggregates':host_aggregates, \
-                'integrity_zones':integrity_zones, \
+                #'host_aggregates':host_aggregates, \
+                'extra_specs_list':self.extra_specs_list, \
                 'cpus':self.vCPUs, \
                 'mem':self.mem, \
                 'local_volume':self.local_volume_size, \
@@ -221,9 +226,10 @@ class Volume:
         self.vm_list = []             # a list of links to VMs
 
         self.diversity_groups = {}
+        self.exclusivity_groups = {}
+
         #self.availability_zone = None
         #self.host_aggregates = {}
-        #self.integrity_zones = {}
 
         self.volume_size = 0          # GB
         self.io_bandwidth = 0       
@@ -256,6 +262,7 @@ class Volume:
                 'survgroup':survgroup_id, \
                 'vm_list':vm_list, \
                 'diversity_groups':self.diversity_groups, \
+                'exclusivity_groups':self.exclusivity_groups, \
                 'volume':self.volume_size, \
                 'io_bandwidth':self.io_bandwidth, \
                 'volume_weight':self.volume_weight, \

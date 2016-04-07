@@ -4,7 +4,7 @@
 #################################################################################################################
 # Author: Gueyoung Jung
 # Contact: gjung@research.att.com
-# Version 2.0.2: Feb. 9, 2016
+# Version 2.0.3: Mar. 15, 2016
 #
 # Functions 
 # - Parse each application
@@ -22,9 +22,14 @@ class Parser:
     def __init__(self, _resource):
         self.resource = _resource
 
+        self.high_level_allowed = True
+        if "none" in self.resource.datacenter.region_code_list:
+            self.high_level_allowed = False
+
         self.format_version = None
-        self.stack_id = None  # used as application id
+        self.stack_id = None          # used as application id
         self.application_name = None
+        self.action = None            # [create|update|ping]
 
         self.total_nw_bandwidth = 0
         self.total_CPU = 0
@@ -50,7 +55,15 @@ class Parser:
         else:
             self.application_name = "none"
 
-        return self._set_topology(_graph["resources"])
+        if "action" in _graph.keys():
+            self.action = _graph["action"]
+        else:
+            self.action = "any"
+
+        if self.action == "ping":
+            return ({}, {}, {})
+        else:
+            return self._set_topology(_graph["resources"])
 
     def _set_topology(self, _elements):
         vgroups = {}
@@ -68,12 +81,19 @@ class Parser:
                     vm.name = vm.uuid
 
                 if vm.set_vm_properties(r["properties"]["flavor"], self.resource) == False:
-                    self.status = "Not recognize flavor = " + r["properties"]["flavor"]
+                    self.status = "not recognize flavor = " + r["properties"]["flavor"]
                     return ({}, {}, {})
+
+                if "availability_zone" in r["properties"].keys():
+                    az = r["properties"]["availability_zone"]
+                    # NOTE: do not allow to specify a certain host name here
+                    vm.availability_zone = az.split(":")[0]
   
                 vms[vm.uuid] = vm
 
             elif r["type"] == "OS::Cinder::Volume":
+                # NOTE: do nothing at this version
+                '''
                 volume = Volume(self.stack_id, rk)
 
                 if "name" in r.keys():
@@ -89,25 +109,42 @@ class Parser:
                 volume.volume_size = r["properties"]["size"]
 
                 volumes[volume.uuid] = volume
+                '''
 
             elif r["type"] == "ATT::CloudQoS::ResourceGroup" and \
-                 (r["properties"]["relationship"] == "affinity" or \
-                  r["properties"]["relationship"] == "exclusivity"):
+                 r["properties"]["relationship"] == "affinity":
                 vgroup = VGroup(self.stack_id, rk)
 
                 if "name" in r.keys():
                     vgroup.name = r["name"]
                 else:
-                    vgroup.name = vgroup.uuid
+                    vgroup.name = "any"
 
-                if r["properties"]["relationship"] == "affinity":
-                    vgroup.vgroup_type = "AFF"
-                elif r["properties"]["relationship"] == "exclusivity":
-                    vgroup.vgroup_type = "EX"
-
+                vgroup.vgroup_type = "AFF"
+                  
                 vgroup.level = r["properties"]["level"]
+        
+                if vgroup.level != "host":
+                    if self.high_level_allowed == False:
+                        self.status = "only host level of affinity group allowed in this site " + \
+                                      "due to the mis-match of host naming convention"
+                        return ({}, {}, {})
 
                 vgroups[vgroup.uuid] = vgroup
+
+            elif r["type"] == "OS::Nova::ServerGroup" or \
+                 r["type"] == "OS::Heat::AutoScalingGroup" or \
+                 r["type"] == "OS::Heat::Stack" or \
+                 r["type"] == "OS::Heat::ResourceGroup":
+
+                self.status = "Not supported resource type (" + r["type"]+ ") in this version"
+                return ({}, {}, {})
+
+        if self._set_diversity_groups(_elements, vgroups, vms, volumes) == False:
+            return ({}, {}, {})
+
+        if self._set_exclusivity_groups(_elements, vgroups, vms, volumes) == False:
+            return ({}, {}, {})
 
         self._set_vm_links(_elements, vms)
 
@@ -115,9 +152,6 @@ class Parser:
             return ({}, {}, {})
 
         self._set_total_link_capacities(vms, volumes)
-
-        if self._set_diversity_groups(_elements, vgroups, vms, volumes) == False:
-            return ({}, {}, {})
 
         self._set_weight(vms, volumes)
 
@@ -132,6 +166,105 @@ class Parser:
                 self._set_vgroup_weight(vgroup)
 
         return (vgroups, vms, volumes)
+
+    def _set_diversity_groups(self, _elements, _vgroups, _vms, _volumes):
+        for rk, r in _elements.iteritems():
+            if r["type"] == "ATT::CloudQoS::ResourceGroup" and \
+               r["properties"]["relationship"] == "diversity":
+
+                '''
+                vgroup = VGroup(self.stack_id, rk)
+
+                if "name" in r.keys():
+                    vgroup.name = r["name"]
+                else:
+                    vgroup.name = "any"
+
+                vgroup.vgroup_type = "DIV"
+                  
+                vgroup.level = r["properties"]["level"]
+
+                _vgroups[vgroup.uuid] = vgroup
+                '''
+
+                level = r["properties"]["level"]
+
+                if level != "host":
+                    if self.high_level_allowed == False:
+                        self.status = "only host level of diversity group allowed in this site " + \
+                                      "due to the mis-match of host naming convention"
+                        return False
+
+                for vk in r["properties"]["resources"]:
+                    if vk in _vms.keys():
+                        vm = _vms[vk]
+                        vm.diversity_groups[rk] = level
+                        #vgroup.subvgroups[vk] = vm
+                    elif vk in _volumes.keys():
+                        v = _volumes[vk]
+                        v.diversity_groups[rk] = level
+                        #vgroup.subvgroups[vk] = v 
+                    elif vk in _vgroups.keys(): 
+                        g = _vgroups[vk]
+                        g.diversity_groups[rk] = level
+                        #vgroup.subvgroups[vk] = g
+                    else:
+                        self.status = "{} in diversity group {} not exist or not allowed".format(vk, vgroup.name)
+                        return False
+
+        return True
+
+    def _set_exclusivity_groups(self, _elements, _vgroups, _vms, _volumes):
+        for rk, r in _elements.iteritems():
+            if r["type"] == "ATT::CloudQoS::ResourceGroup" and \
+               r["properties"]["relationship"] == "exclusivity":
+
+                group_name = None
+                if "name" not in r.keys():
+                    self.status = "missing the name of exclusivity group"
+                    return False
+                else:
+                    group_name = r["name"]
+
+                '''
+                vgroup = VGroup(self.stack_id, rk)
+
+                vgroup.name = group_name
+
+                vgroup.vgroup_type = "EX"
+                  
+                vgroup.level = r["properties"]["level"]
+
+                _vgroups[vgroup.uuid] = vgroup
+                '''
+
+                level = r["properties"]["level"]
+
+                if level != "host":
+                    if self.high_level_allowed == False:
+                        self.status = "only host level of exclusivity group allowed in this site " + \
+                                      "due to the mis-match of host naming convention"
+                        return False
+
+                for vk in r["properties"]["resources"]:
+                    if vk in _vms.keys():
+                        vm = _vms[vk]
+                        vm.exclusivity_groups[rk] = level + ":" + group_name
+                        #vgroup.subvgroups[vk] = vm
+                    elif vk in _volumes.keys():
+                        v = _volumes[vk]
+                        v.exclusivity_groups[rk] = level + ":" + group_name
+                        #vgroup.subvgroups[vk] = v
+                    elif vk in _vgroups.keys():
+                        g = _vgroups[vk]
+                        g.exclusivity_groups[rk] = level + ":" + group_name
+                        #vgroup.subvgroups[vk] = g
+                    else:
+                        self.status = "{} in exclusivity group {} not exist or not allowed".format(vk, group_name)
+
+                        return False
+
+        return True
 
     def _set_vm_links(self, _elements, _vms):
         for rk, r in _elements.iteritems():
@@ -202,26 +335,6 @@ class Parser:
             for vl in volume.vm_list:
                 volume.io_bandwidth += vl.io_bandwidth
 
-    def _set_diversity_groups(self, _elements, _vgroups, _vms, _volumes):
-        for rk, r in _elements.iteritems():
-            if r["type"] == "ATT::CloudQoS::ResourceGroup" and r["properties"]["relationship"] == "diversity":
-                level = r["properties"]["level"]
-                for vk in r["properties"]["resources"]:
-                    if vk in _vms.keys():
-                        vm = _vms[vk]
-                        vm.diversity_groups[rk] = level
-                    elif vk in _volumes.keys():
-                        v = _volumes[vk]
-                        v.diversity_groups[rk] = level
-                    elif vk in _vgroups.keys():
-                        g = _vgroups[vk]
-                        g.diversity_groups[rk] = level
-                    else:
-                        self.status = "{} in diversity group {} not exist".format(vk, r["name"])
-                        return False
-
-        return True
-
     def _set_weight(self, _vms, _volumes):
         for vmk, vm in _vms.iteritems():
 
@@ -287,12 +400,9 @@ class Parser:
         affinity_map = {} # key is uuid of vm, volume, or vgroup & value is its parent vgroup
 
         for level in LEVELS:
-
             for rk, r in _elements.iteritems():
-
                 if r["type"] == "ATT::CloudQoS::ResourceGroup" and \
-                   (r["properties"]["relationship"] == "affinity" or \
-                    r["properties"]["relationship"] == "exclusivity") and \
+                   r["properties"]["relationship"] == "affinity" and \
                    r["properties"]["level"] == level:
 
                     vgroup = None
@@ -304,31 +414,40 @@ class Parser:
                     for vk in r["properties"]["resources"]:
 
                         if vk in _vms.keys():
-                            vgroup.subvgroup_list.append(_vms[vk])
+                            vgroup.subvgroups[vk] = _vms[vk]
                             _vms[vk].survgroup = vgroup
+
                             affinity_map[vk] = vgroup
+
                             self._add_implicit_diversity_groups(vgroup, _vms[vk].diversity_groups)
-                            self._add_resource_requirements(vgroup, _vms[vk])
+                            self._add_implicit_exclusivity_groups(vgroup, _vms[vk].exclusivity_groups)
                             self._add_memberships(vgroup, _vms[vk])
+                            self._add_resource_requirements(vgroup, _vms[vk])
+
                             del _vms[vk]
 
                         elif vk in _volumes.keys():
-                            vgroup.subvgroup_list.append(_volumes[vk])
+                            vgroup.subvgroups[vk] = _volumes[vk]
                             _volumes[vk].survgroup = vgroup
+
                             affinity_map[vk] = vgroup
+
                             self._add_implicit_diversity_groups(vgroup, _volumes[vk].diversity_groups)
-                            self._add_resource_requirements(vgroup, _volumes[vk])
+                            self._add_implicit_exclusivity_groups(vgroup, _volumes[vk].exclusivity_groups)
                             self._add_memberships(vgroup, _volumes[vk])
+                            self._add_resource_requirements(vgroup, _volumes[vk])
+
                             del _volumes[vk]
 
-                        elif vk in _vgroups.keys():
-
+                        elif vk in _vgroups.keys(): 
                             vg = _vgroups[vk]
+
                             if LEVELS.index(vg.level) > LEVELS.index(level):
-                                vg.level = level
+                                #vg.level = level
+                                self.status = "Grouping scope: sub-group's level is larger"
+                                return False
 
                             if self._exist_in_subgroups(vk, vgroup) == None:
-
                                 if self._get_subgroups(vg, \
                                                        _elements, \
                                                        _vgroups, \
@@ -337,15 +456,19 @@ class Parser:
                                                        affinity_map) == False:
                                     return False
 
-                                vgroup.subvgroup_list.append(vg)
+                                vgroup.subvgroups[vk] = vg
                                 vg.survgroup = vgroup
+
                                 affinity_map[vk] = vgroup
+
                                 self._add_implicit_diversity_groups(vgroup, vg.diversity_groups)
-                                self._add_resource_requirements(vgroup, vg)
+                                self._add_implicit_exclusivity_groups(vgroup, vg.exclusivity_groups)
                                 self._add_memberships(vgroup, vg)
+                                self._add_resource_requirements(vgroup, vg)
+
                                 del _vgroups[vk]
 
-                        else: # vk belongs to the other vgroup already
+                        else: # vk belongs to the other vgroup already or refer to invalid resource
                             if vk not in affinity_map.keys():
                                 self.status = "Invalid resource = " + vk
                                 return False
@@ -361,40 +484,53 @@ class Parser:
         for vk in _elements[_vgroup.uuid]["properties"]["resources"]:
 
             if vk in _vms.keys():
-                _vgroup.subvgroup_list.append(_vms[vk])
+                _vgroup.subvgroups[vk] = _vms[vk]
                 _vms[vk].survgroup = _vgroup
+
                 _affinity_map[vk] = _vgroup
+
                 self._add_implicit_diversity_groups(_vgroup, _vms[vk].diversity_groups)
-                self._add_resource_requirements(_vgroup, _vms[vk])
+                self._add_implicit_exclusivity_groups(_vgroup, _vms[vk].exclusivity_groups)
                 self._add_memberships(_vgroup, _vms[vk])
+                self._add_resource_requirements(_vgroup, _vms[vk])
+
                 del _vms[vk]
 
             elif vk in _volumes.keys():
-                _vgroup.subvgroup_list.append(_volumes[vk])
+                _vgroup.subvgroups[vk] = _volumes[vk]
                 _volumes[vk].survgroup = _vgroup
+
                 _affinity_map[vk] = _vgroup
+
                 self._add_implicit_diversity_groups(_vgroup, _volumes[vk].diversity_groups)
-                self._add_resource_requirements(_vgroup, _volumes[vk])
+                self._add_implicit_exclusivity_groups(_vgroup, _volumes[vk].exclusivity_groups)
                 self._add_memberships(_vgroup, _volumes[vk])
+                self._add_resource_requirements(_vgroup, _volumes[vk])
+
                 del _volumes[vk]
 
             elif vk in _vgroups.keys():
-
                 vg = _vgroups[vk]
+
                 if LEVELS.index(vg.level) > LEVELS.index(_vgroup.level):
-                    vg.level = _vgroup.level
+                    #vg.level = _vgroup.level
+                    self.status = "Grouping scope: sub-group's level is larger"
+                    return False
 
                 if self._exist_in_subgroups(vk, _vgroup) == None:
-
                     if self._get_subgroups(vg, _elements, _vgroups, _vms, _volumes, _affinity_map) == False:
                         return False
 
-                    _vgroup.subvgroup_list.append(vg)
+                    _vgroup.subvgroups[vk] = vg
                     vg.survgroup = _vgroup
+
                     _affinity_map[vk] = _vgroup
+
                     self._add_implicit_diversity_groups(_vgroup, vg.diversity_groups)
-                    self._add_resource_requirements(_vgroup, vg)
+                    self._add_implicit_exclusivity_groups(_vgroup, vg.exclusivity_groups)
                     self._add_memberships(_vgroup, vg)
+                    self._add_resource_requirements(_vgroup, vg)
+
                     del _vgroups[vk]
             else:
                 if vk not in _affinity_map.keys():
@@ -408,10 +544,15 @@ class Parser:
         return True
 
     def _add_implicit_diversity_groups(self, _vgroup, _diversity_groups):
-        for dz in _diversity_groups.keys():
-            l = _diversity_groups[dz]
+        for dz, level in _diversity_groups.iteritems():
+            if LEVELS.index(level) >= LEVELS.index(_vgroup.level):
+                _vgroup.diversity_groups[dz] = level
+
+    def _add_implicit_exclusivity_groups(self, _vgroup, _exclusivity_groups):
+        for ex, level in _exclusivity_groups.iteritems():
+            l = level.split(":", 1)[0]
             if LEVELS.index(l) >= LEVELS.index(_vgroup.level):
-                _vgroup.diversity_groups[dz] = l
+                _vgroup.exclusivity_groups[ex] = level
 
     def _add_resource_requirements(self, _vgroup, _v):
         if isinstance(_v, VM):
@@ -435,10 +576,22 @@ class Parser:
 
     def _add_memberships(self, _vgroup, _v):
         if isinstance(_v, VM) or isinstance(_v, VGroup):
-            for hgk in _v.host_aggregates.keys():
-                _vgroup.host_aggregates[hgk] = _v.host_aggregates[hgk]
-        else:
-            pass # TODO: for other memberships such as integrity_zones
+            for extra_specs in _v.extra_specs_list:
+                _vgroup.extra_specs_list.append(extra_specs)
+      
+            if isinstance(_v, VM) and _v.availability_zone != None:
+                if _v.availability_zone not in _vgroup.availability_zone_list:
+                    _vgroup.availability_zone_list.append(_v.availability_zone)
+
+            if isinstance(_v, VGroup):
+                for az in _v.availability_zone_list:
+                    if az not in _vgroup.availability_zone_list:
+                        _vgroup.availability_zone_list.append(az)
+
+            '''
+            for hgk, hg in _v.host_aggregates.iteritems():
+                _vgroup.host_aggregates[hgk] = hg
+            '''
 
     # Take vk's most top parent as a s_vg's child vgroup
     def _set_implicit_grouping(self, _vk, _s_vg, _affinity_map, _vgroups):
@@ -452,18 +605,22 @@ class Parser:
                 t_vg.level = _s_vg.level
 
             if self._exist_in_subgroups(t_vg.uuid, _s_vg) == None:
-                _s_vg.subvgroup_list.append(t_vg)
+                _s_vg.subvgroups[t_vg.uuid].append(t_vg)
                 t_vg.survgroup = _s_vg
+
                 _affinity_map[t_vg.uuid] = _s_vg
+
                 self._add_implicit_diversity_groups(_s_vg, t_vg.diversity_groups)
-                self._add_resource_requirements(_s_vg, t_vg)
+                self._add_implicit_exclusivity_groups(_s_vg, t_vg.exclusivity_groups)
                 self._add_memberships(_s_vg, t_vg)
+                self._add_resource_requirements(_s_vg, t_vg)
+
                 del _vgroups[t_vg.uuid] 
 
     def _exist_in_subgroups(self, _vk, _vg):
         containing_vg_uuid = None
-        for v in _vg.subvgroup_list:
-            if v.uuid == _vk:
+        for vk, v in _vg.subvgroups.iteritems():
+            if vk == _vk:
                 containing_vg_uuid = _vg.uuid
                 break
             else:
@@ -474,7 +631,7 @@ class Parser:
         return containing_vg_uuid
 
     def _set_vgroup_links(self, _vgroup, _vgroups, _vms, _volumes):
-        for svg in _vgroup.subvgroup_list: # currently, not define vgroup itself in pipe 
+        for svgk, svg in _vgroup.subvgroups.iteritems(): # currently, not define vgroup itself in pipe 
             if isinstance(svg, VM):
                 for vml in svg.vm_list:
                     found = False
@@ -607,7 +764,7 @@ class Parser:
             else:
                 _vgroup.bandwidth_weight = 0.0
 
-        for svg in _vgroup.subvgroup_list:
+        for svgk, svg in _vgroup.subvgroups.iteritems():
             if isinstance(svg, VGroup):
                 self._set_vgroup_weight(svg)
 

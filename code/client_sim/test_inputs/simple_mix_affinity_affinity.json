@@ -2,8 +2,8 @@
 {
   "version": "0.1",
   "action": "create",
-  "stack_id": "app_uuid",
-  "application_name": "app",
+  "stack_id": "app_uuid6",
+  "application_name": "app6",
   "resources": {
     "vm15_uuid": {
       "name": "vm15",

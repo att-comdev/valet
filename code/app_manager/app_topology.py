@@ -35,6 +35,9 @@ class AppTopology:
     def set_app_topology(self, _app_graph):
         (vgroups, vms, volumes) = self.parser.set_topology(_app_graph)
 
+        if self.parser.action == "ping":
+            return (self.parser.stack_id, self.parser.application_name, self.parser.action)
+
         if len(vgroups) == 0 and len(vms) == 0 and len(volumes) == 0:
             self.status = self.parser.status
             return None
@@ -47,9 +50,12 @@ class AppTopology:
         for volk, vol in volumes.iteritems():
             self.volumes[vol.uuid] = vol
 
-        return (self.parser.stack_id, self.parser.application_name)
+        return (self.parser.stack_id, self.parser.application_name, self.parser.action)
 
     def set_optimization_priority(self):
+        if len(self.vgroups) == 0 and len(self.vms) == 0 and len(self.volumes) == 0:
+            return
+
         app_nw_bandwidth_weight = -1
         if self.resource.nw_bandwidth_avail > 0:
             app_nw_bandwidth_weight = float(self.parser.total_nw_bandwidth) / \

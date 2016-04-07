@@ -58,6 +58,8 @@ class Config:
                     self.db_resource_index_table = v.strip()
                 elif k == "db_app_index_table":
                     self.db_app_index_table = v.strip()
+                elif k == "db_app_table":
+                    self.db_app_table = v.strip()
 
                 line = f.readline()
 

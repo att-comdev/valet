@@ -64,6 +64,13 @@ logging = {
     }
 }
 
+# NOTE: Can add 'interface' here and set to 'public'
+# if the admin interface is unreachable. However, this
+# means tenant visibility will be limited to those
+# that allegro is a member of. The admin interface
+# must be used in order to see all tenants, provided
+# allegro has an admin role in at least one tenant
+# (usually the service tenant).
 identity = {
     'config': {
         'username': 'allegro',

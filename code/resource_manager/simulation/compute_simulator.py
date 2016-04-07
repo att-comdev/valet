@@ -38,7 +38,7 @@ class SimCompute():
 
         for r_num in range(0, self.config.num_of_racks):
             for h_num in range(0, self.config.num_of_hosts_per_rack):
-                host = Host(self.config.mode + "u0" + "r" + str(r_num) + "c" + str(h_num))
+                host = Host(self.config.mode + "0r" + str(r_num) + "c" + str(h_num))
                 host.tag.append("nova")
                 host.memberships["nova"] = logical_group
 
@@ -61,7 +61,7 @@ class SimCompute():
             aggregate = _logical_groups["aggregate" + str(a_num)]
             for r_num in range(0, self.config.num_of_racks):
                 for h_num in range(0, self.config.num_of_hosts_per_rack):
-                    host_name = self.config.mode + "u0" + "r" + str(r_num) + "c" + str(h_num)
+                    host_name = self.config.mode + "0r" + str(r_num) + "c" + str(h_num)
                     if host_name in _hosts.keys():
                         if (h_num % (self.config.aggregated_ratio + a_num)) == 0:
                             host = _hosts[host_name]
@@ -75,7 +75,7 @@ class SimCompute():
     def _set_resources(self, _hosts):
         for r_num in range(0, self.config.num_of_racks):
             for h_num in range(0, self.config.num_of_hosts_per_rack):
-                host_name = self.config.mode + "u0" + "r" + str(r_num) + "c" + str(h_num)
+                host_name = self.config.mode + "0r" + str(r_num) + "c" + str(h_num)
                 if host_name in _hosts.keys():
                     host = _hosts[host_name]
                     host.original_vCPUs = float(self.config.cpus_per_host) 

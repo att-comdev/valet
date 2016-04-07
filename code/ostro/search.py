@@ -1086,6 +1086,8 @@ class Search:
                 lgr.num_of_placed_vms_per_host[host_name] = 0
             lgr.num_of_placed_vms_per_host[host_name] += 1
 
+            self.logger.debug("node added to affinity (" + _affinity_id + ")")
+
         chosen_host = self.avail_hosts[_best.host_name]
         if _level == "host":
             if _affinity_id not in chosen_host.host_memberships.keys():
@@ -1200,12 +1202,16 @@ class Search:
 
     def _close_node_placement(self, _level, _best, _v):
         if _level == "host": 
-            self.node_placements[_v] = _best
+            if _v not in self.node_placements.keys():
+                self.node_placements[_v] = _best
         else:
             if isinstance(_v, VGroup):
-                self.node_placements[_v] = _best
+                if _v not in self.node_placements.keys():
+                    self.node_placements[_v] = _best
 
     def _rollback_reservation(self, _v):
+        self.logger.debug("node (" + _v.name + ") to be rollbacked")
+
         if isinstance(_v, VM):
             self._rollback_vm_reservation(_v)
 
@@ -1214,21 +1220,26 @@ class Search:
 
         elif isinstance(_v, VGroup):
             if _v in self.node_placements.keys():
-                if _v.vgroup_type == "AFF":
-                    affinity_id = _v.level + ":" + _v.name
-                    chosen_host = self.avail_hosts[self.node_placements[_v].host_name]
+                #if _v.vgroup_type == "AFF":
+                affinity_id = _v.level + ":" + _v.name
+                chosen_host = self.avail_hosts[self.node_placements[_v].host_name]
 
-                    self._remove_affinity(chosen_host, affinity_id, self.node_placements[_v].level)
+                self._remove_affinity(chosen_host, affinity_id, self.node_placements[_v].level)
 
             for vk, v in _v.subvgroups.iteritems():
                 self._rollback_reservation(v) 
 
-        exclusivities = self.constraint_solver.get_exclusivities(_v.exclusivity_groups, \
-                                                                 self.node_placements[_v].level)
-        if len(exclusivities) == 1:
-            exclusivity_id = exclusivities[exclusivities.keys()[0]]
-            chosen_host = self.avail_hosts[self.node_placements[_v].host_name]
-            self._remove_exclusivity(chosen_host, exclusivity_id, self.node_placements[_v].level) 
+                if v in self.node_placements.keys():
+                    self.logger.debug("node (" + v.name + ") rollbacked")
+
+        if _v in self.node_placements.keys():
+            exclusivities = self.constraint_solver.get_exclusivities(_v.exclusivity_groups, \
+                                                                     self.node_placements[_v].level)
+
+            if len(exclusivities) == 1:
+                exclusivity_id = exclusivities[exclusivities.keys()[0]]
+                chosen_host = self.avail_hosts[self.node_placements[_v].host_name]
+                self._remove_exclusivity(chosen_host, exclusivity_id, self.node_placements[_v].level) 
 
     def _remove_exclusivity(self, _chosen_host, _exclusivity_id, _level):
         if _exclusivity_id.split(":")[0] == _level: 

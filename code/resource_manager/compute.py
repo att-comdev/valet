@@ -67,27 +67,29 @@ class Compute:
         try:
             hosts_info = json.loads(results)
             #print json.dumps(hosts_info, indent=4)
-            host_list = hosts_info["hosts"]
+            if "hosts" in hosts_info.keys():
+                host_list = hosts_info["hosts"]
 
-            for h in host_list:
-                if h["service"] == "compute":
-                    host = Host(h["host_name"])
-                    host.tag.append("nova")
+                for h in host_list:
+                    if "service" in h.keys():
+                        if h["service"] == "compute":
+                            host = Host(h["host_name"])
+                            host.tag.append("nova")
      
-                    logical_group = None
-                    if h["zone"] not in _logical_groups.keys():
-                        logical_group = LogicalGroup(h["zone"])
-                        logical_group.group_type = "AZ"
-                        _logical_groups[logical_group.name] = logical_group
-                    else:
-                        logical_group = _logical_groups[h["zone"]]
+                            logical_group = None
+                            if h["zone"] not in _logical_groups.keys():
+                                logical_group = LogicalGroup(h["zone"])
+                                logical_group.group_type = "AZ"
+                                _logical_groups[logical_group.name] = logical_group
+                            else:
+                                logical_group = _logical_groups[h["zone"]]
 
-                    host.memberships[logical_group.name] = logical_group
+                            host.memberships[logical_group.name] = logical_group
 
-                    if host.name not in logical_group.vms_per_host.keys():
-                        logical_group.vms_per_host[host.name] = []
+                            if host.name not in logical_group.vms_per_host.keys():
+                                logical_group.vms_per_host[host.name] = []
 
-                    _hosts[host.name] = host
+                            _hosts[host.name] = host
 
         except (ValueError, KeyError, TypeError):
             return "JSON format error while setting host zones from Nova"
@@ -111,26 +113,27 @@ class Compute:
         try:
             aggregates = json.loads(results)
             #print json.dumps(aggregates, indent=4)
-            aggregate_list = aggregates["aggregates"]
+            if "aggregates" in aggregates.keys():
+                aggregate_list = aggregates["aggregates"]
 
-            for a in aggregate_list:
-                aggregate = LogicalGroup(a["name"])
-                aggregate.group_type = "AGGR"
-                if a["deleted"] != False:
-                    aggregate.status = "disabled"
+                for a in aggregate_list:
+                    aggregate = LogicalGroup(a["name"])
+                    aggregate.group_type = "AGGR"
+                    if a["deleted"] != False:
+                        aggregate.status = "disabled"
                     
-                metadata = {}
-                for mk in a["metadata"].keys():
-                    metadata[mk] = a["metadata"][mk]
-                aggregate.metadata = metadata
+                    metadata = {}
+                    for mk in a["metadata"].keys():
+                        metadata[mk] = a["metadata"][mk]
+                    aggregate.metadata = metadata
 
-                _logical_groups[aggregate.name] = aggregate
+                    _logical_groups[aggregate.name] = aggregate
 
-                for hn in a["hosts"]:
-                    host = _hosts[hn]
-                    host.memberships[aggregate.name] = aggregate
+                    for hn in a["hosts"]:
+                        host = _hosts[hn]
+                        host.memberships[aggregate.name] = aggregate
 
-                    aggregate.vms_per_host[host.name] = []
+                        aggregate.vms_per_host[host.name] = []
 
         except (ValueError, KeyError, TypeError):
             return "JSON format error while setting host aggregates from Nova"
@@ -188,11 +191,13 @@ class Compute:
         try:
             servers = json.loads(results)
             #print json.dumps(servers, indent=4)
-            hypervisor_list = servers["hypervisors"]
-            for hv in hypervisor_list:
-                server_list = hv["servers"]
-                for s in server_list:
-                    _vm_list.append(s["uuid"])
+            if "hypervisors" in servers.keys():
+                hypervisor_list = servers["hypervisors"]
+                for hv in hypervisor_list:
+                    if "servers" in hv.keys():
+                        server_list = hv["servers"]
+                        for s in server_list:
+                            _vm_list.append(s["uuid"])
 
         except (ValueError, KeyError, TypeError):
             return "JSON format error while getting existing vms"
@@ -400,7 +405,6 @@ if __name__ == '__main__':
     #c._set_placed_vms(hosts, logical_groups)
     #c._get_vms_of_host("qos101", None)
     #c._get_vm_detail("20b2890b-81bb-4942-94bf-c6bee29630bb", None)
-    #c._set_resources(hosts)
-    c._set_flavors(flavors)
+    c._set_resources(hosts)
+    #c._set_flavors(flavors)
 '''
-

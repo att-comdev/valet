@@ -42,9 +42,10 @@ class AppHandler:
     def add_app(self, _app_data):
         self.apps.clear()
 
+        '''
         if len(self.apps) > 0:
             self.logger.error("cannot clear prior requested apps")
-            # TODO
+        '''
 
         app_topology = AppTopology(self.resource)
 
@@ -123,6 +124,27 @@ class AppHandler:
             for appk, app in self.apps.iteritems():
                 json_info = app.get_json_info()
                 self.db.add_app(appk, json_info)
+
+    def get_vm_info(self, _s_uuid, _h_uuid, _host):
+        vm_info = {}
+
+        if _h_uuid != None and _h_uuid != "none" and \
+           _s_uuid != None and _s_uuid != "none":
+            vm_info = self.db.get_vm_info(_s_uuid, _h_uuid, _host)
+            
+        return vm_info
+
+    def update_vm_info(self, _s_uuid, _h_uuid):
+        if _h_uuid != None and _h_uuid != "none" and \
+           _s_uuid != None and _s_uuid != "none":
+            self.db.update_vm_info(_s_uuid, _h_uuid)
+
+
+
+
+
+
+
 
 
 

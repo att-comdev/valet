@@ -67,4 +67,15 @@ def get_last_logfile(_loc, _max_log_size, _max_num_of_logs, _name, _last_index):
     return (last_logfile, _last_index, mode)
 
 
+def adjust_json_string(_data):
+    _data = _data.replace('"{', '{')
+    _data = _data.replace('}"', '}')
+    _data = _data.replace("None", '"none"')
+    _data = _data.replace("False", '"false"')
+    _data = _data.replace("True", '"true"')
+    _data = _data.replace('_"none"', "_none")
+    _data = _data.replace('_"false"', "_false")
+    _data = _data.replace('_"true"', "_true")
+
+    return _data
 

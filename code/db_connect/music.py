@@ -150,7 +150,9 @@ class Music(object):
                    'keyspace': keyspace,
                    'table': table
                }
+
         response = self.rest.request(method='post', path=path, data=data)
+
         return response.ok
 
     def create_lock(self, lock_name):
@@ -243,6 +245,7 @@ class Music(object):
         '''Read one row based on a primary key name/value.'''
         path = self.__row_url_path(keyspace, table, pk_name, pk_value)
         response = self.rest.request(path=path)
+
         return response.json()
 
     def read_all_rows(self, keyspace, table):

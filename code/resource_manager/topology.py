@@ -66,7 +66,7 @@ class Topology:
                 _datacenter.region_code = region_name
             '''
 
-            if (rack_name) not in _host_groups.keys():
+            if rack_name not in _host_groups.keys():
                 host_group = HostGroup(rack_name)                          
                 host_group.host_type = "rack"                                                        
                 _host_groups[host_group.name] = host_group

@@ -12,7 +12,9 @@
 #################################################################################################################
 
 
-import sys, logging
+import sys 
+import logging
+from logging.handlers import RotatingFileHandler
 
 from daemon import Daemon   # Implemented for Python v2.x
 from configuration import Config
@@ -45,15 +47,20 @@ if __name__ == "__main__":
         sys.exit(2)
 
     # Logger 
+    log_formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
+    log_handler = RotatingFileHandler(config.logging_loc, \
+                                      mode='a', \
+                                      maxBytes=config.max_main_log_size, \
+                                      backupCount=2, \
+                                      encoding=None, \
+                                      delay=0)
+    log_handler.setFormatter(log_formatter)
     logger = logging.getLogger(config.logger_name)
     if config.logging_level == "debug":
         logger.setLevel(logging.DEBUG)
     else:
         logger.setLevel(logging.INFO)
-    formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
-    handler = logging.FileHandler(config.logging_loc)
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
+    logger.addHandler(log_handler)
 
     # Start daemon process
     daemon = OstroDaemon(config.process, logger)
@@ -65,6 +72,8 @@ if __name__ == "__main__":
             daemon.stop()
         elif sys.argv[1] == 'restart':
             daemon.restart()
+        elif sys.argv[1] == 'status':
+            exit_code = daemon.status()
         else:
             print "Unknown command"
             sys.exit(2)

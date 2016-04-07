@@ -255,15 +255,69 @@ class Host:
         else:
             return False
 
-    def exist_vm(self, _vm_id):
+    def exist_vm_by_h_uuid(self, _h_uuid):
         exist = False
 
         for vm_id in self.vm_list:
-            if vm_id[0] == _vm_id[0] and vm_id[1] == _vm_id[1] and vm_id[2] == _vm_id[2]: 
+            if vm_id[0] == _h_uuid: 
                 exist = True
                 break
 
         return exist
+
+    def exist_vm_by_uuid(self, _uuid):
+        exist = False;
+
+        for vm_id in self.vm_list:
+            if vm_id[2] == _uuid:
+                exist = True
+                break
+        
+        return exist
+
+    def remove_vm_by_h_uuid(self, _h_uuid):
+        success = False
+
+        for vm_id in self.vm_list:
+            if vm_id[0] == _h_uuid:
+                self.vm_list.remove(vm_id)
+                success = True
+                break
+
+        return success
+
+    def remove_vm_by_uuid(self, _uuid):
+        success = False
+
+        for vm_id in self.vm_list:
+            if vm_id[2] == _uuid:
+                self.vm_list.remove(vm_id)
+                success = True
+                break
+
+        return success
+
+    def update_uuid(self, _h_uuid, _uuid):
+        success = False
+
+        for vm_id in self.vm_list:
+            if vm_id[0] == _h_uuid:
+                vm_id[2] = _uuid
+                success = True
+                break
+
+        return success
+
+    def update_h_uuid(self, _h_uuid, _uuid):
+        success = False
+
+        for vm_id in self.vm_list:
+            if vm_id[2] == _uuid:
+                vm_id[0] = _h_uuid
+                success = True
+                break
+
+        return success
 
     def compute_avail_vCPUs(self, _overcommit_ratio, _standby_ratio):  
         self.vCPUs = self.original_vCPUs * _overcommit_ratio * (1.0 - _standby_ratio)
@@ -287,19 +341,6 @@ class Host:
         used_disk_cap = self.original_local_disk_cap - free_disk_cap
 
         self.avail_local_disk_cap = self.local_disk_cap - used_disk_cap
-
-    '''
-    def get_orch_vm_id(self, _vm_id):
-        orch_vm_id = "none"
-
-        for vm_id in self.vm_list:
-            if vm_id[1] == _vm_id[1] and vm_id[2] == _vm_id[2]: 
-                if vm_id[0] != "none":
-                    orch_vm_id = vm_id[0]
-                break
-
-        return orch_vm_id
-    '''
 
     def get_json_info(self):
         membership_list = []
@@ -355,48 +396,136 @@ class LogicalGroup:
 
         self.last_update = 0
 
-    def exist_vm(self, _vm_id):
+    def exist_vm_by_h_uuid(self, _h_uuid):
         exist = False
 
         for vm_id in self.vm_list:
-            if vm_id[0] == _vm_id[0] and vm_id[1] == _vm_id[1] and vm_id[2] == _vm_id[2]:
+            if vm_id[0] == _h_uuid:
                 exist = True
                 break
 
         return exist
 
-    def add_vm(self, _vm_id, _host_id):
+    def exist_vm_by_uuid(self, _uuid):
+        exist = False
+
+        for vm_id in self.vm_list:
+            if vm_id[2] == _uuid:
+                exist = True
+                break
+
+        return exist
+
+    def update_uuid(self, _h_uuid, _uuid, _host_id):
         success = False
 
-        if self.exist_vm(_vm_id) == False:
+        for vm_id in self.vm_list:
+            if vm_id[0] == _h_uuid:
+                vm_id[2] = _uuid
+                success = True
+                break
+
+        for host_vm_id in self.vms_per_host[_host_id]:
+            if host_vm_id[0] == _h_uuid:
+                host_vm_id[2] = _uuid
+                success = True
+                break 
+        
+        return success
+
+    def update_h_uuid(self, _h_uuid, _uuid, _host_id):
+        success = False
+
+        for vm_id in self.vm_list:
+            if vm_id[2] == _uuid:
+                vm_id[0] = _h_uuid
+                success = True
+                break
+
+        for host_vm_id in self.vms_per_host[_host_id]:
+            if host_vm_id[2] == _uuid:
+                host_vm_id[0] = _h_uuid
+                success = True
+                break 
+        
+        return success
+
+    def add_vm_by_h_uuid(self, _vm_id, _host_id):
+        success = False
+
+        if self.exist_vm_by_h_uuid(_vm_id[0]) == False:
             self.vm_list.append(_vm_id)
 
             if self.group_type == "EX" or self.group_type == "AFF":
                 if _host_id not in self.vms_per_host.keys():
                     self.vms_per_host[_host_id] = []
-
             self.vms_per_host[_host_id].append(_vm_id)
 
             success = True
 
         return success
 
-    def remove_vm(self, _vm_id, _host_id):
+    def remove_vm_by_h_uuid(self, _h_uuid, _host_id):
         success = False
 
-        if self.exist_vm(_vm_id) == True:
-            self.vm_list.remove(_vm_id)
+        for vm_id in self.vm_list:
+            if vm_id[0] == _h_uuid:
+                self.vm_list.remove(vm_id)
+                success = True
+                break
 
-            self.vms_per_host[_host_id].remove(_vm_id)
-
-            if self.group_type == "EX" or self.group_type == "AFF":
-                if len(self.vms_per_host[_host_id]) == 0:
-                    del self.vms_per_host[_host_id]
+        for host_vm_id in self.vms_per_host[_host_id]:
+            if host_vm_id[0] == _h_uuid:
+                self.vms_per_host[_host_id].remove(host_vm_id)
+                success = True
+                break
+         
+        if self.group_type == "EX" or self.group_type == "AFF":
+            if len(self.vms_per_host[_host_id]) == 0:
+                del self.vms_per_host[_host_id]
         
-            success = True
-
         return success
 
+    def remove_vm_by_uuid(self, _uuid, _host_id):
+        success = False
+
+        for vm_id in self.vm_list:
+            if vm_id[2] == _uuid:
+                self.vm_list.remove(vm_id)
+                success = True
+                break
+
+        for host_vm_id in self.vms_per_host[_host_id]:
+            if host_vm_id[2] == _uuid:
+                self.vms_per_host[_host_id].remove(host_vm_id)
+                success = True
+                break
+         
+        if self.group_type == "EX" or self.group_type == "AFF":
+            if len(self.vms_per_host[_host_id]) == 0:
+                del self.vms_per_host[_host_id]
+        
+        return success
+
+    def clean_none_vms(self, _host_id):
+        success = False
+
+        for vm_id in self.vm_list:
+            if vm_id[2] == "none":
+                self.vm_list.remove(vm_id)
+                success = True
+
+        for vm_id in self.vms_per_host[_host_id]:
+            if vm_id[2] == "none":
+                self.vms_per_host[_host_id].remove(vm_id) 
+                success = True
+
+        if self.group_type == "EX" or self.group_type == "AFF":
+            if len(self.vms_per_host[_host_id]) == 0:
+                del self.vms_per_host[_host_id]
+
+        return success
+        
     def get_json_info(self):
         return {'status':self.status, \
                 'group_type':self.group_type, \

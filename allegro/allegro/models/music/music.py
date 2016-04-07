@@ -80,6 +80,7 @@ class REST(object):
                            "put, or delete.")
         method_fn = getattr(requests, method)
 
+        response = None
         for url in self.urls:
             # Try each url in turn. First one to succeed wins.
             try:
@@ -90,6 +91,12 @@ class REST(object):
                 return response
             except requests.exceptions.RequestException as e:
                 pass
+
+        # If we get here, an exception was raised for every url,
+        # but we passed so we could try each endpoint. Raise status
+        # for the last attempt (for now) so that we report something.
+        if response:
+            response.raise_for_status()
 
 class Music(object):
     '''Wrapper for Music API'''

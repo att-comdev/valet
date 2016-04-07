@@ -93,6 +93,16 @@ class ErrorsController(object):
 
     @expose('json')
     @error_wrapper
+    def conflict(self, **kw):
+        msg = kw.get(
+            'error_message',
+            'conflict'
+        )
+        response.status = 409
+        return dict(message=msg)
+
+    @expose('json')
+    @error_wrapper
     def server_error(self, **kw):
         msg = kw.get(
             'error_message',

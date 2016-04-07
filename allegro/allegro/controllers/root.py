@@ -18,6 +18,7 @@
 from pecan import conf
 from pecan import expose
 from pecan import request
+from pecan.secure import SecureController, secure
 from webob.exc import status_map
 
 from allegro.controllers import v1
@@ -28,11 +29,15 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class RootController(object):
+class RootController(SecureController):
     v1 = v1.V1Controller()
 
-    def __init__(self):
-        return
+    @classmethod
+    def check_permissions(cls):
+        auth_token = request.headers.get('X-Auth-Token')
+        if auth_token:
+            return conf.identity.engine.is_admin(auth_token)
+        return False
 
     # TODO: No need to respond to this endpont. Throw a 404.
     @expose(generic=True, template='json')

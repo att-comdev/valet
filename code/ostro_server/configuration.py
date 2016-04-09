@@ -232,11 +232,11 @@ class Config:
                 elif k == "topology_trigger_time":
                     self.topology_trigger_time = v.strip()
                 elif k == "topology_trigger_frequency":
-                    self.topology_trigger_freq = int(v.strip())
+                    self.topology_trigger_freq = float(v.strip())
                 elif k == "compute_trigger_time":
                     self.compute_trigger_time = v.strip()
                 elif k == "compute_trigger_frequency":
-                    self.compute_trigger_freq = int(v.strip())
+                    self.compute_trigger_freq = float(v.strip())
                 elif k == "db_keyspace":
                     self.db_keyspace = v.strip()
                 elif k == "db_request_table":

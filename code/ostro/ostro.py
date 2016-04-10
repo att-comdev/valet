@@ -74,6 +74,9 @@ class Ostro:
         self.thread_list.append(self.topology)
         self.thread_list.append(self.compute)
 
+        # For monitoring test
+        duration = 30.0
+        expired = time.time() + duration
         while self.end_of_process == False:
             time.sleep(1)
 
@@ -87,6 +90,11 @@ class Ostro:
 
                 if len(request_list) > 0:
                     self.place_app(request_list)
+
+            current = time.time()
+            if current > expired:
+                self.logger.debug("test: ostro running ......")
+                expired = current + duration
 
         self.topology.end_of_process = True
         self.compute.end_of_process = True

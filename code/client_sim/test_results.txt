@@ -19,14 +19,20 @@ test: request_data =  [
       },
       "type": "OS::Nova::Server"
     },
+    "vm102_uuid": {
+      "name": "vm102",
+      "properties": {
+        "flavor": "bflavor0"
+      },
+      "type": "OS::Nova::Server"
+    },
     "affinity100_uuid": {
       "name": "affinity100",
       "properties": {
         "relationship": "affinity",
         "level": "rack",
         "resources": [
-          "vm100_uuid",
-          "vm101_uuid"
+          "diversity100_uuid"
         ]
       },
       "type": "ATT::CloudQoS::ResourceGroup"
@@ -38,7 +44,8 @@ test: request_data =  [
         "level": "host",
         "resources": [
           "vm100_uuid",
-          "vm101_uuid"
+          "vm101_uuid",
+          "vm102_uuid"
         ]
       },
       "type": "ATT::CloudQoS::ResourceGroup"
@@ -50,21 +57,10 @@ test: request_data =  [
 Placement result
 {
     "status": {
-        "message": "success", 
-        "type": "ok"
+        "message": "no available hosts", 
+        "type": "error"
     }, 
-    "resources": {
-        "vm100_uuid": {
-            "properties": {
-                "host": "sim0r1c0"
-            }
-        }, 
-        "vm101_uuid": {
-            "properties": {
-                "host": "sim0r1c1"
-            }
-        }
-    }
+    "resources": {}
 }
 Resource status
 {
@@ -72,7 +68,7 @@ Resource status
         "bflavor2": {
             "status": "enabled", 
             "mem": 6000.0, 
-            "last_update": 1459989633.776572, 
+            "last_update": 1460053083.961173, 
             "vCPUs": 3.0, 
             "extra_specs": {}, 
             "flavor_id": null, 
@@ -81,7 +77,7 @@ Resource status
         "bflavor0": {
             "status": "enabled", 
             "mem": 2000.0, 
-            "last_update": 1459989633.7767, 
+            "last_update": 1460053083.961295, 
             "vCPUs": 1.0, 
             "extra_specs": {}, 
             "flavor_id": null, 
@@ -90,7 +86,7 @@ Resource status
         "bflavor1": {
             "status": "enabled", 
             "mem": 4000.0, 
-            "last_update": 1459989633.776822, 
+            "last_update": 1460053083.961414, 
             "vCPUs": 2.0, 
             "extra_specs": {}, 
             "flavor_id": null, 
@@ -99,7 +95,7 @@ Resource status
         "sflavor0": {
             "status": "enabled", 
             "mem": 2000, 
-            "last_update": 1459989633.776962, 
+            "last_update": 1460053083.961555, 
             "vCPUs": 1, 
             "extra_specs": {
                 "cpu_allocation_ratio": "0.5"
@@ -133,7 +129,7 @@ Resource status
             "sim0r0"
         ], 
         "storage_list": [], 
-        "last_update": 1459989672.45102, 
+        "last_update": 1460053100.908078, 
         "local_disk": 3200.0, 
         "vCPUs": 422.40000000000003, 
         "membership_list": [
@@ -149,7 +145,7 @@ Resource status
         "switch_list": [
             "sim"
         ], 
-        "last_link_update": 1459989633.782166, 
+        "last_link_update": 1460053083.966524, 
         "original_local_disk": 4000.0
     }, 
     "logical_groups": {
@@ -161,7 +157,7 @@ Resource status
                 "sim0r1c0": []
             }, 
             "volume_list": [], 
-            "last_update": 1459989633.77364, 
+            "last_update": 1460053083.958402, 
             "group_type": "AGGR", 
             "metadata": {
                 "cpu_allocation_ratio": "0.5"
@@ -171,32 +167,32 @@ Resource status
             "status": "enabled", 
             "vm_list": [
                 [
-                    "vm100_uuid", 
-                    "vm100", 
+                    "vm101_uuid", 
+                    "vm101", 
                     "none"
                 ], 
                 [
-                    "vm101_uuid", 
-                    "vm101", 
+                    "vm100_uuid", 
+                    "vm100", 
                     "none"
                 ]
             ], 
             "vms_per_host": {
                 "sim0r1": [
                     [
-                        "vm100_uuid", 
-                        "vm100", 
+                        "vm101_uuid", 
+                        "vm101", 
                         "none"
                     ], 
                     [
-                        "vm101_uuid", 
-                        "vm101", 
+                        "vm100_uuid", 
+                        "vm100", 
                         "none"
                     ]
                 ]
             }, 
             "volume_list": [], 
-            "last_update": 1459989672.451012, 
+            "last_update": 1460053100.908069, 
             "group_type": "AFF", 
             "metadata": {}
         }, 
@@ -210,12 +206,12 @@ Resource status
                 "sim0r1c0": []
             }, 
             "volume_list": [], 
-            "last_update": 1459989633.773805, 
+            "last_update": 1460053083.9586, 
             "group_type": "AZ", 
             "metadata": {}
         }
     }, 
-    "timestamp": 1459989672.45102, 
+    "timestamp": 1460053100.908078, 
     "switches": {
         "sim0r1": {
             "status": "enabled", 
@@ -228,7 +224,7 @@ Resource status
                     "resource": "sim"
                 }
             }, 
-            "last_update": 1459989633.778788
+            "last_update": 1460053083.964079
         }, 
         "sim0r0": {
             "status": "enabled", 
@@ -241,7 +237,7 @@ Resource status
                     "resource": "sim"
                 }
             }, 
-            "last_update": 1459989633.778874
+            "last_update": 1460053083.964164
         }, 
         "sim0r1c1": {
             "status": "enabled", 
@@ -254,7 +250,7 @@ Resource status
                     "resource": "sim0r1"
                 }
             }, 
-            "last_update": 1459989633.778959
+            "last_update": 1460053083.964258
         }, 
         "sim0r1c0": {
             "status": "enabled", 
@@ -267,7 +263,7 @@ Resource status
                     "resource": "sim0r1"
                 }
             }, 
-            "last_update": 1459989633.779052
+            "last_update": 1460053083.964372
         }, 
         "sim0r0c0": {
             "status": "enabled", 
@@ -280,7 +276,7 @@ Resource status
                     "resource": "sim0r0"
                 }
             }, 
-            "last_update": 1459989633.779137
+            "last_update": 1460053083.964475
         }, 
         "sim0r0c1": {
             "status": "enabled", 
@@ -293,14 +289,14 @@ Resource status
                     "resource": "sim0r0"
                 }
             }, 
-            "last_update": 1459989633.779231
+            "last_update": 1460053083.964584
         }, 
         "sim": {
             "status": "enabled", 
             "switch_type": "root", 
             "peer_links": {}, 
             "up_links": {}, 
-            "last_update": 1459989633.778435
+            "last_update": 1460053083.963734
         }
     }, 
     "hosts": {
@@ -323,9 +319,9 @@ Resource status
             "original_vCPUs": 16.0, 
             "free_mem_mb": 14000.0, 
             "avail_vCPUs": 203.8, 
-            "last_link_update": 1459989633.779473, 
+            "last_link_update": 1460053083.964863, 
             "original_local_disk": 1000.0, 
-            "last_update": 1459989672.451017, 
+            "last_update": 1460053100.908042, 
             "state": "up", 
             "membership_list": [
                 "nova"
@@ -356,9 +352,9 @@ Resource status
             "original_vCPUs": 16.0, 
             "free_mem_mb": 16000.0, 
             "avail_vCPUs": 6.4, 
-            "last_link_update": 1459989633.780728, 
+            "last_link_update": 1460053083.965089, 
             "original_local_disk": 1000.0, 
-            "last_update": 1459989633.780727, 
+            "last_update": 1460053083.965088, 
             "state": "up", 
             "membership_list": [
                 "aggregate0", 
@@ -390,9 +386,9 @@ Resource status
             "original_vCPUs": 16.0, 
             "free_mem_mb": 16000.0, 
             "avail_vCPUs": 204.8, 
-            "last_link_update": 1459989633.780972, 
+            "last_link_update": 1460053083.965313, 
             "original_local_disk": 1000.0, 
-            "last_update": 1459989633.780971, 
+            "last_update": 1460053083.965312, 
             "state": "up", 
             "membership_list": [
                 "nova"
@@ -429,9 +425,9 @@ Resource status
             "original_vCPUs": 16.0, 
             "free_mem_mb": 14000.0, 
             "avail_vCPUs": 5.4, 
-            "last_link_update": 1459989633.781204, 
+            "last_link_update": 1460053083.965537, 
             "original_local_disk": 1000.0, 
-            "last_update": 1459989672.450984, 
+            "last_update": 1460053100.908075, 
             "state": "up", 
             "membership_list": [
                 "aggregate0", 
@@ -478,7 +474,7 @@ Resource status
             "avail_local_disk": 1499.9609375, 
             "host_type": "rack", 
             "storage_list": [], 
-            "last_update": 1459989672.451019, 
+            "last_update": 1460053100.908077, 
             "local_disk": 1600.0, 
             "vCPUs": 211.20000000000002, 
             "membership_list": [
@@ -491,7 +487,7 @@ Resource status
             "switch_list": [
                 "sim0r1"
             ], 
-            "last_link_update": 1459989633.781519, 
+            "last_link_update": 1460053083.965865, 
             "original_local_disk": 2000.0
         }, 
         "sim0r0": {
@@ -509,7 +505,7 @@ Resource status
             "avail_local_disk": 1600.0, 
             "host_type": "rack", 
             "storage_list": [], 
-            "last_update": 1459989633.782195, 
+            "last_update": 1460053083.966554, 
             "local_disk": 1600.0, 
             "vCPUs": 211.20000000000002, 
             "membership_list": [
@@ -521,7 +517,7 @@ Resource status
             "switch_list": [
                 "sim0r0"
             ], 
-            "last_link_update": 1459989633.781846, 
+            "last_link_update": 1460053083.966168, 
             "original_local_disk": 2000.0
         }
     }
@@ -560,7 +556,7 @@ Applications
     }, 
     "name": "app100", 
     "stack_id": "app_uuid100", 
-    "timestamp": 1459989672.45102, 
+    "timestamp": 1460053100.908078, 
     "Volumes": {}, 
     "action": "create", 
     "VMs": {

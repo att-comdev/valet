@@ -17,12 +17,16 @@
 import json
 import requests
 
+from oslo_config import cfg
 from oslo_log import log as logging
 
+from keystoneclient.v2_0 import client
 from nova.i18n import _LE, _LW
 from nova.scheduler import filters
 
 from qosorch import allegro_api
+
+CONF = cfg.CONF
 
 LOG = logging.getLogger(__name__)
 
@@ -33,11 +37,58 @@ class AllegroFilter(filters.BaseHostFilter):
     # Host state does not change within a request
     run_filter_once_per_request = True
 
+    # Used to authenticate request. Update via _authorize()
+    _auth_token = None
+    _tenant_id = None
+
     def __init__(self):
         self.api = allegro_api.AllegroAPIWrapper()
+        self.opt_group_str = 'allegro'
+        self.opt_project_name_str = 'allegro_project_name'
+        self.opt_username_str = 'allegro_user'
+        self.opt_password_str = 'allegro_password'
+        self.opt_auth_uri_str = 'auth_uri'
+        self._register_opts()
+
+    def _authorize(self):
+        opt = getattr(cfg.CONF, self.opt_group_str)
+        project_name = opt[self.opt_project_name_str]
+        username = opt[self.opt_username_str]
+        password = opt[self.opt_password_str]
+        auth_uri = opt[self.opt_auth_uri_str]
+
+        kwargs = {
+            'username': username,
+            'password': password,
+            'tenant_name': project_name,
+            'auth_url': auth_uri
+        }
+        keystone_client = client.Client(**kwargs)
+        self._auth_token = keystone_client.auth_token
+        self._tenant_id = keystone_client.tenant_id
 
     def _is_same_host(self, host, location):
         return host == location
+
+    # Register options
+    def _register_opts(self):
+        opts = []
+        option = cfg.StrOpt(self.opt_project_name_str, default=None,
+                            help='Allegro Project Name')
+        opts.append(option)
+        option = cfg.StrOpt(self.opt_username_str, default=None,
+                            help='Allegro Username')
+        opts.append(option)
+        option = cfg.StrOpt(self.opt_password_str, default=None,
+                            help='Allegro Password')
+        opts.append(option)
+        option = cfg.StrOpt(self.opt_auth_uri_str, default=None,
+                            help='Keystone Authorization API Endpoint')
+        opts.append(option)
+
+        opt_group = cfg.OptGroup(self.opt_group_str)
+        cfg.CONF.register_group(opt_group)
+        cfg.CONF.register_opts(opts, group=opt_group)
 
     # TODO: Factor out common code to a qosorch library
     def filter_all(self, filter_obj_list, filter_properties):
@@ -58,7 +109,10 @@ class AllegroFilter(filters.BaseHostFilter):
             yield_all = True
         else:
             uuid = filter_properties[hints_key][uuid_key]
-            placement = self.api.placement(uuid)
+            self._authorize()
+            placement = self.api.placement(uuid,
+                                           tenant_id=self._tenant_id,
+                                           auth_token=self._auth_token)
 
             # TODO: Ostro will give a matching format (e.g., mtmac2)
             # Nova's format is host
@@ -81,7 +135,7 @@ class AllegroFilter(filters.BaseHostFilter):
                               (uuid, obj.host))
             if yield_all or match:
                 yield obj
-        
+
     # Do nothing here. Let filter_all handle it in one swell foop.
     def host_passes(self, host_state, filter_properties):
         """Return True if host has sufficient capacity."""

@@ -39,6 +39,10 @@ Throughout this document, the following installation-specific terms are used:
 - ``$IOARBITER_HOST``: IOArbiter API hostname or FQDN
 - ``$PATH_TO_VENV``: Allegro API virtual environment path
 - ``$TEGU_HOST``: Tegu API hostname or FQDN
+- ``$ALLEGRO_PROJECT_NAME``: Allegro user default project (e.g., service)
+- ``$ALLEGRO_USERNAME``: Allegro username (e.g., allegro)
+- ``$ALLEGRO_PASSWORD``: Allegro user password
+- ``$KEYSTONE_AUTH_API``: Keystone Auth API endpoint
 
 Root or sudo privileges are required for some steps.
 
@@ -93,6 +97,8 @@ Install allegro-api in the venv on the designated allegro node (which could be t
 While the following error might appear when installing allegro-api under python 2.7.6, note that SSL is not currently used by allegro-api.
 
 `InsecurePlatformWarning`_ : A true SSLContext object is not available. This prevents urllib3 from configuring SSL appropriately and may cause certain SSL connections to fail.
+
+In config.py, edit the 'identity' section so that the config values (username, password, and project_name) match those of the allegro_user. (Project Name is equivalent to the Tenant Name.) The auth_url must point to the Keystone API endpoint.
 
 allegro-api SQLAlchemy Setup
 ----------------------------
@@ -475,6 +481,22 @@ Next, add an ``[allegro]`` section:
 ::
 
   allegro_api_server_url = http://$ALLEGRO_HOST:8090/v1
+
+::
+
+  allegro_project_name = $ALLEGRO_PROJECT_NAME
+
+::
+
+  allegro_user = $ALLEGRO_USERNAME
+
+::
+
+  allegro_password = $ALLEGRO_PASSWORD
+
+::
+
+  auth_uri = $KEYSTONE_AUTH_API
 
 Restart nova-scheduler:
 

@@ -17,7 +17,7 @@
 
 from pecan import expose
 from pecan import request
-        
+
 from allegro.controllers import plans, placements, groups, optimizers
     
 import logging

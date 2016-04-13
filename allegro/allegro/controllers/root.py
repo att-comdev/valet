@@ -18,7 +18,7 @@
 from pecan import conf
 from pecan import expose
 from pecan import request
-from pecan.secure import SecureController, secure
+from pecan.secure import SecureController
 from webob.exc import status_map
 
 from allegro.controllers import v1

@@ -27,6 +27,7 @@ from compute_manager import ComputeManager
 
 sys.path.insert(0, '../app_manager')
 from app_handler import AppHandler  
+from app_topology_base import VM, Volume
 
 sys.path.insert(0, '../db_connect')
 from music_handler import MusicHandler
@@ -73,17 +74,27 @@ class Ostro:
         self.thread_list.append(self.topology)
         self.thread_list.append(self.compute)
 
+        # For monitoring test
+        duration = 30.0
+        expired = time.time() + duration
         while self.end_of_process == False:
             time.sleep(1)
 
             if self.config.db_keyspace != "none":
-                (event_list, request_list) = self.db.get_requests()
+                event_list = self.db.get_events()
 
                 if len(event_list) > 0:
-                    pass
+                    self.handle_events(event_list)
+
+                request_list = self.db.get_requests()
 
                 if len(request_list) > 0:
                     self.place_app(request_list)
+
+            current = time.time()
+            if current > expired:
+                self.logger.debug("test: ostro running ......")
+                expired = current + duration
 
         self.topology.end_of_process = True
         self.compute.end_of_process = True
@@ -211,23 +222,177 @@ class Ostro:
 
         return placement_map
 
+    def handle_events(self, _event_list):
+        self.data_lock.acquire(1) 
+
+        self.logger.info("--- start event handling ---")
+
+        for e in _event_list:
+            if self._check_host(e.host) == False:
+                continue
+
+            if e.method == "build_and_run_instance":         # VM is created (from stack)
+                self.db.put_uuid(e)          
+
+            elif e.method == "object_action":
+                if e.object_name == 'Instance':              # VM became active or deleted
+                    (h_uuid, s_uuid) = db.get_uuid(e.uuid)  # return None or "none"
+
+                    if e.vm_state == "active": 
+                        vm_info = self.app_handler.get_vm_info(s_uuid, h_uuid, e.host)
+
+                        if len(vm_info) == 0:
+                            '''
+                            h_uuid == None or "none" because vm is not created by stack
+                            or, stack not found because vm is created by the other stack
+                            '''
+                            self._add_vm_to_host(e.uuid, h_uuid, e.host, e.vcpus, e.mem, e.local_disk)
+                        else:
+                            if "planned_host" in vm_info.keys() and vm_info["planned_host"] != e.host:
+                                '''
+                                vm is activated in the different host
+                                '''
+                                self._add_vm_to_host(e.uuid, h_uuid, e.host, e.vcpus, e.mem, e.local_disk)
+                                
+                                self._remove_vm_from_host(e.uuid, h_uuid, \
+                                                          vm_info["planned_host"], \
+                                                          float(vm_info["cpus"]), \
+                                                          float(vm_info["mem"]), \
+                                                          float(vm_info["local_volume"]))
+
+                                self._remove_vm_from_logical_groups(e.uuid, h_uuid, vm_info["planned_host"])
+                            else:
+                                '''
+                                found vm in the planned host, 
+                                possibly the vm deleted in the host while batch cleanup
+                                '''
+                                if self._check_h_uuid(h_uuid, e.host) == False:
+                                    if self._check_uuid(e.uuid, e.host) == True:
+                                        self._update_h_uuid_in_host(h_uuid, e.uuid, e.host)
+                                        self._update_h_uuid_in_logical_groups(h_uuid, e.uuid, e.host)
+                                else:
+                                    self._update_uuid_in_host(h_uuid, e.uuid, e.host)
+                                    self._update_uuid_in_logical_groups(h_uuid, e.uuid, e.host)
+                    
+                    elif e.vm_state == "deleted":
+                        self._remove_vm_from_host(e.uuid, h_uuid, e.host, e.vcpus, e.mem, e.local_disk)
+
+                        self._remove_vm_from_logical_groups(e.uuid, h_uuid, e.host)
+
+                        self.app_handler.update_vm_info(s_uuid, h_uuid)
+
+                elif e.object_name == 'ComputeNode':     # Host resource is updated
+                    # NOTE: what if host is disabled?
+                    if self.resource.update_host_resources(e.host, e.status, \
+                                                           e.vcpus, e.vcpus_used, \
+                                                           e.mem, e.free_mem, \
+                                                           e.local_disk, e.free_local_disk, \
+                                                           e.disk_available_least) == True:
+                        self.resource.update_host_time(e.host)
+
+        self.resource.update_topology()
+
+        for e in _event_list:
+            self.db.delete_event(e.event_id)
+            if e.method == "object_action":
+                if e.object_name == 'Instance':
+                    if e.vm_state == "deleted":
+                        self.db.delete_uuid(e.uuid)
+
+        self.logger.info("--- done event handling ---")
+
+        self.data_lock.release()
+
+    def _add_vm_to_host(self, _uuid, _h_uuid, _host_name, _vcpus, _mem, _local_disk):
+        vm_id = None
+        if _h_uuid == None: 
+            vm_id = ("none", "none", _uuid)
+        else:
+            vm_id = (_h_uuid, "none", _uuid)
+
+        self.resource.add_vm_to_host(_host_name, _vm_id, _vcpus, _mem, _local_disk)
+        self.resource.update_host_time(_host_name)
+
+    def _remove_vm_from_host(self, _uuid, _h_uuid, _host_name, _vcpus, _mem, _local_disk):
+        if self._check_h_uuid(_h_uuid, _host_name) == True:
+            self.resource.remove_vm_by_h_uuid_from_host(_host_name, _h_uuid, _vcpus, _mem, _local_disk)
+            self.resource.update_host_time(_host_name)
+        else:
+            if self._check_uuid(_uuid, _host_name) == True:
+                self.resource.remove_vm_by_uuid_from_host(_host_name, _uuid, _vcpus, _mem, _local_disk)
+                self.resource.update_host_time(_host_name)
+
+    def _remove_vm_from_logical_groups(self, _uuid, _h_uuid, _host_name):
+        host = self.resource.hosts[_host_name]
+        if h_uuid != None and h_uuid != "none":
+            self.resource.remove_vm_by_h_uuid_from_logical_groups(host, _h_uuid)
+        else:
+            self.resource.remove_vm_by_uuid_from_logical_groups(host, _uuid)
+
+    def _check_host(self, _host_name):
+        exist = False
+
+        for hk in self.resource.hosts.keys():
+            if hk == _host_name:
+                exist = True
+                break
+
+        return exist
+
+    def _check_h_uuid(self, _h_uuid, _host_name):
+        if _h_uuid == None or _h_uuid == "none":
+            return False
+
+        host = self.resource.hosts[_host_name]
+
+        return host.exist_vm_by_h_uuid(_h_uuid)
+
+    def _check_uuid(self, _uuid, _host_name):
+        if _uuid == None or _uuid == "none":
+            return False
+
+        host = self.resource.hosts[_host_name]
+
+        return host.exist_vm_by_uuid(_uuid)
+
+    def _update_uuid_in_host(self, _h_uuid, _uuid, _host_name):
+        host = self.resource.hosts[_host_name]
+        if host.update_uuid(_h_uuid, _uuid) == True:
+            self.resource.update_host_time(_host_name)
+        
+    def _update_h_uuid_in_host(self, _h_uuid, _uuid, _host_name):
+        host = self.resource.hosts[_host_name]
+        if host.update_h_uuid(_h_uuid, _uuid) == True:
+            self.resource.update_host_time(_host_name)
+        
+    def _update_uuid_in_logical_groups(self, _h_uuid, _uuid, _host_name):
+        host = self.resource.hosts[_host_name]
+
+        self.resource.update_uuid_in_logical_groups(_h_uuid, _uuid, host)
+        
+    def _update_h_uuid_in_logical_groups(self, _h_uuid, _uuid, _host_name):
+        host = self.resource.hosts[_host_name]
+
+        self.resource.update_h_uuid_in_logical_groups(_h_uuid, _uuid, host)
+
     def _get_json_results(self, _status_type, _status_message, _placement_map):
         result = {}
 
         if _status_type != "error":
             applications = {}
             for v in _placement_map.keys():
-                resources = None
-                if v.app_uuid in applications.keys():
-                    resources = applications[v.app_uuid]
-                else:
-                    resources = {}
-                    applications[v.app_uuid] = resources
+                if isinstance(v, VM) or isinstance(v, Volume):
+                    resources = None
+                    if v.app_uuid in applications.keys():
+                        resources = applications[v.app_uuid]
+                    else:
+                        resources = {}
+                        applications[v.app_uuid] = resources
 
-                host = _placement_map[v]
-                resource_property = {"host":host}
-                properties = {"properties":resource_property}
-                resources[v.uuid] = properties
+                    host = _placement_map[v]
+                    resource_property = {"host":host}
+                    properties = {"properties":resource_property}
+                    resources[v.uuid] = properties
 
             for appk, app_resources in applications.iteritems():
                 app_result = {}

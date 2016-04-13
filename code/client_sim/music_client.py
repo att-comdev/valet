@@ -38,6 +38,8 @@ class MusicClient:
             'request': request_data
         }
 
+        print "test: request_data = ", request_data
+
         self.music.create_row(self.config.db_keyspace, self.config.db_request_table, data)
 
     def get_placements(self):

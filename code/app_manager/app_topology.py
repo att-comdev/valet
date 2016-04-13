@@ -19,13 +19,15 @@ from app_topology_parser import Parser
 
 class AppTopology:
 
-    def __init__(self, _resource):
+    def __init__(self, _resource, _logger):
         self.vgroups = {}
         self.vms = {}
         self.volumes = {}
 
         self.resource = _resource
-        self.parser = Parser(self.resource)
+        self.logger = _logger
+
+        self.parser = Parser(self.resource, self.logger)
 
         self.optimization_priority = None
 

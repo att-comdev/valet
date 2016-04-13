@@ -1,0 +1,55 @@
+[
+{
+  "version": "0.1",
+  "action": "create",
+  "stack_id": "app_uuid100",
+  "application_name": "app100",
+  "resources": {
+    "vm100_uuid": {
+      "name": "vm100",
+      "properties": {
+        "flavor": "bflavor0"
+      },
+      "type": "OS::Nova::Server"
+    },
+    "vm101_uuid": {
+      "name": "vm101",
+      "properties": {
+        "flavor": "bflavor0"
+      },
+      "type": "OS::Nova::Server"
+    },
+    "vm102_uuid": {
+      "name": "vm102",
+      "properties": {
+        "flavor": "bflavor0"
+      },
+      "type": "OS::Nova::Server"
+    },
+    "affinity100_uuid": {
+      "name": "affinity100",
+      "properties": {
+        "relationship": "affinity",
+        "level": "rack",
+        "resources": [
+          "diversity100_uuid"
+        ]
+      },
+      "type": "ATT::CloudQoS::ResourceGroup"
+    },
+    "diversity100_uuid": {
+      "name": "diversity100",
+      "properties": {
+        "relationship": "diversity",
+        "level": "host",
+        "resources": [
+          "vm100_uuid",
+          "vm101_uuid",
+          "vm102_uuid"
+        ]
+      },
+      "type": "ATT::CloudQoS::ResourceGroup"
+    }
+  }
+}
+]

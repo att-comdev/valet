@@ -24,10 +24,10 @@ class Config:
         self.db_response_table = None
         self.db_event_table = None
         self.db_resource_table = None
+        self.db_app_table = None
         self.db_resource_index_table = None
         self.db_app_index_table = None
-
-        #self.replication_factor = 0
+        self.db_uuid_table = None
 
     def configure(self):
         try:
@@ -42,9 +42,7 @@ class Config:
                 (rk, v) = line.split("=")
                 k = rk.strip()
 
-                if k == "mode":
-                    self.mode = v.strip()
-                elif k == "db_keyspace":
+                if k == "db_keyspace":
                     self.db_keyspace = v.strip()
                 elif k == "db_request_table":
                     self.db_request_table = v.strip()
@@ -54,12 +52,14 @@ class Config:
                     self.db_event_table = v.strip()
                 elif k == "db_resource_table":
                     self.db_resource_table = v.strip()
+                elif k == "db_app_table":
+                    self.db_app_table = v.strip()
                 elif k == "db_resource_index_table":
                     self.db_resource_index_table = v.strip()
                 elif k == "db_app_index_table":
                     self.db_app_index_table = v.strip()
-                elif k == "db_app_table":
-                    self.db_app_table = v.strip()
+                elif k == "db_uuid_table":
+                    self.db_uuid_table = v.strip()
 
                 line = f.readline()
 
@@ -75,6 +75,3 @@ class Config:
 
 
 
-# Unit test
-config = Config()
-config.configure()

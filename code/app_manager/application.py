@@ -42,9 +42,9 @@ class App:
         self.vms[_vol.uuid].storage_host = _host_name
 
     def add_vgroup(self, _vg, _host_name):
-        self.vms[_vg.uuid] = _vg
-        self.vms[_vg.uuid].status = "scheduled"
-        self.vms[_vg.uuid].host = _host_name
+        self.vgroups[_vg.uuid] = _vg
+        self.vgroups[_vg.uuid].status = "scheduled"
+        self.vgroups[_vg.uuid].host = _host_name
 
     def get_json_info(self):
         vms = {}

@@ -595,18 +595,184 @@ class Resource:
             if isinstance(cluster, HostGroup):
                 self.datacenter.last_update = time.time()
 
+    # Call by optimizer and event handler
+    def add_vm_to_host(self, _host_name, _vm_id, _vcpus, _mem, _ldisk):
+        host = self.hosts[_host_name]
+
+        host.vm_list.append(_vm_id)
+
+        host.avail_vCPUs -= _vcpus
+        host.avail_mem_cap -= _mem
+        host.avail_local_disk_cap -= _ldisk
+
+        host.vCPUs_used += _vcpus
+        host.free_mem_mb -= _mem
+        host.free_disk_gb -= _ldisk
+        host.disk_available_least -= _ldisk
+
+    # Call by event handler
+    def remove_vm_by_h_uuid_from_host(self, __host_name, _h_uuid, _vcpus, _mem, _ldisk):
+        host = self.hosts[_host_name]
+       
+        host.remove_vm_by_h_uuid(_h_uuid) 
+
+        host.avail_vCPUs += _vcpus
+        host.avail_mem_cap += _mem
+        host.avail_local_disk_cap += _ldisk
+
+        host.vCPUs_used -= _vcpus
+        host.free_mem_mb += _mem
+        host.free_disk_gb += _ldisk
+        host.disk_available_least += _ldisk
+
+    # Call by event handler
+    def remove_vm_by_uuid_from_host(self, __host_name, _uuid, _vcpus, _mem, _ldisk):
+        host = self.hosts[_host_name]
+       
+        host.remove_vm_by_uuid(_uuid) 
+
+        host.avail_vCPUs += _vcpus
+        host.avail_mem_cap += _mem
+        host.avail_local_disk_cap += _ldisk
+
+        host.vCPUs_used -= _vcpus
+        host.free_mem_mb += _mem
+        host.free_disk_gb += _ldisk
+        host.disk_available_least += _ldisk
+
+    # Call by optimizer
+    def add_vol_to_host(self, _host_name, _storage_name, _v_id, _disk):
+        host = self.hosts[_host_name]
+   
+        host.volume_list.append(_v_id)                                                  
+                                                                                                 
+        storage_host = self.storage_hosts[_storage_name]              
+        storage_host.volume_list.append(_v_id)                                          
+                                                                                                 
+        storage_host.avail_disk_cap -= _disk
+
+    # Call by optimizer
+    # NOTE: Assume the up-link of spine switch is not used except out-going from datacenter      
+    # NOTE: What about peer-switches?
+    def deduct_bandwidth(self, _host_name, _placement_level, _bandwidth):
+        host = self.hosts[_host_name]
+
+        if _placement_level == "host":                                                           
+            self._deduct_host_bandwidth(host, _bandwidth)                                       
+                                                                                                 
+        elif _placement_level == "rack":                                                         
+            self._deduct_host_bandwidth(host, _bandwidth)                                       
+                                                                                                 
+            rack = host.host_group                                                              
+            if isinstance(rack, Datacenter):                                                     
+                pass                                                                             
+            else:                                                                                
+                self._deduct_host_bandwidth(rack, _bandwidth)                                    
+
+        elif _placement_level == "cluster":                                                      
+            self._deduct_host_bandwidth(host, _bandwidth)                                       
+
+            rack = host.host_group                                                              
+            self._deduct_host_bandwidth(rack, _bandwidth)                                        
+
+            cluster = rack.parent_resource                                                       
+            for sk, s in cluster.switches.iteritems():                                           
+                if s.switch_type == "spine":                                                     
+                    for ulk, ul in s.up_links.iteritems():                                       
+                        ul.avail_nw_bandwidth -= _bandwidth                                      
+        
+                    s.last_update = time.time()                                                  
+
+    def _deduct_host_bandwidth(self, _host, _bandwidth):                                         
+        for hsk, hs in _host.switches.iteritems():                                               
+            for ulk, ul in hs.up_links.iteritems():                                              
+                ul.avail_nw_bandwidth -= _bandwidth                                              
+
+            hs.last_update = time.time() 
+
+    def update_host_resources(self, _hn, _st, _vcpus, _vcpus_used, _mem, _fmem, _ldisk, _fldisk, _avail_least):
+        updated = False
+
+        host = self.hosts[_hn]
+
+        if host.status != _st:
+            host.status = _st
+            updated = True
+
+        if host.original_vCPUs != _vcpus or \
+           host.vCPUs_used != _vcpus_used:                                              
+            host.original_vCPUs = _vcpus                                         
+            host.vCPUs_used = _vcpus_used                                               
+            updated = True                                                              
+                                                                                                 
+        if host.free_mem_mb != _fmem or \
+           host.original_mem_cap != _mem:                                
+            host.free_mem_mb = _fmem                                                       
+            host.original_mem_cap = _mem                                    
+            updated = True                                                              
+
+        if host.free_disk_gb != _fldisk or \
+           host.original_local_disk_cap != _ldisk or \
+           host.disk_available_least != _avail_least:                            
+            host.free_disk_gb = _fldisk                                        
+            host.original_local_disk_cap = _ldisk                
+            host.disk_available_least = _avail_least                    
+            updated = True  
+
+        if updated == True:
+            self.compute_avail_resources(_hn, host)  
+
+        return updated                                                          
+
+    # Call by optimizer and event handler
+    def update_host_time(self, _host_name):
+        host = self.hosts[_host_name]
+
+        host.last_update = time.time()
+        self.update_rack_resource(host)
+
+    # Call by optimizer
+    def update_storage_time(self, _storage_name):
+        storage_host = self.storage_hosts[_storage_name]              
+       
+        storage_host.last_cap_update = time.time() 
+
+    # Call by optimizer
+    def add_logical_group(self, _host_name, _lg_name, _lg_type):
+        host = None
+        if _host_name in self.hosts.keys():
+            host = self.hosts[_host_name]
+        else:
+            host = self.host_groups[_host_name]
+
+        if host != None:
+            if _lg_name not in self.logical_groups.keys():
+                logical_group = LogicalGroup(_lg_name)
+                logical_group.group_type = _lg_type
+                logical_group.last_update = time.time()   
+                self.logical_groups[_lg_name] = logical_group           
+
+            if _lg_name not in host.memberships.keys():                                       
+                host.memberships[_lg_name] = self.logical_groups[_lg_name] 
+
+                if isinstance(host, HostGroup):
+                    host.last_update = time.time()  
+
+                    self.update_cluster_resource(host)
+
+    # Call by optimizer and event handler
     def add_vm_to_logical_groups(self, _host, _vm_id, _logical_groups_of_vm):
         for lgk in _host.memberships.keys():
             if lgk in _logical_groups_of_vm:            
                 lg = self.logical_groups[lgk]
 
                 if isinstance(_host, Host):
-                    if lg.add_vm(_vm_id, _host.name) == True:
+                    if lg.add_vm_by_h_uuid(_vm_id, _host.name) == True:
                         lg.last_update = time.time()
                 elif isinstance(_host, HostGroup):
                     if lg.group_type == "EX" or lg.group_type == "AFF":
                         if lgk.split(":")[0] == _host.host_type:
-                            if lg.add_vm(_vm_id, _host.name) == True:
+                            if lg.add_vm_by_h_uuid(_vm_id, _host.name) == True:
                                 lg.last_update = time.time()
 
         if isinstance(_host, Host) and _host.host_group != None:
@@ -614,23 +780,164 @@ class Resource:
         elif isinstance(_host, HostGroup) and _host.parent_resource != None:
             self.add_vm_to_logical_groups(_host.parent_resource, _vm_id, _logical_groups_of_vm)
 
-    def remove_vm_from_logical_groups(self, _host, _vm_id):
+    # Call by event handler
+    def remove_vm_by_h_uuid_from_logical_groups(self, _host, _h_uuid):
         for lgk in _host.memberships.keys():
             lg = self.logical_groups[lgk]
 
             if isinstance(_host, Host):
-                if lg.remove_vm(_vm_id, _host.name) == True:
+                if lg.remove_vm_by_h_uuid(_h_uuid, _host.name) == True:
                     lg.last_update = time.time()
             elif isinstance(_host, HostGroup):
                 if lg.group_type == "EX" or lg.group_type == "AFF":
                     if lgk.split(":")[0] == _host.host_type:
-                        if lg.remove_vm(_vm_id, _host.name) == True:
+                        if lg.remove_vm_by_h_uuid(_h_uuid, _host.name) == True:
                             lg.last_update = time.time()
 
         if isinstance(_host, Host) and _host.host_group != None:
-            self.remove_vm_from_logical_groups(_host.host_group, _vm_id)
+            self.remove_vm_by_h_uuid_from_logical_groups(_host.host_group, _h_uuid)
         elif isinstance(_host, HostGroup) and _host.parent_resource != None:
-            self.remove_vm_from_logical_groups(_host.parent_resource, _vm_id)
+            self.remove_vm_by_h_uuid_from_logical_groups(_host.parent_resource, _h_uuid)
+
+    # Call by compute manager 
+    def remove_vm_by_uuid_from_logical_groups(self, _host, _uuid):
+        for lgk in _host.memberships.keys():
+            lg = self.logical_groups[lgk]
+
+            if isinstance(_host, Host):
+                if lg.remove_vm_by_uuid(_uuid, _host.name) == True:
+                    lg.last_update = time.time()
+            elif isinstance(_host, HostGroup):
+                if lg.group_type == "EX" or lg.group_type == "AFF":
+                    if lgk.split(":")[0] == _host.host_type:
+                        if lg.remove_vm_by_uuid(_uuid, _host.name) == True:
+                            lg.last_update = time.time()
+
+        if isinstance(_host, Host) and _host.host_group != None:
+            self.remove_vm_by_uuid_from_logical_groups(_host.host_group, _uuid)
+        elif isinstance(_host, HostGroup) and _host.parent_resource != None:
+            self.remove_vm_by_uuid_from_logical_groups(_host.parent_resource, _uuid)
+
+    # Call by compute manager
+    def clean_none_vms_from_logical_groups(self, _host):
+        for lgk in _host.memberships.keys():
+            lg = self.logical_groups[lgk]
+
+            if isinstance(_host, Host):
+                if lg.clean_none_vms(_host.name) == True:
+                    lg.last_update = time.time()
+            elif isinstance(_host, HostGroup):
+                if lg.group_type == "EX" or lg.group_type == "AFF":
+                    if lgk.split(":")[0] == _host.host_type:
+                        if lg.clean_none_vms(_host.name) == True:
+                            lg.last_update = time.time()
+
+        if isinstance(_host, Host) and _host.host_group != None:
+            self.clean_none_vms_from_logical_groups(_host.host_group)
+        elif isinstance(_host, HostGroup) and _host.parent_resource != None:
+            self.clean_none_vms_from_logical_groups(_host.parent_resource)
+
+    def update_uuid_in_logical_groups(self, _h_uuid, _uuid, _host):
+        for lgk in _host.memberships.keys():
+            lg = self.logical_groups[lgk]
+
+            if isinstance(_host, Host):
+                if lg.update_uuid(_h_uuid, _uuid, _host.name) == True:
+                    #lg.last_update = time.time()
+                    pass
+            elif isinstance(_host, HostGroup):
+                if lg.group_type == "EX" or lg.group_type == "AFF":
+                    if lgk.split(":")[0] == _host.host_type:
+                        if lg.update_uuid(_h_uuid, _uuid, _host.name) == True:
+                            #lg.last_update = time.time()
+                            pass
+
+        if isinstance(_host, Host) and _host.host_group != None:
+            self.update_uuid_in_logical_groups(_h_uuid, _uuid, _host.host_group)
+        elif isinstance(_host, HostGroup) and _host.parent_resource != None:
+            self.update_uuid_in_logical_groups(_h_uuid, _uuid, _host.parent_resource)
+
+    def update_h_uuid_in_logical_groups(self, _h_uuid, _uuid, _host):
+        for lgk in _host.memberships.keys():
+            lg = self.logical_groups[lgk]
+
+            if isinstance(_host, Host):
+                if lg.update_h_uuid(_h_uuid, _uuid, _host.name) == True:
+                    #lg.last_update = time.time()
+                    pass
+            elif isinstance(_host, HostGroup):
+                if lg.group_type == "EX" or lg.group_type == "AFF":
+                    if lgk.split(":")[0] == _host.host_type:
+                        if lg.update_h_uuid(_h_uuid, _uuid, _host.name) == True:
+                            #lg.last_update = time.time()
+                            pass
+
+        if isinstance(_host, Host) and _host.host_group != None:
+            self.update_h_uuid_in_logical_groups(_h_uuid, _uuid, _host.host_group)
+        elif isinstance(_host, HostGroup) and _host.parent_resource != None:
+            self.update_h_uuid_in_logical_groups(_h_uuid, _uuid, _host.parent_resource)
+
+    def compute_avail_resources(self, hk, host):
+        ram_allocation_ratio_list = []
+        cpu_allocation_ratio_list = []
+        disk_allocation_ratio_list = []
+
+        for lgk, lg in host.memberships.iteritems():
+            if lg.group_type == "AGGR":
+                if "ram_allocation_ratio" in lg.metadata.keys():
+                    ram_allocation_ratio_list.append(float(lg.metadata["ram_allocation_ratio"]))
+                if "cpu_allocation_ratio" in lg.metadata.keys():
+                    cpu_allocation_ratio_list.append(float(lg.metadata["cpu_allocation_ratio"]))
+                if "disk_allocation_ratio" in lg.metadata.keys():
+                    disk_allocation_ratio_list.append(float(lg.metadata["disk_allocation_ratio"]))
+
+        ram_allocation_ratio = 1.0
+        if len(ram_allocation_ratio_list) > 0:
+            ram_allocation_ratio = min(ram_allocation_ratio_list)
+        else:
+            if self.config.default_ram_allocation_ratio > 0:
+                ram_allocation_ratio = self.config.default_ram_allocation_ratio
+
+        static_ram_standby_ratio = 0
+        if self.config.static_mem_standby_ratio > 0:
+            static_ram_standby_ratio = float(self.config.static_mem_standby_ratio) / float(100)
+
+        host.compute_avail_mem(ram_allocation_ratio, static_ram_standby_ratio)
+
+        self.logger.debug("host (" + hk + ")'s total_mem = " + str(host.mem_cap) + \
+                          ", avail_mem = " + str(host.avail_mem_cap))
+
+        cpu_allocation_ratio = 1.0
+        if len(cpu_allocation_ratio_list) > 0:
+            cpu_allocation_ratio = min(cpu_allocation_ratio_list)
+        else:
+            if self.config.default_cpu_allocation_ratio > 0:
+                cpu_allocation_ratio = self.config.default_cpu_allocation_ratio
+
+        static_cpu_standby_ratio = 0
+        if self.config.static_cpu_standby_ratio > 0:
+            static_cpu_standby_ratio = float(self.config.static_cpu_standby_ratio) / float(100)
+
+        host.compute_avail_vCPUs(cpu_allocation_ratio, static_cpu_standby_ratio)
+
+        self.logger.debug("host (" + hk + ")'s total_vCPUs = " + str(host.vCPUs) + \
+                          ", avail_vCPUs = " + str(host.avail_vCPUs))
+
+        disk_allocation_ratio = 1.0
+        if len(disk_allocation_ratio_list) > 0:
+            disk_allocation_ratio = min(disk_allocation_ratio_list)
+        else:
+            if self.config.default_disk_allocation_ratio > 0:
+                disk_allocation_ratio = self.config.default_disk_allocation_ratio
+
+        static_disk_standby_ratio = 0
+        if self.config.static_local_disk_standby_ratio > 0:
+            static_disk_standby_ratio = float(self.config.static_local_disk_standby_ratio) / float(100)
+
+        host.compute_avail_disk(disk_allocation_ratio, static_disk_standby_ratio)
+
+        self.logger.debug("host (" + hk + ")'s total_local_disk = " + str(host.local_disk_cap) + \
+                          ", avail_local_disk = " + str(host.avail_local_disk_cap))
 
     def get_flavor(self, _name):
         flavor = None

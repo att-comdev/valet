@@ -23,7 +23,8 @@ class SimCompute():
     def set_hosts(self, _hosts, _logical_groups):
         self._set_availability_zones(_hosts, _logical_groups)
 
-        self._set_aggregates(_hosts, _logical_groups)
+        # for test
+        #self._set_aggregates(_hosts, _logical_groups)
 
         self._set_placed_vms(_hosts, _logical_groups)
 
@@ -37,8 +38,16 @@ class SimCompute():
         _logical_groups[logical_group.name] = logical_group
 
         for r_num in range(0, self.config.num_of_racks):
-            for h_num in range(0, self.config.num_of_hosts_per_rack):
-                host = Host(self.config.mode + "u0" + "r" + str(r_num) + "c" + str(h_num))
+
+            # for test
+            num_of_hosts = 0
+            if r_num == 1:
+                num_of_hosts = 1
+            else:
+                num_of_hosts = 2
+            for h_num in range(0, num_of_hosts):
+            #for h_num in range(0, self.config.num_of_hosts_per_rack):
+                host = Host(self.config.mode + "0r" + str(r_num) + "c" + str(h_num))
                 host.tag.append("nova")
                 host.memberships["nova"] = logical_group
 
@@ -61,7 +70,7 @@ class SimCompute():
             aggregate = _logical_groups["aggregate" + str(a_num)]
             for r_num in range(0, self.config.num_of_racks):
                 for h_num in range(0, self.config.num_of_hosts_per_rack):
-                    host_name = self.config.mode + "u0" + "r" + str(r_num) + "c" + str(h_num)
+                    host_name = self.config.mode + "0r" + str(r_num) + "c" + str(h_num)
                     if host_name in _hosts.keys():
                         if (h_num % (self.config.aggregated_ratio + a_num)) == 0:
                             host = _hosts[host_name]
@@ -74,10 +83,22 @@ class SimCompute():
 
     def _set_resources(self, _hosts):
         for r_num in range(0, self.config.num_of_racks):
-            for h_num in range(0, self.config.num_of_hosts_per_rack):
-                host_name = self.config.mode + "u0" + "r" + str(r_num) + "c" + str(h_num)
+
+            # for test
+            num_of_hosts = 0
+            if r_num == 1:
+                num_of_hosts = 1
+            else:
+                num_of_hosts = 2
+            for h_num in range(0, num_of_hosts):
+            #for h_num in range(0, self.config.num_of_hosts_per_rack):
+                host_name = self.config.mode + "0r" + str(r_num) + "c" + str(h_num)
                 if host_name in _hosts.keys():
                     host = _hosts[host_name]
+                    # for test
+                    if r_num == 1:
+                        host.status = "disabled"
+                        host.state = "down"
                     host.original_vCPUs = float(self.config.cpus_per_host) 
                     host.vCPUs_used = 0.0
                     host.original_mem_cap = float(self.config.mem_per_host)

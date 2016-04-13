@@ -1,0 +1,740 @@
+event_id =  1460475309.13
+{
+    "node": "qos101", 
+    "instance": {
+        "nova_object.version": "1.19", 
+        "nova_object.name": "Instance", 
+        "nova_object.namespace": "nova", 
+        "nova_object.data": {
+            "vm_state": "building", 
+            "pci_requests": {
+                "nova_object.version": "1.1", 
+                "nova_object.name": "InstancePCIRequests", 
+                "nova_object.namespace": "nova", 
+                "nova_object.data": {
+                    "instance_uuid": "efd4f0c3-313b-4a55-89a6-7f17e01cdba9", 
+                    "requests": []
+                }
+            }, 
+            "availability_zone": "none", 
+            "terminated_at": "none", 
+            "ephemeral_gb": 0, 
+            "instance_type_id": 2, 
+            "updated_at": "none", 
+            "numa_topology": "none", 
+            "vm_mode": "none", 
+            "deleted_at": "none", 
+            "id": 1539, 
+            "disable_terminate": "false", 
+            "display_name": "simple-my_instance-dpqrrljmkryj", 
+            "uuid": "efd4f0c3-313b-4a55-89a6-7f17e01cdba9", 
+            "new_flavor": "none", 
+            "hostname": "simple-my-instance-dpqrrljmkryj", 
+            "launched_on": "none", 
+            "power_state": 0, 
+            "old_flavor": "none", 
+            "project_id": "65c3e5ee5ee0428caa5e5275c58ead61", 
+            "launched_at": "none", 
+            "metadata": {}, 
+            "node": "none", 
+            "ramdisk_id": "", 
+            "deleted": "false", 
+            "key_name": "demo", 
+            "host": "none", 
+            "user_id": "1702902d510646838cff9303c7ff16ce", 
+            "task_state": "scheduling", 
+            "shutdown_terminate": "false", 
+            "cell_name": "none", 
+            "root_gb": 20, 
+            "locked": "false", 
+            "created_at": "2016-03-28T19:13:40Z", 
+            "locked_by": "none", 
+            "memory_mb": 2048, 
+            "vcpus": 1, 
+            "os_type": "none", 
+            "scheduled_at": "none"
+        }
+    }, 
+    "filter_properties": {
+        "retry": {
+            "num_attempts": 1, 
+            "hosts": [
+                [
+                    "qos101", 
+                    "qos101"
+                ]
+            ]
+        }, 
+        "limits": {
+            "memory_mb": 193345.5
+        }, 
+        "scheduler_hints": {
+            "heat_resource_uuid": "d2c54709-118a-41be-8a0d-c0bc82531af7", 
+            "heat_stack_id": "c4aaf02b-75f6-429e-b68c-c8b4fbd557ab", 
+            "heat_resource_name": "my_instance", 
+            "heat_stack_name": "simple", 
+            "heat_path_in_stack": [
+                [
+                    "none", 
+                    "simple"
+                ]
+            ], 
+            "heat_root_stack_id": "c4aaf02b-75f6-429e-b68c-c8b4fbd557ab"
+        }
+    }, 
+    "security_groups": [
+        "default"
+    ]
+}
+event_id =  1460475311.22
+{
+    "objmethod": "save", 
+    "args": [], 
+    "objinst": {
+        "nova_object.version": "1.19", 
+        "nova_object.namespace": "nova", 
+        "nova_object.name": "Instance", 
+        "nova_object.data": {
+            "vm_state": "active", 
+            "pci_requests": {
+                "nova_object.version": "1.1", 
+                "nova_object.name": "InstancePCIRequests", 
+                "nova_object.namespace": "nova", 
+                "nova_object.data": {
+                    "instance_uuid": "efd4f0c3-313b-4a55-89a6-7f17e01cdba9", 
+                    "requests": []
+                }
+            }, 
+            "availability_zone": "none", 
+            "terminated_at": "none", 
+            "ephemeral_gb": 0, 
+            "instance_type_id": 2, 
+            "updated_at": "2016-03-28T19:13:41Z", 
+            "numa_topology": "none", 
+            "vm_mode": "none", 
+            "cleaned": "false", 
+            "vcpu_model": {
+                "nova_object.version": "1.0", 
+                "nova_object.namespace": "nova", 
+                "nova_object.name": "VirtCPUModel", 
+                "nova_object.data": {
+                    "vendor": "none", 
+                    "features": [], 
+                    "mode": "host-model", 
+                    "model": "none", 
+                    "arch": "none", 
+                    "match": "exact", 
+                    "topology": {
+                        "nova_object.version": "1.0", 
+                        "nova_object.namespace": "nova", 
+                        "nova_object.name": "VirtCPUTopology", 
+                        "nova_object.data": {
+                            "cores": 1, 
+                            "threads": 1, 
+                            "sockets": 1
+                        }, 
+                        "nova_object.changes": [
+                            "cores", 
+                            "threads", 
+                            "sockets"
+                        ]
+                    }
+                }, 
+                "nova_object.changes": [
+                    "vendor", 
+                    "features", 
+                    "model", 
+                    "topology", 
+                    "arch", 
+                    "match", 
+                    "mode"
+                ]
+            }, 
+            "flavor": {
+                "nova_object.version": "1.1", 
+                "nova_object.name": "Flavor", 
+                "nova_object.namespace": "nova", 
+                "nova_object.data": {
+                    "memory_mb": 2048, 
+                    "flavorid": "2", 
+                    "name": "m1.small", 
+                    "deleted": "false", 
+                    "created_at": "none", 
+                    "ephemeral_gb": 0, 
+                    "updated_at": "none", 
+                    "disabled": "false", 
+                    "vcpus": 1, 
+                    "root_gb": 20, 
+                    "extra_specs": {}, 
+                    "swap": 0, 
+                    "rxtx_factor": 1.0, 
+                    "is_public": "true", 
+                    "deleted_at": "none", 
+                    "vcpu_weight": 0, 
+                    "id": 2
+                }
+            }, 
+            "deleted_at": "none", 
+            "reservation_id": "r-cgo015m0", 
+            "id": 1539, 
+            "security_groups": {
+                "nova_object.version": "1.0", 
+                "nova_object.name": "SecurityGroupList", 
+                "nova_object.namespace": "nova", 
+                "nova_object.data": {
+                    "objects": []
+                }
+            }, 
+            "disable_terminate": "false", 
+            "root_device_name": "/dev/vda", 
+            "display_name": "simple-my_instance-dpqrrljmkryj", 
+            "uuid": "efd4f0c3-313b-4a55-89a6-7f17e01cdba9", 
+            "default_swap_device": "none", 
+            "info_cache": {
+                "nova_object.version": "1.5", 
+                "nova_object.name": "InstanceInfoCache", 
+                "nova_object.namespace": "nova", 
+                "nova_object.data": {
+                    "instance_uuid": "efd4f0c3-313b-4a55-89a6-7f17e01cdba9", 
+                    "deleted": "false", 
+                    "created_at": "2016-03-28T19:13:40Z", 
+                    "updated_at": "none", 
+                    "network_info": "[]", 
+                    "deleted_at": "none"
+                }
+            }, 
+            "hostname": "simple-my-instance-dpqrrljmkryj", 
+            "launched_on": "qos101", 
+            "display_description": "simple-my_instance-dpqrrljmkryj", 
+            "key_data": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCc3+Qt64MiXHeCoIIbeLvwUYrm2vxXRyv5qyan+J/51hYfu2myVJdV+1X0vnpg27ZgdmgzrHRvvRExG9jjtI/+TvAQ3ZQZkvxxGARl6kP+xAYyUvBvyrzEqTzb7BPpN7Nr4K2Fv0ZNW0uTByQuCXR7IrfuX+0B5aTYVSDNVh2vGDLZ815FOAEUsJsV9LV4jg26MbuePwahGf0OsbiTAfgLyxGbiUb3vl6Yvzojd/GvcWcaLGw4OO7DvSbNMjXq8e6bOuFqBVaAxaPSvvyP1LKrAXQjuCDTCxAH255vbVYTpfGedeGzWF7mTZNb5NQAczbZkYdEHz8NbVmF7sRQA69L Generated by Nova", 
+            "kernel_id": "", 
+            "scheduled_at": "none", 
+            "power_state": 1, 
+            "default_ephemeral_device": "none", 
+            "progress": 0, 
+            "old_flavor": "none", 
+            "project_id": "65c3e5ee5ee0428caa5e5275c58ead61", 
+            "launched_at": "2016-03-28T19:13:55Z", 
+            "config_drive": "", 
+            "node": "qos101", 
+            "pci_devices": {
+                "nova_object.version": "1.1", 
+                "nova_object.name": "PciDeviceList", 
+                "nova_object.namespace": "nova", 
+                "nova_object.data": {
+                    "objects": []
+                }
+            }, 
+            "access_ip_v6": "none", 
+            "access_ip_v4": "none", 
+            "deleted": "false", 
+            "key_name": "demo", 
+            "host": "qos101", 
+            "root_gb": 20, 
+            "user_id": "1702902d510646838cff9303c7ff16ce", 
+            "system_metadata": {
+                "image_container_format": "bare", 
+                "image_min_disk": "20", 
+                "image_disk_format": "qcow2", 
+                "image_base_image_ref": "ef3ad30f-411b-478f-a802-3635a70b60dd", 
+                "image_min_ram": "0"
+            }, 
+            "task_state": "none", 
+            "shutdown_terminate": "false", 
+            "cell_name": "none", 
+            "ephemeral_key_uuid": "none", 
+            "locked": "false", 
+            "created_at": "2016-03-28T19:13:40Z", 
+            "locked_by": "none", 
+            "launch_index": 0, 
+            "memory_mb": 2048, 
+            "vcpus": 1, 
+            "image_ref": "ef3ad30f-411b-478f-a802-3635a70b60dd", 
+            "architecture": "none", 
+            "auto_disk_config": "false", 
+            "os_type": "none", 
+            "metadata": {}, 
+            "ramdisk_id": "", 
+            "new_flavor": "none"
+        }, 
+        "nova_object.changes": [
+            "vm_state", 
+            "root_device_name", 
+            "power_state", 
+            "vcpu_model", 
+            "task_state", 
+            "launched_at"
+        ]
+    }, 
+    "kwargs": {
+        "expected_task_state": "spawning"
+    }
+}
+event_id =  1460475313.33
+{
+    "objmethod": "save", 
+    "objinst": {
+        "nova_object.version": "1.11", 
+        "nova_object.name": "ComputeNode", 
+        "nova_object.data": {
+            "pci_device_pools": {
+                "nova_object.version": "1.1", 
+                "nova_object.namespace": "nova", 
+                "nova_object.name": "PciDevicePoolList", 
+                "nova_object.data": {
+                    "objects": []
+                }, 
+                "nova_object.changes": [
+                    "objects"
+                ]
+            }, 
+            "updated_at": "2016-03-22T14:00:48Z", 
+            "numa_topology": {
+                "nova_object.version": "1.2", 
+                "nova_object.namespace": "nova", 
+                "nova_object.name": "NUMATopology", 
+                "nova_object.data": {
+                    "cells": [
+                        {
+                            "nova_object.version": "1.2", 
+                            "nova_object.namespace": "nova", 
+                            "nova_object.name": "NUMACell", 
+                            "nova_object.data": {
+                                "cpu_usage": 0, 
+                                "memory_usage": 0, 
+                                "cpuset": [
+                                    0, 
+                                    2, 
+                                    4, 
+                                    6, 
+                                    8, 
+                                    10, 
+                                    12, 
+                                    14, 
+                                    16, 
+                                    18, 
+                                    20, 
+                                    22, 
+                                    24, 
+                                    26, 
+                                    28, 
+                                    30
+                                ], 
+                                "mempages": [
+                                    {
+                                        "nova_object.version": "1.0", 
+                                        "nova_object.namespace": "nova", 
+                                        "nova_object.name": "NUMAPagesTopology", 
+                                        "nova_object.data": {
+                                            "total": 16483142, 
+                                            "size_kb": 4, 
+                                            "used": 0
+                                        }, 
+                                        "nova_object.changes": [
+                                            "total", 
+                                            "size_kb", 
+                                            "used"
+                                        ]
+                                    }, 
+                                    {
+                                        "nova_object.version": "1.0", 
+                                        "nova_object.namespace": "nova", 
+                                        "nova_object.name": "NUMAPagesTopology", 
+                                        "nova_object.data": {
+                                            "total": 0, 
+                                            "size_kb": 2048, 
+                                            "used": 0
+                                        }, 
+                                        "nova_object.changes": [
+                                            "total", 
+                                            "size_kb", 
+                                            "used"
+                                        ]
+                                    }
+                                ], 
+                                "pinned_cpus": [], 
+                                "memory": 64387, 
+                                "siblings": [
+                                    [
+                                        8, 
+                                        24
+                                    ], 
+                                    [
+                                        2, 
+                                        18
+                                    ], 
+                                    [
+                                        10, 
+                                        26
+                                    ], 
+                                    [
+                                        0, 
+                                        16
+                                    ], 
+                                    [
+                                        28, 
+                                        12
+                                    ], 
+                                    [
+                                        22, 
+                                        6
+                                    ], 
+                                    [
+                                        30, 
+                                        14
+                                    ], 
+                                    [
+                                        20, 
+                                        4
+                                    ]
+                                ], 
+                                "id": 0
+                            }, 
+                            "nova_object.changes": [
+                                "cpu_usage", 
+                                "memory_usage", 
+                                "cpuset", 
+                                "pinned_cpus", 
+                                "siblings", 
+                                "memory", 
+                                "mempages", 
+                                "id"
+                            ]
+                        }, 
+                        {
+                            "nova_object.version": "1.2", 
+                            "nova_object.namespace": "nova", 
+                            "nova_object.name": "NUMACell", 
+                            "nova_object.data": {
+                                "cpu_usage": 0, 
+                                "memory_usage": 0, 
+                                "cpuset": [
+                                    1, 
+                                    3, 
+                                    5, 
+                                    7, 
+                                    9, 
+                                    11, 
+                                    13, 
+                                    15, 
+                                    17, 
+                                    19, 
+                                    21, 
+                                    23, 
+                                    25, 
+                                    27, 
+                                    29, 
+                                    31
+                                ], 
+                                "mempages": [
+                                    {
+                                        "nova_object.version": "1.0", 
+                                        "nova_object.namespace": "nova", 
+                                        "nova_object.name": "NUMAPagesTopology", 
+                                        "nova_object.data": {
+                                            "total": 16514492, 
+                                            "size_kb": 4, 
+                                            "used": 0
+                                        }, 
+                                        "nova_object.changes": [
+                                            "total", 
+                                            "size_kb", 
+                                            "used"
+                                        ]
+                                    }, 
+                                    {
+                                        "nova_object.version": "1.0", 
+                                        "nova_object.namespace": "nova", 
+                                        "nova_object.name": "NUMAPagesTopology", 
+                                        "nova_object.data": {
+                                            "total": 0, 
+                                            "size_kb": 2048, 
+                                            "used": 0
+                                        }, 
+                                        "nova_object.changes": [
+                                            "total", 
+                                            "size_kb", 
+                                            "used"
+                                        ]
+                                    }
+                                ], 
+                                "pinned_cpus": [], 
+                                "memory": 64509, 
+                                "siblings": [
+                                    [
+                                        1, 
+                                        17
+                                    ], 
+                                    [
+                                        31, 
+                                        15
+                                    ], 
+                                    [
+                                        23, 
+                                        7
+                                    ], 
+                                    [
+                                        13, 
+                                        29
+                                    ], 
+                                    [
+                                        27, 
+                                        11
+                                    ], 
+                                    [
+                                        19, 
+                                        3
+                                    ], 
+                                    [
+                                        9, 
+                                        25
+                                    ], 
+                                    [
+                                        5, 
+                                        21
+                                    ]
+                                ], 
+                                "id": 1
+                            }, 
+                            "nova_object.changes": [
+                                "cpu_usage", 
+                                "memory_usage", 
+                                "cpuset", 
+                                "pinned_cpus", 
+                                "siblings", 
+                                "memory", 
+                                "mempages", 
+                                "id"
+                            ]
+                        }
+                    ]
+                }, 
+                "nova_object.changes": [
+                    "cells"
+                ]
+            }, 
+            "cpu_info": {
+                "arch": "x86_64", 
+                "model": "SandyBridge", 
+                "vendor": "Intel", 
+                "features": [
+                    "pge", 
+                    "avx", 
+                    "clflush", 
+                    "sep", 
+                    "syscall", 
+                    "vme", 
+                    "dtes64", 
+                    "msr", 
+                    "xsave", 
+                    "vmx", 
+                    "xtpr", 
+                    "cmov", 
+                    "ssse3", 
+                    "est", 
+                    "pat", 
+                    "monitor", 
+                    "smx", 
+                    "pbe", 
+                    "lm", 
+                    "tsc", 
+                    "nx", 
+                    "fxsr", 
+                    "tm", 
+                    "sse4.1", 
+                    "pae", 
+                    "sse4.2", 
+                    "pclmuldq", 
+                    "acpi", 
+                    "tsc-deadline", 
+                    "mmx", 
+                    "osxsave", 
+                    "cx8", 
+                    "mce", 
+                    "de", 
+                    "tm2", 
+                    "ht", 
+                    "dca", 
+                    "lahf_lm", 
+                    "pdcm", 
+                    "mca", 
+                    "pdpe1gb", 
+                    "apic", 
+                    "sse", 
+                    "pse", 
+                    "ds", 
+                    "invtsc", 
+                    "pni", 
+                    "rdtscp", 
+                    "aes", 
+                    "sse2", 
+                    "ss", 
+                    "ds_cpl", 
+                    "pcid", 
+                    "fpu", 
+                    "cx16", 
+                    "pse36", 
+                    "mtrr", 
+                    "popcnt", 
+                    "x2apic"
+                ], 
+                "topology": {
+                    "cores": 8, 
+                    "threads": 2, 
+                    "sockets": 1
+                }
+            }, 
+            "free_disk_gb": 4243, 
+            "deleted_at": "none", 
+            "memory_mb_used": 154632, 
+            "stats": {
+                "num_task_none": "21", 
+                "num_vm_suspended": "1", 
+                "io_workload": "1", 
+                "num_instances": "21", 
+                "num_proj_b2dbb5a20ebe481e93e17287b7b21efb": "3", 
+                "num_proj_6e2dbaa8549a4ad9901820fba9063e13": "5", 
+                "num_vm_stopped": "10", 
+                "num_vm_building": "1", 
+                "num_vm_active": "9", 
+                "num_proj_65c3e5ee5ee0428caa5e5275c58ead61": "8", 
+                "num_proj_1d00180787fd4e6dbf79d74936b674d3": "2", 
+                "num_proj_d040ae9c88fb46aa8fdcce460655b83a": "1", 
+                "num_os_type_none": "21", 
+                "num_proj_27067c636bce446fa79394ea150b2230": "1", 
+                "num_proj_f3d9651771b44a008e5d76da1077f319": "1"
+            }, 
+            "local_gb_used": 1300, 
+            "id": 1, 
+            "current_workload": 0, 
+            "deleted": "false", 
+            "host_ip": "10.1.1.1", 
+            "hypervisor_hostname": "qos101", 
+            "metrics": "[]", 
+            "host": "qos101", 
+            "hypervisor_version": 2002000, 
+            "disk_available_least": 4111, 
+            "local_gb": 5543, 
+            "free_ram_mb": -25735, 
+            "vcpus_used": 66, 
+            "hypervisor_type": "QEMU", 
+            "created_at": "2013-10-18T18:30:30Z", 
+            "memory_mb": 128897, 
+            "vcpus": 32, 
+            "running_vms": 21, 
+            "service_id": 5
+        }, 
+        "nova_object.changes": [
+            "pci_device_pools", 
+            "deleted", 
+            "updated_at", 
+            "numa_topology", 
+            "host_ip", 
+            "metrics", 
+            "cpu_info", 
+            "host", 
+            "hypervisor_hostname", 
+            "free_disk_gb", 
+            "hypervisor_version", 
+            "disk_available_least", 
+            "deleted_at", 
+            "free_ram_mb", 
+            "memory_mb_used", 
+            "memory_mb", 
+            "local_gb", 
+            "stats", 
+            "vcpus_used", 
+            "hypervisor_type", 
+            "created_at", 
+            "local_gb_used", 
+            "current_workload", 
+            "vcpus", 
+            "running_vms", 
+            "service_id"
+        ]
+    }
+}
+event_id =  1460475315.42
+{
+    "objmethod": "save", 
+    "objinst": {
+        "nova_object.version": "1.19", 
+        "nova_object.namespace": "nova", 
+        "nova_object.name": "Instance", 
+        "nova_object.data": {
+            "vm_state": "deleted", 
+            "availability_zone": "none", 
+            "terminated_at": "2016-03-28T19:14:09Z", 
+            "ephemeral_gb": 0, 
+            "instance_type_id": 2, 
+            "updated_at": "2016-03-28T19:14:09Z", 
+            "cleaned": "true", 
+            "vm_mode": "none", 
+            "flavor": {
+                "nova_object.version": "1.1", 
+                "nova_object.name": "Flavor", 
+                "nova_object.namespace": "nova", 
+                "nova_object.data": {
+                    "memory_mb": 2048, 
+                    "flavorid": "2", 
+                    "name": "m1.small", 
+                    "deleted": "false", 
+                    "created_at": "none", 
+                    "ephemeral_gb": 0, 
+                    "updated_at": "none", 
+                    "disabled": "false", 
+                    "vcpus": 1, 
+                    "root_gb": 20, 
+                    "extra_specs": {}, 
+                    "swap": 0, 
+                    "rxtx_factor": 1.0, 
+                    "is_public": "true", 
+                    "deleted_at": "none", 
+                    "vcpu_weight": 0, 
+                    "id": 2
+                }
+            }, 
+            "deleted_at": "none", 
+            "reservation_id": "r-cgo015m0", 
+            "id": 1539, 
+            "disable_terminate": "false", 
+            "display_name": "simple-my_instance-dpqrrljmkryj", 
+            "uuid": "efd4f0c3-313b-4a55-89a6-7f17e01cdba9", 
+            "new_flavor": "none", 
+            "hostname": "simple-my-instance-dpqrrljmkryj", 
+            "launched_on": "qos101", 
+            "power_state": 0, 
+            "progress": 0, 
+            "old_flavor": "none", 
+            "project_id": "65c3e5ee5ee0428caa5e5275c58ead61", 
+            "launched_at": "2016-03-28T19:13:55Z", 
+            "metadata": {}, 
+            "node": "qos101", 
+            "ramdisk_id": "", 
+            "deleted": "false", 
+            "key_name": "demo", 
+            "user_data": "Q29udGVudC1UeXBlOiBtdWx0aXBhcnQvbWl4ZWQ7IGJvdW5kYXJ5PSI9PT", 
+            "host": "qos101", 
+            "root_gb": 20, 
+            "user_id": "1702902d510646838cff9303c7ff16ce", 
+            "task_state": "none", 
+            "shutdown_terminate": "false", 
+            "cell_name": "none", 
+            "ephemeral_key_uuid": "none", 
+            "locked": "false", 
+            "created_at": "2016-03-28T19:13:40Z", 
+            "locked_by": "none", 
+            "memory_mb": 2048, 
+            "vcpus": 1, 
+            "root_device_name": "/dev/vda", 
+            "os_type": "none", 
+            "scheduled_at": "none"
+        }, 
+        "nova_object.changes": [
+            "terminated_at", 
+            "vm_state", 
+            "task_state", 
+            "power_state"
+        ]
+    }
+}

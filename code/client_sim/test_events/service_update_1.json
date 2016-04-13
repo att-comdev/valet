@@ -1,0 +1,14 @@
+{
+          'service': {'binary': 'nova-compute',
+                      'created_at': '2013-10-18T18:30:30.000000',
+                      'deleted': 0,
+                      'deleted_at': None,
+                      'disabled': False,
+                      'disabled_reason': None,
+                      'host': 'qos101',
+                      'id': 5,
+                      'report_count': 7628119,
+                      'topic': 'compute',
+                      'updated_at': '2016-03-28T19:13:53.039140'},
+          'values': {'report_count': 7628120}
+}

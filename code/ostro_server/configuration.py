@@ -52,9 +52,12 @@ class Config:
         self.db_app_table=None
         self.db_resource_index_table = None
         self.db_app_index_table = None
+        self.db_uuid_table = None
         #self.replication_factor = 0
 
         self.ip = None
+
+        self.priority = 0
 
         self.rpc_server_ip = None
         self.rpc_server_port = 0
@@ -66,6 +69,7 @@ class Config:
 
         self.resource_log_loc = None
         self.app_log_loc = None
+        self.max_main_log_size = 0
         self.max_log_size = 0
         self.max_num_of_logs = 0
 
@@ -161,6 +165,8 @@ class Config:
                     self.root_loc = v.strip()
                 elif k == "mode":
                     self.mode = v.strip()
+                elif k == "priority":
+                    self.priority = v.strip()
                 elif k == "logger_name":
                     self.logger_name = v.strip()
                 elif k == "logging_level":
@@ -171,6 +177,8 @@ class Config:
                     self.resource_log_loc = v.strip()
                 elif k == "app_log_loc":
                     self.app_log_loc = v.strip()
+                elif k == "max_main_log_size":
+                    self.max_main_log_size = int(v.strip())
                 elif k == "max_log_size":
                     self.max_log_size = int(v.strip())
                 elif k == "max_num_of_logs":
@@ -224,11 +232,11 @@ class Config:
                 elif k == "topology_trigger_time":
                     self.topology_trigger_time = v.strip()
                 elif k == "topology_trigger_frequency":
-                    self.topology_trigger_freq = int(v.strip())
+                    self.topology_trigger_freq = float(v.strip())
                 elif k == "compute_trigger_time":
                     self.compute_trigger_time = v.strip()
                 elif k == "compute_trigger_frequency":
-                    self.compute_trigger_freq = int(v.strip())
+                    self.compute_trigger_freq = float(v.strip())
                 elif k == "db_keyspace":
                     self.db_keyspace = v.strip()
                 elif k == "db_request_table":
@@ -245,6 +253,8 @@ class Config:
                     self.db_resource_index_table = v.strip()
                 elif k == "db_app_index_table":
                     self.db_app_index_table = v.strip()
+                elif k == "db_uuid_table":
+                    self.db_uuid_table = v.strip()
                 elif k == "ip":
                     self.ip = v.strip()
                 elif k == "control_loc":

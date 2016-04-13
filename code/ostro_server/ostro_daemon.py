@@ -12,7 +12,10 @@
 #################################################################################################################
 
 
-import sys, logging
+import os
+import sys 
+import logging
+from logging.handlers import RotatingFileHandler
 
 from daemon import Daemon   # Implemented for Python v2.x
 from configuration import Config
@@ -44,16 +47,43 @@ if __name__ == "__main__":
         print "Error while configuring Ostro: " + config_status
         sys.exit(2)
 
+    # Create logging directories
+    try:
+        if not os.path.exists(config.logging_loc):
+            os.makedirs(config.logging_loc)
+    except OSError:
+        print "Error while Ostro log dir"
+        sys.exit(2)
+
+    try:
+        if not os.path.exists(config.resource_log_loc):
+            os.makedirs(config.resource_log_loc)
+    except OSError:
+        print "Error while resource log dir"
+        sys.exit(2)
+
+    try:
+        if not os.path.exists(config.app_log_loc):
+            os.makedirs(config.app_log_loc)
+    except OSError:
+        print "Error while app log dir"
+        sys.exit(2)
+
     # Logger 
+    log_formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
+    log_handler = RotatingFileHandler(config.logging_loc + config.logger_name + ".log", \
+                                      mode='a', \
+                                      maxBytes=config.max_main_log_size, \
+                                      backupCount=2, \
+                                      encoding=None, \
+                                      delay=0)
+    log_handler.setFormatter(log_formatter)
     logger = logging.getLogger(config.logger_name)
     if config.logging_level == "debug":
         logger.setLevel(logging.DEBUG)
     else:
         logger.setLevel(logging.INFO)
-    formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
-    handler = logging.FileHandler(config.logging_loc)
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
+    logger.addHandler(log_handler)
 
     # Start daemon process
     daemon = OstroDaemon(config.process, logger)
@@ -65,6 +95,8 @@ if __name__ == "__main__":
             daemon.stop()
         elif sys.argv[1] == 'restart':
             daemon.restart()
+        elif sys.argv[1] == 'status':
+            exit_code = daemon.status()
         else:
             print "Unknown command"
             sys.exit(2)

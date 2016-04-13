@@ -99,7 +99,7 @@ class ComputeManager(threading.Thread):
         if triggered_host_updates == True and triggered_flavor_updates == True:
             self.resource.update_topology()
         else:
-            # TODO: error handling, e.g., 3 times failure then stop Ostro
+            # TODO: error handling, e.g., 3 times failure then stop Ostro?
             pass
 
         self.logger.info("--- done compute_nodes status update ---")
@@ -149,66 +149,7 @@ class ComputeManager(threading.Thread):
 
     def _compute_avail_host_resources(self, _hosts):
         for hk, host in _hosts.iteritems():
-            ram_allocation_ratio_list = []
-            cpu_allocation_ratio_list = []
-            disk_allocation_ratio_list = []
-
-            for lgk, lg in host.memberships.iteritems():
-                if lg.group_type == "AGGR":
-                    if "ram_allocation_ratio" in lg.metadata.keys():
-                        ram_allocation_ratio_list.append(float(lg.metadata["ram_allocation_ratio"])) 
-                    if "cpu_allocation_ratio" in lg.metadata.keys():
-                        cpu_allocation_ratio_list.append(float(lg.metadata["cpu_allocation_ratio"])) 
-                    if "disk_allocation_ratio" in lg.metadata.keys():
-                        disk_allocation_ratio_list.append(float(lg.metadata["disk_allocation_ratio"])) 
-
-            ram_allocation_ratio = 1.0
-            if len(ram_allocation_ratio_list) > 0:
-                ram_allocation_ratio = min(ram_allocation_ratio_list)
-            else:
-                if self.config.default_ram_allocation_ratio > 0:
-                    ram_allocation_ratio = self.config.default_ram_allocation_ratio
-
-            static_ram_standby_ratio = 0
-            if self.config.static_mem_standby_ratio > 0:
-                static_ram_standby_ratio = float(self.config.static_mem_standby_ratio) / float(100)
-
-            host.compute_avail_mem(ram_allocation_ratio, static_ram_standby_ratio)
-            
-            self.logger.debug("host (" + hk + ")'s total_mem = " + str(host.mem_cap) + \
-                              ", avail_mem = " + str(host.avail_mem_cap))
-
-            cpu_allocation_ratio = 1.0
-            if len(cpu_allocation_ratio_list) > 0:
-                cpu_allocation_ratio = min(cpu_allocation_ratio_list)
-            else:
-                if self.config.default_cpu_allocation_ratio > 0:
-                    cpu_allocation_ratio = self.config.default_cpu_allocation_ratio
-
-            static_cpu_standby_ratio = 0
-            if self.config.static_cpu_standby_ratio > 0:
-                static_cpu_standby_ratio = float(self.config.static_cpu_standby_ratio) / float(100)
-
-            host.compute_avail_vCPUs(cpu_allocation_ratio, static_cpu_standby_ratio)
-            
-            self.logger.debug("host (" + hk + ")'s total_vCPUs = " + str(host.vCPUs) + \
-                              ", avail_vCPUs = " + str(host.avail_vCPUs))
-
-            disk_allocation_ratio = 1.0
-            if len(disk_allocation_ratio_list) > 0:
-                disk_allocation_ratio = min(disk_allocation_ratio_list)
-            else:
-                if self.config.default_disk_allocation_ratio > 0:
-                    disk_allocation_ratio = self.config.default_disk_allocation_ratio
-
-            static_disk_standby_ratio = 0
-            if self.config.static_local_disk_standby_ratio > 0:
-                static_disk_standby_ratio = float(self.config.static_local_disk_standby_ratio) / float(100)
-
-            host.compute_avail_disk(disk_allocation_ratio, static_disk_standby_ratio)
-            
-            self.logger.debug("host (" + hk + ")'s total_local_disk = " + str(host.local_disk_cap) + \
-                              ", avail_local_disk = " + str(host.avail_local_disk_cap))
+            self.resource.compute_avail_resources(hk, host)
 
     def _check_logical_group_update(self, _logical_groups):
         for lk in _logical_groups.keys():
@@ -308,6 +249,16 @@ class ComputeManager(threading.Thread):
     def _check_host_config_update(self, _host, _rhost):
         topology_updated = False
 
+        topology_updated = self._check_host_status(_host, _rhost)
+        topology_updated = self._check_host_resources(_host, _rhost)
+        topology_updated = self._check_host_memberships(_host, _rhost)
+        topology_updated = self._check_host_vms(_host, _rhost)
+
+        return topology_updated
+
+    def _check_host_status(self, _host, _rhost):
+        topology_updated = False
+
         if "nova" not in _rhost.tag:
             _rhost.tag.append("nova")
             topology_updated = True
@@ -322,6 +273,11 @@ class ComputeManager(threading.Thread):
             _rhost.state = _host.state
             topology_updated = True
             self.logger.warn("host (" + _rhost.name + ") updated (state changed)")
+
+        return topology_updated
+
+    def _check_host_resources(self, _host, _rhost):
+        topology_updated = False
 
         if _host.vCPUs != _rhost.vCPUs or \
            _host.original_vCPUs != _rhost.original_vCPUs or \
@@ -361,6 +317,11 @@ class ComputeManager(threading.Thread):
             topology_updated = True
             self.logger.warn("host (" + _rhost.name + ") updated (other resource numbers)")
 
+        return topology_updated
+
+    def _check_host_memberships(self, _host, _rhost):
+        topology_updated = False
+
         for mk in _host.memberships.keys():
             if mk not in _rhost.memberships.keys():
                 _rhost.memberships[mk] = self.resource.logical_groups[mk]
@@ -375,15 +336,23 @@ class ComputeManager(threading.Thread):
                     topology_updated = True
                     self.logger.warn("host (" + _rhost.name + ") updated (delete membership)")
 
-        for vm_id in _host.vm_list:
-            if vm_id[0] == "none":
-                for rvm_id in _rhost.vm_list:
-                    if vm_id[1] == rvm_id[1] and vm_id[2] == rvm_id[2]:
-                        if rvm_id[0] != "none":
-                            vm_id[0] = rvm_id[0]
-                        break
+        return topology_updated
 
-            if _rhost.exist_vm(vm_id) == False:
+    def _check_host_vms(self, _host, _rhost): 
+        topology_updated = False
+
+        # Clean up VMs
+        for rvm_id in _rhost.vm_list:
+            if rvm_id[2] == "none":
+                _rhost.vm_list.remove(rvm_id)
+
+                topology_updated = True
+                self.logger.warn("host (" + _rhost.name +") updated (none vm removed)")
+
+        self.resource.clean_none_vms_from_logical_groups(_rhost)
+
+        for vm_id in _host.vm_list:
+            if _rhost.exist_vm_by_uuid(vm_id[2]) == False:
                 _rhost.vm_list.append(vm_id)
 
                 # NOTE: do we need this?
@@ -393,10 +362,10 @@ class ComputeManager(threading.Thread):
                 self.logger.warn("host (" + _rhost.name +") updated (new vm placed)")
 
         for rvm_id in _rhost.vm_list:
-            if rvm_id[2] == "none" or _host.exist_vm(rvm_id) == False:
+            if _host.exist_vm_by_uuid(rvm_id[2]) == False:
                 _rhost.vm_list.remove(rvm_id)
 
-                self.resource.remove_vm_from_logical_groups(_rhost, rvm_id)
+                self.resource.remove_vm_by_uuid_from_logical_groups(_rhost, rvm_id[2])
 
                 topology_updated = True
                 self.logger.warn("host (" + _rhost.name +") updated (vm removed)")

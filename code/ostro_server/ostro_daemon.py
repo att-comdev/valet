@@ -86,7 +86,9 @@ if __name__ == "__main__":
     logger.addHandler(log_handler)
 
     # Start daemon process
-    daemon = OstroDaemon(config.process, logger)
+    daemon = OstroDaemon(config.priority, config.process, logger)
+
+    exit_code = 0
 
     if len(sys.argv) == 2:
         if sys.argv[1] == 'start':
@@ -96,11 +98,11 @@ if __name__ == "__main__":
         elif sys.argv[1] == 'restart':
             daemon.restart()
         elif sys.argv[1] == 'status':
-            exit_code = daemon.status()
+            exit_code = int(daemon.status())
         else:
             print "Unknown command"
             sys.exit(2)
-        sys.exit(0)
+        sys.exit(exit_code)
     else:
         print "Usage: %s start|stop|restart" % sys.argv[0]
         sys.exit(2)

@@ -557,12 +557,15 @@ class Search:
         while True:
             top_candidate_list = []
             best_usage = _candidate_list[0].sort_base
-            while len(_candidate_list) > 0:
-                ch = _candidate_list.pop(0)
+
+            rm_list = []
+            for ch in _candidate_list:
                 if ch.sort_base == best_usage:
                     top_candidate_list.append(ch)
+                    rm_list.append(ch)
                 else:
                     break
+            _candidate_list[:] = [c for c in _candidate_list if c not in rm_list]
 
             constrained_list = []
             for c in top_candidate_list:
@@ -586,12 +589,15 @@ class Search:
     def _sort_highest_consolidation(self, _n, _level, _candidate_list):
         top_candidate_list = []
         best_bandwidth_usage = _candidate_list[0].sort_base
-        while len(_candidate_list) > 0:
-            ch = _candidate_list.pop(0)
+
+        rm_list = []
+        for ch in _candidate_list:
             if ch.sort_base == best_bandwidth_usage:
                 top_candidate_list.append(ch)
+                rm_list.append(ch)
             else:
                 break
+        _candidate_list[:] = [c for c in _candidate_list if c not in rm_list]
 
         target = None
         for (t, w) in self.app_topology.optimization_priority:

@@ -12,6 +12,7 @@
 #################################################################################################################
 
 
+import os
 import sys 
 import logging
 from logging.handlers import RotatingFileHandler
@@ -46,9 +47,31 @@ if __name__ == "__main__":
         print "Error while configuring Ostro: " + config_status
         sys.exit(2)
 
+    # Create logging directories
+    try:
+        if not os.path.exists(config.logging_loc):
+            os.makedirs(config.logging_loc)
+    except OSError:
+        print "Error while Ostro log dir"
+        sys.exit(2)
+
+    try:
+        if not os.path.exists(config.resource_log_loc):
+            os.makedirs(config.resource_log_loc)
+    except OSError:
+        print "Error while resource log dir"
+        sys.exit(2)
+
+    try:
+        if not os.path.exists(config.app_log_loc):
+            os.makedirs(config.app_log_loc)
+    except OSError:
+        print "Error while app log dir"
+        sys.exit(2)
+
     # Logger 
     log_formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
-    log_handler = RotatingFileHandler(config.logging_loc, \
+    log_handler = RotatingFileHandler(config.logging_loc + config.logger_name + ".log", \
                                       mode='a', \
                                       maxBytes=config.max_main_log_size, \
                                       backupCount=2, \

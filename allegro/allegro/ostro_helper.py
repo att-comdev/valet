@@ -18,6 +18,7 @@
 import time
 import uuid
 
+from pecan import conf
 import simplejson
 
 from allegro.models.music import PlacementRequest
@@ -32,11 +33,15 @@ class Ostro(object):
     request = None
     response = None
 
-    tries = 10  # Number of times to poll for placement.
-    interval = 1  # Interval in seconds to poll for placement.
+    tries = None  # Number of times to poll for placement.
+    interval = None  # Interval in seconds to poll for placement.
 
     debug = True
     debug_file = '/tmp/allegro-dump.txt'
+
+    def __init__(self):
+        self.tries = conf.ostro.get('tries', 10)
+        self.interval = conf.ostro.get('interval', 1)
 
     def _build_uuid_map(self, resources):
         '''Build a dict mapping names to UUIDs.'''

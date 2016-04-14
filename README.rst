@@ -40,7 +40,6 @@ Throughout this document, the following installation-specific terms are used:
 - ``$PATH_TO_VENV``: Allegro API virtual environment path
 - ``$TEGU_HOST``: Tegu API hostname or FQDN
 - ``$ALLEGRO_PROJECT_NAME``: Allegro user default project (e.g., service)
-- ``$ALLEGRO_USERNAME``: Allegro username (e.g., allegro)
 - ``$ALLEGRO_PASSWORD``: Allegro user password
 - ``$KEYSTONE_AUTH_API``: Keystone Auth API endpoint
 
@@ -98,7 +97,20 @@ While the following error might appear when installing allegro-api under python 
 
 `InsecurePlatformWarning`_ : A true SSLContext object is not available. This prevents urllib3 from configuring SSL appropriately and may cause certain SSL connections to fail.
 
-In config.py, edit the 'identity' section so that the config values (username, password, and project_name) match those of the allegro_user. (Project Name is equivalent to the Tenant Name.) The auth_url must point to the Keystone API endpoint.
+allegro-api Configuration
+-------------------------
+
+**IMPORTANT**: SQLAlchemy can't be used as an ORM engine at this time. This will be re-enabled in the future. It is ok to ignore the SQLAlchemy directives in this section.
+
+Edit ``$ALLEGRO_PATH/allegro/config.py`` and ensure the ``server``, ``identity``, ``sqlalchemy``, and ``music`` sections reflect the desired configuration settings:
+
+**server**: ``port`` must be the desired port number (usually 8090, but it doesn't have to be).
+
+**identity**: Within the ``config`` subsection, ``username``, ``password``, and ``project_name`` must match those of the designated OpenStack allegro user. (``project_name`` is equivalent to ``tenant_name``.) ``auth_url`` must point to the Keystone API endpoint (usually the publicurl).
+
+**sqlalchemy**: ``url``, ``echo``, ``echo_pool``, ``pool_recycle``, and ``encoding`` must match the settings required for access to SQLAlchemy. In particular, the desired allegro username/password for database access must be present in the ``url``.
+
+**music**: ``host``, ``port``, ``keyspace``, and ``replication_factor`` must match the settings required for access to Music. If more than one host is desired, set ``hosts`` (plural) to a python list of hosts instead. If ``host`` and ``hosts`` are both set, ``host`` is used and ``hosts`` is ignored.
 
 allegro-api SQLAlchemy Setup
 ----------------------------
@@ -354,6 +366,20 @@ OpenStack Configuration
 
 allegro-openstack requires edits to the heat, nova, and cinder configuration files, specifically in relation to the heat-engine, nova-scheduler, and cinder-scheduler. It's possible that these services are not all running on the same host. In that case, install allegro-openstack all relevant hosts, editing configuration files as needed on each.
 
+Add a user ``allegro`` to the OpenStack cluster, giving it an ``admin`` role in the ``service`` project (tenant):
+
+::
+
+  $ keystone user-create --name allegro --pass $ALLEGRO_PASSWORD
+
+::
+
+  $ keystone user-role-add --user allegro --tenant service --role admin
+
+allegro-api requires line-of-sight to the Keystone adminurl endpoint. If this endpoint is unavailable, allegro-api will not be able to obtain a list of all projects (tenants) for use with group management.
+
+To mitigate, edit ``$ALLEGRO_PATH/allegro/config.py``. In the ``identity`` section, add an additional config setting of ``interface`` and set it to ``'public'``. Next, add the allegro user as a member of every project (tenant) it is expected to be aware of.
+
 heat.conf
 ^^^^^^^^^
 
@@ -488,7 +514,7 @@ Next, add an ``[allegro]`` section:
 
 ::
 
-  allegro_user = $ALLEGRO_USERNAME
+  allegro_user = allegro
 
 ::
 

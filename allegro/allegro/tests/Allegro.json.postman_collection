@@ -32,7 +32,8 @@
 				"ab18d511-890d-d13e-baea-49cb77121a3b",
 				"832f3e6d-e96c-de32-f7bf-7a4fe2607a42"
 			],
-			"owner": "61155"
+			"owner": "61155",
+			"collectionId": "1d5ba476-f6c7-a0c0-d664-a331c00926c3"
 		},
 		{
 			"id": "540bc889-a135-870c-92d8-87470353dc5d",
@@ -49,7 +50,8 @@
 			"name": "Placements",
 			"description": "",
 			"order": [
-				"2cc7dcd2-5a8d-b356-abdd-784ca7f0ea38"
+				"2cc7dcd2-5a8d-b356-abdd-784ca7f0ea38",
+				"57b2dc09-eb7b-c0a9-7f2f-91f7c6686418"
 			],
 			"owner": "61155"
 		},
@@ -248,7 +250,7 @@
 		{
 			"id": "2cc7dcd2-5a8d-b356-abdd-784ca7f0ea38",
 			"headers": "Content-Type: application/json\nX-Auth-Token: {{auth_token}}\n",
-			"url": "{{allegro}}/v1/{{tenant_id}}/placements/a649424b-dd57-1431-befc-45cc4b72d653/",
+			"url": "{{allegro}}/v1/{{tenant_id}}/placements/",
 			"preRequestScript": "",
 			"pathVariables": {},
 			"method": "GET",
@@ -257,9 +259,9 @@
 			"tests": "",
 			"currentHelper": "normal",
 			"helperAttributes": {},
-			"time": 1460055564609,
+			"time": 1460476050919,
 			"name": "List placements",
-			"description": "List all placements for a given plan.",
+			"description": "List all placements.",
 			"collectionId": "1d5ba476-f6c7-a0c0-d664-a331c00926c3"
 		},
 		{
@@ -295,6 +297,23 @@
 			"time": 1460055481718,
 			"name": "API v1",
 			"description": "Root API v1 endpoint\n",
+			"collectionId": "1d5ba476-f6c7-a0c0-d664-a331c00926c3"
+		},
+		{
+			"id": "57b2dc09-eb7b-c0a9-7f2f-91f7c6686418",
+			"headers": "Content-Type: application/json\nX-Auth-Token: {{auth_token}}\n",
+			"url": "{{allegro}}/v1/{{tenant_id}}/placements/bcfc4498-2336-4d4d-8ea5-da5959875819/",
+			"preRequestScript": "",
+			"pathVariables": {},
+			"method": "GET",
+			"data": [],
+			"dataMode": "params",
+			"tests": "",
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1460475940602,
+			"name": "List placement (orchestration id)",
+			"description": "List placement given an orchestration id",
 			"collectionId": "1d5ba476-f6c7-a0c0-d664-a331c00926c3"
 		},
 		{
@@ -450,14 +469,13 @@
 			"method": "POST",
 			"data": [],
 			"dataMode": "raw",
-			"tests": "var data = JSON.parse(responseBody);\npostman.setEnvironmentVariable(\"auth_token\", data['access']['token']['id']);",
+			"tests": "var data = JSON.parse(responseBody);\npostman.setEnvironmentVariable(\"auth_token\", data['access']['token']['id']);\npostman.setEnvironmentVariable(\"tenant_id\", data['access']['token']['tenant']['id']);",
 			"currentHelper": "normal",
 			"helperAttributes": {},
-			"time": 1460054811405,
+			"time": 1460499553922,
 			"name": "Keystone Generate Token v2",
 			"description": "Generate a token for use",
 			"collectionId": "1d5ba476-f6c7-a0c0-d664-a331c00926c3",
-			"folder": "8c978d71-6846-1f14-ccc1-89f00ac3607f",
 			"rawModeData": "{\n    \"auth\": {\n        \"tenantName\": \"{{tenant_name}}\",\n        \"passwordCredentials\": {\n            \"username\": \"{{username}}\",\n            \"password\": \"{{password}}\"\n        }\n    }\n}"
 		},
 		{

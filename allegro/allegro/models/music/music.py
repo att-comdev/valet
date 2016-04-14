@@ -105,9 +105,10 @@ class Music(object):
     lock_timeout = None  # Maximum time in seconds to acquire a lock
 
     rest = None  # API Endpoint
+    replication_factor = None  # Number of Music nodes to replicate across
 
     def __init__(self, host=None, hosts=['localhost'],
-                 port='8080', lock_timeout=10):
+                 port='8080', lock_timeout=10, replication_factor=1):
         '''Initializer. Accepts a lock_timeout for atomic operations.'''
 
         # If one host is provided, that overrides the list
@@ -124,12 +125,14 @@ class Music(object):
         self.lock_names = []
         self.lock_timeout = lock_timeout
 
+        self.replication_factor = replication_factor
+
     def create_keyspace(self, keyspace):
         '''Creates a keyspace.'''
         data = {
             'replicationInfo': {
                 'class': 'SimpleStrategy',
-                'replication_factor': 1
+                'replication_factor': self.replication_factor
             },
             'durabilityOfWrites': True,
             'consistencyInfo': {

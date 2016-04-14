@@ -200,7 +200,8 @@ def _engine_from_config(configuration):
     configuration = dict(configuration)
     kwargs = {
         'host': configuration.get('host'),
-        'port': configuration.get('port')
+        'port': configuration.get('port'),
+        'replication_factor': configuration.get('replication_factor'),
     }
     return Music(**kwargs)
 

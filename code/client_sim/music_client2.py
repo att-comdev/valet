@@ -78,7 +78,7 @@ if __name__ == '__main__':
     mc = MusicClient(config)
 
     time.sleep(5)
-    mc.set_request("app_uuid100", "./test_inputs/complex_mix_affinity_nested_diversity_violated.json")
+    mc.set_request("app_uuid101", "./test_inputs/complex_mix_affinity_affinity.json")
     time.sleep(5)
     results = mc.get_placements()
     if results != None:

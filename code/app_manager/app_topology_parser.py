@@ -29,8 +29,10 @@ NOTE: Restrictions of nested groups
 '''
 class Parser:
 
-    def __init__(self, _resource):
+    def __init__(self, _resource, _logger):
         self.resource = _resource
+
+        self.logger = _logger
 
         self.high_level_allowed = True
         if "none" in self.resource.datacenter.region_code_list:
@@ -71,6 +73,7 @@ class Parser:
             self.action = "any"
 
         if self.action == "ping":
+            self.logger.debug("ping does not parse")
             return ({}, {}, {})
         else:
             return self._set_topology(_graph["resources"])
@@ -100,6 +103,8 @@ class Parser:
                     vm.availability_zone = az.split(":")[0]
   
                 vms[vm.uuid] = vm
+
+                self.logger.debug("get a vm = " + vm.name)
 
             elif r["type"] == "OS::Cinder::Volume":
                 # NOTE: do nothing at this version
@@ -154,6 +159,8 @@ class Parser:
 
                 vgroups[vgroup.uuid] = vgroup
 
+                self.logger.debug("get a group = " + vgroup.name)
+
             elif r["type"] == "OS::Nova::ServerGroup" or \
                  r["type"] == "OS::Heat::AutoScalingGroup" or \
                  r["type"] == "OS::Heat::Stack" or \
@@ -171,6 +178,8 @@ class Parser:
 
         self._set_weight(vms, volumes)
 
+        self.logger.debug("all vms parsed")
+
         if self._merge_diversity_groups(_elements, vgroups, vms, volumes) == False:
             return ({}, {}, {})
 
@@ -186,12 +195,16 @@ class Parser:
             if vg.vgroup_type == "DIV" or vg.vgroup_type == "EX":
                 del vgroups[vgk]
 
+        self.logger.debug("all groups resolved")
+
         for vgk in vgroups.keys():
             vgroup = vgroups[vgk]
             self._set_vgroup_links(vgroup, vgroups, vms, volumes)
 
             if isinstance(vgroup, VGroup):
                 self._set_vgroup_weight(vgroup)
+
+        self.logger.debug("all groups parsed")
 
         return (vgroups, vms, volumes)
 
@@ -411,6 +424,8 @@ class Parser:
                         vgroup = _vgroups[rk]
                     else:
                         continue
+
+                    self.logger.debug("merge for affinity = " + vgroup.name)
 
                     for vk in r["properties"]["resources"]:
 
@@ -697,7 +712,7 @@ class Parser:
                 '''
 
             if self._exist_in_subgroups(t_vg.uuid, _s_vg) == None:
-                _s_vg.subvgroups[t_vg.uuid].append(t_vg)
+                _s_vg.subvgroups[t_vg.uuid] = t_vg
                 t_vg.survgroup = _s_vg
 
                 _affinity_map[t_vg.uuid] = _s_vg

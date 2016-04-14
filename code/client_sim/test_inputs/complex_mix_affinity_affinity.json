@@ -1,0 +1,81 @@
+[
+{
+  "version": "0.1",
+  "action": "create",
+  "stack_id": "app_uuid101",
+  "application_name": "app101",
+  "resources": {
+    "vm102_uuid": {
+      "name": "vm102",
+      "properties": {
+        "flavor": "bflavor0"
+      },
+      "type": "OS::Nova::Server"
+    },
+    "vm103_uuid": {
+      "name": "vm103",
+      "properties": {
+        "flavor": "bflavor0"
+      },
+      "type": "OS::Nova::Server"
+    },
+    "vm104_uuid": {
+      "name": "vm104",
+      "properties": {
+        "flavor": "bflavor0"
+      },
+      "type": "OS::Nova::Server"
+    },
+    "vm105_uuid": {
+      "name": "vm105",
+      "properties": {
+        "flavor": "bflavor0"
+      },
+      "type": "OS::Nova::Server"
+    },
+    "vm106_uuid": {
+      "name": "vm106",
+      "properties": {
+        "flavor": "bflavor0"
+      },
+      "type": "OS::Nova::Server"
+    },
+    "vm107_uuid": {
+      "name": "vm107",
+      "properties": {
+        "flavor": "bflavor0"
+      },
+      "type": "OS::Nova::Server"
+    },
+    "affinity101_uuid": {
+      "name": "affinity101",
+      "properties": {
+        "relationship": "affinity",
+        "level": "host",
+        "resources": [
+          "vm102_uuid",
+          "vm103_uuid",
+          "vm104_uuid"
+        ]
+      },
+      "type": "ATT::CloudQoS::ResourceGroup"
+    },
+    "affinity102_uuid": {
+      "name": "affinity102",
+      "properties": {
+        "relationship": "affinity",
+        "level": "rack",
+        "resources": [
+          "vm102_uuid",
+          "vm103_uuid",
+          "vm104_uuid",
+          "vm105_uuid",
+          "vm106_uuid",
+          "vm107_uuid"
+        ]
+      },
+      "type": "ATT::CloudQoS::ResourceGroup"
+    }
+  }
+}
+]

@@ -47,9 +47,11 @@ class AppHandler:
             self.logger.error("cannot clear prior requested apps")
         '''
 
-        app_topology = AppTopology(self.resource)
+        app_topology = AppTopology(self.resource, self.logger)
 
         for app in _app_data:
+            self.logger.debug("parse app")
+
             app_id = app_topology.set_app_topology(app)
 
             if app_id == None:

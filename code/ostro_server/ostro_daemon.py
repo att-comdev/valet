@@ -101,10 +101,11 @@ if __name__ == "__main__":
             exit_code = int(daemon.status())
         else:
             print "Unknown command"
-            sys.exit(2)
-        sys.exit(exit_code)
+            exit_code = 2
     else:
         print "Usage: %s start|stop|restart" % sys.argv[0]
-        sys.exit(2)
+        exit_code = 2
+
+    sys.exit(exit_code)
 
 

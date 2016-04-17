@@ -70,6 +70,7 @@ class Group(Base):
         self.description = description
         self.type = type
         if _insert:
+            self.members = []  # members ignored at init time
             self.insert()
         else:
             # TODO: Support lists in Music

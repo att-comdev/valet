@@ -81,7 +81,6 @@ QUICK_RESTART_SEC = 150     # we consider it a quick restart if less than this
 
 # HA Configuration
 HEARTBEAT_SEC = 5                    # Heartbeat interval in seconds
-PRI_WAIT_SEC = 5                     # Backoff to let higher prio valet take over
 
 
 NAME = 'name'
@@ -271,7 +270,7 @@ class HaValetThread (threading.Thread):
                 time.sleep(HEARTBEAT_SEC)
             else:
                 # No valet running. Wait for higher priority valet to activate.
-                time.sleep(PRI_WAIT_SEC*priority)
+                time.sleep(HEARTBEAT_SEC*priority)
 
             self.set_logger()
 
@@ -506,6 +505,7 @@ class HAValet:
                 conf_data[process_name]['name'] = process_name
                 print 'Launching: ', conf_data[process_name]['name']
                 thread = HaValetThread(conf_data[process_name], exit_event)
+                time.sleep(HEARTBEAT_SEC)
                 thread.start()
                 threads.append(thread)
             else:

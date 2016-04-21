@@ -28,11 +28,10 @@ from allegro.models.music import Placement
 # Placement Helpers
 #
 
-def update_placements(plan, resources, placements):
-    for key in placements.iterkeys():
-        uuid = key
-        name = resources[key]['name']
-        properties = placements[key]['properties']
+def set_placements(plan, resources, placements):
+    for uuid in placements.iterkeys():
+        name = resources[uuid]['name']
+        properties = placements[uuid]['properties']
         location = properties['host']
         placement = Placement(
             name, uuid,
@@ -40,6 +39,16 @@ def update_placements(plan, resources, placements):
             location=location
         )
     return plan
+
+def update_placements(plan, placements):
+    for uuid in placements.iterkeys():
+        placement = Placement.query.filter_by(orchestration_id=uuid).first()
+        if placement:
+            properties = placements[uuid]['properties']
+            location = properties['host']
+            placement.location = location
+            placement.update()
+    return
 
 #
 # Error Helpers

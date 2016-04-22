@@ -101,12 +101,19 @@ class AllegroAPIWrapper(object):
         except requests.exceptions.HTTPError as e:
             self._exception(e, sys.exc_info(), req)
 
-    def placement(self, uuid, tenant_id=None, auth_token=None):
+    def placement(self, uuid, hosts=None, tenant_id=None, auth_token=None):
         """Call Allegro API to get placement for an Orchestration ID."""
         try:
             url = self._api_endpoint(tenant_id) + '/placements/' + uuid
             self.headers['X-Auth-Token'] = auth_token
-            req = requests.get(url, headers=self.headers)
+            if hosts:
+                kwargs = {
+                    "locations": hosts
+                }
+                payload = json.dumps(kwargs)
+                req = requests.post(url, data=payload, headers=self.headers)
+            else:
+                req = requests.get(url, headers=self.headers)
 
             # TODO: If not 200 or timeout, honk
             #req.raise_for_status()

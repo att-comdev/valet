@@ -53,7 +53,8 @@ class Config:
         self.db_resource_index_table = None
         self.db_app_index_table = None
         self.db_uuid_table = None
-        #self.replication_factor = 0
+        self.replication_factor = 0
+        self.db_hosts = []
 
         self.ip = None
 
@@ -255,6 +256,12 @@ class Config:
                     self.db_app_index_table = v.strip()
                 elif k == "db_uuid_table":
                     self.db_uuid_table = v.strip()
+                elif k == "replication_factor":
+                    self.replication_factor = int(v.strip())
+                elif k == "db_hosts":
+                    hl = v.strip().split(",")
+                    for h in hl:                                                               
+                        self.db_hosts.append(h)
                 elif k == "ip":
                     self.ip = v.strip()
                 elif k == "control_loc":

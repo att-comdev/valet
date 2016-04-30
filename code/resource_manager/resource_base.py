@@ -300,23 +300,35 @@ class Host:
     def update_uuid(self, _h_uuid, _uuid):
         success = False
 
+        vm_name = "none"
         for vm_id in self.vm_list:
             if vm_id[0] == _h_uuid:
-                vm_id[2] = _uuid
+                vm_name = vm_id[1]
+                self.vm_list.remove(vm_id)
                 success = True
                 break
 
+        if success == True:
+            vm_id = (_h_uuid, vm_name, _uuid)
+            self.vm_list.append(vm_id)
+ 
         return success
 
     def update_h_uuid(self, _h_uuid, _uuid):
         success = False
 
+        vm_name = "none"
         for vm_id in self.vm_list:
             if vm_id[2] == _uuid:
-                vm_id[0] = _h_uuid
+                vm_name = vm_id[1]
+                self.vm_list.remove(vm_id)
                 success = True
                 break
 
+        if success == True:
+            vm_id = (_h_uuid, vm_name, _uuid) 
+            self.vm_list.append(vm_id)
+ 
         return success
 
     def compute_avail_vCPUs(self, _overcommit_ratio, _standby_ratio):  
@@ -419,35 +431,49 @@ class LogicalGroup:
     def update_uuid(self, _h_uuid, _uuid, _host_id):
         success = False
 
+        vm_name = "none"
         for vm_id in self.vm_list:
             if vm_id[0] == _h_uuid:
-                vm_id[2] = _uuid
+                vm_name = vm_id[1]
+                self.vm_list.remove(vm_id)
                 success = True
                 break
 
         for host_vm_id in self.vms_per_host[_host_id]:
             if host_vm_id[0] == _h_uuid:
-                host_vm_id[2] = _uuid
+                self.vms_per_host[_host_id].remove(host_vm_id)
                 success = True
                 break 
         
+        if success == True:
+            vm_id = (_h_uuid, vm_name, _uuid)
+            self.vm_list.append(vm_id)
+            self.vms_per_host[_host_id].append(vm_id)
+
         return success
 
     def update_h_uuid(self, _h_uuid, _uuid, _host_id):
         success = False
 
+        vm_name = "none"
         for vm_id in self.vm_list:
             if vm_id[2] == _uuid:
-                vm_id[0] = _h_uuid
+                vm_name = vm_id[1]
+                self.vm_list.remove(vm_id)
                 success = True
                 break
 
         for host_vm_id in self.vms_per_host[_host_id]:
             if host_vm_id[2] == _uuid:
-                host_vm_id[0] = _h_uuid
+                self.vms_per_host[_host_id].remove(host_vm_id)
                 success = True
                 break 
         
+        if success == True:
+            vm_id = (_h_uuid, vm_name, _uuid)
+            self.vm_list.append(vm_id)
+            self.vms_per_host[_host_id].append(vm_id)
+
         return success
 
     def add_vm_by_h_uuid(self, _vm_id, _host_id):

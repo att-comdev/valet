@@ -294,7 +294,12 @@ class Resource:
         self._update_storage_avail()
         self._update_nw_bandwidth_avail()
 
-        self.current_timestamp = self._store_topology_updates()
+        ct = self._store_topology_updates()
+        if ct == None:
+            return False
+        else:
+            self.current_timestamp = ct
+            return True
 
     def _update_topology(self):
         for level in LEVELS:
@@ -572,8 +577,12 @@ class Resource:
         self.logger.info("log: resource status timestamp in " + resource_logfile)
 
         if self.db != None:
-            self.db.update_resource_status(self.datacenter.name, json_logging)
-            self.db.update_resource_log_index(self.datacenter.name, self.last_log_index)
+            if self.db.update_resource_status(self.datacenter.name, json_logging) == False:
+                self.logger.error("error while updating resource status in MUSIC")
+                return None
+            if self.db.update_resource_log_index(self.datacenter.name, self.last_log_index) == False:
+                self.logger.error("error while updating resource log index in MUSIC")
+                return None
 
         return last_update_time
 
@@ -611,7 +620,7 @@ class Resource:
         host.disk_available_least -= _ldisk
 
     # Call by event handler
-    def remove_vm_by_h_uuid_from_host(self, __host_name, _h_uuid, _vcpus, _mem, _ldisk):
+    def remove_vm_by_h_uuid_from_host(self, _host_name, _h_uuid, _vcpus, _mem, _ldisk):
         host = self.hosts[_host_name]
        
         host.remove_vm_by_h_uuid(_h_uuid) 
@@ -626,7 +635,7 @@ class Resource:
         host.disk_available_least += _ldisk
 
     # Call by event handler
-    def remove_vm_by_uuid_from_host(self, __host_name, _uuid, _vcpus, _mem, _ldisk):
+    def remove_vm_by_uuid_from_host(self, _host_name, _uuid, _vcpus, _mem, _ldisk):
         host = self.hosts[_host_name]
        
         host.remove_vm_by_uuid(_uuid) 
@@ -843,14 +852,12 @@ class Resource:
 
             if isinstance(_host, Host):
                 if lg.update_uuid(_h_uuid, _uuid, _host.name) == True:
-                    #lg.last_update = time.time()
-                    pass
+                    lg.last_update = time.time()
             elif isinstance(_host, HostGroup):
                 if lg.group_type == "EX" or lg.group_type == "AFF":
                     if lgk.split(":")[0] == _host.host_type:
                         if lg.update_uuid(_h_uuid, _uuid, _host.name) == True:
-                            #lg.last_update = time.time()
-                            pass
+                            lg.last_update = time.time()
 
         if isinstance(_host, Host) and _host.host_group != None:
             self.update_uuid_in_logical_groups(_h_uuid, _uuid, _host.host_group)
@@ -863,14 +870,12 @@ class Resource:
 
             if isinstance(_host, Host):
                 if lg.update_h_uuid(_h_uuid, _uuid, _host.name) == True:
-                    #lg.last_update = time.time()
-                    pass
+                    lg.last_update = time.time()
             elif isinstance(_host, HostGroup):
                 if lg.group_type == "EX" or lg.group_type == "AFF":
                     if lgk.split(":")[0] == _host.host_type:
                         if lg.update_h_uuid(_h_uuid, _uuid, _host.name) == True:
-                            #lg.last_update = time.time()
-                            pass
+                            lg.last_update = time.time()
 
         if isinstance(_host, Host) and _host.host_group != None:
             self.update_h_uuid_in_logical_groups(_h_uuid, _uuid, _host.host_group)

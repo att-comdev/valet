@@ -18,7 +18,7 @@ import sys
 import time
 import json
 
-from optimizer import Optimizer
+from optimizer import Optimizer   
 
 sys.path.insert(0, '../resource_manager')
 from resource import Resource
@@ -26,11 +26,12 @@ from topology_manager import TopologyManager
 from compute_manager import ComputeManager
 
 sys.path.insert(0, '../app_manager')
-from app_handler import AppHandler
+from app_handler import AppHandler  
 from app_topology_base import VM, Volume
 
 sys.path.insert(0, '../db_connect')
 from music_handler import MusicHandler
+
 
 class Ostro:
 
@@ -42,10 +43,9 @@ class Ostro:
         self.db = None
         if self.config.db_keyspace != "none":
             self.db = MusicHandler(self.config, self.logger)
-            if self.db.init_db() == False:
-                self.logger.error("error while initializing MUSIC database")
-            else:
-                self.logger.debug("done init music")
+            self.db.init_db()
+
+            self.logger.debug("done init music")
 
         self.resource = Resource(self.db, self.config, self.logger)
 
@@ -82,24 +82,14 @@ class Ostro:
 
             if self.config.db_keyspace != "none":
                 event_list = self.db.get_events()
-                if event_list == None:
-                    self.logger.error("error while getting events from MUSIC")
-                    break
 
                 if len(event_list) > 0:
-                    self.logger.debug("got " + str(len(event_list)) + " events")
-
-                    if self.handle_events(event_list) == False:
-                        break
+                    self.handle_events(event_list)
 
                 request_list = self.db.get_requests()
-                if request_list == None:
-                    self.logger.error("error while getting requests from MUSIC")
-                    break
 
                 if len(request_list) > 0:
-                    if self.place_app(request_list) == False:
-                        break
+                    self.place_app(request_list)
 
             current = time.time()
             if current > expired:
@@ -127,10 +117,6 @@ class Ostro:
         self.logger.info("--- start bootstrap ---")
 
         resource_status = self.db.get_resource_status(self.resource.datacenter.name)
-        if resource_status == None:
-            self.logger.error("error while getting resource status from MUSIC")
-            return False
-
         if len(resource_status) > 0:
             self.logger.info("bootstrap from db")
 
@@ -150,9 +136,7 @@ class Ostro:
             if self._set_topology() == False:
                 return False
 
-            if self.resource.update_topology() == False:
-                # TODO: ignore?
-                pass
+            self.resource.update_topology()
 
         self.logger.info("--- done bootstrap ---")
 
@@ -207,16 +191,12 @@ class Ostro:
 
             self.logger.debug("successful placement decision")
 
-        if self.db.put_result(result) == False:
-            self.logger.error("error while inserting placement result into MUSIC")
-            return False
+        self.db.put_result(result)
 
         self.logger.info("stat: total running time of place_app = " + str(end_time - start_time) + " sec")
         self.logger.info("--- done app placement ---")
 
         self.data_lock.release()
-
-        return True
 
     def _place_app(self, _app_data):
         app_topology = self.app_handler.add_app(_app_data)
@@ -236,9 +216,7 @@ class Ostro:
             return None
 
         if len(placement_map) > 0:
-            if self.resource.update_topology() == False:
-                # TODO: ignore?
-                pass 
+            resource_status = self.resource.update_topology()  
 
             self.app_handler.add_placement(placement_map, self.resource.current_timestamp)
 
@@ -249,91 +227,61 @@ class Ostro:
 
         self.logger.info("--- start event handling ---")
 
-        resource_updated = False
-
         for e in _event_list:
-            if e.host != None and e.host != "none":
-                if self._check_host(e.host) == False:
-                    self.logger.warn("host (" + e.host + ") related to this event not exists")
-                    continue
+            if self._check_host(e.host) == False:
+                continue
 
             if e.method == "build_and_run_instance":         # VM is created (from stack)
-                self.logger.debug("got build_and_run event")
-                if self.db.put_uuid(e) == False:
-                    self.logger.error("error while inserting uuid into MUSIC")
-                    return False         
+                self.db.put_uuid(e)          
 
             elif e.method == "object_action":
                 if e.object_name == 'Instance':              # VM became active or deleted
-                    #(h_uuid, s_uuid) = self.db.get_uuid(e.uuid)  
-                    orch_id = self.db.get_uuid(e.uuid)  
-                    if orch_id == None:
-                        self.logger.error("error while getting orchestration ids from MUSIC")
-                        return False
+                    (h_uuid, s_uuid) = db.get_uuid(e.uuid)  # return None or "none"
 
                     if e.vm_state == "active": 
-                        self.logger.debug("got object_action instance active event")
-                        vm_info = self.app_handler.get_vm_info(orch_id[1], orch_id[0], e.host)
-                        if vm_info == None:
-                            self.logger.error("error while getting app info from MUSIC")
-                            return False
+                        vm_info = self.app_handler.get_vm_info(s_uuid, h_uuid, e.host)
 
                         if len(vm_info) == 0:
                             '''
                             h_uuid == None or "none" because vm is not created by stack
                             or, stack not found because vm is created by the other stack
                             '''
-                            self.logger.warn("no vm_info found in app placement record")
-                            self._add_vm_to_host(e.uuid, orch_id[0], e.host, e.vcpus, e.mem, e.local_disk)
+                            self._add_vm_to_host(e.uuid, h_uuid, e.host, e.vcpus, e.mem, e.local_disk)
                         else:
                             if "planned_host" in vm_info.keys() and vm_info["planned_host"] != e.host:
                                 '''
                                 vm is activated in the different host
                                 '''
-                                self.logger.warn("vm activated in the different host")
-                                self._add_vm_to_host(e.uuid, orch_id[0], e.host, e.vcpus, e.mem, e.local_disk)
+                                self._add_vm_to_host(e.uuid, h_uuid, e.host, e.vcpus, e.mem, e.local_disk)
                                 
-                                self._remove_vm_from_host(e.uuid, orch_id[0], \
+                                self._remove_vm_from_host(e.uuid, h_uuid, \
                                                           vm_info["planned_host"], \
                                                           float(vm_info["cpus"]), \
                                                           float(vm_info["mem"]), \
                                                           float(vm_info["local_volume"]))
 
-                                self._remove_vm_from_logical_groups(e.uuid, orch_id[0], vm_info["planned_host"])
+                                self._remove_vm_from_logical_groups(e.uuid, h_uuid, vm_info["planned_host"])
                             else:
                                 '''
                                 found vm in the planned host, 
                                 possibly the vm deleted in the host while batch cleanup
                                 '''
-                                if self._check_h_uuid(orch_id[0], e.host) == False:
-                                    self.logger.debug("planned vm was deleted")
+                                if self._check_h_uuid(h_uuid, e.host) == False:
                                     if self._check_uuid(e.uuid, e.host) == True:
-                                        self._update_h_uuid_in_host(orch_id[0], e.uuid, e.host)
-                                        self._update_h_uuid_in_logical_groups(orch_id[0], e.uuid, e.host)
+                                        self._update_h_uuid_in_host(h_uuid, e.uuid, e.host)
+                                        self._update_h_uuid_in_logical_groups(h_uuid, e.uuid, e.host)
                                 else:
-                                    self.logger.debug("vm activated as planned")
-                                    self._update_uuid_in_host(orch_id[0], e.uuid, e.host)
-                                    self._update_uuid_in_logical_groups(orch_id[0], e.uuid, e.host)
-                        
-                        resource_updated = True
+                                    self._update_uuid_in_host(h_uuid, e.uuid, e.host)
+                                    self._update_uuid_in_logical_groups(h_uuid, e.uuid, e.host)
                     
                     elif e.vm_state == "deleted":
-                        self.logger.debug("got object_action instance delete event")
+                        self._remove_vm_from_host(e.uuid, h_uuid, e.host, e.vcpus, e.mem, e.local_disk)
 
-                        self._remove_vm_from_host(e.uuid, orch_id[0], e.host, e.vcpus, e.mem, e.local_disk)
-                        self._remove_vm_from_logical_groups(e.uuid, orch_id[0], e.host)
+                        self._remove_vm_from_logical_groups(e.uuid, h_uuid, e.host)
 
-                        if self.app_handler.update_vm_info(orch_id[1], orch_id[0]) == False:
-                            self.logger.error("error while updating app in MUSIC")
-                            return False
-
-                        resource_updated = True
-                    
-                    else:
-                        self.logger.warn("unknown vm_state = " + e.vm_state)
+                        self.app_handler.update_vm_info(s_uuid, h_uuid)
 
                 elif e.object_name == 'ComputeNode':     # Host resource is updated
-                    self.logger.debug("got object_action compute event = ")
                     # NOTE: what if host is disabled?
                     if self.resource.update_host_resources(e.host, e.status, \
                                                            e.vcpus, e.vcpus_used, \
@@ -341,35 +289,19 @@ class Ostro:
                                                            e.local_disk, e.free_local_disk, \
                                                            e.disk_available_least) == True:
                         self.resource.update_host_time(e.host)
-                        
-                        resource_updated = True
-                    
-                else:
-                    self.logger.warn("unknown object_name = " + e.object_name)
-            else:
-                self.logger.warn("unknown event method = " + e.method)
 
-        if resource_updated == True:
-            if self.resource.update_topology() == False:
-                # TODO: ignore?
-                pass
+        self.resource.update_topology()
 
         for e in _event_list:
-            self.logger.debug("delete event = " + e.event_id)
-            if self.db.delete_event(e.event_id) == False:
-                return False
+            self.db.delete_event(e.event_id)
             if e.method == "object_action":
                 if e.object_name == 'Instance':
                     if e.vm_state == "deleted":
-                        self.logger.debug("delete uuid")
-                        if self.db.delete_uuid(e.uuid) == False:
-                            return False
+                        self.db.delete_uuid(e.uuid)
 
         self.logger.info("--- done event handling ---")
 
         self.data_lock.release()
-
-        return True
 
     def _add_vm_to_host(self, _uuid, _h_uuid, _host_name, _vcpus, _mem, _local_disk):
         vm_id = None
@@ -378,7 +310,7 @@ class Ostro:
         else:
             vm_id = (_h_uuid, "none", _uuid)
 
-        self.resource.add_vm_to_host(_host_name, vm_id, _vcpus, _mem, _local_disk)
+        self.resource.add_vm_to_host(_host_name, _vm_id, _vcpus, _mem, _local_disk)
         self.resource.update_host_time(_host_name)
 
     def _remove_vm_from_host(self, _uuid, _h_uuid, _host_name, _vcpus, _mem, _local_disk):
@@ -392,7 +324,7 @@ class Ostro:
 
     def _remove_vm_from_logical_groups(self, _uuid, _h_uuid, _host_name):
         host = self.resource.hosts[_host_name]
-        if _h_uuid != None and _h_uuid != "none":
+        if h_uuid != None and h_uuid != "none":
             self.resource.remove_vm_by_h_uuid_from_logical_groups(host, _h_uuid)
         else:
             self.resource.remove_vm_by_uuid_from_logical_groups(host, _uuid)
@@ -427,9 +359,7 @@ class Ostro:
         host = self.resource.hosts[_host_name]
         if host.update_uuid(_h_uuid, _uuid) == True:
             self.resource.update_host_time(_host_name)
-        else:
-            self.logger.warn("fail to update uuid in host = " + host.name)
-
+        
     def _update_h_uuid_in_host(self, _h_uuid, _uuid, _host_name):
         host = self.resource.hosts[_host_name]
         if host.update_h_uuid(_h_uuid, _uuid) == True:

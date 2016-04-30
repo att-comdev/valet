@@ -30,6 +30,7 @@ class DBCleaner:
     def clean_db_tables(self):
         results = self.music.read_all_rows(self.config.db_keyspace, self.config.db_resource_table)
         if len(results) > 0:
+            print "resource table result = ", len(results)
             for rowk, row in results.iteritems():
                 self.music.delete_row_eventually(self.config.db_keyspace, \
                                                  self.config.db_resource_table, \
@@ -37,6 +38,7 @@ class DBCleaner:
 
         results = self.music.read_all_rows(self.config.db_keyspace, self.config.db_request_table)
         if len(results) > 0:
+            print "request table result = ", len(results)
             for rowk, row in results.iteritems():
                 self.music.delete_row_eventually(self.config.db_keyspace, \
                                                  self.config.db_request_table, \
@@ -44,6 +46,7 @@ class DBCleaner:
 
         results = self.music.read_all_rows(self.config.db_keyspace, self.config.db_response_table)
         if len(results) > 0:
+            print "response table result = ", len(results)
             for rowk, row in results.iteritems():
                 self.music.delete_row_eventually(self.config.db_keyspace, \
                                                  self.config.db_response_table, \
@@ -51,6 +54,7 @@ class DBCleaner:
 
         results = self.music.read_all_rows(self.config.db_keyspace, self.config.db_event_table)
         if len(results) > 0:
+            print "event table result = ", len(results)
             for rowk, row in results.iteritems():
                 self.music.delete_row_eventually(self.config.db_keyspace, \
                                                  self.config.db_event_table, \
@@ -58,6 +62,7 @@ class DBCleaner:
 
         results = self.music.read_all_rows(self.config.db_keyspace, self.config.db_resource_index_table)
         if len(results) > 0:
+            print "resource_index table result = ", len(results)
             for rowk, row in results.iteritems():
                 self.music.delete_row_eventually(self.config.db_keyspace, \
                                                  self.config.db_resource_index_table, \
@@ -65,6 +70,7 @@ class DBCleaner:
 
         results = self.music.read_all_rows(self.config.db_keyspace, self.config.db_app_index_table)
         if len(results) > 0:
+            print "app_index table result = ", len(results)
             for rowk, row in results.iteritems():
                 self.music.delete_row_eventually(self.config.db_keyspace, \
                                                  self.config.db_app_index_table, \
@@ -72,6 +78,7 @@ class DBCleaner:
 
         results = self.music.read_all_rows(self.config.db_keyspace, self.config.db_app_table)
         if len(results) > 0:
+            print "app table result = ", len(results)
             for rowk, row in results.iteritems():
                 self.music.delete_row_eventually(self.config.db_keyspace, \
                                                  self.config.db_app_table, \
@@ -79,6 +86,7 @@ class DBCleaner:
 
         results = self.music.read_all_rows(self.config.db_keyspace, self.config.db_uuid_table)
         if len(results) > 0:
+            print "uuid table result = ", len(results)
             for rowk, row in results.iteritems():
                 self.music.delete_row_eventually(self.config.db_keyspace, \
                                                  self.config.db_uuid_table, \

@@ -47,9 +47,11 @@ class AppHandler:
             self.logger.error("cannot clear prior requested apps")
         '''
 
-        app_topology = AppTopology(self.resource)
+        app_topology = AppTopology(self.resource, self.logger)
 
         for app in _app_data:
+            self.logger.debug("parse app")
+
             app_id = app_topology.set_app_topology(app)
 
             if app_id == None:
@@ -93,7 +95,9 @@ class AppHandler:
                     if v.level == hg.host_type:
                         self.apps[v.app_uuid].add_vgroup(v, hg.name)
 
-        self._store_app_placements()
+        if self._store_app_placements() == False:
+            # TODO: ignore?
+            pass
 
     def _store_app_placements(self):
         (app_logfile, last_index, mode) = get_last_logfile(self.config.app_log_loc, \
@@ -119,12 +123,18 @@ class AppHandler:
         self.logger.info("log: app placement timestamp in " + app_logfile)
 
         if self.db != None:
-            self.db.update_app_log_index(self.resource.datacenter.name, self.last_log_index)
-   
             for appk, app in self.apps.iteritems():
                 json_info = app.get_json_info()
-                self.db.add_app(appk, json_info)
+                if self.db.add_app(appk, json_info) == False:
+                    self.logger.error("error while adding app info to MUSIC")
+                    return False
 
+            if self.db.update_app_log_index(self.resource.datacenter.name, self.last_log_index) == False:
+                self.logger.error("error while updating app log index in MUSIC")
+                return False
+
+        return True
+   
     def get_vm_info(self, _s_uuid, _h_uuid, _host):
         vm_info = {}
 
@@ -137,7 +147,10 @@ class AppHandler:
     def update_vm_info(self, _s_uuid, _h_uuid):
         if _h_uuid != None and _h_uuid != "none" and \
            _s_uuid != None and _s_uuid != "none":
-            self.db.update_vm_info(_s_uuid, _h_uuid)
+            if self.db.update_vm_info(_s_uuid, _h_uuid) == False:
+                return False
+
+        return True
 
 
 

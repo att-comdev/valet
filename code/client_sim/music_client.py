@@ -46,19 +46,9 @@ class MusicClient:
         results = self.music.read_all_rows(self.config.db_keyspace, self.config.db_response_table)
         
         if len(results) > 0:
-            #self._remove_old_placements(results)
-
             return results
         else:
             return None
-
-    def _remove_old_placements(self, _results):
-        for rowk, row in _results.iteritems():
-            stack_id = row['stack_id']
-            self.music.delete_row_eventually(self.config.db_keyspace, \
-                                             self.config.db_response_table, \
-                                             'stack_id', \
-                                             stack_id)
 
     def get_resource_status(self):
         return self.music.read_all_rows(self.config.db_keyspace, self.config.db_resource_table)
@@ -67,7 +57,6 @@ class MusicClient:
         return self.music.read_all_rows(self.config.db_keyspace, self.config.db_app_table)
 
 
-# Unit test
 if __name__ == '__main__':
     config = Config()
     config_status = config.configure()
@@ -92,6 +81,7 @@ if __name__ == '__main__':
         resource = json.loads(row['resource'])
         print json.dumps(resource, indent=4)
 
+    '''
     time.sleep(5)
     mc.set_request("ping_uuid1", "./test_inputs/simple_ping.json")
     time.sleep(5)
@@ -107,7 +97,6 @@ if __name__ == '__main__':
         resource = json.loads(row['resource'])
         print json.dumps(resource, indent=4)
 
-    '''
     time.sleep(5)
     mc.set_request("app_uuid2", "./test_inputs/simple_exclusivity.json")
     time.sleep(5)
@@ -212,7 +201,6 @@ if __name__ == '__main__':
     for rowk, row in status.iteritems():
         resource = json.loads(row['resource'])
         print json.dumps(resource, indent=4)
-    '''
 
     time.sleep(5)
     mc.set_request("app_uuid9", "./test_inputs/simple_az.json")
@@ -228,6 +216,7 @@ if __name__ == '__main__':
     for rowk, row in status.iteritems():
         resource = json.loads(row['resource'])
         print json.dumps(resource, indent=4)
+    '''
 
     apps = mc.get_apps()
     print "Applications"

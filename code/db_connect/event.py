@@ -11,6 +11,9 @@
 #################################################################################################################
 
 
+import json
+
+
 class Event:
 
     def __init__(self, _id):
@@ -33,6 +36,7 @@ class Event:
         self.free_mem = -1                                                                    
         self.free_local_disk = -1                                                             
         self.disk_available_least = -1
+        self.numa_cell_list = []
 
         # Common between Instance and ComputeNode
         self.host = None
@@ -51,9 +55,9 @@ class Event:
 
     def set_data(self):
         if self.method == 'object_action':
-            self.change_list = e.args['objinst']['nova_object.changes']
-            self.change_data = e.args['objinst']['nova_object.data']
-            self.object_name = e.args['objinst']['nova_object.name']
+            self.change_list = self.args['objinst']['nova_object.changes']
+            self.change_data = self.args['objinst']['nova_object.data']
+            self.object_name = self.args['objinst']['nova_object.name']
 
             if self.object_name == 'Instance':
                 if 'uuid' in self.change_data.keys():
@@ -116,13 +120,28 @@ class Event:
                 if 'local_gb' in self.change_list and 'local_gb' in self.change_data.keys():               
                     self.local_disk = self.change_data['local_gb']                                         
                                                                                                  
-                if 'free_disk_gb' in change_list and 'free_disk_gb' in change_data.keys():       
+                if 'free_disk_gb' in self.change_list and 'free_disk_gb' in self.change_data.keys():       
                     self.free_local_disk = self.change_data['free_disk_gb']                                
                                                                                                  
                 if 'disk_available_least' in self.change_list and \
                    'disk_available_least' in self.change_data.keys():
                     self.disk_available_least = self.change_data['disk_available_least']                   
                                                  
+                if 'numa_topology' in self.change_list and 'numa_topology' in self.change_data.keys():       
+                    str_numa_topology = self.change_data['numa_topology']
+                    try:
+                        numa_topology = json.loads(str_numa_topology)
+                        #print json.dumps(numa_topology, indent=4)
+  
+                        if 'nova_object.data' in numa_topology.keys():
+                            if 'cells' in numa_topology['nova_object.data']:
+                                for cell in numa_topology['nova_object.data']['cells']:
+                                    self.numa_cell_list.append(cell) 
+                             
+                    except (ValueError, KeyError, TypeError):
+                        pass
+                        #print "error while parsing numa_topology"
+                                                                                                 
         elif self.method == 'build_and_run_instance':
             if 'scheduler_hints' in self.args['filter_properties'].keys():
                 scheduler_hints = self.args['filter_properties']['scheduler_hints']      

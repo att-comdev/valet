@@ -89,7 +89,9 @@ class TopologyManager(threading.Thread):
         self.logger.info("--- start topology status update ---")
 
         if self.set_topology() == True:
-            self.resource.update_topology()
+            if self.resource.update_topology() == False:
+                # TODO: ignore?
+                pass
 
         self.logger.info("--- done topology status update ---")
 

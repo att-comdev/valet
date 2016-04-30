@@ -32,36 +32,27 @@ import requests
 class REST(object):
     '''Helper class for REST operations.'''
 
-    hosts = None
+    host = None
     port = None
     path = None
-    timeout = None
 
-    _urls = None
+    def __init__(self, host, port, path='/'):
+        '''Initializer. Accepts target host, port, and path.'''
 
-    def __init__(self, hosts, port, path='/', timeout='10'):
-        '''Initializer. Accepts target host list, port, and path.'''
-
-        self.hosts = hosts  # List of IP or FQDNs
+        self.host = host  # IP or FQDN
         self.port = port  # Port Number
         self.path = path  # Path starting with /
-        self.timeout = float(timeout)  # REST request timeout in seconds
 
     @property
-    def urls(self):
-        '''Returns list of URLs using each host, plus the port/path.'''
+    def __url(self):
+        '''Returns a URL using the host/port/path.'''
 
-        if not self._urls:
-            urls = []
-            for host in self.hosts:
-                # Must end without a slash
-                urls.append('http://%(host)s:%(port)s%(path)s' % {
-                    'host': host,
-                    'port': self.port,
-                    'path': self.path
-                })
-            self._urls = urls
-        return self._urls
+        # Must end without a slash
+        return 'http://%(host)s:%(port)s%(path)s' % {
+                'host': self.host,
+                'port': self.port,
+                'path': self.path
+            }
 
     @staticmethod
     def __headers(content_type='application/json'):
@@ -76,27 +67,14 @@ class REST(object):
                 path='/', data=None):
         '''Performs HTTP request.'''
         if method not in ('post', 'get', 'put', 'delete'):
-            raise KeyError("Method must be one of post, get, " \
-                           "put, or delete.")
+            raise KeyError("Method must be one of post, get, put, or delete.")
         method_fn = getattr(requests, method)
 
-        response = None
-        for url in self.urls:
-            # Try each url in turn. First one to succeed wins.
-            try:
-                response = method_fn(url + path, data=json.dumps(data),
-                                     headers=self.__headers(content_type),
-                                     timeout = self.timeout)
-                response.raise_for_status()
-                return response
-            except requests.exceptions.RequestException as e:
-                pass
-
-        # If we get here, an exception was raised for every url,
-        # but we passed so we could try each endpoint. Raise status
-        # for the last attempt (for now) so that we report something.
-        if response:
-            response.raise_for_status()
+        url = self.__url + path
+        response = method_fn(url, data=json.dumps(data),
+                             headers=self.__headers(content_type))
+        response.raise_for_status()
+        return response
 
 class Music(object):
     '''Wrapper for Music API'''
@@ -105,18 +83,12 @@ class Music(object):
     lock_timeout = None  # Maximum time in seconds to acquire a lock
 
     rest = None  # API Endpoint
-    replication_factor = None  # Number of Music nodes to replicate across
 
-    def __init__(self, host=None, hosts=['localhost'],
-                 port='8080', lock_timeout=10, replication_factor=1):
+    def __init__(self, host='localhost', port='8080', lock_timeout=10):
         '''Initializer. Accepts a lock_timeout for atomic operations.'''
 
-        # If one host is provided, that overrides the list
-        if host:
-            hosts = [host]
-
         kwargs = {
-            'hosts': hosts,
+            'host': host,
             'port': port,
             'path': '/MUSIC/rest'
         }
@@ -125,14 +97,12 @@ class Music(object):
         self.lock_names = []
         self.lock_timeout = lock_timeout
 
-        self.replication_factor = replication_factor
-
     def create_keyspace(self, keyspace):
         '''Creates a keyspace.'''
         data = {
             'replicationInfo': {
                 'class': 'SimpleStrategy',
-                'replication_factor': self.replication_factor
+                'replication_factor': 3
             },
             'durabilityOfWrites': True,
             'consistencyInfo': {
@@ -180,7 +150,9 @@ class Music(object):
                    'keyspace': keyspace,
                    'table': table
                }
+
         response = self.rest.request(method='post', path=path, data=data)
+
         return response.ok
 
     def create_lock(self, lock_name):
@@ -273,6 +245,7 @@ class Music(object):
         '''Read one row based on a primary key name/value.'''
         path = self.__row_url_path(keyspace, table, pk_name, pk_value)
         response = self.rest.request(path=path)
+
         return response.json()
 
     def read_all_rows(self, keyspace, table):
@@ -305,3 +278,5 @@ class Music(object):
         '''Delete all locks created during the lifetime of this object.'''
         for lock_name in self.lock_names:
             self.delete_lock(lock_name)
+
+

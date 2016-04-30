@@ -105,6 +105,7 @@ class Search:
         for hk, host in self.resource.hosts.iteritems():
 
             if host.check_availability() == False:
+                self.logger.debug("host (" + host.name + ") not available at this time")
                 continue
 
             r = Resource()
@@ -201,6 +202,7 @@ class Search:
         for lgk, lg in self.resource.logical_groups.iteritems():
         
             if lg.status != "enabled":
+                self.logger.debug("group (" + lg.name + ") enalbed")
                 continue
 
             lgr = LogicalGroupResource()
@@ -214,23 +216,23 @@ class Search:
             for hk in lg.vms_per_host.keys():
                 lgr.num_of_placed_vms_per_host[hk] = len(lg.vms_per_host[hk])
 
-            for hk in lg.vms_per_host.keys():                                                    
+            for hk in lg.vms_per_host.keys():
                 if hk in self.resource.hosts.keys():                                                      
-                    host = self.resource.hosts[hk]                                                        
+                    host = self.resource.hosts[hk]     
                     if host.check_availability() == False:                                       
                         for vm_id in host.vm_list:                                               
-                            if lg.exist_vm(vm_id) == True: 
+                            if lg.exist_vm_by_uuid(vm_id[2]) == True: 
                                 lgr.num_of_placed_vms -= 1  
                         if hk in lgr.num_of_placed_vms_per_host.keys():                                    
-                            del lgr.num_of_plaed_vms_per_host[hk]                                                  
+                            del lgr.num_of_placed_vms_per_host[hk]       
                 elif hk in self.resource.host_groups.keys():                                              
                     host_group = self.resource.host_groups[hk]                                            
                     if host_group.check_availability() == False:                                 
                         for vm_id in host_group.vm_list:                                         
-                            if lg.exist_vm(vm_id) == True:                                       
+                            if lg.exist_vm_by_uuid(vm_id[2]) == True:                                       
                                 lgr.num_of_placed_vms -= 1                                        
                         if hk in lgr.num_of_placed_vms_per_host.keys():                                    
-                            del lg.num_of_plaed_vms_per_host[hk]                                       
+                            del lgr.num_of_placed_vms_per_host[hk]                                       
 
             self.avail_logical_groups[lgk] = lgr
 

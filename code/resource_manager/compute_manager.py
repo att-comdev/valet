@@ -97,7 +97,9 @@ class ComputeManager(threading.Thread):
         triggered_flavor_updates = self.set_flavors()
 
         if triggered_host_updates == True and triggered_flavor_updates == True:
-            self.resource.update_topology()
+            if self.resource.update_topology() == False:
+                # TODO: error in MUSIC. ignore?
+                pass
         else:
             # TODO: error handling, e.g., 3 times failure then stop Ostro?
             pass
@@ -105,6 +107,8 @@ class ComputeManager(threading.Thread):
         self.logger.info("--- done compute_nodes status update ---")
 
         self.data_lock.release()
+
+        return True
 
     def _set_admin_token(self):                                                                  
         self.admin_token = self.auth.get_tenant_token(self.config)

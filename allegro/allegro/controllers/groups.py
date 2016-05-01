@@ -65,7 +65,7 @@ class MembersItemController(object):
 
     # DELETE /v1/PROJECT_ID/groups/GROUP_ID/members/MEMBER_ID
     @index.when(method='DELETE', template='json')
-    def index_put(self, **kw):
+    def index_delete(self, **kw):
         """Delete group member"""
         group = request.context['group']
         member_id = request.context['member_id']
@@ -104,7 +104,7 @@ class MembersController(object):
     # UPDATE /v1/PROJECT_ID/groups/GROUP_ID/members
     @index.when(method='PUT', template='json')
     @validate(members_schema, '/v1/errors/schema')
-    def index_post(self, **kwargs):
+    def index_put(self, **kwargs):
         """Add one or more members to a group"""
         new_members = kwargs.get('members', None)
 
@@ -123,7 +123,7 @@ class MembersController(object):
 
     # DELETE /v1/PROJECT_ID/groups/GROUP_ID/members
     @index.when(method='DELETE', template='json')
-    def index_put(self, **kw):
+    def index_delete(self, **kw):
         """Delete all group members"""
         group = request.context['group']
         group.members = []

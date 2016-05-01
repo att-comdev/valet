@@ -16,7 +16,7 @@
 # limitations under the License.
 
 from allegro import models
-from allegro.controllers import update_placements, error
+from allegro.controllers import set_placements, error
 # TODO: Make this a driver plugin point instead so we can pick and choose.
 from allegro.models.music import Plan, Placement
 #from allegro.models.sqlalchemy import Plan, Placement 
@@ -73,7 +73,7 @@ class PlansItemController(object):
         """Update a Plan"""
         # FIXME: Possible Ostro regression or missing code for updates?
         # New placements are not being seen in the response, so
-        # update_placements is currently failing as a result.
+        # set_placements is currently failing as a result.
         kwargs = request.json
         ostro = Ostro()
         ostro.request(**kwargs)
@@ -90,7 +90,7 @@ class PlansItemController(object):
         resources = ostro.request['resources_update']
         placements = ostro.response['resources']
 
-        update_placements(self.plan, resources, placements)
+        set_placements(self.plan, resources, placements)
         response.status = 201
 
         # Flush so that the DB is current.
@@ -108,37 +108,6 @@ class PlansItemController(object):
 class PlansController(object):
     # Get all the plans /v1/PROJECT_ID/plans
 
-    # Proposed body
-    # {
-    #   "status": "query",
-    #   "name": "query",
-    #   "limit": "query",
-    #   "marker": "query",
-    #   "show_deleted": "query",
-    #   "sort_keys": "query",
-    #   "sort_dir": "query"
-    # }
-
-    # Proposed response
-    # {
-    #   "plans": [
-    #     {
-    #       "creation_time": "2014-06-03T20:59:46Z",
-    #       "description": "sample plan",
-    #       "id": "3095aefc-09fb-4bc7-b1f0-f21a304e864c",
-    #       "links": [
-    #         {
-    #           "href": "http://192.168.123.200:9004/v1/eb1c63a4f77141548385f113a28f0f52/plans/sample_plan/3095aefc-09fb-4bc7-b1f0-f21a304e864c",
-    #           "rel": "self"
-    #         }
-    #       ],
-    #       "plan_name": "simple_plan",
-    #       "plan_status": "CREATE_COMPLETE",
-    #       "plan_status_reason": "Plan CREATE completed successfully",
-    #       "updated_time": null
-    #     }
-    #   ]
-    # }
     @expose(generic=True, template='json')
     def index(self):
         '''Get plans!'''
@@ -169,7 +138,7 @@ class PlansController(object):
 
         plan = Plan(plan_name, stack_id) 
         if plan:
-            update_placements(plan, resources, placements)
+            set_placements(plan, resources, placements)
             response.status = 201
 
             # Flush so that the DB is current.

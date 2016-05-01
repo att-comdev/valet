@@ -110,7 +110,8 @@ class AllegroFilter(filters.BaseHostFilter):
         else:
             uuid = filter_properties[hints_key][uuid_key]
             self._authorize()
-            placement = self.api.placement(uuid,
+            hosts = [obj.host for obj in filter_obj_list]
+            placement = self.api.placement(uuid, hosts=hosts,
                                            tenant_id=self._tenant_id,
                                            auth_token=self._auth_token)
 

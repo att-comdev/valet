@@ -14,10 +14,9 @@ Authenticated calls that target a known URI but that use an HTTP method the impl
 API versions
 ------------
 
-===  =  ==================================
-GET  /  :List versions:
-        Lists all Placement API versions.
-===  =  ==================================
+===  =  =================================
+GET  /  Lists all Placement API versions.
+===  =  =================================
 
 =====================  ===
 Normal response codes  200
@@ -75,45 +74,39 @@ Groups
 Documentation forthcoming.
 
 ====  =======================  ================
-POST  /v1/{tenant_id}/groups  :Create group:
-                              Creates a group.
+POST   /v1/{tenant_id}/groups  Creates a group.
+====  =======================  ================
+
+===  ====================  ====================
+GET  /v1/TENANT_ID/groups  Lists active groups.
 ===  ====================  ====================
 
 ===  =============================  ====================
-GET  /v1/{tenant_id}/groups/{group_id}  :List group data:
-                                        Lists active groups.
-===  =============================  ====================
-
-===  =============================  ====================
-PUT  /v1/{tenant_id}/groups/{group_id}  :Update group:
-                                        Updates a group.
+GET  /v1/TENANT_ID/groups/GROUP_ID  Lists active groups.
 ===  =============================  ====================
 
 ===  =============================  ================
-DELETE  /v1/{tenant_id}/groups/{group_id}  :Delete group:
-                                           Deletes a group.
-POST  /v1/{tenant_id}/groups/{group_id}/members  :Set group members:
-                                                 Sets members of a group.
+PUT  /v1/TENANT_ID/groups/GROUP_ID  Updates a group.
+===  =============================  ================
 
 ======  =============================  ================
-PUT  /v1/{tenant_id}/groups/{group_id}/members  :Update group members:
-                                                Updates members of a group.
+DELETE  /v1/TENANT_ID/groups/GROUP_ID  Deletes a group.
+======  =============================  ================
 
 ====  =====================================  ========================
-GET  /v1/{tenant_id}/groups/{group_id}/members  :List group members:
-                                                Lists members of a group.
+POST  /v1/TENANT_ID/groups/GROUP_ID/members  Sets members of a group.
+====  =====================================  ========================
 
 ===  =====================================  ===========================
-GET  /v1/{tenant_id}/groups/{group_id}/members/{member_id}  :Verify group membership:
-                                                            Verify membership in a group.
+PUT  /v1/TENANT_ID/groups/GROUP_ID/members  Updates members of a group.
+===  =====================================  ===========================
 
 ===  =====================================  =========================
-DELETE  /v1/{tenant_id}/groups/{group_id}/members/{member_id}  :Delete group member:
-                                                               Delete member from a group.
+GET  /v1/TENANT_ID/groups/GROUP_ID/members  Lists members of a group.
+===  =====================================  =========================
 
 ===  ===============================================  =============================
-DELETE  /v1/{tenant_id}/groups/{group_id}/members  :Delete all group members:
-                                                   Delete all members from a group.
+GET  /v1/TENANT_ID/groups/GROUP_ID/members/MEMBER_ID  Verify membership in a group.
 ===  ===============================================  =============================
 
 ======  ===============================================  ===========================

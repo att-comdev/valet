@@ -73,9 +73,9 @@ Groups
 
 Documentation forthcoming.
 
-====  ===================  ================
-POST  v1/TENANT_ID/groups  Creates a group.
-====  ===================  ================
+====  =======================  ================
+POST  \/v1/{tenant_id}/groups  Creates a group.
+====  =======================  ================
 
 ===  ====================  ====================
 GET  /v1/TENANT_ID/groups  Lists active groups.

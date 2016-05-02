@@ -16,12 +16,12 @@
 # limitations under the License.
 
 from os import path
-from pecan import conf
-from pecan import request, redirect
 
 # TODO: Make this a driver plugin point instead so we can pick and choose.
 from allegro.models.music import Placement
 #from allegro.models.sqlalchemy import Placement
+
+from pecan import conf, expose, redirect, request, response
 
 
 #

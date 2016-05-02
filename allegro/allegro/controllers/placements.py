@@ -23,15 +23,17 @@ from allegro.controllers import update_placements, error
 from allegro.models.music import Placement
 #from allegro.models.sqlalchemy import Placement
 from allegro.ostro_helper import Ostro
-from pecan import expose, redirect, request, response
-from webob.exc import status_map
 
 import logging
+from pecan import conf, expose, redirect, request, response
+from webob.exc import status_map
 
 logger = logging.getLogger(__name__)
 
 
 class PlacementsItemController(object):
+    # /v1/PROJECT_ID/placements/PLACEMENT_ID
+
     def __init__(self, orchestration_id):
         self.orchestration_id = orchestration_id
         self.placement = Placement.query.filter_by(
@@ -45,6 +47,12 @@ class PlacementsItemController(object):
     def index(self):
         message = 'The %s method is not allowed.' % request.method
         error('/v1/errors/not_allowed', message)
+
+    @index.when(method='OPTIONS', template='json')
+    def index_options(self):
+        '''Supported methods'''
+        response.headers['Allow'] = 'GET,POST,DELETE'
+        response.status = 204
 
     @index.when(method='GET', template='json')
     def index_get(self):
@@ -104,12 +112,19 @@ class PlacementsItemController(object):
         response.status = 204
 
 class PlacementsController(object):
+    # /v1/PROJECT_ID/placements
+
     @expose(generic=True, template='json')
     def index(self):
         message = 'The %s method is not allowed.' % request.method
         error('/v1/errors/not_allowed', message)
 
-    # Get all the placements /v1/PROJECT_ID/placements
+    @index.when(method='OPTIONS', template='json')
+    def index_options(self):
+        '''Supported methods'''
+        response.headers['Allow'] = 'GET'
+        response.status = 204
+
     @index.when(method='GET', template='json')
     def index_get(self):
         '''Get placements!'''

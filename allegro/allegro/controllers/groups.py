@@ -21,12 +21,12 @@ from allegro.controllers import error
 # TODO: Make this a driver plugin point instead so we can pick and choose.
 from allegro.models.music import Group
 #from allegro.models.sqlalchemy import Group
-from pecan import conf, expose, redirect, request, response
-from pecan_notario import validate
 
 import logging
 from notario import decorators
 from notario.validators import types
+from pecan import conf, expose, redirect, request, response
+from pecan_notario import validate
 from webob.exc import status_map
 
 logger = logging.getLogger(__name__)
@@ -49,6 +49,8 @@ members_schema = (
 
 
 class MembersItemController(object):
+    # /v1/PROJECT_ID/groups/GROUP_ID/members/MEMBER_ID
+
     def __init__(self, member_id):
         """Initialize group member"""
         group = request.context['group']
@@ -62,13 +64,17 @@ class MembersItemController(object):
         message = 'The %s method is not allowed.' % request.method
         error('/v1/errors/not_allowed', message)
 
-    # GET /v1/PROJECT_ID/groups/GROUP_ID/members/MEMBER_ID
+    @index.when(method='OPTIONS', template='json')
+    def index_options(self):
+        '''Supported methods'''
+        response.headers['Allow'] = 'GET,DELETE'
+        response.status = 204
+
     @index.when(method='GET', template='json')
     def index_get(self):
         '''Verify group member'''
         response.status = 204
 
-    # DELETE /v1/PROJECT_ID/groups/GROUP_ID/members/MEMBER_ID
     @index.when(method='DELETE', template='json')
     def index_delete(self, **kw):
         """Delete group member"""
@@ -79,19 +85,25 @@ class MembersItemController(object):
         response.status = 204
 
 class MembersController(object):
+    # /v1/PROJECT_ID/groups/GROUP_ID/members
+
     @expose(generic=True, template='json')
     def index(self):
         message = 'The %s method is not allowed.' % request.method
         error('/v1/errors/not_allowed', message)
 
-    # GET /v1/PROJECT_ID/groups/GROUP_ID/members
+    @index.when(method='OPTIONS', template='json')
+    def index_options(self):
+        '''Supported methods'''
+        response.headers['Allow'] = 'GET,POST,PUT,DELETE'
+        response.status = 204
+
     @index.when(method='GET', template='json')
     def index_get(self):
         '''List group members'''
         group = request.context['group']
         return group.members
 
-    # POST /v1/PROJECT_ID/groups/GROUP_ID/members
     @index.when(method='POST', template='json')
     @validate(members_schema, '/v1/errors/schema')
     def index_post(self, **kwargs):
@@ -111,7 +123,6 @@ class MembersController(object):
         group.flush()
         return group
 
-    # UPDATE /v1/PROJECT_ID/groups/GROUP_ID/members
     @index.when(method='PUT', template='json')
     @validate(members_schema, '/v1/errors/schema')
     def index_put(self, **kwargs):
@@ -131,7 +142,6 @@ class MembersController(object):
         group.flush()
         return group
 
-    # DELETE /v1/PROJECT_ID/groups/GROUP_ID/members
     @index.when(method='DELETE', template='json')
     def index_delete(self, **kw):
         """Delete all group members"""
@@ -145,6 +155,7 @@ class MembersController(object):
         return MembersItemController(member_id), remainder
 
 class GroupsItemController(object):
+    # /v1/PROJECT_ID/groups/GROUP_ID
     members = MembersController()
 
     def __init__(self, group_id):
@@ -159,13 +170,17 @@ class GroupsItemController(object):
         message = 'The %s method is not allowed.' % request.method
         error('/v1/errors/not_allowed', message)
 
-    # GET /v1/PROJECT_ID/groups/GROUP_ID
+    @index.when(method='OPTIONS', template='json')
+    def index_options(self):
+        '''Supported methods'''
+        response.headers['Allow'] = 'GET,PUT,DELETE'
+        response.status = 204
+
     @index.when(method='GET', template='json')
     def index_get(self):
         """Display a group"""
         return request.context['group']
 
-    # UPDATE /v1/PROJECT_ID/groups/GROUP_ID
     @index.when(method='PUT', template='json')
     @validate(update_groups_schema, '/v1/errors/schema')
     def index_put(self, **kwargs):
@@ -185,7 +200,6 @@ class GroupsItemController(object):
         group.flush()
         return group
 
-    # DELETE /v1/PROJECT_ID/groups/GROUP_ID
     @index.when(method='DELETE', template='json')
     def index_delete(self):
         """Delete a group"""
@@ -197,12 +211,19 @@ class GroupsItemController(object):
         response.status = 204
 
 class GroupsController(object):
+    # /v1/PROJECT_ID/groups
+
     @expose(generic=True, template='json')
     def index(self):
         message = 'The %s method is not allowed.' % request.method
         error('/v1/errors/not_allowed', message)
 
-    # GET /v1/PROJECT_ID/groups
+    @index.when(method='OPTIONS', template='json')
+    def index_options(self):
+        '''Supported methods'''
+        response.headers['Allow'] = 'GET,POST'
+        response.status = 204
+
     @index.when(method='GET', template='json')
     def index_get(self):
         '''List groups'''
@@ -211,7 +232,6 @@ class GroupsController(object):
             groups_array.append(group.id)
         return groups_array
 
-    # POST /v1/PROJECT_ID/groups
     @index.when(method='POST', template='json')
     @validate(groups_schema, '/v1/errors/schema')
     def index_post(self, **kwargs):

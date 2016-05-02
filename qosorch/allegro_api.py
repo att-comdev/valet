@@ -104,7 +104,7 @@ class AllegroAPIWrapper(object):
     def placement(self, uuid, hosts=None, tenant_id=None, auth_token=None):
         """Call Allegro API to get placement for an Orchestration ID."""
         try:
-            url = self._api_endpoint(tenant_id) + '/placements/' + uuid
+            url = self._api_endpoint(tenant_id) + '/placements/' + uuid + '/'
             self.headers['X-Auth-Token'] = auth_token
             if hosts:
                 kwargs = {

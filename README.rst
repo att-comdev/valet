@@ -39,9 +39,10 @@ Throughout this document, the following installation-specific terms are used:
 - ``$IOARBITER_HOST``: IOArbiter API hostname or FQDN
 - ``$PATH_TO_VENV``: Allegro API virtual environment path
 - ``$TEGU_HOST``: Tegu API hostname or FQDN
-- ``$ALLEGRO_PROJECT_NAME``: Allegro user default project (e.g., service)
+- ``$ALLEGRO_PROJECT_NAME``: Allegro user default project/tenant (e.g., service)
 - ``$ALLEGRO_PASSWORD``: Allegro user password
 - ``$KEYSTONE_AUTH_API``: Keystone Auth API endpoint
+- ``$KEYSTONE_REGION``: Keystone Region (e.g., RegionOne)
 
 Root or sudo privileges are required for some steps.
 
@@ -366,7 +367,12 @@ OpenStack Configuration
 
 allegro-openstack requires edits to the heat, nova, and cinder configuration files, specifically in relation to the heat-engine, nova-scheduler, and cinder-scheduler. It's possible that these services are not all running on the same host. In that case, install allegro-openstack all relevant hosts, editing configuration files as needed on each.
 
-Add a user ``allegro`` to the OpenStack cluster, giving it an ``admin`` role in the ``service`` project (tenant):
+Prerequisites
+^^^^^^^^^^^^^
+
+The following keystone commands must be performed with admin credentials.
+
+Add a user ``allegro``, giving it an ``admin`` role in the ``service`` project (tenant):
 
 ::
 
@@ -376,7 +382,21 @@ Add a user ``allegro`` to the OpenStack cluster, giving it an ``admin`` role in 
 
   $ keystone user-role-add --user allegro --tenant service --role admin
 
-allegro-api requires line-of-sight to the Keystone adminurl endpoint. If this endpoint is unavailable, allegro-api will not be able to obtain a list of all projects (tenants) for use with group management.
+Create the service entity. This is not used by Valet 1.0 but may be added for future use.
+
+::
+
+  $ keystone service-create --type placement --name allegro --description "OpenStack Placement"
+
+Create the service API endpoints. This is not used by Valet 1.0 but may be added for future use.
+
+::
+
+  $ keystone endpoint-create --region $KEYSTONE_REGION --service allegro --publicurl 'http://$ALLEGRO_HOST:8090/v1/%(tenant_id)s' --adminurl 'http://$ALLEGRO_HOST:8090/v1/%(tenant_id)s' --internalurl 'http://$ALLEGRO_HOST:8090/v1/%(tenant_id)s'
+
+Note that the administrator may choose to use different hostnames/IPs for public vs. admin vs. internal URLs, depending on local architecture and requirements.
+
+Important: allegro-api requires line-of-sight to the Keystone adminurl endpoint. If this endpoint is unavailable, allegro-api will not be able to obtain a list of all projects (tenants) for use with group management.
 
 To mitigate, edit ``$ALLEGRO_PATH/allegro/config.py``. In the ``identity`` section, add an additional config setting of ``interface`` and set it to ``'public'``. Next, add the allegro user as a member of every project (tenant) it is expected to be aware of.
 

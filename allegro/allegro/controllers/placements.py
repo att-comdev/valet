@@ -43,6 +43,11 @@ class PlacementsItemController(object):
 
     @expose(generic=True, template='json')
     def index(self):
+        message = 'The %s method is not allowed.' % request.method
+        error('/v1/errors/not_allowed', message)
+
+    @index.when(method='GET', template='json')
+    def index_get(self):
         """Request a Placement"""
         return self.placement
 
@@ -99,10 +104,14 @@ class PlacementsItemController(object):
         response.status = 204
 
 class PlacementsController(object):
-    # Get all the placements /v1/PROJECT_ID/placements
-
     @expose(generic=True, template='json')
     def index(self):
+        message = 'The %s method is not allowed.' % request.method
+        error('/v1/errors/not_allowed', message)
+
+    # Get all the placements /v1/PROJECT_ID/placements
+    @index.when(method='GET', template='json')
+    def index_get(self):
         '''Get placements!'''
         placements_array = []
         for placement in Placement.query.all():

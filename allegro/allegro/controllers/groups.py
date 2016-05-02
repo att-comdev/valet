@@ -57,9 +57,14 @@ class MembersItemController(object):
                   'Member not found in group')
         request.context['member_id'] = member_id
 
-    # GET /v1/PROJECT_ID/groups/GROUP_ID/members/MEMBER_ID
     @expose(generic=True, template='json')
     def index(self):
+        message = 'The %s method is not allowed.' % request.method
+        error('/v1/errors/not_allowed', message)
+
+    # GET /v1/PROJECT_ID/groups/GROUP_ID/members/MEMBER_ID
+    @index.when(method='GET', template='json')
+    def index_get(self):
         '''Verify group member'''
         response.status = 204
 
@@ -74,9 +79,14 @@ class MembersItemController(object):
         response.status = 204
 
 class MembersController(object):
-    # GET /v1/PROJECT_ID/groups/GROUP_ID/members
     @expose(generic=True, template='json')
     def index(self):
+        message = 'The %s method is not allowed.' % request.method
+        error('/v1/errors/not_allowed', message)
+
+    # GET /v1/PROJECT_ID/groups/GROUP_ID/members
+    @index.when(method='GET', template='json')
+    def index_get(self):
         '''List group members'''
         group = request.context['group']
         return group.members
@@ -144,13 +154,15 @@ class GroupsItemController(object):
             error('/v1/errors/not_found', 'Group not found')
         request.context['group'] = group
 
-    # GET /v1/PROJECT_ID/groups/GROUP_ID
     @expose(generic=True, template='json')
     def index(self):
+        message = 'The %s method is not allowed.' % request.method
+        error('/v1/errors/not_allowed', message)
+
+    # GET /v1/PROJECT_ID/groups/GROUP_ID
+    @index.when(method='GET', template='json')
+    def index_get(self):
         """Display a group"""
-        if request.method == 'POST':
-            error('/v1/errors/not_allowed',
-                  'POST requests to this url are not allowed')
         return request.context['group']
 
     # UPDATE /v1/PROJECT_ID/groups/GROUP_ID
@@ -185,9 +197,14 @@ class GroupsItemController(object):
         response.status = 204
 
 class GroupsController(object):
-    # GET /v1/PROJECT_ID/groups
     @expose(generic=True, template='json')
     def index(self):
+        message = 'The %s method is not allowed.' % request.method
+        error('/v1/errors/not_allowed', message)
+
+    # GET /v1/PROJECT_ID/groups
+    @index.when(method='GET', template='json')
+    def index_get(self):
         '''List groups'''
         groups_array = []
         for group in Group.query.all():

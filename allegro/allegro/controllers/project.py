@@ -37,6 +37,11 @@ class ProjectController(object):
 
     @expose(generic=True, template='json')
     def index(self):
+        message = 'The %s method is not allowed.' % request.method
+        error('/v1/errors/not_allowed', message)
+
+    @index.when(method='GET', template='json')
+    def index_get(self):
         endpoints = ["groups", "optimizers", "plans", "placements"]
         links = []
         for endpoint in endpoints:

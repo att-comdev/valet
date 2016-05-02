@@ -62,9 +62,11 @@ class PlansItemController(object):
 
     @expose(generic=True, template='json')
     def index(self):
-        if request.method == 'POST':
-            error('/v1/errors/not_allowed',
-                  'POST requests to this url are not allowed')
+        message = 'The %s method is not allowed.' % request.method
+        error('/v1/errors/not_allowed', message)
+
+    @index.when(method='GET', template='json')
+    def index_get(self):
         return self.plan
 
     @index.when(method='PUT', template='json')
@@ -106,10 +108,14 @@ class PlansItemController(object):
         response.status = 204
 
 class PlansController(object):
-    # Get all the plans /v1/PROJECT_ID/plans
-
     @expose(generic=True, template='json')
     def index(self):
+        message = 'The %s method is not allowed.' % request.method
+        error('/v1/errors/not_allowed', message)
+
+    # Get all the plans /v1/PROJECT_ID/plans
+    @index.when(method='GET', template='json')
+    def index_get(self):
         '''Get plans!'''
         plans_array = []
         for plan in Plan.query.all():

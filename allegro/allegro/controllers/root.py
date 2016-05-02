@@ -39,9 +39,14 @@ class RootController(SecureController):
             return conf.identity.engine.is_admin(auth_token)
         return False
 
-    # TODO: No need to respond to this endpont. Throw a 404.
     @expose(generic=True, template='json')
     def index(self):
+        message = 'The %s method is not allowed.' % request.method
+        error('/v1/errors/not_allowed', message)
+
+    # TODO: No need to respond to this endpont?
+    @index.when(method='GET', template='json')
+    def index_get(self):
         ver = {
           "versions": [
             {

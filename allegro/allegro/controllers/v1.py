@@ -34,6 +34,11 @@ class V1Controller(object):
 
     @expose(generic=True, template='json')
     def index(self):
+        message = 'The %s method is not allowed.' % request.method
+        error('/v1/errors/not_allowed', message)
+
+    @index.when(method='GET', template='json')
+    def index_get(self):
         links = []
         links.append({
             "href": "%(url)s/v1/%(project_id)s/" % {

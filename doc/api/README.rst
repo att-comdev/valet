@@ -74,7 +74,7 @@ Groups
 Documentation forthcoming.
 
 ====  =======================  ================
-POST   /v1/{tenant_id}/groups  Creates a group.
+POST  /\v1/{tenant_id}/groups  Creates a group.
 ====  =======================  ================
 
 ===  ====================  ====================

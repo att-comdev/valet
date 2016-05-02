@@ -74,15 +74,15 @@ Groups
 
 Documentation forthcoming.
 
-====  ====================  ================
+====  ===================  ================
 POST  /v1/{tenant_id}/groups  :Create group:
                               Creates a group.
-GET  /v1/{tenant_id}/groups  :List group data:
-                             Lists active groups.
-
 ===  ====================  ====================
+
+===  =============================  ====================
 GET  /v1/{tenant_id}/groups/{group_id}  :List group data:
                                         Lists active groups.
+===  =============================  ====================
 
 ===  =============================  ====================
 PUT  /v1/{tenant_id}/groups/{group_id}  :Update group:

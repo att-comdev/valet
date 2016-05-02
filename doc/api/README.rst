@@ -74,7 +74,7 @@ Groups
 
 Documentation forthcoming.
 
-====  ===================  ================
+====  =======================  ================
 POST  /v1/{tenant_id}/groups  :Create group:
                               Creates a group.
 ===  ====================  ====================

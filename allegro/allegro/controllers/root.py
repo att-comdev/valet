@@ -15,16 +15,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from pecan import conf
-from pecan import expose
-from pecan import request
-from pecan.secure import SecureController
-from webob.exc import status_map
-
 from allegro.controllers import v1
 from allegro.controllers.errors import error_wrapper
 
 import logging
+from pecan import conf, expose, redirect, request, response
+from pecan.secure import SecureController
+from webob.exc import status_map
 
 logger = logging.getLogger(__name__)
 
@@ -43,6 +40,12 @@ class RootController(SecureController):
     def index(self):
         message = 'The %s method is not allowed.' % request.method
         error('/v1/errors/not_allowed', message)
+
+    @index.when(method='OPTIONS', template='json')
+    def index_options(self):
+        '''Supported methods'''
+        response.headers['Allow'] = 'GET'
+        response.status = 204
 
     # TODO: No need to respond to this endpont?
     @index.when(method='GET', template='json')

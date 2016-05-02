@@ -21,12 +21,12 @@ from allegro.controllers import set_placements, error
 from allegro.models.music import Plan, Placement
 #from allegro.models.sqlalchemy import Plan, Placement 
 from allegro.ostro_helper import Ostro
-from pecan import expose, redirect, request, response
-from pecan_notario import validate
 
 import logging
 from notario import decorators
 from notario.validators import types
+from pecan import conf, expose, redirect, request, response
+from pecan_notario import validate
 from webob.exc import status_map
 
 logger = logging.getLogger(__name__)
@@ -48,6 +48,8 @@ update_schema = (
 
 
 class PlansItemController(object):
+    # /v1/PROJECT_ID/plans/PLAN_ID
+
     placements = None
 
     def __init__(self, uuid4):
@@ -64,6 +66,12 @@ class PlansItemController(object):
     def index(self):
         message = 'The %s method is not allowed.' % request.method
         error('/v1/errors/not_allowed', message)
+
+    @index.when(method='OPTIONS', template='json')
+    def index_options(self):
+        '''Supported methods'''
+        response.headers['Allow'] = 'GET,PUT,DELETE'
+        response.status = 204
 
     @index.when(method='GET', template='json')
     def index_get(self):
@@ -108,10 +116,18 @@ class PlansItemController(object):
         response.status = 204
 
 class PlansController(object):
+    # /v1/PROJECT_ID/plans
+
     @expose(generic=True, template='json')
     def index(self):
         message = 'The %s method is not allowed.' % request.method
         error('/v1/errors/not_allowed', message)
+
+    @index.when(method='OPTIONS', template='json')
+    def index_options(self):
+        '''Supported methods'''
+        response.headers['Allow'] = 'GET,POST'
+        response.status = 204
 
     # Get all the plans /v1/PROJECT_ID/plans
     @index.when(method='GET', template='json')

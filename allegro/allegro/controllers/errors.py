@@ -15,7 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from pecan import expose, response, request
+from pecan import conf, expose, redirect, request, response
 
 
 def error_wrapper(func):

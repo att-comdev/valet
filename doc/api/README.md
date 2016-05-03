@@ -216,9 +216,9 @@ This operation does not accept a request body and does not return a response bod
 
 ```json
 {
-    "members": [
-        "65c3e5ee5ee0428caa5e5275c58ead61"
-    ]
+  "members": [
+    "65c3e5ee5ee0428caa5e5275c58ead61"
+  ]
 }
 ```
 
@@ -263,9 +263,9 @@ This operation does not accept a request body and does not return a response bod
 
 ```json
 {
-    "members": [
-        "b7d0e9b175294b649464caa3411adb3f"
-    ]
+  "members": [
+    "b7d0e9b175294b649464caa3411adb3f"
+  ]
 }
 ```
 
@@ -304,6 +304,15 @@ This operation does not accept a request body and does not return a response bod
 |-------------|-------|------------|---------------------------------------------------|
 | members     | plain | xsd:list   | A list of member UUIDs for the group. Members are tenant UUIDs that were valid at the time they were added. |
 | tenant_id   | plain | csapi:UUID | The UUID of the tenant. A tenant is also known as an account or project. |
+
+```json
+{
+  "members": [
+    "b7d0e9b175294b649464caa3411adb3f",
+    "65c3e5ee5ee0428caa5e5275c58ead61"
+  ]
+}
+```
 
 This operation does not accept a request body.
 

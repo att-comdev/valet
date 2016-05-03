@@ -12,6 +12,7 @@
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
 # implied.
+#
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
@@ -81,7 +82,7 @@ class PlansItemController(object):
     @validate(update_schema, '/v1/errors/schema')
     def index_put(self, **kw):
         """Update a Plan"""
-        # FIXME: Possible Ostro regression or missing code for updates?
+        # FIXME: Possible Ostro regression?
         # New placements are not being seen in the response, so
         # set_placements is currently failing as a result.
         kwargs = request.json

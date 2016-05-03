@@ -12,6 +12,7 @@
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
 # implied.
+#
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
@@ -86,18 +87,7 @@ class PlacementsItemController(object):
                 error('/v1/errors/server_error',
                       'Ostro error: %s' % message)
 
-            #ostro.response = {
-            #    "resources": {
-            #        "b71bedad-dd57-4942-a7bd-ab074b72d652": {
-            #            "properties": {
-            #                "host": "qos101"
-            #            }
-            #        }
-            #    }
-	    #}
-
             placements = ostro.response['resources']
-    
             update_placements(self.placement.plan, placements)
             placement = Placement.query.filter_by(
                             orchestration_id=orchestration_id).first()

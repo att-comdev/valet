@@ -8,8 +8,9 @@ Authenticated calls that target a known URI but that use an HTTP method the impl
 
 ## API versions
 
-|---|---|---|
-| **GET** | `/` | Lists all Placement API versions. |
+### List all Placement API versions
+
+**GET** `/`
 
 **Normal response codes:** 200
 
@@ -34,13 +35,14 @@ This operation does not accept a request body.
 
 ## Groups
 
-|---|---|---|
-| **POST** | `/v1/{tenant_id}/groups` | Creates a group. |
+### Create a group
+
+**POST** `/v1/{tenant_id}/groups`
 
 **Normal response codes:** 201
 **Error response codes:** badRequest (400), unauthorized (401), internalServerError (500)
 
-### Request parameters
+#### Request parameters
 
 | Parameter | Style | Type | Description |
 |-----------|-------|------|-------------|
@@ -49,7 +51,7 @@ This operation does not accept a request body.
 | tenant_id | plain | csapi:UUID | The UUID of the tenant. A tenant is also known as an account or project. |
 | type | plain | xsd:string | A type for the new group. Presently, the only valid value is `exclusivity`. |
 
-### Response parameters
+#### Response parameters
 
 | Parameter   | Style | Type       | Description                                       |
 |-------------|-------|------------|---------------------------------------------------|

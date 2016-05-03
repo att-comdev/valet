@@ -20,52 +20,20 @@ GET     ``/``                                                      Lists all Pla
 
 Normal response codes: 200
 
-| ``Test - line 1
-| Test - line 2``
-
-::
-
-  {
-
-::
-
-    "versions": [
-::
-
-      {
-::
-
-        "status": "CURRENT",
-::
-
-        "id": "v1.0",
-::
-
-        "links": [
-::
-
-          {
-::
-
-            "href": "http://127.0.0.1:8090/v1/",
-::
-
-            "rel": "self"
-::
-
-          }
-::
-
-        ]
-::
-
-      }
-::
-
-    ]
-::
-
-  }
+| ``{``
+| ``  "versions": [``
+| ``    {``
+| ``      "status": "CURRENT",``
+| ``      "id": "v1.0",``
+| ``      "links": [``
+| ``        {``
+| ``          "href": "http://127.0.0.1:8090/v1/",``
+| ``          "rel": "self"``
+| ``        }``
+| ``      ]``
+| ``    }``
+| ``  ]``
+| ``}``
 
 This operation does not accept a request body.
 

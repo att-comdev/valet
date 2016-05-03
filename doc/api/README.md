@@ -9,23 +9,27 @@ Authenticated calls that target a known URI but that use an HTTP method the impl
 ## API versions
 
 | GET | `/` | Lists all Placement API versions. |
+|-----|-----|-----------------------------------|
+| GET | `/` | Lists all Placement API versions. |
 
 Normal response codes: 200
 
+```json
+{
+  "versions": [
     {
-      "versions": [
+      "status": "CURRENT",
+      "id": "v1.0",
+      "links": [
         {
-          "status": "CURRENT",
-          "id": "v1.0",
-          "links": [
-            {
-              "href": "http://127.0.0.1:8090/v1/",
-              "rel": "self"
-            }
-          ]
+          "href": "http://127.0.0.1:8090/v1/",
+          "rel": "self"
         }
       ]
     }
+  ]
+}
+```
 
 This operation does not accept a request body.
 

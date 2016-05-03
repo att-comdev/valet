@@ -8,9 +8,8 @@ Authenticated calls that target a known URI but that use an HTTP method the impl
 
 ## API versions
 
-| GET | `/` | Lists all Placement API versions. |
-|-----|-----|-----------------------------------|
-| GET | `/` | Lists all Placement API versions. |
+| GET    | `/`                                                     | Lists all Placement API versions. |
+|--------|---------------------------------------------------------|-----------------------------------|
 
 Normal response codes: 200
 
@@ -37,27 +36,38 @@ This operation does not accept a request body.
 
 Documentation forthcoming.
 
-| POST | `/v1/{tenant_id}/groups` | Creates a group. |
+| POST   | `/v1/{tenant_id}/groups`                                | Creates a group.                  |
+|--------|---------------------------------------------------------|-----------------------------------|
 
-| GET | `/v1/{tenant_id}/groups` | Lists active groups. |
+| GET    | `/v1/{tenant_id}/groups`                                | Lists active groups.              |
+|--------|---------------------------------------------------------|-----------------------------------|
 
-| GET | `/v1/{tenant_id}/groups/{group_id}` | Show group details. |
+| GET    | `/v1/{tenant_id}/groups/{group_id}`                     | Show group details.               |
+|--------|---------------------------------------------------------|-----------------------------------|
 
-| PUT | `/v1/{tenant_id}/groups/{group_id}` | Updates a group. |
+| PUT    | `/v1/{tenant_id}/groups/{group_id}`                     | Updates a group.                  |
+|--------|---------------------------------------------------------|-----------------------------------|
 
-| DELETE | `/v1/{tenant_id}/groups/{group_id}` | Deletes a group. |
+| DELETE | `/v1/{tenant_id}/groups/{group_id}`                     | Deletes a group.                  |
+|--------|---------------------------------------------------------|-----------------------------------|
 
-| POST | `/v1/{tenant_id}/groups/{group_id}/members` | Sets members of a group. |
+| POST   | `/v1/{tenant_id}/groups/{group_id}/members`             | Sets members of a group.          |
+|--------|---------------------------------------------------------|-----------------------------------|
 
-| PUT | `/v1/{tenant_id}/groups/{group_id}/members` | Updates members of a group. |
+| PUT    | `/v1/{tenant_id}/groups/{group_id}/members`             | Updates members of a group.       |
+|--------|---------------------------------------------------------|-----------------------------------|
 
-| GET | `/v1/{tenant_id}/groups/{group_id}/members` | Lists members of a group. |
+| GET    | `/v1/{tenant_id}/groups/{group_id}/members`             | Lists members of a group.         |
+|--------|---------------------------------------------------------|-----------------------------------|
 
-| GET | `/v1/{tenant_id}/groups/{group_id}/members/{member_id}` | Verify membership in a group. |
+| GET    | `/v1/{tenant_id}/groups/{group_id}/members/{member_id}` | Verify membership in a group.     |
+|--------|---------------------------------------------------------|-----------------------------------|
 
-| DELETE | `/v1/{tenant_id}/groups/{group_id}/members/{member_id}` | Delete member from a group. |
+| DELETE | `/v1/{tenant_id}/groups/{group_id}/members/{member_id}` | Delete member from a group.       |
+|--------|---------------------------------------------------------|-----------------------------------|
 
-| DELETE | `/v1/{tenant_id}/groups/{group_id}/members` | Delete all members from a group. |
+| DELETE | `/v1/{tenant_id}/groups/{group_id}/members`             | Delete all members from a group.  |
+|--------|---------------------------------------------------------|-----------------------------------|
 
 ## Optimizers
 

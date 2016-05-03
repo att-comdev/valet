@@ -16,6 +16,7 @@ app = {
     'root': 'allegro.controllers.root.RootController',
     'modules': ['allegro'],
     'default_renderer': 'json',
+    'force_canonical': False,
     'hooks': [
         TransactionHook(
             models.start,

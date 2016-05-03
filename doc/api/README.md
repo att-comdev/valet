@@ -40,7 +40,8 @@ This operation does not accept a request body.
 **Normal response codes:** 201
 **Error response codes:** badRequest (400), unauthorized (401), internalServerError (500)
 
-**Request parameters**
+### Request parameters
+
 | Parameter | Style | Type | Description |
 |-----------|-------|------|-------------|
 | description (Optional) | plain | xsd:string | A description for the new group. |
@@ -48,7 +49,8 @@ This operation does not accept a request body.
 | tenant_id | plain | csapi:UUID | The UUID of the tenant. A tenant is also known as an account or project. |
 | type | plain | xsd:string | A type for the new group. Presently, the only valid value is `exclusivity`. |
 
-**Response parameters**
+### Response parameters
+
 | Parameter   | Style | Type       | Description                                       |
 |-------------|-------|------------|---------------------------------------------------|
 | description | plain | xsd:string | The group description.                            |
@@ -83,12 +85,14 @@ This operation does not accept a request body.
 **Normal response codes:** 200
 **Error response codes:** unauthorized (401)
 
-**Request parameters**
+### Request parameters
+
 | Parameter | Style | Type | Description |
 |-----------|-------|------|-------------|
 | tenant_id | plain | csapi:UUID | The UUID of the tenant. A tenant is also known as an account or project. |
 
-**Response parameters**
+### Response parameters
+
 | Parameter   | Style | Type       | Description                                       |
 |-------------|-------|------------|---------------------------------------------------|
 | groups      | plain | xsd:list   | A list of active group UUIDs.                     |
@@ -104,13 +108,15 @@ This operation does not accept a request body.
 **Normal response codes:** 200
 **Error response codes:** unauthorized (401)
 
-**Request parameters**
+### Request parameters
+
 | Parameter   | Style | Type       | Description                                       |
 |-------------|-------|------------|---------------------------------------------------|
 | group_id    | plain | csapi:UUID | The UUID of the group.                            |
 | tenant_id   | plain | csapi:UUID | The UUID of the tenant. A tenant is also known as an account or project. |
 
-**Response parameters**
+### Response parameters
+
 | Parameter   | Style | Type       | Description                                       |
 |-------------|-------|------------|---------------------------------------------------|
 | description | plain | xsd:string | The group description.                            |
@@ -138,7 +144,8 @@ This operation does not accept a request body.
 **Normal response codes:** 201
 **Error response codes:** badRequest (400), unauthorized (401)
 
-**Request parameters**
+### Request parameters
+
 | Parameter   | Style | Type       | Description                                       |
 |-------------|-------|------------|---------------------------------------------------|
 | description (Optional) | plain | xsd:string | A description for the group. Replaces the original description. |
@@ -147,7 +154,8 @@ This operation does not accept a request body.
 | tenant_id | plain | csapi:UUID | The UUID of the tenant. A tenant is also known as an account or project. |
 | type | plain | xsd:string | A type for the group. Presently, the only valid value is `exclusivity`. |
 
-**Response parameters**
+### Response parameters
+
 | Parameter   | Style | Type       | Description                                       |
 |-------------|-------|------------|---------------------------------------------------|
 | description | plain | xsd:string | The group description.                            |
@@ -164,7 +172,8 @@ This operation does not accept a request body.
 **Normal response codes:** 204
 **Error response codes:** badRequest (400), unauthorized (401), itemNotFound (404)
 
-**Request parameters**
+### Request parameters
+
 | Parameter   | Style | Type       | Description                                       |
 |-------------|-------|------------|---------------------------------------------------|
 | group_id    | plain | csapi:UUID | The UUID of the group.                            |
@@ -180,14 +189,16 @@ This operation does not accept a request body and does not return a response bod
 **Normal response codes:** 201
 **Error response codes:** badRequest (400), unauthorized (401), conflict (409)
 
-**Request parameters**
+### Request parameters
+
 | Parameter   | Style | Type       | Description                                       |
 |-------------|-------|------------|---------------------------------------------------|
 | group_id    | plain | csapi:UUID | The UUID of the group.                            |
 | members     | plain | xsd:list   | A list of group members. This replaces any previous list of members. All members must be valid tenant UUIDs. |
 | tenant_id   | plain | csapi:UUID | The UUID of the tenant. A tenant is also known as an account or project. |
 
-**Response parameters**
+### Response parameters
+
 | Parameter   | Style | Type       | Description                                       |
 |-------------|-------|------------|---------------------------------------------------|
 | description | plain | xsd:string | The group description.                            |
@@ -224,14 +235,16 @@ This operation does not accept a request body and does not return a response bod
 **Normal response codes:** 201
 **Error response codes:** badRequest (400), unauthorized (401), conflict (409)
 
-**Request parameters**
+### Request parameters
+
 | Parameter   | Style | Type       | Description                                       |
 |-------------|-------|------------|---------------------------------------------------|
 | group_id    | plain | csapi:UUID | The UUID of the group.                            |
 | members     | plain | xsd:list   | A list of group members. This is added to any previous list of members. All members must be valid tenant UUIDs. |
 | tenant_id   | plain | csapi:UUID | The UUID of the tenant. A tenant is also known as an account or project. |
 
-**Response parameters**
+### Response parameters
+
 | Parameter   | Style | Type       | Description                                       |
 |-------------|-------|------------|---------------------------------------------------|
 | description | plain | xsd:string | The group description.                            |
@@ -269,13 +282,14 @@ This operation does not accept a request body and does not return a response bod
 **Normal response codes:** 200
 **Error response codes:** unauthorized (401)
 
-**Request parameters**
+### Request parameters
 | Parameter   | Style | Type       | Description                                       |
 |-------------|-------|------------|---------------------------------------------------|
 | group_id    | plain | csapi:UUID | The UUID of the group.                            |
 | tenant_id   | plain | csapi:UUID | The UUID of the tenant. A tenant is also known as an account or project. |
 
-**Response parameters**
+### Response parameters
+
 | Parameter   | Style | Type       | Description                                       |
 |-------------|-------|------------|---------------------------------------------------|
 | members     | plain | xsd:list   | A list of member UUIDs for the group. Members are tenant UUIDs that were valid at the time they were added. |
@@ -291,7 +305,8 @@ This operation does not accept a request body.
 **Normal response codes:** 204
 **Error response codes:** badRequest (400), unauthorized (401), itemNotFound (404)
 
-**Request parameters**
+### Request parameters
+
 | Parameter   | Style | Type       | Description                                       |
 |-------------|-------|------------|---------------------------------------------------|
 | group_id    | plain | csapi:UUID | The UUID of the group.                            |
@@ -308,7 +323,8 @@ This operation does not accept a request body and does not return a response bod
 **Normal response codes:** 204
 **Error response codes:** badRequest (400), unauthorized (401), itemNotFound (404)
 
-**Request parameters**
+### Request parameters
+
 | Parameter   | Style | Type       | Description                                       |
 |-------------|-------|------------|---------------------------------------------------|
 | group_id    | plain | csapi:UUID | The UUID of the group.                            |
@@ -325,7 +341,8 @@ This operation does not accept a request body and does not return a response bod
 **Normal response codes:** 204
 **Error response codes:** badRequest (400), unauthorized (401), itemNotFound (404)
 
-**Request parameters**
+### Request parameters
+
 | Parameter   | Style | Type       | Description                                       |
 |-------------|-------|------------|---------------------------------------------------|
 | group_id    | plain | csapi:UUID | The UUID of the group.                            |

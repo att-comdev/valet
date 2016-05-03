@@ -27,6 +27,7 @@ import time
 import iso8601
 # https://github.com/openstack/python-keystoneclient/blob/
 #         master/keystoneclient/v2_0/client.py
+import keystoneauth1.exceptions
 from keystoneauth1.identity import v2
 from keystoneauth1 import session
 from keystoneclient.v2_0 import client
@@ -81,7 +82,10 @@ class Identity(object):
         kwargs = {
             'token': auth_token,
         }
-        token = self.client.tokens.validate(**kwargs)
+        try:
+            token = self.client.tokens.validate(**kwargs)
+        except keystoneauth1.exceptions.http.NotFound:
+            return False
         for role in token.user.get('roles', []):
             if role.get('name') == 'admin':
                 return True

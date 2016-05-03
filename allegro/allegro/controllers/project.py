@@ -39,7 +39,7 @@ class ProjectController(object):
     @expose(generic=True, template='json')
     def index(self):
         message = 'The %s method is not allowed.' % request.method
-        error('/v1/errors/not_allowed', message)
+        error('/errors/not_allowed', message)
 
     @index.when(method='OPTIONS', template='json')
     def index_options(self):

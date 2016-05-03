@@ -41,14 +41,14 @@ class OptimizersController(object):
         status_type = ostro.response['status']['type']
         if status_type != 'ok':
             message = ostro.response['status']['message']
-            error('/v1/errors/server_error',
+            error('/errors/server_error',
                   'Ostro error: %s' % message)
         return ostro.response
 
     @expose(generic=True, template='json')
     def index(self):
         message = 'The %s method is not allowed.' % request.method
-        error('/v1/errors/not_allowed', message)
+        error('/errors/not_allowed', message)
 
     @index.when(method='OPTIONS', template='json')
     def index_options(self):

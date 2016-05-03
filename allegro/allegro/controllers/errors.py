@@ -66,6 +66,16 @@ class ErrorsController(object):
 
     @expose('json')
     @error_wrapper
+    def unauthorized(self, **kw):
+        msg = kw.get(
+            'error_message',
+            'authorization required'
+        )
+        response.status = 401
+        return dict(message=msg)
+
+    @expose('json')
+    @error_wrapper
     def forbidden(self, **kw):
         msg = kw.get(
             'error_message',

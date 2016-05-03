@@ -16,7 +16,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from allegro.controllers import error, v1
+from allegro.controllers import error, errors, v1
 from allegro.controllers.errors import error_wrapper
 
 import logging
@@ -27,12 +27,13 @@ logger = logging.getLogger(__name__)
 
 
 class RootController(object):
+    errors = errors.ErrorsController()
     v1 = v1.V1Controller()
 
     @expose(generic=True, template='json')
     def index(self):
         message = 'The %s method is not allowed.' % request.method
-        error('/v1/errors/not_allowed', message)
+        error('/errors/not_allowed', message)
 
     @index.when(method='OPTIONS', template='json')
     def index_options(self):

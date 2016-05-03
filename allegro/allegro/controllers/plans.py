@@ -59,14 +59,14 @@ class PlansItemController(object):
         if not self.plan:
             self.plan = Plan.query.filter_by(stack_id=self.uuid).first()
             if not self.plan:
-                error('/v1/errors/not_found',
+                error('/errors/not_found',
                     'Plan not found')
         request.context['plan_id'] = self.plan.id
 
     @expose(generic=True, template='json')
     def index(self):
         message = 'The %s method is not allowed.' % request.method
-        error('/v1/errors/not_allowed', message)
+        error('/errors/not_allowed', message)
 
     @index.when(method='OPTIONS', template='json')
     def index_options(self):
@@ -79,7 +79,7 @@ class PlansItemController(object):
         return self.plan
 
     @index.when(method='PUT', template='json')
-    @validate(update_schema, '/v1/errors/schema')
+    @validate(update_schema, '/errors/schema')
     def index_put(self, **kw):
         """Update a Plan"""
         # FIXME: Possible Ostro regression?
@@ -93,7 +93,7 @@ class PlansItemController(object):
         status_type = ostro.response['status']['type']
         if status_type != 'ok':
             message = ostro.response['status']['message']
-            error('/v1/errors/invalid',
+            error('/errors/invalid',
                   'Ostro error: %s' % message)
 
         plan_name = kwargs['plan_name']
@@ -122,7 +122,7 @@ class PlansController(object):
     @expose(generic=True, template='json')
     def index(self):
         message = 'The %s method is not allowed.' % request.method
-        error('/v1/errors/not_allowed', message)
+        error('/errors/not_allowed', message)
 
     @index.when(method='OPTIONS', template='json')
     def index_options(self):
@@ -140,7 +140,7 @@ class PlansController(object):
         return plans_array
     
     @index.when(method='POST', template='json')
-    @validate(create_schema, '/v1/errors/schema')
+    @validate(create_schema, '/errors/schema')
     def index_post(self, **kw):
         """Create a Plan"""
         kwargs = request.json
@@ -151,7 +151,7 @@ class PlansController(object):
         status_type = ostro.response['status']['type']
         if status_type != 'ok':
             message = ostro.response['status']['message']
-            error('/v1/errors/server_error',
+            error('/errors/server_error',
                   'Ostro error: %s' % message)
 
         plan_name = kwargs['plan_name']
@@ -168,7 +168,7 @@ class PlansController(object):
             plan.flush()
             return plan
         else:
-            error('/v1/errors/server_error',
+            error('/errors/server_error',
                   'Unable to create Plan.')
 
     @expose()

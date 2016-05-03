@@ -16,7 +16,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from allegro.controllers import error, errors, project
+from allegro.controllers import error, project
     
 import logging
 from pecan import conf, expose, redirect, request, response
@@ -28,19 +28,17 @@ logger = logging.getLogger(__name__)
 class V1Controller(SecureController):
     # /v1
 
-    errors = errors.ErrorsController()
-
     @classmethod
     def check_permissions(cls):
         auth_token = request.headers.get('X-Auth-Token')
-        if auth_token:
-            return conf.identity.engine.is_admin(auth_token)
-        return False
+        if auth_token and conf.identity.engine.is_admin(auth_token):
+            return True
+        error('/errors/unauthorized')
 
     @expose(generic=True, template='json')
     def index(self):
         message = 'The %s method is not allowed.' % request.method
-        error('/v1/errors/not_allowed', message)
+        error('/errors/not_allowed', message)
 
     @expose()
     def _lookup(self, project_id, *remainder):

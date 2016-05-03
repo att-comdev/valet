@@ -40,14 +40,14 @@ class PlacementsItemController(object):
         self.placement = Placement.query.filter_by(
                              orchestration_id=self.orchestration_id).first()
         if not self.placement:
-            error('/v1/errors/not_found',
+            error('/errors/not_found',
                   'Placement not found')
         request.context['placement_id'] = self.placement.id
 
     @expose(generic=True, template='json')
     def index(self):
         message = 'The %s method is not allowed.' % request.method
-        error('/v1/errors/not_allowed', message)
+        error('/errors/not_allowed', message)
 
     @index.when(method='OPTIONS', template='json')
     def index_options(self):
@@ -84,7 +84,7 @@ class PlacementsItemController(object):
             status_type = ostro.response['status']['type']
             if status_type != 'ok':
                 message = ostro.response['status']['message']
-                error('/v1/errors/server_error',
+                error('/errors/server_error',
                       'Ostro error: %s' % message)
 
             placements = ostro.response['resources']
@@ -107,7 +107,7 @@ class PlacementsController(object):
     @expose(generic=True, template='json')
     def index(self):
         message = 'The %s method is not allowed.' % request.method
-        error('/v1/errors/not_allowed', message)
+        error('/errors/not_allowed', message)
 
     @index.when(method='OPTIONS', template='json')
     def index_options(self):

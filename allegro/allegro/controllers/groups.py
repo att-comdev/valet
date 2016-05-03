@@ -55,14 +55,14 @@ class MembersItemController(object):
         """Initialize group member"""
         group = request.context['group']
         if not member_id in group.members:
-            error('/v1/errors/not_found',
+            error('/errors/not_found',
                   'Member not found in group')
         request.context['member_id'] = member_id
 
     @expose(generic=True, template='json')
     def index(self):
         message = 'The %s method is not allowed.' % request.method
-        error('/v1/errors/not_allowed', message)
+        error('/errors/not_allowed', message)
 
     @index.when(method='OPTIONS', template='json')
     def index_options(self):
@@ -90,7 +90,7 @@ class MembersController(object):
     @expose(generic=True, template='json')
     def index(self):
         message = 'The %s method is not allowed.' % request.method
-        error('/v1/errors/not_allowed', message)
+        error('/errors/not_allowed', message)
 
     @index.when(method='OPTIONS', template='json')
     def index_options(self):
@@ -105,13 +105,13 @@ class MembersController(object):
         return {'members': group.members}
 
     @index.when(method='POST', template='json')
-    @validate(members_schema, '/v1/errors/schema')
+    @validate(members_schema, '/errors/schema')
     def index_post(self, **kwargs):
         """Set/replace all group members"""
         new_members = kwargs.get('members', [])
 
         if not conf.identity.engine.is_tenant_list_valid(new_members):
-            error('/v1/errors/conflict',
+            error('/errors/conflict',
                   'Member list contains invalid tenant IDs')
 
         group = request.context['group']
@@ -124,13 +124,13 @@ class MembersController(object):
         return group
 
     @index.when(method='PUT', template='json')
-    @validate(members_schema, '/v1/errors/schema')
+    @validate(members_schema, '/errors/schema')
     def index_put(self, **kwargs):
         """Add one or more members to a group"""
         new_members = kwargs.get('members', None)
 
         if not conf.identity.engine.is_tenant_list_valid(new_members):
-            error('/v1/errors/conflict',
+            error('/errors/conflict',
                   'Member list contains invalid tenant IDs')
 
         group = request.context['group']
@@ -162,13 +162,13 @@ class GroupsItemController(object):
         """Initialize group"""
         group = Group.query.filter_by(id=group_id).first()
         if not group:
-            error('/v1/errors/not_found', 'Group not found')
+            error('/errors/not_found', 'Group not found')
         request.context['group'] = group
 
     @expose(generic=True, template='json')
     def index(self):
         message = 'The %s method is not allowed.' % request.method
-        error('/v1/errors/not_allowed', message)
+        error('/errors/not_allowed', message)
 
     @index.when(method='OPTIONS', template='json')
     def index_options(self):
@@ -182,7 +182,7 @@ class GroupsItemController(object):
         return request.context['group']
 
     @index.when(method='PUT', template='json')
-    @validate(update_groups_schema, '/v1/errors/schema')
+    @validate(update_groups_schema, '/errors/schema')
     def index_put(self, **kwargs):
         """Update a group"""
         # Members are updated in the /v1/groups/members controller.
@@ -205,7 +205,7 @@ class GroupsItemController(object):
         """Delete a group"""
         group = request.context['group']
         if type(group.members) is list and len(group.members) > 0:
-            error('/v1/errors/conflict',
+            error('/errors/conflict',
                   'Unable to delete a Group with members.')
         group.delete()
         response.status = 204
@@ -216,7 +216,7 @@ class GroupsController(object):
     @expose(generic=True, template='json')
     def index(self):
         message = 'The %s method is not allowed.' % request.method
-        error('/v1/errors/not_allowed', message)
+        error('/errors/not_allowed', message)
 
     @index.when(method='OPTIONS', template='json')
     def index_options(self):
@@ -233,7 +233,7 @@ class GroupsController(object):
         return {'groups': groups_array}
 
     @index.when(method='POST', template='json')
-    @validate(groups_schema, '/v1/errors/schema')
+    @validate(groups_schema, '/errors/schema')
     def index_post(self, **kwargs):
         """Create a group"""
         group_name = kwargs.get('name', None)
@@ -249,7 +249,7 @@ class GroupsController(object):
             group.flush()
             return group
         else:
-            error('/v1/errors/server_error',
+            error('/errors/server_error',
                   'Unable to create Group.')
 
     @expose()

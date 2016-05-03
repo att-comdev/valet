@@ -79,21 +79,22 @@ This operation does not accept a request body.
 }
 ```
 
-----
+----------
 
-|---|---|---|
-| **GET** | `/v1/{tenant_id}/groups` | Lists active groups. |
+### List active groups
+
+**GET** `/v1/{tenant_id}/groups`
 
 **Normal response codes:** 200
 **Error response codes:** unauthorized (401)
 
-### Request parameters
+#### Request parameters
 
 | Parameter | Style | Type | Description |
 |-----------|-------|------|-------------|
 | tenant_id | plain | csapi:UUID | The UUID of the tenant. A tenant is also known as an account or project. |
 
-### Response parameters
+#### Response parameters
 
 | Parameter   | Style | Type       | Description                                       |
 |-------------|-------|------------|---------------------------------------------------|
@@ -102,22 +103,23 @@ This operation does not accept a request body.
 
 This operation does not accept a request body.
 
-----
+----------
 
-|---|---|---|
-| **GET** | `/v1/{tenant_id}/groups/{group_id}` | Show group details. |
+### Show group details
+
+**GET** `/v1/{tenant_id}/groups/{group_id}`
 
 **Normal response codes:** 200
 **Error response codes:** unauthorized (401)
 
-### Request parameters
+#### Request parameters
 
 | Parameter   | Style | Type       | Description                                       |
 |-------------|-------|------------|---------------------------------------------------|
 | group_id    | plain | csapi:UUID | The UUID of the group.                            |
 | tenant_id   | plain | csapi:UUID | The UUID of the tenant. A tenant is also known as an account or project. |
 
-### Response parameters
+#### Response parameters
 
 | Parameter   | Style | Type       | Description                                       |
 |-------------|-------|------------|---------------------------------------------------|
@@ -138,15 +140,16 @@ This operation does not accept a request body.
 ```
 This operation does not accept a request body.
 
-----
+----------
 
-|---|---|---|
-| **PUT** | `/v1/{tenant_id}/groups/{group_id}` | Updates a group. |
+### Update a group
+
+**PUT** `/v1/{tenant_id}/groups/{group_id}`
 
 **Normal response codes:** 201
 **Error response codes:** badRequest (400), unauthorized (401)
 
-### Request parameters
+#### Request parameters
 
 | Parameter   | Style | Type       | Description                                       |
 |-------------|-------|------------|---------------------------------------------------|
@@ -156,7 +159,7 @@ This operation does not accept a request body.
 | tenant_id | plain | csapi:UUID | The UUID of the tenant. A tenant is also known as an account or project. |
 | type | plain | xsd:string | A type for the group. Presently, the only valid value is `exclusivity`. |
 
-### Response parameters
+#### Response parameters
 
 | Parameter   | Style | Type       | Description                                       |
 |-------------|-------|------------|---------------------------------------------------|
@@ -166,15 +169,16 @@ This operation does not accept a request body.
 | name        | plain | xsd:string | The group name.                                   |
 | type        | plain | xsd:string | The group type.                                   |
 
-----
+----------
 
-|---|---|---|
-| **DELETE** | `/v1/{tenant_id}/groups/{group_id}` | Deletes a group. |
+### Delete a group
+
+**DELETE** `/v1/{tenant_id}/groups/{group_id}`
 
 **Normal response codes:** 204
 **Error response codes:** badRequest (400), unauthorized (401), itemNotFound (404)
 
-### Request parameters
+#### Request parameters
 
 | Parameter   | Style | Type       | Description                                       |
 |-------------|-------|------------|---------------------------------------------------|
@@ -183,15 +187,16 @@ This operation does not accept a request body.
 
 This operation does not accept a request body and does not return a response body.
 
-----
+----------
 
-|---|---|---|
-| **POST** | `/v1/{tenant_id}/groups/{group_id}/members` | Sets members of a group. |
+### Set members of a group
+
+**POST** `/v1/{tenant_id}/groups/{group_id}/members`
 
 **Normal response codes:** 201
 **Error response codes:** badRequest (400), unauthorized (401), conflict (409)
 
-### Request parameters
+#### Request parameters
 
 | Parameter   | Style | Type       | Description                                       |
 |-------------|-------|------------|---------------------------------------------------|
@@ -199,7 +204,7 @@ This operation does not accept a request body and does not return a response bod
 | members     | plain | xsd:list   | A list of group members. This replaces any previous list of members. All members must be valid tenant UUIDs. |
 | tenant_id   | plain | csapi:UUID | The UUID of the tenant. A tenant is also known as an account or project. |
 
-### Response parameters
+#### Response parameters
 
 | Parameter   | Style | Type       | Description                                       |
 |-------------|-------|------------|---------------------------------------------------|
@@ -229,15 +234,16 @@ This operation does not accept a request body and does not return a response bod
 }
 ```
 
-----
+----------
 
-|---|---|---|
-| **PUT** | `/v1/{tenant_id}/groups/{group_id}/members` | Updates members of a group. |
+### Update members of a group
+
+**PUT** `/v1/{tenant_id}/groups/{group_id}/members`
 
 **Normal response codes:** 201
 **Error response codes:** badRequest (400), unauthorized (401), conflict (409)
 
-### Request parameters
+#### Request parameters
 
 | Parameter   | Style | Type       | Description                                       |
 |-------------|-------|------------|---------------------------------------------------|
@@ -245,7 +251,7 @@ This operation does not accept a request body and does not return a response bod
 | members     | plain | xsd:list   | A list of group members. This is added to any previous list of members. All members must be valid tenant UUIDs. |
 | tenant_id   | plain | csapi:UUID | The UUID of the tenant. A tenant is also known as an account or project. |
 
-### Response parameters
+#### Response parameters
 
 | Parameter   | Style | Type       | Description                                       |
 |-------------|-------|------------|---------------------------------------------------|
@@ -276,21 +282,23 @@ This operation does not accept a request body and does not return a response bod
 }
 ```
 
-----
+----------
 
-|---|---|---|
-| **GET** | `/v1/{tenant_id}/groups/{group_id}/members` | Lists members of a group. |
+### List members of a group
+
+**GET** `/v1/{tenant_id}/groups/{group_id}/members`
 
 **Normal response codes:** 200
 **Error response codes:** unauthorized (401)
 
-### Request parameters
+#### Request parameters
+
 | Parameter   | Style | Type       | Description                                       |
 |-------------|-------|------------|---------------------------------------------------|
 | group_id    | plain | csapi:UUID | The UUID of the group.                            |
 | tenant_id   | plain | csapi:UUID | The UUID of the tenant. A tenant is also known as an account or project. |
 
-### Response parameters
+#### Response parameters
 
 | Parameter   | Style | Type       | Description                                       |
 |-------------|-------|------------|---------------------------------------------------|
@@ -299,15 +307,16 @@ This operation does not accept a request body and does not return a response bod
 
 This operation does not accept a request body.
 
-----
+----------
 
-|---|---|---|
-| **GET** | `/v1/{tenant_id}/groups/{group_id}/members/{member_id}` | Verify membership in a group. |
+### Verify membership in a group
+
+**GET** `/v1/{tenant_id}/groups/{group_id}/members/{member_id}`
 
 **Normal response codes:** 204
 **Error response codes:** badRequest (400), unauthorized (401), itemNotFound (404)
 
-### Request parameters
+#### Request parameters
 
 | Parameter   | Style | Type       | Description                                       |
 |-------------|-------|------------|---------------------------------------------------|
@@ -317,15 +326,16 @@ This operation does not accept a request body.
 
 This operation does not accept a request body and does not return a response body.
 
-----
+----------
 
-|---|---|---|
-| **DELETE** | `/v1/{tenant_id}/groups/{group_id}/members/{member_id}` | Delete member from a group. |
+### Delete member from a group
+
+**DELETE** `/v1/{tenant_id}/groups/{group_id}/members/{member_id}`
 
 **Normal response codes:** 204
 **Error response codes:** badRequest (400), unauthorized (401), itemNotFound (404)
 
-### Request parameters
+#### Request parameters
 
 | Parameter   | Style | Type       | Description                                       |
 |-------------|-------|------------|---------------------------------------------------|
@@ -335,15 +345,16 @@ This operation does not accept a request body and does not return a response bod
 
 This operation does not accept a request body and does not return a response body.
 
-----
+----------
 
-|---|---|---|
-| **DELETE** | `/v1/{tenant_id}/groups/{group_id}/members` | Delete all members from a group. |
+### Delete all members from a group
+
+**DELETE** `/v1/{tenant_id}/groups/{group_id}/members`
 
 **Normal response codes:** 204
 **Error response codes:** badRequest (400), unauthorized (401), itemNotFound (404)
 
-### Request parameters
+#### Request parameters
 
 | Parameter   | Style | Type       | Description                                       |
 |-------------|-------|------------|---------------------------------------------------|

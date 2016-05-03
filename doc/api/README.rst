@@ -20,7 +20,7 @@ GET     ``/``                                                      Lists all Pla
 
 Normal response codes: 200
 
-.. code:: python
+.. code:: yaml
 
   {
     "versions": [

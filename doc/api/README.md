@@ -79,7 +79,7 @@ This operation does not accept a request body.
 }
 ```
 
-----------
+* * * * * * * * * * *
 
 ### List active groups
 
@@ -103,7 +103,7 @@ This operation does not accept a request body.
 
 This operation does not accept a request body.
 
-----------
+* * * * * * * * * * *
 
 ### Show group details
 
@@ -140,7 +140,7 @@ This operation does not accept a request body.
 ```
 This operation does not accept a request body.
 
-----------
+* * * * * * * * * * *
 
 ### Update a group
 
@@ -169,7 +169,7 @@ This operation does not accept a request body.
 | name        | plain | xsd:string | The group name.                                   |
 | type        | plain | xsd:string | The group type.                                   |
 
-----------
+* * * * * * * * * * *
 
 ### Delete a group
 
@@ -187,7 +187,7 @@ This operation does not accept a request body.
 
 This operation does not accept a request body and does not return a response body.
 
-----------
+* * * * * * * * * * *
 
 ### Set members of a group
 
@@ -234,7 +234,7 @@ This operation does not accept a request body and does not return a response bod
 }
 ```
 
-----------
+* * * * * * * * * * *
 
 ### Update members of a group
 
@@ -282,7 +282,7 @@ This operation does not accept a request body and does not return a response bod
 }
 ```
 
-----------
+* * * * * * * * * * *
 
 ### List members of a group
 
@@ -307,7 +307,7 @@ This operation does not accept a request body and does not return a response bod
 
 This operation does not accept a request body.
 
-----------
+* * * * * * * * * * *
 
 ### Verify membership in a group
 
@@ -326,7 +326,7 @@ This operation does not accept a request body.
 
 This operation does not accept a request body and does not return a response body.
 
-----------
+* * * * * * * * * * *
 
 ### Delete member from a group
 
@@ -345,7 +345,7 @@ This operation does not accept a request body and does not return a response bod
 
 This operation does not accept a request body and does not return a response body.
 
-----------
+* * * * * * * * * * *
 
 ### Delete all members from a group
 

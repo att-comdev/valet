@@ -15,7 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from allegro.controllers import plans, placements, groups, optimizers
+from allegro.controllers import error, plans, placements, groups, optimizers
     
 import logging
 from pecan import conf, expose, redirect, request, response

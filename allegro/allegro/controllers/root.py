@@ -15,7 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from allegro.controllers import v1
+from allegro.controllers import error, v1
 from allegro.controllers.errors import error_wrapper
 
 import logging

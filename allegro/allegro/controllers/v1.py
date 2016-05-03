@@ -15,7 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from allegro.controllers import errors, project
+from allegro.controllers import error, errors, project
     
 import logging
 from pecan import conf, expose, redirect, request, response
@@ -28,42 +28,10 @@ class V1Controller(object):
 
     errors = errors.ErrorsController()
 
-    def __init__(self):
-        # TODO: No need to respond to this endpoint. Throw a 404.
-        self.project_id = "{project_id}"
-
     @expose(generic=True, template='json')
     def index(self):
         message = 'The %s method is not allowed.' % request.method
         error('/v1/errors/not_allowed', message)
-
-    @index.when(method='OPTIONS', template='json')
-    def index_options(self):
-        '''Supported methods'''
-        response.headers['Allow'] = 'GET'
-        response.status = 204
-
-    @index.when(method='GET', template='json')
-    def index_get(self):
-        links = []
-        links.append({
-            "href": "%(url)s/v1/%(project_id)s/" % {
-                     'url': request.application_url,
-                     'project_id': self.project_id
-            },
-            "rel": "self"
-        })
-        ver = {
-          "versions": [
-            {
-              "status": "CURRENT",
-              "id": "v1.0",
-              "links": links
-            }
-          ]
-        }
-
-        return ver
 
     @expose()
     def _lookup(self, project_id, *remainder):

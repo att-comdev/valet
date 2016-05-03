@@ -20,8 +20,8 @@ GET     ``/``                                                      Lists all Pla
 
 Normal response codes: 200
 
-| ``Test - line 1``
-| ``Test - line 2``
+| ``Test - line 1
+| Test - line 2``
 
 ::
 

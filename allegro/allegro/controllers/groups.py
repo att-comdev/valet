@@ -102,7 +102,7 @@ class MembersController(object):
     def index_get(self):
         '''List group members'''
         group = request.context['group']
-        return group.members
+        return {'members': group.members}
 
     @index.when(method='POST', template='json')
     @validate(members_schema, '/v1/errors/schema')
@@ -230,7 +230,7 @@ class GroupsController(object):
         groups_array = []
         for group in Group.query.all():
             groups_array.append(group.id)
-        return groups_array
+        return {'groups': groups_array}
 
     @index.when(method='POST', template='json')
     @validate(groups_schema, '/v1/errors/schema')

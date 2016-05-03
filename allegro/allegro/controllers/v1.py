@@ -12,6 +12,7 @@
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
 # implied.
+#
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
@@ -19,14 +20,22 @@ from allegro.controllers import error, errors, project
     
 import logging
 from pecan import conf, expose, redirect, request, response
+from pecan.secure import SecureController
 
 logger = logging.getLogger(__name__)
     
         
-class V1Controller(object):
+class V1Controller(SecureController):
     # /v1
 
     errors = errors.ErrorsController()
+
+    @classmethod
+    def check_permissions(cls):
+        auth_token = request.headers.get('X-Auth-Token')
+        if auth_token:
+            return conf.identity.engine.is_admin(auth_token)
+        return False
 
     @expose(generic=True, template='json')
     def index(self):

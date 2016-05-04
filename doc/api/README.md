@@ -118,7 +118,7 @@ This operation does not accept a request body.
 **GET** `/v1/{tenant_id}/groups/{group_id}`
 
 **Normal response codes:** 200
-**Error response codes:** unauthorized (401)
+**Error response codes:** unauthorized (401), itemNotFound (404)
 
 #### Request parameters
 
@@ -156,7 +156,7 @@ This operation does not accept a request body.
 **PUT** `/v1/{tenant_id}/groups/{group_id}`
 
 **Normal response codes:** 201
-**Error response codes:** badRequest (400), unauthorized (401)
+**Error response codes:** badRequest (400), unauthorized (401), itemNotFound (404)
 
 #### Request parameters
 
@@ -221,7 +221,7 @@ This operation does not accept a request body and does not return a response bod
 **POST** `/v1/{tenant_id}/groups/{group_id}/members`
 
 **Normal response codes:** 201
-**Error response codes:** badRequest (400), unauthorized (401), conflict (409)
+**Error response codes:** badRequest (400), unauthorized (401), itemNotFound (404), conflict (409)
 
 #### Request parameters
 
@@ -268,7 +268,7 @@ This operation does not accept a request body and does not return a response bod
 **PUT** `/v1/{tenant_id}/groups/{group_id}/members`
 
 **Normal response codes:** 201
-**Error response codes:** badRequest (400), unauthorized (401), conflict (409)
+**Error response codes:** badRequest (400), unauthorized (401), itemNotFound (404), conflict (409)
 
 #### Request parameters
 
@@ -316,7 +316,7 @@ This operation does not accept a request body and does not return a response bod
 **GET** `/v1/{tenant_id}/groups/{group_id}/members`
 
 **Normal response codes:** 200
-**Error response codes:** unauthorized (401)
+**Error response codes:** unauthorized (401), itemNotFound (404)
 
 #### Request parameters
 

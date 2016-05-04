@@ -103,6 +103,14 @@ This operation does not accept a request body.
 
 This operation does not accept a request body.
 
+```json
+{
+  "groups": [
+    "7de4790e-08f2-44b7-8332-7a41fab36a41"
+  ]
+}
+```
+
 * * * * * * * * * * *
 
 ### Show group details
@@ -138,6 +146,7 @@ This operation does not accept a request body.
   "name": "group"
 }
 ```
+
 This operation does not accept a request body.
 
 * * * * * * * * * * *
@@ -168,6 +177,24 @@ This operation does not accept a request body.
 | members     | plain | xsd:list   | A list of group members.                          |
 | name        | plain | xsd:string | The group name.                                   |
 | type        | plain | xsd:string | The group type.                                   |
+
+```json
+{
+  "description": "My Even Awesomer Group",
+  "type": "exclusivity",
+  "name": "renamed group"
+}
+```
+
+```json
+{
+  "description": "My Even Awesomer Group",
+  "type": "exclusivity",
+  "id": "7de4790e-08f2-44b7-8332-7a41fab36a41",
+  "members": [],
+  "name": "renamed group"
+}
+```
 
 * * * * * * * * * * *
 

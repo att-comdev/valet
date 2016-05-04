@@ -65,8 +65,6 @@ LOG_DIR = os.getenv('HA_VALET_LOGD', HA_VALET_ROOT + 'log/')
 ETC_DIR = os.getenv('HA_VALET_ETCD', '.')
 CONF_FILE = ETC_DIR + '/ha_valet.cfg'
 
-
-
 # Set the maximum logfile size as Byte for time-series log files
 max_log_size = 1000000
 # Set the maximum number of time-series log files
@@ -76,7 +74,7 @@ max_num_of_logs = 10
 PRIMARY_SETUP = 1
 RETRY_COUNT = 3      # How many times to retry ping command
 CONNECT_TIMEOUT = 3  # Ping timeout
-MAX_QUICK_STARTS = 4        # we stop if there are > 4 restarts in quick succession
+MAX_QUICK_STARTS = 10        # we stop if there are > 10 restarts in quick succession
 QUICK_RESTART_SEC = 150     # we consider it a quick restart if less than this
 
 # HA Configuration
@@ -84,6 +82,7 @@ HEARTBEAT_SEC = 5                    # Heartbeat interval in seconds
 
 
 NAME = 'name'
+ORDER = 'order'
 HOST = 'host'
 PORT = 'port'
 USER = 'user'
@@ -320,6 +319,8 @@ class HaValetThread (threading.Thread):
                         quick_start += 1
                         if quick_start > MAX_QUICK_STARTS:
                             crit(self.log_fd, "refusing to restart "+name+": too many restarts in quick succession.")
+                            # kill ourselves [if there is a watch dog it will restart us]
+                            self.exitFlag.set()
                             return
                     else:
                         quick_start = 0               # reset if it's been a while since last restart
@@ -436,6 +437,7 @@ class HAValet:
                         tokens = line.lstrip(' \t\n\r').split(' ')
                         section = tokens[0][1:].strip('\n\r\n')
                         cdata[section] = {}
+                        cdata[section][NAME] = section
                     else:
                         if line[:1] == '\n':
                             continue
@@ -500,27 +502,28 @@ class HAValet:
         threads = []
         exit_event = threading.Event()
 
-        for process_name in conf_data.keys():
-            if self._valid_process_conf_data(conf_data[process_name]):
-                conf_data[process_name]['name'] = process_name
-                print 'Launching: ', conf_data[process_name]['name']
-                thread = HaValetThread(conf_data[process_name], exit_event)
+        # sort by launching order
+        proc_sorted = sorted(conf_data.values(), key=lambda d: d[ORDER])
+
+        for proc in proc_sorted:
+            if self._valid_process_conf_data(proc):
+                print 'Launching:', proc[NAME], ', order:', proc[ORDER]
+                thread = HaValetThread(proc, exit_event)
                 time.sleep(HEARTBEAT_SEC)
                 thread.start()
                 threads.append(thread)
             else:
-                print process_name + " section is missing mandatory parameter."
+                print proc[NAME] + " section is missing mandatory parameter."
                 continue
 
         print 'Type "quit" to exit.'
 
-        while True:
+        while not exit_event.isSet():
             time.sleep(HEARTBEAT_SEC)
             line = raw_input('PROMPT> ')
             if line == 'quit':
                 exit_event.set()
                 print 'exit event fired'
-                break
 
         # Wait for all threads to complete
         for thread in threads:

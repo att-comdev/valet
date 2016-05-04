@@ -88,23 +88,18 @@ class AllegroAPIWrapper(object):
             self._exception(e, sys.exc_info(), req)
 
     def plans_delete(self, stack, tenant_id=None, auth_token=None):
-        # FIXME: Must put trailing slash on end or else
-        # Allegro does a 302 redirect and then a _GET_ vs a DELETE.
-        # When we try this with Postman the redirect remains a DELETE.
         try:
             url = self._api_endpoint(tenant_id) + '/plans/' + \
-                  stack.id + '/'
+                  stack.id
             self.headers['X-Auth-Token'] = auth_token
             req = requests.delete(url, headers=self.headers)
-            # TODO: Do not raise for status just yet.
-            #req.raise_for_status()
         except requests.exceptions.HTTPError as e:
             self._exception(e, sys.exc_info(), req)
 
     def placement(self, uuid, hosts=None, tenant_id=None, auth_token=None):
         """Call Allegro API to get placement for an Orchestration ID."""
         try:
-            url = self._api_endpoint(tenant_id) + '/placements/' + uuid + '/'
+            url = self._api_endpoint(tenant_id) + '/placements/' + uuid
             self.headers['X-Auth-Token'] = auth_token
             if hosts:
                 kwargs = {

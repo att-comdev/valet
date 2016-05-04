@@ -4,7 +4,7 @@ Determines placement for cloud resources.
 
 ## General API information
 
-Authenticated calls that target a known URI but that use an HTTP method the implementation does not support return a 405 Method Not Allowed status. In addition, the HTTP OPTIONS method is supported for each known URI. In the OPTIONS case, the Allow response header indicates the supported HTTP methods.
+Authenticated calls that target a known URI but that use an HTTP method the implementation does not support return a 405 Method Not Allowed status. In addition, the HTTP OPTIONS method is supported for each known URI. In both cases, the Allow response header indicates the supported HTTP methods.
 
 ## API versions
 
@@ -203,7 +203,7 @@ This operation does not accept a request body.
 **DELETE** `/v1/{tenant_id}/groups/{group_id}`
 
 **Normal response codes:** 204
-**Error response codes:** badRequest (400), unauthorized (401), itemNotFound (404)
+**Error response codes:** badRequest (400), unauthorized (401), itemNotFound (404), conflict (409)
 
 #### Request parameters
 

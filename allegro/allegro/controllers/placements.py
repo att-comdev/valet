@@ -12,6 +12,7 @@
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
 # implied.
+#
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
@@ -23,26 +24,39 @@ from allegro.controllers import update_placements, error
 from allegro.models.music import Placement
 #from allegro.models.sqlalchemy import Placement
 from allegro.ostro_helper import Ostro
-from pecan import expose, redirect, request, response
-from webob.exc import status_map
 
 import logging
+from pecan import conf, expose, redirect, request, response
+from webob.exc import status_map
 
 logger = logging.getLogger(__name__)
 
 
 class PlacementsItemController(object):
+    # /v1/PROJECT_ID/placements/PLACEMENT_ID
+
     def __init__(self, orchestration_id):
         self.orchestration_id = orchestration_id
         self.placement = Placement.query.filter_by(
                              orchestration_id=self.orchestration_id).first()
         if not self.placement:
-            error('/v1/errors/not_found',
+            error('/errors/not_found',
                   'Placement not found')
         request.context['placement_id'] = self.placement.id
 
     @expose(generic=True, template='json')
     def index(self):
+        message = 'The %s method is not allowed.' % request.method
+        error('/errors/not_allowed', message)
+
+    @index.when(method='OPTIONS', template='json')
+    def index_options(self):
+        '''Supported methods'''
+        response.headers['Allow'] = 'GET,POST,DELETE'
+        response.status = 204
+
+    @index.when(method='GET', template='json')
+    def index_get(self):
         """Request a Placement"""
         return self.placement
 
@@ -70,21 +84,10 @@ class PlacementsItemController(object):
             status_type = ostro.response['status']['type']
             if status_type != 'ok':
                 message = ostro.response['status']['message']
-                error('/v1/errors/server_error',
+                error('/errors/server_error',
                       'Ostro error: %s' % message)
 
-            #ostro.response = {
-            #    "resources": {
-            #        "b71bedad-dd57-4942-a7bd-ab074b72d652": {
-            #            "properties": {
-            #                "host": "qos101"
-            #            }
-            #        }
-            #    }
-	    #}
-
             placements = ostro.response['resources']
-    
             update_placements(self.placement.plan, placements)
             placement = Placement.query.filter_by(
                             orchestration_id=orchestration_id).first()
@@ -99,10 +102,21 @@ class PlacementsItemController(object):
         response.status = 204
 
 class PlacementsController(object):
-    # Get all the placements /v1/PROJECT_ID/placements
+    # /v1/PROJECT_ID/placements
 
     @expose(generic=True, template='json')
     def index(self):
+        message = 'The %s method is not allowed.' % request.method
+        error('/errors/not_allowed', message)
+
+    @index.when(method='OPTIONS', template='json')
+    def index_options(self):
+        '''Supported methods'''
+        response.headers['Allow'] = 'GET'
+        response.status = 204
+
+    @index.when(method='GET', template='json')
+    def index_get(self):
         '''Get placements!'''
         placements_array = []
         for placement in Placement.query.all():

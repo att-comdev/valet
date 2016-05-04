@@ -12,16 +12,17 @@
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
 # implied.
+#
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
 from os import path
-from pecan import conf
-from pecan import request, redirect
 
 # TODO: Make this a driver plugin point instead so we can pick and choose.
 from allegro.models.music import Placement
 #from allegro.models.sqlalchemy import Placement
+
+from pecan import conf, expose, redirect, request, response
 
 
 #

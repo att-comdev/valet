@@ -12,47 +12,33 @@
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
 # implied.
+#
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from pecan import expose
-from pecan import request
-        
-from allegro.controllers import errors, project
+from allegro.controllers import error, project
     
 import logging
+from pecan import conf, expose, redirect, request, response
+from pecan.secure import SecureController
 
 logger = logging.getLogger(__name__)
     
         
-class V1Controller(object):
-    errors = errors.ErrorsController()
+class V1Controller(SecureController):
+    # /v1
 
-    def __init__(self):
-        # TODO: No need to respond to this endpoint. Throw a 404.
-        self.project_id = "{project_id}"
+    @classmethod
+    def check_permissions(cls):
+        auth_token = request.headers.get('X-Auth-Token')
+        if auth_token and conf.identity.engine.is_admin(auth_token):
+            return True
+        error('/errors/unauthorized')
 
     @expose(generic=True, template='json')
     def index(self):
-        links = []
-        links.append({
-            "href": "%(url)s/v1/%(project_id)s/" % {
-                     'url': request.application_url,
-                     'project_id': self.project_id
-            },
-            "rel": "self"
-        })
-        ver = {
-          "versions": [
-            {
-              "status": "CURRENT",
-              "id": "v1.0",
-              "links": links
-            }
-          ]
-        }
-
-        return ver
+        message = 'The %s method is not allowed.' % request.method
+        error('/errors/not_allowed', message)
 
     @expose()
     def _lookup(self, project_id, *remainder):

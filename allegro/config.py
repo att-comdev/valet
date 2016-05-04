@@ -16,6 +16,7 @@ app = {
     'root': 'allegro.controllers.root.RootController',
     'modules': ['allegro'],
     'default_renderer': 'json',
+    'force_canonical': False,
     'hooks': [
         TransactionHook(
             models.start,
@@ -25,9 +26,9 @@ app = {
             models.clear
         ),
     ],
-    'static_root': '%(confdir)s/public',
+    #'static_root': '%(confdir)s/public',
     'template_path': '%(confdir)s/allegro/templates',
-    'debug': True,
+    'debug': False,
     # Instead of this, add HTTP error reporters to controllers/errors.py
     #'errors': {
     #    404: '/error/404',

@@ -12,6 +12,7 @@
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
 # implied.
+#
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
@@ -21,12 +22,12 @@ from allegro.controllers import set_placements, error
 from allegro.models.music import Plan, Placement
 #from allegro.models.sqlalchemy import Plan, Placement 
 from allegro.ostro_helper import Ostro
-from pecan import expose, redirect, request, response
-from pecan_notario import validate
 
 import logging
 from notario import decorators
 from notario.validators import types
+from pecan import conf, expose, redirect, request, response
+from pecan_notario import validate
 from webob.exc import status_map
 
 logger = logging.getLogger(__name__)
@@ -48,6 +49,8 @@ update_schema = (
 
 
 class PlansItemController(object):
+    # /v1/PROJECT_ID/plans/PLAN_ID
+
     placements = None
 
     def __init__(self, uuid4):
@@ -56,22 +59,30 @@ class PlansItemController(object):
         if not self.plan:
             self.plan = Plan.query.filter_by(stack_id=self.uuid).first()
             if not self.plan:
-                error('/v1/errors/not_found',
+                error('/errors/not_found',
                     'Plan not found')
         request.context['plan_id'] = self.plan.id
 
     @expose(generic=True, template='json')
     def index(self):
-        if request.method == 'POST':
-            error('/v1/errors/not_allowed',
-                  'POST requests to this url are not allowed')
+        message = 'The %s method is not allowed.' % request.method
+        error('/errors/not_allowed', message)
+
+    @index.when(method='OPTIONS', template='json')
+    def index_options(self):
+        '''Supported methods'''
+        response.headers['Allow'] = 'GET,PUT,DELETE'
+        response.status = 204
+
+    @index.when(method='GET', template='json')
+    def index_get(self):
         return self.plan
 
     @index.when(method='PUT', template='json')
-    @validate(update_schema, '/v1/errors/schema')
+    @validate(update_schema, '/errors/schema')
     def index_put(self, **kw):
         """Update a Plan"""
-        # FIXME: Possible Ostro regression or missing code for updates?
+        # FIXME: Possible Ostro regression?
         # New placements are not being seen in the response, so
         # set_placements is currently failing as a result.
         kwargs = request.json
@@ -82,7 +93,7 @@ class PlansItemController(object):
         status_type = ostro.response['status']['type']
         if status_type != 'ok':
             message = ostro.response['status']['message']
-            error('/v1/errors/invalid',
+            error('/errors/invalid',
                   'Ostro error: %s' % message)
 
         plan_name = kwargs['plan_name']
@@ -106,10 +117,22 @@ class PlansItemController(object):
         response.status = 204
 
 class PlansController(object):
-    # Get all the plans /v1/PROJECT_ID/plans
+    # /v1/PROJECT_ID/plans
 
     @expose(generic=True, template='json')
     def index(self):
+        message = 'The %s method is not allowed.' % request.method
+        error('/errors/not_allowed', message)
+
+    @index.when(method='OPTIONS', template='json')
+    def index_options(self):
+        '''Supported methods'''
+        response.headers['Allow'] = 'GET,POST'
+        response.status = 204
+
+    # Get all the plans /v1/PROJECT_ID/plans
+    @index.when(method='GET', template='json')
+    def index_get(self):
         '''Get plans!'''
         plans_array = []
         for plan in Plan.query.all():
@@ -117,7 +140,7 @@ class PlansController(object):
         return plans_array
     
     @index.when(method='POST', template='json')
-    @validate(create_schema, '/v1/errors/schema')
+    @validate(create_schema, '/errors/schema')
     def index_post(self, **kw):
         """Create a Plan"""
         kwargs = request.json
@@ -128,7 +151,7 @@ class PlansController(object):
         status_type = ostro.response['status']['type']
         if status_type != 'ok':
             message = ostro.response['status']['message']
-            error('/v1/errors/server_error',
+            error('/errors/server_error',
                   'Ostro error: %s' % message)
 
         plan_name = kwargs['plan_name']
@@ -145,7 +168,7 @@ class PlansController(object):
             plan.flush()
             return plan
         else:
-            error('/v1/errors/server_error',
+            error('/errors/server_error',
                   'Unable to create Plan.')
 
     @expose()

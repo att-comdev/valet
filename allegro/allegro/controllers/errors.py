@@ -12,19 +12,22 @@
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
 # implied.
+#
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from pecan import expose, response, request
+from pecan import conf, expose, redirect, request, response
 
 
 def error_wrapper(func):
-    '''Modeled after Apple's error APIs'''
+    '''Error decorator.'''
     def func_wrapper(self, **kwargs):
         # Call the controller method
         kwargs = func(self, **kwargs)
 
         # Prep the actual error
+        # Modeled after Apple's error APIs at present.
+        # TODO: Use OpenStack format?
         message = kwargs.get('message', 'Undocumented error')
         internalMessage = kwargs.get('internal', response.status)
         status = kwargs.get('status', response.status_code)
@@ -63,12 +66,12 @@ class ErrorsController(object):
 
     @expose('json')
     @error_wrapper
-    def not_allowed(self, **kw):
+    def unauthorized(self, **kw):
         msg = kw.get(
             'error_message',
-            'method not allowed'
+            'authorization required'
         )
-        response.status = 405
+        response.status = 401
         return dict(message=msg)
 
     @expose('json')
@@ -92,6 +95,16 @@ class ErrorsController(object):
         return dict(message=msg)
 
     @expose('json')
+    @expose('json')
+    @error_wrapper
+    def not_allowed(self, **kw):
+        msg = kw.get(
+            'error_message',
+            'method not allowed'
+        )
+        response.status = 405
+        return dict(message=msg)
+
     @error_wrapper
     def conflict(self, **kw):
         msg = kw.get(

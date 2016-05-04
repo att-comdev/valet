@@ -16,20 +16,30 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from allegro.controllers import error, project
-    
+'''v1'''
+
 import logging
-from pecan import conf, expose, redirect, request, response
+
+from allegro.controllers import error, project
+from allegro.i18n import _
+
+from pecan import conf, expose, request
 from pecan.secure import SecureController
 
-logger = logging.getLogger(__name__)
-    
-        
+LOG = logging.getLogger(__name__)
+
+# pylint: disable=R0201
+
+
 class V1Controller(SecureController):
-    # /v1
+    '''
+    v1 Controller
+    /v1
+    '''
 
     @classmethod
     def check_permissions(cls):
+        '''SecureController permission check callback'''
         auth_token = request.headers.get('X-Auth-Token')
         if auth_token and conf.identity.engine.is_admin(auth_token):
             return True
@@ -37,9 +47,11 @@ class V1Controller(SecureController):
 
     @expose(generic=True, template='json')
     def index(self):
-        message = 'The %s method is not allowed.' % request.method
+        '''Catchall for unallowed methods'''
+        message = _('The %s method is not allowed.') % request.method
         error('/errors/not_allowed', message)
 
     @expose()
     def _lookup(self, project_id, *remainder):
+        '''Pecan subcontroller routing callback'''
         return project.ProjectController(project_id), remainder

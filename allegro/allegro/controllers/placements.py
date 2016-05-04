@@ -16,53 +16,65 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import simplejson
+'''Placments'''
 
-from allegro import models
+import logging
+
 from allegro.controllers import update_placements, error
+from allegro.i18n import _
 # TODO: Make this a driver plugin point instead so we can pick and choose.
 from allegro.models.music import Placement
 #from allegro.models.sqlalchemy import Placement
 from allegro.ostro_helper import Ostro
 
-import logging
-from pecan import conf, expose, redirect, request, response
-from webob.exc import status_map
+from pecan import expose, request, response
 
-logger = logging.getLogger(__name__)
+LOG = logging.getLogger(__name__)
+
+# pylint: disable=R0201
 
 
 class PlacementsItemController(object):
-    # /v1/PROJECT_ID/placements/PLACEMENT_ID
+    '''
+    Placements Item Controller
+    /v1/{tenant_id}/placements/{placement_id}
+    '''
 
     def __init__(self, orchestration_id):
         self.orchestration_id = orchestration_id
-        self.placement = Placement.query.filter_by(
-                             orchestration_id=self.orchestration_id).first()
+        self.placement = Placement.query.filter_by(  # pylint: disable=E1101
+            orchestration_id=self.orchestration_id).first()
         if not self.placement:
             error('/errors/not_found',
-                  'Placement not found')
+                  _('Placement not found'))
         request.context['placement_id'] = self.placement.id
+
+    @classmethod
+    def allow(cls):
+        '''Allowed methods'''
+        return 'GET,POST,DELETE'
 
     @expose(generic=True, template='json')
     def index(self):
-        message = 'The %s method is not allowed.' % request.method
-        error('/errors/not_allowed', message)
+        '''Catchall for unallowed methods'''
+        message = _('The %s method is not allowed.') % request.method
+        kwargs = {'allow': self.allow()}
+        error('/errors/not_allowed', message, **kwargs)
 
     @index.when(method='OPTIONS', template='json')
     def index_options(self):
-        '''Supported methods'''
-        response.headers['Allow'] = 'GET,POST,DELETE'
+        '''Options'''
+        response.headers['Allow'] = self.allow()
         response.status = 204
 
     @index.when(method='GET', template='json')
     def index_get(self):
-        """Request a Placement"""
+        '''Request a Placement'''
         return self.placement
 
     @index.when(method='POST', template='json')
     def index_post(self, **kwargs):
-        """Request a Placement with possible replanning"""
+        '''Request a Placement with possible replanning'''
         locations = kwargs.get('locations', [])
         if self.placement.location in locations:
             # Ostro's placement is in the list of candidates. Good!
@@ -85,44 +97,55 @@ class PlacementsItemController(object):
             if status_type != 'ok':
                 message = ostro.response['status']['message']
                 error('/errors/server_error',
-                      'Ostro error: %s' % message)
+                      _('Ostro error: %s') % message)
 
             placements = ostro.response['resources']
-            update_placements(self.placement.plan, placements)
-            placement = Placement.query.filter_by(
-                            orchestration_id=orchestration_id).first()
+            update_placements(placements)
+            placement = Placement.query.filter_by(  # pylint: disable=E1101
+                orchestration_id=orchestration_id).first()
             response.status = 201
-        
+
             return placement
 
     @index.when(method='DELETE', template='json')
-    def index_delete(self, **kwargs):
-        """Delete a Placement"""
+    def index_delete(self):
+        '''Delete a Placement'''
         self.placement.delete()
         response.status = 204
 
 class PlacementsController(object):
-    # /v1/PROJECT_ID/placements
+    '''
+    Placements Controller
+    /v1/{tenant_id}/placements
+    '''
+
+    @classmethod
+    def allow(cls):
+        '''Allowed methods'''
+        return 'GET'
 
     @expose(generic=True, template='json')
     def index(self):
-        message = 'The %s method is not allowed.' % request.method
-        error('/errors/not_allowed', message)
+        '''Catchall for unallowed methods'''
+        message = _('The %s method is not allowed.') % request.method
+        kwargs = {'allow': self.allow()}
+        error('/errors/not_allowed', message, **kwargs)
 
     @index.when(method='OPTIONS', template='json')
     def index_options(self):
-        '''Supported methods'''
-        response.headers['Allow'] = 'GET'
+        '''Options'''
+        response.headers['Allow'] = self.allow()
         response.status = 204
 
     @index.when(method='GET', template='json')
     def index_get(self):
         '''Get placements!'''
         placements_array = []
-        for placement in Placement.query.all():
+        for placement in Placement.query.all():  # pylint: disable=E1101
             placements_array.append(placement)
         return placements_array
-    
+
     @expose()
     def _lookup(self, orchestration_id, *remainder):
+        '''Pecan subcontroller routing callback'''
         return PlacementsItemController(orchestration_id), remainder

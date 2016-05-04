@@ -16,53 +16,75 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from allegro.controllers import error, errors, v1
-from allegro.controllers.errors import error_wrapper
+'''Root'''
 
 import logging
-from pecan import conf, expose, redirect, request, response
+
+from allegro.controllers import error
+from allegro.controllers.errors import ErrorsController, error_wrapper
+from allegro.controllers.v1 import V1Controller
+from allegro.i18n import _
+
+from pecan import expose, request, response
 from webob.exc import status_map
 
-logger = logging.getLogger(__name__)
+LOG = logging.getLogger(__name__)
+
+# pylint: disable=R0201
 
 
 class RootController(object):
-    errors = errors.ErrorsController()
-    v1 = v1.V1Controller()
+    '''
+    Root Controller
+    /
+    '''
+
+    errors = ErrorsController()
+    v1 = V1Controller()  # pylint: disable=C0103
+
+    @classmethod
+    def allow(cls):
+        '''Allowed methods'''
+        return 'GET'
 
     @expose(generic=True, template='json')
     def index(self):
-        message = 'The %s method is not allowed.' % request.method
-        error('/errors/not_allowed', message)
+        '''Catchall for unallowed methods'''
+        message = _('The %s method is not allowed.') % request.method
+        kwargs = {'allow': self.allow()}
+        error('/errors/not_allowed', message, **kwargs)
 
     @index.when(method='OPTIONS', template='json')
     def index_options(self):
-        '''Supported methods'''
-        response.headers['Allow'] = 'GET'
+        '''Options'''
+        response.headers['Allow'] = self.allow()
         response.status = 204
 
     @index.when(method='GET', template='json')
     def index_get(self):
+        '''Get canonical URL for each version'''
         ver = {
-          "versions": [
-            {
-              "status": "CURRENT",
-              "id": "v1.0",
-              "links": [
+            "versions": [
                 {
-                  "href": request.application_url + "/v1/",
-                  "rel": "self"
+                    "status": "CURRENT",
+                    "id": "v1.0",
+                    "links": [
+                        {
+                            "href": request.application_url + "/v1/",
+                            "rel": "self"
+                        }
+                    ]
                 }
-              ]
-            }
-          ]
+            ]
         }
 
         return ver
 
+    # TODO: See if we need this anymore. Thinking we don't.
     @expose('error.html')
     @error_wrapper
     def error(self, status):
+        '''Error handler'''
         try:
             status = int(status)
         except ValueError:  # pragma: no cover

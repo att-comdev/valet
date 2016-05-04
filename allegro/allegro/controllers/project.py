@@ -16,58 +16,84 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from allegro.controllers import error, plans, placements, groups, optimizers
-    
+'''Project'''
+
 import logging
-from pecan import conf, expose, redirect, request, response
 
-logger = logging.getLogger(__name__)
-    
-        
+from allegro.controllers import error
+from allegro.controllers.groups import GroupsController
+from allegro.controllers.placements import PlacementsController
+from allegro.controllers.plans import PlansController
+from allegro.controllers.optimizers import OptimizersController
+from allegro.i18n import _
+
+from pecan import expose, request, response
+
+LOG = logging.getLogger(__name__)
+
+# pylint: disable=R0201
+
+
 class ProjectController(object):
-    # /v1/PROJECT_ID
+    '''
+    Project Controller
+    /v1/{tenant_id}
 
-    plans = plans.PlansController()
-    placements = placements.PlacementsController()
-    groups = groups.GroupsController()
-    optimizers = optimizers.OptimizersController()
+    NOTE: The term "tenant" has been superceded by "project"
+    yet the OpenStack community still uses the term "tenant"
+    in popular usage. "Vive la résistance!"
+    '''
+
+    plans = PlansController()
+    placements = PlacementsController()
+    groups = GroupsController()
+    optimizers = OptimizersController()
 
     def __init__(self, project_id):
+        '''Initializer'''
         assert project_id
         request.context['project_id'] = project_id
 
+    @classmethod
+    def allow(cls):
+        '''Allowed methods'''
+        return 'GET'
+
     @expose(generic=True, template='json')
     def index(self):
-        message = 'The %s method is not allowed.' % request.method
-        error('/errors/not_allowed', message)
+        '''Catchall for unallowed methods'''
+        message = _('The %s method is not allowed.') % request.method
+        kwargs = {'allow': self.allow()}
+        error('/errors/not_allowed', message, **kwargs)
 
     @index.when(method='OPTIONS', template='json')
     def index_options(self):
-        '''Supported methods'''
-        response.headers['Allow'] = 'GET'
+        '''Options'''
+        response.headers['Allow'] = self.allow()
         response.status = 204
 
     @index.when(method='GET', template='json')
     def index_get(self):
+        '''Get canonical URL for each endpoint'''
         endpoints = ["groups", "optimizers", "plans", "placements"]
         links = []
         for endpoint in endpoints:
             links.append({
-                "href": "%(url)s/v1/%(project_id)s/%(endpoint)s/" % { 
-                         'url': request.application_url,
-                         'project_id': request.context['project_id'],
-                         'endpoint': endpoint
+                "href": "%(url)s/v1/%(project_id)s/%(endpoint)s/" % {
+                    'url': request.application_url,
+                    'project_id': request.context['project_id'],
+                    'endpoint': endpoint
                 },
                 "rel": "self"
             })
         ver = {
-          "versions": [
-            {
-              "status": "CURRENT",
-              "id": "v1.0",
-              "links": links
-            }
-          ]
+            "versions": [
+                {
+                    "status": "CURRENT",
+                    "id": "v1.0",
+                    "links": links
+                }
+            ]
         }
 
         return ver

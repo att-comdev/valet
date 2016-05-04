@@ -16,21 +16,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from allegro.controllers import error
-from allegro.ostro_helper import Ostro
+'''Optimizers'''
 
 import logging
-from notario import decorators
-from notario.validators import types
-from pecan import conf, expose, redirect, request, response
-from pecan_notario import validate
-from webob.exc import status_map
 
-logger = logging.getLogger(__name__)
+from allegro.controllers import error
+from allegro.i18n import _
+from allegro.ostro_helper import Ostro
+
+from pecan import expose, request, response
+
+LOG = logging.getLogger(__name__)
+
+# pylint: disable=R0201
 
 
 class OptimizersController(object):
-    # /v1/PROJECT_ID/optimizers
+    '''
+    Optimizers Controller
+    /v1/{tenant_id}/optimizers
+    '''
 
     def _ping(self):
         '''Ping the optimizer.'''
@@ -42,27 +47,36 @@ class OptimizersController(object):
         if status_type != 'ok':
             message = ostro.response['status']['message']
             error('/errors/server_error',
-                  'Ostro error: %s' % message)
+                  _('Ostro error: %s') % message)
         return ostro.response
+
+    @classmethod
+    def allow(cls):
+        '''Allowed methods'''
+        return 'HEAD,GET'
 
     @expose(generic=True, template='json')
     def index(self):
-        message = 'The %s method is not allowed.' % request.method
-        error('/errors/not_allowed', message)
+        '''Catchall for unallowed methods'''
+        message = _('The %s method is not allowed.') % request.method
+        kwargs = {'allow': self.allow()}
+        error('/errors/not_allowed', message, **kwargs)
 
     @index.when(method='OPTIONS', template='json')
     def index_options(self):
-        '''Supported methods'''
-        response.headers['Allow'] = 'HEAD,GET'
+        '''Options'''
+        response.headers['Allow'] = self.allow()
         response.status = 204
 
     @index.when(method='HEAD', template='json')
     def index_head(self):
-        ostro_response = self._ping()
+        '''Ping Ostro'''
+        _unused = self._ping()  # pylint: disable=W0612
         response.status = 204
 
     @index.when(method='GET', template='json')
     def index_get(self):
+        '''Ping Ostro and return the response'''
         ostro_response = self._ping()
         response.status = 200
         return ostro_response

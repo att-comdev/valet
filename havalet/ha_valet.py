@@ -481,9 +481,10 @@ class HAValet:
 
         parser = argparse.ArgumentParser()
         parser.add_argument('-p', '--process', help='process name to monitor', default='')
+        parser.add_argument('-f', '--file', help='configuraion file', default='./ha_valet.cfg')
         args = parser.parse_args()
 
-        conf_data = self._parse_valet_conf(process=args.process)
+        conf_data = self._parse_valet_conf(conf_file_name=args.file, process=args.process)
 
         # if a specific process was asked for..
         # remove all others

@@ -35,11 +35,10 @@ class AllegroAPIWrapper(object):
         self.opt_name_str = 'allegro_api_server_url'
         self._register_opts()
 
-    def _api_endpoint(self, tenant_id='e833dea42c7c47d6be25150693fe0f40'):
-        # TODO: Require tenant id, else honk
+    def _api_endpoint(self):
         try:
             opt = getattr(cfg.CONF, self.opt_group_str)
-            endpoint = opt[self.opt_name_str] + '/' + tenant_id
+            endpoint = opt[self.opt_name_str]
             if endpoint:
                 return endpoint
             else:
@@ -77,9 +76,9 @@ class AllegroAPIWrapper(object):
             # traceback can be added to the end of the raise
         raise my_exc.__class__, my_exc
 
-    def plans_create(self, stack, plan, tenant_id=None, auth_token=None):
+    def plans_create(self, stack, plan, auth_token=None):
         try:
-            url = self._api_endpoint(tenant_id) + '/plans/'
+            url = self._api_endpoint() + '/plans/'
             payload = json.dumps(plan)
             self.headers['X-Auth-Token'] = auth_token
             req = requests.post(url, data=payload, headers=self.headers)
@@ -87,19 +86,18 @@ class AllegroAPIWrapper(object):
         except requests.exceptions.HTTPError as e:
             self._exception(e, sys.exc_info(), req)
 
-    def plans_delete(self, stack, tenant_id=None, auth_token=None):
+    def plans_delete(self, stack, auth_token=None):
         try:
-            url = self._api_endpoint(tenant_id) + '/plans/' + \
-                  stack.id
+            url = self._api_endpoint() + '/plans/' + stack.id
             self.headers['X-Auth-Token'] = auth_token
             req = requests.delete(url, headers=self.headers)
         except requests.exceptions.HTTPError as e:
             self._exception(e, sys.exc_info(), req)
 
-    def placement(self, uuid, hosts=None, tenant_id=None, auth_token=None):
+    def placement(self, uuid, hosts=None, auth_token=None):
         """Call Allegro API to get placement for an Orchestration ID."""
         try:
-            url = self._api_endpoint(tenant_id) + '/placements/' + uuid
+            url = self._api_endpoint() + '/placements/' + uuid
             self.headers['X-Auth-Token'] = auth_token
             if hosts:
                 kwargs = {

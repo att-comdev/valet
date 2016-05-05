@@ -20,7 +20,12 @@
 
 import logging
 
-from allegro.controllers import error, project
+from allegro.controllers import error
+#from allegro.controllers import project
+from allegro.controllers.groups import GroupsController
+from allegro.controllers.placements import PlacementsController
+from allegro.controllers.plans import PlansController
+from allegro.controllers.optimizers import OptimizersController
 from allegro.i18n import _
 
 from pecan import conf, expose, request
@@ -37,6 +42,11 @@ class V1Controller(SecureController):
     /v1
     '''
 
+    plans = PlansController()
+    placements = PlacementsController()
+    groups = GroupsController()
+    optimizers = OptimizersController()
+
     @classmethod
     def check_permissions(cls):
         '''SecureController permission check callback'''
@@ -45,13 +55,45 @@ class V1Controller(SecureController):
             return True
         error('/errors/unauthorized')
 
+    @classmethod
+    def allow(cls):
+        '''Allowed methods'''
+        return 'GET'
+
     @expose(generic=True, template='json')
     def index(self):
         '''Catchall for unallowed methods'''
         message = _('The %s method is not allowed.') % request.method
-        error('/errors/not_allowed', message)
+        kwargs = {'allow': self.allow()}
+        error('/errors/not_allowed', message, **kwargs)
 
-    @expose()
-    def _lookup(self, project_id, *remainder):
-        '''Pecan subcontroller routing callback'''
-        return project.ProjectController(project_id), remainder
+    @index.when(method='OPTIONS', template='json')
+    def index_options(self):
+        '''Options'''
+        response.headers['Allow'] = self.allow()
+        response.status = 204
+
+    @index.when(method='GET', template='json')
+    def index_get(self):
+        '''Get canonical URL for each endpoint'''
+        endpoints = ["groups", "optimizers", "plans", "placements"]
+        links = []
+        for endpoint in endpoints:
+            links.append({
+                "href": "%(url)s/v1/%(endpoint)s/" % {
+                    'url': request.application_url,
+                    'endpoint': endpoint
+                },
+                "rel": "self"
+            })
+        ver = {
+            "versions": [
+                {
+                    "status": "CURRENT",
+                    "id": "v1.0",
+                    "links": links
+                }
+            ]
+        }
+
+        return ver

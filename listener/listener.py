@@ -158,17 +158,17 @@ def _parse_arguments():
     parser.add_argument(
         '-H', '--host', type=str, dest='host',
         help='compute node on which rabbitmq is running',
-        default='qos101.research.att.com')
+        default='localhost')
     parser.add_argument(
         '-p', '--port', type=int, dest='port',
         help='port on which rabbitmq is running', default=5672)
     parser.add_argument(
         '-u', '--username', type=str, dest='user',
-        help='rabbitmq username (default="guest")', default='bigsite')
+        help='rabbitmq username (default="guest")', default='guest')
     parser.add_argument(
         '-P', '--passwdfile', type=str, dest='passwdfile',
         help='file containing host rabbitmq passwords',
-        default='/usr/local/share/cloudqos/rabbitmqpasswords')
+        default='passwd')
     parser.add_argument(
         '-o', '--output_format', type=str, dest='output_format',
         help='output format (default="dict")',

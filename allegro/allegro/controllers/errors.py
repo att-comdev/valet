@@ -117,9 +117,10 @@ class ErrorsController(object):
             _('method not allowed')
         )
         kwargs = request.context.get('kwargs')
-        allow = kwargs.get('allow', None)
-        if allow:
-            response.headers['Allow'] = allow
+        if kwargs:
+            allow = kwargs.get('allow', None)
+            if allow:
+                response.headers['Allow'] = allow
         response.status = 405
         return dict(message=msg)
 

@@ -39,7 +39,6 @@ class AllegroFilter(filters.BaseHostFilter):
 
     # Used to authenticate request. Update via _authorize()
     _auth_token = None
-    _tenant_id = None
 
     def __init__(self):
         self.api = allegro_api.AllegroAPIWrapper()
@@ -65,7 +64,6 @@ class AllegroFilter(filters.BaseHostFilter):
         }
         keystone_client = client.Client(**kwargs)
         self._auth_token = keystone_client.auth_token
-        self._tenant_id = keystone_client.tenant_id
 
     def _is_same_host(self, host, location):
         return host == location
@@ -112,7 +110,6 @@ class AllegroFilter(filters.BaseHostFilter):
             self._authorize()
             hosts = [obj.host for obj in filter_obj_list]
             placement = self.api.placement(uuid, hosts=hosts,
-                                           tenant_id=self._tenant_id,
                                            auth_token=self._auth_token)
 
             # TODO: Ostro will give a matching format (e.g., mtmac2)

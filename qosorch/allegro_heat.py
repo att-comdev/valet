@@ -111,9 +111,7 @@ class AllegroLifecyclePlugin(lifecycle_plugin.LifecyclePlugin):
             return
 
         if action == 'DELETE':
-            self.api.plans_delete(stack,
-                                  tenant_id=cnxt.tenant_id,
-                                  auth_token=cnxt.auth_token)
+            self.api.plans_delete(stack, auth_token=cnxt.auth_token)
         elif action == 'CREATE':
             resources = dict()
             specifications = dict()
@@ -135,9 +133,7 @@ class AllegroLifecyclePlugin(lifecycle_plugin.LifecyclePlugin):
             if reservations:
                 plan['reservations'] = reservations
         
-            self.api.plans_create(stack, plan,
-                                  tenant_id=cnxt.tenant_id,
-                                  auth_token=cnxt.auth_token)
+            self.api.plans_create(stack, plan, auth_token=cnxt.auth_token)
 
     def do_post_op(self, cnxt, stack, current_stack=None, action=None,
                    is_stack_failure=False):

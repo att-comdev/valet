@@ -2,7 +2,7 @@
 
 This script is based on a RabbitMQ message bus listener. It has been modified to listen for specific messages needed by Ostro and persist digested versions of the messages to Music.
 
-This version of the listener does not use oslo.messages. It listens directly to the message transport. Future revisions are expected to use oslo.message in order to keep the means of transport abstract.
+This version of the listener does not use oslo.messaging. It listens directly to the message transport. Future revisions are expected to use oslo.messaging in order to keep the means of transport abstract.
 
 This script is not yet daemonized or packaged for pip installation.
 

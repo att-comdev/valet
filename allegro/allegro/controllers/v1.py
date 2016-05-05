@@ -21,7 +21,6 @@
 import logging
 
 from allegro.controllers import error
-#from allegro.controllers import project
 from allegro.controllers.groups import GroupsController
 from allegro.controllers.placements import PlacementsController
 from allegro.controllers.plans import PlansController

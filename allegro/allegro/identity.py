@@ -16,10 +16,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Identity library"""
+"""Identity helper library"""
 
 from datetime import datetime
-#import json
 import os
 import sys
 import time
@@ -57,6 +56,9 @@ class Identity(object):
     @property
     def _client_expired(self):
         """Returns True if cached client's token is expired."""
+        # NOTE: Keystone may auto-regen the client now (v2? v3?)
+        # If so, this trip may no longer be necessary. Doesn't
+        # hurt to keep it around for the time being.
         if not self._client or not self._client.auth_ref:
             return True
         token = self._client.auth_ref.get('token')
@@ -106,12 +108,6 @@ class Identity(object):
             return True
         return False
 
-def init_identity():
-    """Initialize the identity engine and place in the config."""
-    config = conf.identity.config
-    engine = _identity_engine_from_config(config)
-    conf.identity.engine = engine
-
 def _identity_engine_from_config(config):
     """Initialize the identity engine based on supplied config."""
     # Using tenant_name instead of project name due to keystone v2
@@ -125,47 +121,8 @@ def _identity_engine_from_config(config):
     engine = Identity(interface, **kwargs)
     return engine
 
-def main():
-    """Used for ad hoc testing."""
-    if len(sys.argv) < 2:
-        print "Please provide a Keystone token. Example syntax:"
-        print "keystone token-get 2>/dev/null | " \
-              "grep ' id ' | awk '{print $4}'"
-        exit(1)
-
-    auth_token = sys.argv[1]
-    tenant_id = os.environ.get('OS_TENANT_ID')
-    kwargs = {
-        'token': auth_token,
-        'tenant_id': tenant_id,
-    }
-
-    init_identity()
-    engine = conf.identity.engine
-
-    print 'Client Auth Token: %s' % engine.client.auth_token
-    print 'User Auth Token: %s' % auth_token
-    print 'Tenant ID: %s' % tenant_id
-    print
-
-    while True:
-        try:
-            auth_result = engine.client.tokens.authenticate(**kwargs)
-            if auth_result:
-                #print json.dumps(auth_result.to_dict())
-                print 'The user auth token is valid'
-                print 'Token expiration: %s' % (auth_result.expires)
-
-                timenow = utcnow().isoformat()
-                print 'Time now: %s' % (timenow)
-        except (AuthorizationFailure, Unauthorized):
-            print 'User token is invalid or expired.'
-            print 'This should never happen though.'
-            exit(1)
-
-        print 'Sleeping for 60 seconds.'
-        time.sleep(60)
-        print
-
-if __name__ == "__main__":
-    main()
+def init_identity():
+    """Initialize the identity engine and place in the config."""
+    config = conf.identity.config
+    engine = _identity_engine_from_config(config)
+    conf.identity.engine = engine

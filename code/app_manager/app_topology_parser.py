@@ -75,6 +75,9 @@ class Parser:
         if self.action == "ping":
             self.logger.debug("ping does not parse")
             return ({}, {}, {})
+        elif self.action == "replan":
+            self.logger.debug("replan requested")
+            return ({}, {}, {})
         else:
             return self._set_topology(_graph["resources"])
 

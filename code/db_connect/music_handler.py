@@ -169,14 +169,14 @@ class MusicHandler:
                     self.logger.debug("db: event does not have args")
                     continue
 
-                args_data = adjust_json_string(args_data)
+                #args_data = adjust_json_string(args_data)
 
                 #args = simplejson.loads(row['args'])
                 try:
                     args = json.loads(args_data)  
                     #print json.dumps(args, indent=4)                                               
                 except (ValueError, KeyError, TypeError):                                        
-                    self.logger.warn("db: error while decoding to JSON event = " + method)           
+                    self.logger.warn("db: error while decoding to JSON event = " + method + ":" + event_id)
                     continue
                 
                 if method == 'object_action':                                                    
@@ -600,6 +600,22 @@ class MusicHandler:
         self.logger.info("db: app added")
 
         return True
+
+    def get_app_info(self, _s_uuid):
+        json_app = {}
+
+        row = {}
+        try:
+            row = self.music.read_row(self.config.db_keyspace, self.config.db_app_table, 'stack_id', _s_uuid)
+        except Exception, e:
+            self.logger.error("MUSIC error: " + str(e))
+            return None
+
+        if len(row) > 0:
+            str_app = row[row.keys()[0]]['app']
+            json_app = json.loads(str_app)
+
+        return json_app
 
     # TODO: get all other VMs related to this VM
     def get_vm_info(self, _s_uuid, _h_uuid, _host): 

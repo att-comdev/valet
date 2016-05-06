@@ -333,7 +333,7 @@ class Ostro:
                         self.logger.warn("unknown vm_state = " + e.vm_state)
 
                 elif e.object_name == 'ComputeNode':     # Host resource is updated
-                    self.logger.debug("got object_action compute event = ")
+                    self.logger.debug("got object_action compute event")
                     # NOTE: what if host is disabled?
                     if self.resource.update_host_resources(e.host, e.status, \
                                                            e.vcpus, e.vcpus_used, \
@@ -357,6 +357,7 @@ class Ostro:
         for e in _event_list:
             self.logger.debug("delete event = " + e.event_id)
             if self.db.delete_event(e.event_id) == False:
+                self.logger.error("critical error while deleting event")
                 return False
             if e.method == "object_action":
                 if e.object_name == 'Instance':

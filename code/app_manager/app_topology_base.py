@@ -122,6 +122,7 @@ class VM:
         #self.host_aggregates = {}
         self.extra_specs_list = []
 
+        self.flavor = None
         self.vCPUs = 0
         self.mem = 0                  # MB
         self.local_volume_size = 0    # GB
@@ -141,6 +142,7 @@ class VM:
         if flavor == None:
             return False
         else:
+            self.flavor = _flavor_name
             self.vCPUs = flavor.vCPUs
             self.mem = flavor.mem_cap
             self.local_volume_size = flavor.disk_cap
@@ -198,6 +200,7 @@ class VM:
                 'availability_zones':availability_zone, \
                 #'host_aggregates':host_aggregates, \
                 'extra_specs_list':self.extra_specs_list, \
+                'flavor':self.flavor, \
                 'cpus':self.vCPUs, \
                 'mem':self.mem, \
                 'local_volume':self.local_volume_size, \

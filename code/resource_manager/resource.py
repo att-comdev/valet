@@ -706,16 +706,19 @@ class Resource:
 
         if host.status != _st:
             host.status = _st
+            self.logger.debug("host status changed")
             updated = True
 
         if host.original_vCPUs != _vcpus or \
            host.vCPUs_used != _vcpus_used:                                              
+            self.logger.debug("host cpu changed")
             host.original_vCPUs = _vcpus                                         
             host.vCPUs_used = _vcpus_used                                               
             updated = True                                                              
                                                                                                  
         if host.free_mem_mb != _fmem or \
            host.original_mem_cap != _mem:                                
+            self.logger.debug("host mem changed")
             host.free_mem_mb = _fmem                                                       
             host.original_mem_cap = _mem                                    
             updated = True                                                              
@@ -723,6 +726,7 @@ class Resource:
         if host.free_disk_gb != _fldisk or \
            host.original_local_disk_cap != _ldisk or \
            host.disk_available_least != _avail_least:                            
+            self.logger.debug("host disk changed")
             host.free_disk_gb = _fldisk                                        
             host.original_local_disk_cap = _ldisk                
             host.disk_available_least = _avail_least                    

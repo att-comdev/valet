@@ -61,6 +61,13 @@ class AppHandler:
             else:
                 self.logger.info("application: " + app_id[1] + " with action = " + app_id[2])
 
+                if app_id[2] == "replan":
+                    re_app = self._regenerate_app_topology(app_id[0], app)
+                    if re_app == None:
+                        return None
+                    _app_data.append(re_app)
+                    continue
+
                 new_app = App(app_id[0], app_id[1], app_id[2])
 
                 self.apps[app_id[0]] = new_app
@@ -152,13 +159,112 @@ class AppHandler:
 
         return True
 
+    def _regenerate_app_topology(self, _stack_id, _app):
+        re_app = {}
+       
+        old_app = self.db.get_app_info(_stack_id)
+        if old_app == None:
+            self.status = "error while getting old_app from MUSIC"
+            self.logger.error(self.status)
+            return None
+        elif len(old_app) == 0:
+            self.status = "cannot find the old app in MUSIC"
+            self.logger.error(self.status)
+            return None
 
+        re_app["action"] = "create"
+        re_app["stack_id"] = _stack_id
+        
+        resources = {}
+        diversity_groups = {}
+        exclusivity_groups = {}
 
+        if "VMs" in old_app.keys():
+            for vmk, vm in old_app["VMs"].iteritems():
+                resources[vmk] = {}
+                resources[vmk]["name"] = vm["name"] 
+                resources[vmk]["type"] = "OS::Nova::Server"
+                properties = {}
+                properties["flavor"] = vm["flavor"]
+                if vm["availability_zone"] != "none":
+                    properties["availability_zone"] = vm["availability_zone"]
+                resources[vmk]["properties"] = properties
 
+                if len(vm["diversity_groups"]) > 0:
+                    for divk, level in vm["diversity_groups"]:
+                        div_id = divk + ":" + level
+                        if div_id not in diversity_groups.keys():
+                            diversity_groups[div_id] = []
+                        diversity_groups[div_id].append(vmk)
 
+                if len(vm["exclusivity_groups"]) > 0:
+                    for exk, level_name in vm["exclusivity_groups"]:
+                        ex_id = exk + ":" + level_name
+                        if ex_id not in exclusivity_groups.keys():
+                            exclusivity_groups[ex_id] = []
+                        exclusivity_groups[ex_id].append(vmk)
+ 
+                resources[vmk]["properties"]["old_host"] = None
+                resources[vmk]["properties"]["candidate_host_list"] = []
+                if vmk == _app["orchestration_id"]:   # must replan
+                    resources[vmk]["properties"]["old_host"] = vm["host"]
+                    resources[vmk]["properties"]["candidate_host_list"] = _app["locations"]
+                elif vmk in _app["exclusions"]:
+                    resources[vmk]["properties"]["candidate_host_list"].append(vm["host"])
+                else:                                 # must replan
+                    resources[vmk]["properties"]["old_host"] = vm["host"]
 
+        if "VGroups" in old_app.keys():
+            for gk, affinity in old_app["VGroups"].iteritems():
+                resources[gk] = {}
+                resources[gk]["name"] = affinity["name"] 
+                resources[gk]["type"] = "ATT::CloudQoS::ResourceGroup"
+                properties = {}
+                properties["relationship"] = "affinity"
+                properties["level"] = affinity["level"]
+                properties["resources"] = []
+                for r in affinity["subvgroup_list"]:
+                    properties["resources"].append(r)
+                resources[gk]["properties"] = properties
 
+                if len(affinity["diversity_groups"]) > 0:
+                    for divk, level in affinity["diversity_groups"]:
+                        div_id = divk + ":" + level
+                        if div_id not in diversity_groups.keys():
+                            diversity_groups[div_id] = []
+                        diversity_groups[div_id].append(gk)
 
+                if len(affinity["exclusivity_groups"]) > 0:
+                    for exk, level_name in affinity["exclusivity_groups"]:
+                        ex_id = exk + ":" + level_name
+                        if ex_id not in exclusivity_groups.keys():
+                            exclusivity_groups[ex_id] = []
+                        exclusivity_groups[ex_id].append(gk)
+ 
+        # NOTE: skip pipes in this version
 
+        for div_id, resource_list in diversity_groups.iteritems():
+            divk_level = div_id.split(":")
+            resources[divk_level[0]] = {}
+            resources[divk_level[0]]["type"] = "ATT::CloudQoS::ResourceGroup"
+            properties = {}
+            properties["relationship"] = "diversity"
+            properties["level"] = divk_level[1]
+            properties["resources"] = resource_list
+            resources[divk_level[0]]["properties"] = properties
 
+        for ex_id, resource_list in exclusivity_groups.iteritems():
+            exk_level_name = ex_id.split(":")
+            resources[exk_level_name[0]] = {}
+            resources[exk_level_name[0]]["name"] = exk_level_name[2]
+            resources[exk_level_name[0]]["type"] = "ATT::CloudQoS::ResourceGroup"
+            properties = {}
+            properties["relationship"] = "exclusivity"
+            properties["level"] = exk_level_name[1]
+            properties["resources"] = resource_list
+            resources[exk_level_name[0]]["properties"] = properties
+
+        re_app["resources"] = resources
+
+        return re_app       
 

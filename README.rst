@@ -392,7 +392,7 @@ Create the service API endpoints. This is not used by Valet 1.0 but may be added
 
 ::
 
-  $ keystone endpoint-create --region $KEYSTONE_REGION --service allegro --publicurl 'http://$ALLEGRO_HOST:8090/v1/%(tenant_id)s' --adminurl 'http://$ALLEGRO_HOST:8090/v1/%(tenant_id)s' --internalurl 'http://$ALLEGRO_HOST:8090/v1/%(tenant_id)s'
+  $ keystone endpoint-create --region $KEYSTONE_REGION --service allegro --publicurl 'http://$ALLEGRO_HOST:8090/v1' --adminurl 'http://$ALLEGRO_HOST:8090/v1' --internalurl 'http://$ALLEGRO_HOST:8090/v1'
 
 Note that the administrator may choose to use different hostnames/IPs for public vs. admin vs. internal URLs, depending on local architecture and requirements.
 

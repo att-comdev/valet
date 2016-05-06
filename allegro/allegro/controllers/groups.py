@@ -273,7 +273,7 @@ class GroupsController(object):
         '''List groups'''
         groups_array = []
         for group in Group.query.all():  # pylint: disable=E1101
-            groups_array.append(group.id)
+            groups_array.append(group)
         return {'groups': groups_array}
 
     @index.when(method='POST', template='json')

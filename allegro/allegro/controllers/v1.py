@@ -50,8 +50,16 @@ class V1Controller(SecureController):
     def check_permissions(cls):
         '''SecureController permission check callback'''
         auth_token = request.headers.get('X-Auth-Token')
-        if auth_token and conf.identity.engine.is_admin(auth_token):
-            return True
+        if auth_token:
+            # The token must have an admin role
+            # and be associated with a tenant.
+            token = conf.identity.engine.validate_token(auth_token)
+            if token and conf.identity.engine.is_token_admin(token):
+                tenant_id = \
+                    conf.identity.engine.tenant_from_token(token)
+                if tenant_id:
+                    request.context['tenant_id'] = tenant_id
+                    return True
         error('/errors/unauthorized')
 
     @classmethod

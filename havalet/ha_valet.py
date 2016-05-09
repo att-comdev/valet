@@ -467,11 +467,15 @@ class HAValet:
         :return: are all mandatory parameters are found
         :rtype: bool
         """
-        if (process_data.get(HOST) is not None and process_data.get(PORT) is not None and
-            process_data.get(PROTOCOL) is not None and process_data.get(PRIORITY) is not None and
-            process_data.get(START_COMMAND) is not None and process_data.get(STOP_COMMAND) is not None and
+        if (process_data.get(HOST) is not None and
+            process_data.get(PORT) is not None and
+            process_data.get(PROTOCOL) is not None and
+            process_data.get(PRIORITY) is not None and
+            process_data.get(ORDER) is not None and
+            process_data.get(START_COMMAND) is not None and
+            process_data.get(STOP_COMMAND) is not None and
             process_data.get(TEST_COMMAND) is not None):
-                return True
+            return True
         else:
             return False
 
@@ -504,7 +508,7 @@ class HAValet:
         exit_event = threading.Event()
 
         # sort by launching order
-        proc_sorted = sorted(conf_data.values(), key=lambda d: d[ORDER])
+        proc_sorted = sorted(conf_data.values(), key=lambda d: int(d[ORDER]))
 
         for proc in proc_sorted:
             if self._valid_process_conf_data(proc):

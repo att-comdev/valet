@@ -101,11 +101,23 @@ class PlansItemController(object):
         # FIXME: Possible Ostro regression?
         # New placements are not being seen in the response, so
         # set_placements is currently failing as a result.
-        kwargs = request.json
         ostro = Ostro()
-        ostro.request(**kwargs)
-        ostro.send()
 
+        kwargs = {
+            'tenant_id': request.context['tenant_id'],
+            'args': request.json
+        }
+
+        # Prepare the request. If request prep fails,
+        # an error message will be in the response.
+        # Though the Ostro helper reports the error,
+        # we cite it as a Valet error.
+        if not ostro.request(**kwargs):
+            message = ostro.response['status']['message']
+            error('/errors/conflict',
+                  _('Valet error: %s') % message)
+
+        ostro.send()
         status_type = ostro.response['status']['type']
         if status_type != 'ok':
             message = ostro.response['status']['message']
@@ -169,11 +181,23 @@ class PlansController(object):
     @validate(CREATE_SCHEMA, '/errors/schema')
     def index_post(self):
         '''Create a Plan'''
-        kwargs = request.json
         ostro = Ostro()
-        ostro.request(**kwargs)
-        ostro.send()
 
+        kwargs = {
+            'tenant_id': request.context['tenant_id'],
+            'args': request.json
+        }
+
+        # Prepare the request. If request prep fails,
+        # an error message will be in the response.
+        # Though the Ostro helper reports the error,
+        # we cite it as a Valet error.
+        if not ostro.request(**kwargs):
+            message = ostro.response['status']['message']
+            error('/errors/conflict',
+                  _('Valet error: %s') % message)
+
+        ostro.send()
         status_type = ostro.response['status']['type']
         if status_type != 'ok':
             message = ostro.response['status']['message']

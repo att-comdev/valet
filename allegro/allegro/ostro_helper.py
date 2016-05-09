@@ -21,9 +21,12 @@ import uuid
 from pecan import conf
 import simplejson
 
+from allegro.models.music import Group
 from allegro.models.music import PlacementRequest
 from allegro.models.music import PlacementResult
 from allegro.models.music import Query
+
+RESOURCE_TYPE = 'ATT::CloudQoS::ResourceGroup'
 
 
 class Ostro(object):
@@ -32,6 +35,7 @@ class Ostro(object):
     args = None
     request = None
     response = None
+    tenant_id = None
 
     tries = None  # Number of times to poll for placement.
     interval = None  # Interval in seconds to poll for placement.
@@ -51,6 +55,24 @@ class Ostro(object):
                 name = resources[key]['name']
                 mapping[name] = key
         return mapping
+
+    def _verify_exclusivity_groups(self, resources, tenant_id):
+        '''
+        Returns first exclusivity group name the tenant is not a
+        member of, or None if there are no conflicts.
+        '''
+        for res in resources.itervalues():
+            res_type = res.get('type')
+            if res_type == RESOURCE_TYPE:
+                properties = res.get('properties')
+                relationship = properties.get('relationship')
+                if relationship.lower() == 'exclusivity':
+                    group_name = properties.get('name')
+                    group = Group.query.filter_by(  # pylint: disable=E1101
+                        name=group_name).first()
+                    if group and tenant_id not in group.members:
+                        return group.name
+        return None
 
     def _map_names_to_uuids(self, mapping, data):
         '''Map resource names to their UUID equivalents.'''
@@ -120,8 +142,40 @@ class Ostro(object):
             "stack_id": stack_id
         }
 
+    def _prepare_resources(self, resources):
+        '''
+        Pre-digests resource data for use by Ostro.
+        Maps Heat resource names to Orchestration UUIDs.
+        Ensures any named exclusivity groups have tenant_id as a member.
+        '''
+        mapping = self._build_uuid_map(resources)
+        ostro_resources = \
+            self._map_names_to_uuids(mapping, resources)
+        self._sanitize_resources(ostro_resources)
+        response = {
+            'resources': ostro_resources
+        }
+
+        # Honk if we find an exclusivity group that doesn't have
+        # the tenant_id as a member.
+        group = self._verify_exclusivity_groups( \
+            ostro_resources, self.tenant_id)
+        if group:
+            message = 'Tenant ID %s is not a member of ' \
+                      'Exclusivity Group \'%s\'' % (self.tenant_id, group)
+            response['status'] = {
+                'type': 'error',
+                'message': message,
+            }
+        return response
+
     def request(self, **kwargs):
-        self.args = kwargs
+        '''
+        Prepare an Ostro request. If False is returned,
+        the response attribute contains status as to the error.
+        '''
+        self.args = kwargs.get('args')
+        self.tenant_id = kwargs.get('tenant_id')
         self.response = None
 
         resources = self.args['resources']
@@ -130,26 +184,29 @@ class Ostro(object):
             resources_update = self.args['resources_update']
         else:
             action = 'create'
-            resources_update = {}
+            resources_update = None
 
-        mapping = self._build_uuid_map(resources)
-        ostro_resources = self._map_names_to_uuids(mapping, resources)
-        self._sanitize_resources(ostro_resources)
-
-        mapping = self._build_uuid_map(resources_update)
-        ostro_resources_update = \
-            self._map_names_to_uuids(mapping, resources_update)
-        self._sanitize_resources(ostro_resources_update)
+        # If we get any status in the response, it's an error. Bail.
+        self.response = self._prepare_resources(resources)
+        if 'status' in self.response:
+            return False
 
         self.request = {
             "version": "0.1",
             "action": action,
-            "resources": ostro_resources
+            "resources": response['resources'],
+            "stack_id": self.args['stack_id']
         }
-        if ostro_resources_update:
-            self.request['resources_update'] = ostro_resources_update
 
-        self.request["stack_id"] = self.args['stack_id']
+        if resources_update:
+            # If we get any status in the response, it's an error. Bail.
+            self.response = self._prepare_resources(resources_update)
+            if 'status' in self.response:
+                return False
+            if ostro_resources_update:
+                self.request['resources_update'] = ostro_resources_update
+
+        return True
 
     def send(self):
         '''Send the request and obtain a response.'''

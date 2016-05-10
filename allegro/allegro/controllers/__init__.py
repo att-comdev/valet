@@ -21,9 +21,7 @@
 from os import path
 import string
 
-# TODO: Make this a driver plugin point instead so we can pick and choose.
-from allegro.models.music import Placement
-#from allegro.models.sqlalchemy import Placement
+from allegro.models import Placement
 
 from pecan import conf, expose, redirect, request, response
 

@@ -22,9 +22,7 @@ import logging
 
 from allegro.controllers import update_placements, error
 from allegro.i18n import _
-# TODO: Make this a driver plugin point instead so we can pick and choose.
-from allegro.models.music import Placement
-#from allegro.models.sqlalchemy import Placement
+from allegro.models import Placement
 from allegro.ostro_helper import Ostro
 
 from pecan import expose, request, response

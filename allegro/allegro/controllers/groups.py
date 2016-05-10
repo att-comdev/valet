@@ -22,9 +22,7 @@ import logging
 
 from allegro.controllers import error, group_name_type
 from allegro.i18n import _
-# TODO: Make this a driver plugin point instead so we can pick and choose.
-from allegro.models.music import Group
-#from allegro.models.sqlalchemy import Group
+from allegro.models import Group
 
 from notario import decorators
 from notario.validators import types

@@ -194,7 +194,7 @@ class Ostro(object):
         self.request = {
             "version": "0.1",
             "action": action,
-            "resources": response['resources'],
+            "resources": self.response['resources'],
             "stack_id": self.args['stack_id']
         }
 

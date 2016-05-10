@@ -46,9 +46,9 @@ This operation does not accept a request body.
 
 | Parameter | Style | Type | Description |
 |-----------|-------|------|-------------|
-| description (Optional) | plain | xsd:string | A description for the new group. |
-| name | plain | xsd:string | A name for the new group. |
-| type | plain | xsd:string | A type for the new group. Presently, the only valid value is `exclusivity`. |
+| description | plain | xsd:string | A description for the new group. |
+| name | plain | xsd:string | A name for the new group. Must only contain letters, numbers, hypens, full stops, underscores, and tildes (RFC 3986, Section 2.3). This parameter is immutable. |
+| type | plain | xsd:string | A type for the new group. Presently, the only valid value is `exclusivity`. This parameter is immutable. |
 
 #### Response parameters
 
@@ -98,7 +98,13 @@ This operation does not accept a request body.
 ```json
 {
   "groups": [
-    "7de4790e-08f2-44b7-8332-7a41fab36a41"
+    {
+      "description": "My Awesome Group",
+      "type": "exclusivity",
+      "id": "7de4790e-08f2-44b7-8332-7a41fab36a41",
+      "members": [],
+      "name": "group"
+    }
   ]
 }
 ```
@@ -130,11 +136,13 @@ This operation does not accept a request body.
 
 ```json
 {
-  "description": "My Awesome Group",
-  "type": "exclusivity",
-  "id": "7de4790e-08f2-44b7-8332-7a41fab36a41",
-  "members": [],
-  "name": "group"
+  "group": {
+    "description": "My Awesome Group",
+    "type": "exclusivity",
+    "id": "7de4790e-08f2-44b7-8332-7a41fab36a41",
+    "members": [],
+    "name": "group"
+  }
 }
 ```
 
@@ -153,10 +161,8 @@ This operation does not accept a request body.
 
 | Parameter   | Style | Type       | Description                                       |
 |-------------|-------|------------|---------------------------------------------------|
-| description (Optional) | plain | xsd:string | A description for the group. Replaces the original description. |
+| description | plain | xsd:string | A description for the group. Replaces the original description. |
 | group_id | plain | csapi:UUID | The UUID of the group. |
-| name | plain | xsd:string | A name for the group. Replaces the original name. |
-| type | plain | xsd:string | A type for the group. Presently, the only valid value is `exclusivity`. |
 
 #### Response parameters
 
@@ -170,19 +176,17 @@ This operation does not accept a request body.
 
 ```json
 {
-  "description": "My Even Awesomer Group",
-  "type": "exclusivity",
-  "name": "renamed group"
+  "description": "My Extra Awesome Group"
 }
 ```
 
 ```json
 {
-  "description": "My Even Awesomer Group",
+  "description": "My Extra Awesome Group",
   "type": "exclusivity",
   "id": "7de4790e-08f2-44b7-8332-7a41fab36a41",
   "members": [],
-  "name": "renamed group"
+  "name": "group"
 }
 ```
 
@@ -205,53 +209,7 @@ This operation does not accept a request body and does not return a response bod
 
 * * * * * * * * * * *
 
-### Set members of a group
-
-**POST** `/v1/groups/{group_id}/members`
-
-**Normal response codes:** 201
-**Error response codes:** badRequest (400), unauthorized (401), itemNotFound (404), conflict (409)
-
-#### Request parameters
-
-| Parameter   | Style | Type       | Description                                       |
-|-------------|-------|------------|---------------------------------------------------|
-| group_id    | plain | csapi:UUID | The UUID of the group.                            |
-| members     | plain | xsd:list   | A list of group members. This replaces any previous list of members. All members must be valid tenant UUIDs. |
-
-#### Response parameters
-
-| Parameter   | Style | Type       | Description                                       |
-|-------------|-------|------------|---------------------------------------------------|
-| description | plain | xsd:string | The group description.                            |
-| id          | plain | csapi:UUID | The UUID of the group.                            |
-| members     | plain | xsd:list   | A list of group members.                          |
-| name        | plain | xsd:string | The group name.                                   |
-| type        | plain | xsd:string | The group type.                                   |
-
-```json
-{
-  "members": [
-    "65c3e5ee5ee0428caa5e5275c58ead61"
-  ]
-}
-```
-
-```json
-{
-  "description": "My Awesome Group",
-  "type": "exclusivity",
-  "id": "bf49803b-48b6-4a13-9191-98dde1dbd5e4",
-  "members": [
-    "65c3e5ee5ee0428caa5e5275c58ead61"
-  ],
-  "name": "group"
-}
-```
-
-* * * * * * * * * * *
-
-### Update members of a group
+### Add members to a group
 
 **PUT** `/v1/groups/{group_id}/members`
 
@@ -295,38 +253,6 @@ This operation does not accept a request body and does not return a response bod
   "name": "group"
 }
 ```
-
-* * * * * * * * * * *
-
-### List members of a group
-
-**GET** `/v1/groups/{group_id}/members`
-
-**Normal response codes:** 200
-**Error response codes:** unauthorized (401), itemNotFound (404)
-
-#### Request parameters
-
-| Parameter   | Style | Type       | Description                                       |
-|-------------|-------|------------|---------------------------------------------------|
-| group_id    | plain | csapi:UUID | The UUID of the group.                            |
-
-#### Response parameters
-
-| Parameter   | Style | Type       | Description                                       |
-|-------------|-------|------------|---------------------------------------------------|
-| members     | plain | xsd:list   | A list of member UUIDs for the group. Members are tenant UUIDs that were valid at the time they were added. |
-
-```json
-{
-  "members": [
-    "b7d0e9b175294b649464caa3411adb3f",
-    "65c3e5ee5ee0428caa5e5275c58ead61"
-  ]
-}
-```
-
-This operation does not accept a request body.
 
 * * * * * * * * * * *
 

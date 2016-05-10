@@ -102,10 +102,11 @@ class PlansItemController(object):
         # New placements are not being seen in the response, so
         # set_placements is currently failing as a result.
         ostro = Ostro()
+        args = request.json
 
         kwargs = {
             'tenant_id': request.context['tenant_id'],
-            'args': request.json
+            'args': args
         }
 
         # Prepare the request. If request prep fails,
@@ -125,8 +126,8 @@ class PlansItemController(object):
                   _('Ostro error: %s') % message)
 
         # TODO: See if we will eventually need these for Ostro.
-        #plan_name = kwargs['plan_name']
-        #stack_id = kwargs['stack_id']
+        #plan_name = args['plan_name']
+        #stack_id = args['stack_id']
         resources = ostro.request['resources_update']
         placements = ostro.response['resources']
 
@@ -182,10 +183,11 @@ class PlansController(object):
     def index_post(self):
         '''Create a Plan'''
         ostro = Ostro()
+        args = request.json
 
         kwargs = {
             'tenant_id': request.context['tenant_id'],
-            'args': request.json
+            'args': args
         }
 
         # Prepare the request. If request prep fails,
@@ -204,8 +206,8 @@ class PlansController(object):
             error('/errors/server_error',
                   _('Ostro error: %s') % message)
 
-        plan_name = kwargs['plan_name']
-        stack_id = kwargs['stack_id']
+        plan_name = args['plan_name']
+        stack_id = args['stack_id']
         resources = ostro.request['resources']
         placements = ostro.response['resources']
 

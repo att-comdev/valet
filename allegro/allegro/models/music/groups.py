@@ -56,7 +56,8 @@ class Group(Base):
         return self.id
 
     def values(self):
-        # TODO: Support lists in Music (e.g., members)
+        # Lists aren't directly supported in Music, so we have to
+        # convert to/from json on the way out/in.
         return {
             'name': self.name,
             'description': self.description,

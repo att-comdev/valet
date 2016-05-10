@@ -40,6 +40,7 @@ class Ostro(object):
     tries = None  # Number of times to poll for placement.
     interval = None  # Interval in seconds to poll for placement.
 
+    # TODO: Make debug mode a setting. Write dump file to a log.
     debug = True
     debug_file = '/tmp/allegro-dump.txt'
 
@@ -58,8 +59,8 @@ class Ostro(object):
 
     def _verify_exclusivity_groups(self, resources, tenant_id):
         '''
-        Returns first exclusivity group name the tenant is not a
-        member of, or None if there are no conflicts.
+        Returns an error status dict if a nonexistant exclusivity group
+        is found or if the tenant is not a member. Returns None if ok.
         '''
         for res in resources.itervalues():
             res_type = res.get('type')
@@ -70,9 +71,21 @@ class Ostro(object):
                     group_name = properties.get('name')
                     group = Group.query.filter_by(  # pylint: disable=E1101
                         name=group_name).first()
-                    if group and tenant_id not in group.members:
-                        return group.name
-        return None
+                    if not group:
+                        message = "Exclusivity group '%s' not found" % \
+                                  (group.name)
+                    elif group and tenant_id not in group.members:
+                        message = "Tenant ID %s not a member of " \
+                                  "exclusivity group '%s' (%s)" % \
+                                  (self.tenant_id, group.name, group.id)
+                    if message:
+                        response = {
+                            'status': {
+                                'type': 'error',
+                                'message': message,
+                            }
+                        }
+                        return response
 
     def _map_names_to_uuids(self, mapping, data):
         '''Map resource names to their UUID equivalents.'''
@@ -137,7 +150,7 @@ class Ostro(object):
         stack_id = str(uuid.uuid4())
         self.args = { 'stack_id': stack_id }
         self.request = {
-            "version": "0.1",
+            "version": "1.0",
             "action": "ping",
             "stack_id": stack_id
         }
@@ -146,28 +159,17 @@ class Ostro(object):
         '''
         Pre-digests resource data for use by Ostro.
         Maps Heat resource names to Orchestration UUIDs.
-        Ensures any named exclusivity groups have tenant_id as a member.
+        Ensures exclusivity groups exist and have tenant_id as a member.
         '''
         mapping = self._build_uuid_map(resources)
-        ostro_resources = \
-            self._map_names_to_uuids(mapping, resources)
+        ostro_resources = self._map_names_to_uuids(mapping, resources)
         self._sanitize_resources(ostro_resources)
-        response = {
-            'resources': ostro_resources
-        }
 
-        # Honk if we find an exclusivity group that doesn't have
-        # the tenant_id as a member.
-        group = self._verify_exclusivity_groups( \
+        verify_error = self._verify_exclusivity_groups(
             ostro_resources, self.tenant_id)
-        if group:
-            message = 'Tenant ID %s is not a member of ' \
-                      'Exclusivity Group \'%s\'' % (self.tenant_id, group)
-            response['status'] = {
-                'type': 'error',
-                'message': message,
-            }
-        return response
+        if type(verify_error) is dict:
+            return verify_error
+        return {'resources': ostro_resources}
 
     def request(self, **kwargs):
         '''
@@ -192,7 +194,7 @@ class Ostro(object):
             return False
 
         self.request = {
-            "version": "0.1",
+            "version": "1.0",
             "action": action,
             "resources": self.response['resources'],
             "stack_id": self.args['stack_id']

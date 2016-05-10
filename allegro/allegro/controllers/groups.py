@@ -20,7 +20,7 @@
 
 import logging
 
-from allegro.controllers import error
+from allegro.controllers import error, group_name_type
 from allegro.i18n import _
 # TODO: Make this a driver plugin point instead so we can pick and choose.
 from allegro.models.music import Group
@@ -34,9 +34,9 @@ from pecan_notario import validate
 LOG = logging.getLogger(__name__)
 
 GROUPS_SCHEMA = (
-    ('description', types.string),
-    ('name', types.string),
-    (decorators.optional('type'), types.string)
+    (decorators.optional('description'), types.string),
+    ('name', group_name_type),
+    ('type', types.string)
 )
 
 UPDATE_GROUPS_SCHEMA = (

@@ -19,6 +19,7 @@
 '''Controllers Package'''
 
 from os import path
+import string
 
 # TODO: Make this a driver plugin point instead so we can pick and choose.
 from allegro.models.music import Placement
@@ -26,6 +27,17 @@ from allegro.models.music import Placement
 
 from pecan import conf, expose, redirect, request, response
 
+
+#
+# Group Helpers
+#
+
+def group_name_type(value):
+    '''Validator for group name type.'''
+    assert set(value) <= set(string.letters + string.digits + "-._~"), \
+        "must contain only uppercase and lowercase letters, " \
+        "decimal digits, hyphens, periods, underscores, and tildes " \
+        "[RFC 3986, Section 2.3]"
 
 #
 # Placement Helpers

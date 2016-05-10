@@ -12,18 +12,17 @@
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
 # implied.
+#
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
 import simplejson
-#import uuid
 
 #from sqlalchemy import Column, Integer, String, Sequence
 #from sqlalchemy.orm import relationship, backref
 #from sqlalchemy.orm.exc import DetachedInstanceError
 
-from allegro.models.music import Base, Query
-#from allegro.models.sqlalchemy import Base
+from . import Base, Query
 
 
 class Group(Base):

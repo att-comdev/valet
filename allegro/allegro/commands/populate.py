@@ -18,15 +18,13 @@
 from pecan.commands.base import BaseCommand
 from pecan import conf
 
-# TODO: Make this a driver plugin point instead so we can pick and choose.
-from allegro.models import music as models
-#from allegro.models import sqlalchemy as models
-from allegro.models.music.groups import Group
-from allegro.models.music.placements import Placement
-from allegro.models.music.plans import Plan
-from allegro.models.music.ostro import Event
-from allegro.models.music.ostro import PlacementRequest
-from allegro.models.music.ostro import PlacementResult
+from allegro import models
+from allegro.models import Group
+from allegro.models import Placement
+from allegro.models import Plan
+from allegro.models import Event
+from allegro.models import PlacementRequest
+from allegro.models import PlacementResult
 
 
 def out(string):

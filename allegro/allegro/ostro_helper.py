@@ -21,10 +21,10 @@ import uuid
 from pecan import conf
 import simplejson
 
-from allegro.models.music import Group
-from allegro.models.music import PlacementRequest
-from allegro.models.music import PlacementResult
-from allegro.models.music import Query
+from allegro.models import Group
+from allegro.models import PlacementRequest
+from allegro.models import PlacementResult
+from allegro.models import Query
 
 RESOURCE_TYPE = 'ATT::CloudQoS::ResourceGroup'
 

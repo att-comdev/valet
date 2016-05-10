@@ -16,10 +16,8 @@
 # limitations under the License.
 from pecan import make_app
 
-# TODO: Make this a driver plugin point instead so we can pick and choose.
 from allegro import identity
-from allegro.models import music as models
-#from allegro.models import sqlalchemy as models
+from allegro import models
 
 
 def setup_app(config):

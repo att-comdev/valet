@@ -40,9 +40,7 @@ GROUPS_SCHEMA = (
 )
 
 UPDATE_GROUPS_SCHEMA = (
-    (decorators.optional('description'), types.string),
-    (decorators.optional('name'), types.string),
-    (decorators.optional('type'), types.string)
+    (decorators.optional('description'), types.string)
 )
 
 MEMBERS_SCHEMA = (
@@ -107,7 +105,7 @@ class MembersController(object):
     @classmethod
     def allow(cls):
         '''Allowed methods'''
-        return 'GET,POST,PUT,DELETE'
+        return 'PUT,DELETE'
 
     @expose(generic=True, template='json')
     def index(self):
@@ -121,31 +119,6 @@ class MembersController(object):
         '''Options'''
         response.headers['Allow'] = self.allow()
         response.status = 204
-
-    @index.when(method='GET', template='json')
-    def index_get(self):
-        '''List group members'''
-        group = request.context['group']
-        return {'members': group.members}
-
-    @index.when(method='POST', template='json')
-    @validate(MEMBERS_SCHEMA, '/errors/schema')
-    def index_post(self, **kwargs):
-        '''Set/replace all group members'''
-        new_members = kwargs.get('members', [])
-
-        if not conf.identity.engine.is_tenant_list_valid(new_members):
-            error('/errors/conflict',
-                  _('Member list contains invalid tenant IDs'))
-
-        group = request.context['group']
-        group.members = new_members
-        group.update()
-        response.status = 201
-
-        # Flush so that the DB is current.
-        group.flush()
-        return group
 
     @index.when(method='PUT', template='json')
     @validate(MEMBERS_SCHEMA, '/errors/schema')
@@ -216,17 +189,16 @@ class GroupsItemController(object):
     @index.when(method='GET', template='json')
     def index_get(self):
         '''Display a group'''
-        return request.context['group']
+        return {"group": request.context['group']}
 
     @index.when(method='PUT', template='json')
     @validate(UPDATE_GROUPS_SCHEMA, '/errors/schema')
     def index_put(self, **kwargs):
         '''Update a group'''
-        # Members are updated in the /v1/groups/members controller.
+        # Name and type are immutable.
+        # Group Members are updated in MembersController.
         group = request.context['group']
-        group.name = kwargs.get('name', group.name)
         group.description = kwargs.get('description', group.description)
-        group.type = kwargs.get('type', group.type)
         group.update()
         response.status = 201
 

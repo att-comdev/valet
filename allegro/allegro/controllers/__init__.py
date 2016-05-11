@@ -23,7 +23,7 @@ import string
 
 from allegro.models import Placement
 
-from pecan import conf, expose, redirect, request, response
+from pecan import redirect, request
 
 
 #
@@ -36,6 +36,7 @@ def group_name_type(value):
         "must contain only uppercase and lowercase letters, " \
         "decimal digits, hyphens, periods, underscores, and tildes " \
         "[RFC 3986, Section 2.3]"
+
 
 #
 # Placement Helpers
@@ -50,12 +51,12 @@ def set_placements(plan, resources, placements):
         _unused = Placement(  # pylint: disable=W0612
             name, uuid,
             plan=plan,
-            location=location
-        )
+            location=location)
     return plan
 
-def update_placements(placements):
-    '''Update placements'''
+
+def update_placements(placements, reserve_id=None):
+    '''Update placements. Optionally reserve one placement.'''
     for uuid in placements.iterkeys():
         placement = Placement.query.filter_by(  # pylint: disable=E1101
             orchestration_id=uuid).first()
@@ -63,8 +64,11 @@ def update_placements(placements):
             properties = placements[uuid]['properties']
             location = properties['host']
             placement.location = location
+            if reserve_id and placement.orchestration_id == reserve_id:
+                placement.reserved = True
             placement.update()
     return
+
 
 #
 # Error Helpers

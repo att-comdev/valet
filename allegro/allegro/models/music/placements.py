@@ -16,14 +16,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-#from sqlalchemy import Column, Integer, String, ForeignKey, Sequence
-#from sqlalchemy.orm import relationship, backref
-#from sqlalchemy.orm.exc import DetachedInstanceError
+'''Placement Model'''
 
 from . import Base, Query
 
 
 class Placement(Base):
+    '''Placement Model'''
     __tablename__ = 'placements'
 
     id = None
@@ -41,28 +40,34 @@ class Placement(Base):
             'name': 'text',
             'orchestration_id': 'text',
             'location': 'text',
+            'reserved': 'boolean',
             'plan_id': 'text',
-            'PRIMARY KEY': '(id)'
+            'PRIMARY KEY': '(id)',
         }
         return schema
 
     @classmethod
     def pk_name(cls):
+        '''Primary key name'''
         return 'id'
 
     def pk_value(self):
+        '''Primary key value'''
         return self.id
 
     def values(self):
+        '''Values'''
         return {
             'name': self.name,
             'orchestration_id': self.orchestration_id,
             'location': self.location,
-            'plan_id': self.plan_id
+            'reserved': self.reserved,
+            'plan_id': self.plan_id,
         }
 
     def __init__(self, name, orchestration_id, plan=None,
-                 plan_id=None, location=None, _insert=True):
+                 plan_id=None, location=None, reserved=False, _insert=True):
+        '''Initializer'''
         super(Placement, self).__init__()
         self.name = name
         self.orchestration_id = orchestration_id
@@ -71,21 +76,21 @@ class Placement(Base):
         self.plan = plan
         self.plan_id = plan.id
         self.location = location
+        self.reserved = reserved
         if _insert:
             self.insert()
 
     def __repr__(self):
-        try:
-            return '<Plan %r>' % self.name
-        except DetachedInstanceError:
-            return '<Plan detached>'
+        '''Object representation'''
+        return '<Plan %r>' % self.name
 
     def __json__(self):
+        '''JSON representation'''
         json_ = {}
         json_['id'] = self.id
         json_['name'] = self.name
         json_['orchestration_id'] = self.orchestration_id
         json_['location'] = self.location
+        json_['reserved'] = self.reserved
         json_['plan_id'] = self.plan.id
         return json_
-

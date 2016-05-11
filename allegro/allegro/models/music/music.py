@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- encoding: utf-8 -*-
 #
 # Copyright (c) 2016 AT&T
@@ -17,7 +16,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-'''Music Data Store API.'''
+'''Music Data Store API'''
 
 # Standard library imports
 import json
@@ -58,7 +57,7 @@ class REST(object):
                 urls.append('http://%(host)s:%(port)s%(path)s' % {
                     'host': host,
                     'port': self.port,
-                    'path': self.path
+                    'path': self.path,
                 })
             self._urls = urls
         return self._urls
@@ -68,7 +67,7 @@ class REST(object):
         '''Returns HTTP request headers.'''
         headers = {
             'accept': content_type,
-            'content-type': content_type
+            'content-type': content_type,
         }
         return headers
 
@@ -86,7 +85,7 @@ class REST(object):
             try:
                 response = method_fn(url + path, data=json.dumps(data),
                                      headers=self.__headers(content_type),
-                                     timeout = self.timeout)
+                                     timeout=self.timeout)
                 response.raise_for_status()
                 return response
             except requests.exceptions.RequestException as e:
@@ -97,6 +96,7 @@ class REST(object):
         # for the last attempt (for now) so that we report something.
         if response:
             response.raise_for_status()
+
 
 class Music(object):
     '''Wrapper for Music API'''
@@ -118,7 +118,7 @@ class Music(object):
         kwargs = {
             'hosts': hosts,
             'port': port,
-            'path': '/MUSIC/rest'
+            'path': '/MUSIC/rest',
         }
         self.rest = REST(**kwargs)
 
@@ -132,12 +132,12 @@ class Music(object):
         data = {
             'replicationInfo': {
                 'class': 'SimpleStrategy',
-                'replication_factor': self.replication_factor
+                'replication_factor': self.replication_factor,
             },
             'durabilityOfWrites': True,
             'consistencyInfo': {
-                'type': 'eventual'
-            }
+                'type': 'eventual',
+            },
         }
 
         path = '/keyspaces/%s' % keyspace
@@ -149,13 +149,13 @@ class Music(object):
         data = {
             'fields': schema,
             'consistencyInfo': {
-                'type': 'eventual'
-            }
+                'type': 'eventual',
+            },
         }
 
         path = '/keyspaces/%(keyspace)s/tables/%(table)s/' % {
                    'keyspace': keyspace,
-                   'table': table
+                   'table': table,
                }
         response = self.rest.request(method='post', path=path, data=data)
         return response.ok
@@ -172,13 +172,13 @@ class Music(object):
         data = {
             'values': values,
             'consistencyInfo': {
-                'type': 'eventual'
-            }
+                'type': 'eventual',
+            },
         }
 
         path = '/keyspaces/%(keyspace)s/tables/%(table)s/rows' % {
                    'keyspace': keyspace,
-                   'table': table
+                   'table': table,
                }
         response = self.rest.request(method='post', path=path, data=data)
         return response.ok
@@ -212,7 +212,7 @@ class Music(object):
         '''Returns a Music-compliant row URL path.'''
         path = '/keyspaces/%(keyspace)s/tables/%(table)s/rows' % {
                    'keyspace': keyspace,
-                   'table': table
+                   'table': table,
                }
 
         if pk_name and pk_value:
@@ -228,7 +228,7 @@ class Music(object):
         lock_name = '%(keyspace)s.%(table)s.%(primary_key)s' % {
             'keyspace': keyspace,
             'table': table,
-            'primary_key': pk_value
+            'primary_key': pk_value,
         }
         self.lock_names.append(lock_name)
         lock_id = self.create_lock(lock_name)
@@ -244,8 +244,8 @@ class Music(object):
             'values': values,
             'consistencyInfo': {
                 'type': 'atomic',
-                'lockId': lock_id
-            }
+                'lockId': lock_id,
+            },
         }
 
         path = self.__row_url_path(keyspace, table, pk_name, pk_value)
@@ -261,8 +261,8 @@ class Music(object):
         '''Delete a row. Not atomic.'''
         data = {
             'consistencyInfo': {
-                'type': 'eventual'
-            }
+                'type': 'eventual',
+            },
         }
 
         path = self.__row_url_path(keyspace, table, pk_name, pk_value)
@@ -283,8 +283,8 @@ class Music(object):
         '''Drops a keyspace.'''
         data = {
             'consistencyInfo': {
-                'type': 'eventual'
-            }
+                'type': 'eventual',
+            },
         }
 
         path = '/keyspaces/%s' % keyspace
@@ -299,9 +299,10 @@ class Music(object):
         # print "Server response .... \n" + response.text
         return response.ok
 
-    # TODO: Shouldn't this really be part of internal cleanup?
-    # FIXME: It can be several API calls. Any way to do in one fell swoop?
     def delete_all_locks(self):
         '''Delete all locks created during the lifetime of this object.'''
+
+        # TODO: Shouldn't this really be part of internal cleanup?
+        # FIXME: It can be several API calls. Any way to do in one fell swoop?
         for lock_name in self.lock_names:
             self.delete_lock(lock_name)

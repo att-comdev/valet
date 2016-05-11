@@ -111,7 +111,7 @@ class PlansItemController(object):
         # an error message will be in the response.
         # Though the Ostro helper reports the error,
         # we cite it as a Valet error.
-        if not ostro.request(**kwargs):
+        if not ostro.build_request(**kwargs):
             message = ostro.response['status']['message']
             error('/errors/conflict',
                   _('Valet error: %s') % message)
@@ -192,7 +192,7 @@ class PlansController(object):
         # an error message will be in the response.
         # Though the Ostro helper reports the error,
         # we cite it as a Valet error.
-        if not ostro.request(**kwargs):
+        if not ostro.build_request(**kwargs):
             message = ostro.response['status']['message']
             error('/errors/conflict',
                   _('Valet error: %s') % message)

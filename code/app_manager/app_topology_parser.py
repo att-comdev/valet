@@ -72,14 +72,7 @@ class Parser:
         else:
             self.action = "any"
 
-        if self.action == "ping":
-            self.logger.debug("ping does not parse")
-            return ({}, {}, {})
-        elif self.action == "replan":
-            self.logger.debug("replan requested")
-            return ({}, {}, {})
-        else:
-            return self._set_topology(_graph["resources"])
+        return self._set_topology(_graph["resources"])
 
     def _set_topology(self, _elements):
         vgroups = {}
@@ -129,7 +122,8 @@ class Parser:
                 volumes[volume.uuid] = volume
                 '''
 
-            elif r["type"] == "ATT::CloudQoS::ResourceGroup":
+            #elif r["type"] == "ATT::CloudQoS::ResourceGroup":
+            elif r["type"] == "ATT::Valet::GroupAssignment":
                 vgroup = VGroup(self.stack_id, rk)
 
                 vgroup.vgroup_type = None
@@ -164,13 +158,16 @@ class Parser:
 
                 self.logger.debug("get a group = " + vgroup.name)
 
+            '''
             elif r["type"] == "OS::Nova::ServerGroup" or \
                  r["type"] == "OS::Heat::AutoScalingGroup" or \
                  r["type"] == "OS::Heat::Stack" or \
                  r["type"] == "OS::Heat::ResourceGroup":
+                 r["type"] == "OS::Heat::ResourceGroup":
 
                 self.status = "Not supported resource type (" + r["type"]+ ") in this version"
                 return ({}, {}, {})
+            '''
 
         self._set_vm_links(_elements, vms)
 
@@ -344,7 +341,8 @@ class Parser:
     def _merge_diversity_groups(self, _elements, _vgroups, _vms, _volumes):
         for level in LEVELS:
             for rk, r in _elements.iteritems():
-                if r["type"] == "ATT::CloudQoS::ResourceGroup" and \
+                #if r["type"] == "ATT::CloudQoS::ResourceGroup" and \
+                if r["type"] == "ATT::Valet::GroupAssignment" and \
                    r["properties"]["relationship"] == "diversity" and \
                    r["properties"]["level"] == level:
 
@@ -380,7 +378,8 @@ class Parser:
     def _merge_exclusivity_groups(self, _elements, _vgroups, _vms, _volumes):
         for level in LEVELS:
             for rk, r in _elements.iteritems():
-                if r["type"] == "ATT::CloudQoS::ResourceGroup" and \
+                #if r["type"] == "ATT::CloudQoS::ResourceGroup" and \
+                if r["type"] == "ATT::Valet::GroupAssignment" and \
                    r["properties"]["relationship"] == "exclusivity" and \
                    r["properties"]["level"] == level:
 
@@ -418,7 +417,8 @@ class Parser:
 
         for level in LEVELS:
             for rk, r in _elements.iteritems():
-                if r["type"] == "ATT::CloudQoS::ResourceGroup" and \
+                #if r["type"] == "ATT::CloudQoS::ResourceGroup" and \
+                if r["type"] == "ATT::Valet::GroupAssignment" and \
                    r["properties"]["relationship"] == "affinity" and \
                    r["properties"]["level"] == level:
 

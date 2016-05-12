@@ -24,6 +24,11 @@ class AppTopology:
         self.vms = {}
         self.volumes = {}
 
+        # for replan
+        self.old_vm_map = {}
+        self.planned_vm_map = {}
+        self.candidate_list_map = {}
+
         self.resource = _resource
         self.logger = _logger
 
@@ -36,12 +41,6 @@ class AppTopology:
     # Parse and set each app
     def set_app_topology(self, _app_graph):
         (vgroups, vms, volumes) = self.parser.set_topology(_app_graph)
-
-        if self.parser.action == "ping":
-            return (self.parser.stack_id, self.parser.application_name, self.parser.action)
-
-        if self.parser.action == "replan":
-            return (self.parser.stack_id, self.parser.application_name, self.parser.action)
 
         if len(vgroups) == 0 and len(vms) == 0 and len(volumes) == 0:
             self.status = self.parser.status

@@ -19,12 +19,11 @@ class Daemon:
     Usage: subclass the Daemon class and override the run() method
     """
 
-    def __init__(self, priority, pidfile, logger, stdin='/dev/null', stdout='/dev/null', stderr='/dev/null'):
+    def __init__(self, pidfile, logger, stdin='/dev/null', stdout='/dev/null', stderr='/dev/null'):
         self.stdin = stdin
         self.stdout = stdout
         self.stderr = stderr
         self.pidfile = pidfile
-        self.priority = priority
         self.logger = logger
 
     def daemonize(self):
@@ -58,7 +57,7 @@ class Daemon:
             self.logger.error("Daemon error at step2: " + e.strerror) 
             sys.stderr.write("fork #2 failed: %d (%s)\n" % (e.errno, e.strerror))
             sys.exit(1) 
-
+	
         # redirect standard file descriptors
         sys.stdout.flush()
         sys.stderr.flush()
@@ -68,52 +67,32 @@ class Daemon:
         os.dup2(si.fileno(), sys.stdin.fileno())
         os.dup2(so.fileno(), sys.stdout.fileno())
         os.dup2(se.fileno(), sys.stderr.fileno())
-
+	
         # write pidfile
         atexit.register(self.delpid)
         pid = str(os.getpid())
         file(self.pidfile,'w+').write("%s\n" % pid)
-
+	
     def delpid(self):
         os.remove(self.pidfile)
-
-    def getpid(self):
-        """
-        returns the content of pidfile or None.
-        """
-        try:
-            pf = file(self.pidfile, 'r')
-            pid = int(pf.read().strip())
-            pf.close()
-        except IOError:
-            pid = None
-        return pid
-
-    def checkpid(self, pid):
-        """ Check For the existence of a unix pid. """
-        if pid is None:
-            return False
-
-        try:
-            os.kill(pid, 0)
-        except OSError:
-            self.delpid()
-            return False
-        else:
-            return True
 
     def start(self):
         """
         Start the daemon
         """
         # Check for a pidfile to see if the daemon already runs
-        pid = self.getpid()
+        try:
+            pf = file(self.pidfile,'r')
+            pid = int(pf.read().strip())
+            pf.close()
+        except IOError:
+            pid = None
 
         if pid:
             message = "pidfile %s already exist. Daemon already running?\n"
             sys.stderr.write(message % self.pidfile)
             sys.exit(1)
-
+		
         # Start the daemon
         self.daemonize()
         self.run()
@@ -123,7 +102,12 @@ class Daemon:
         Stop the daemon
         """
         # Get the pid from the pidfile
-        pid = self.getpid()
+        try:
+            pf = file(self.pidfile,'r')
+            pid = int(pf.read().strip())
+            pf.close()
+        except IOError:
+            pid = None
 
         if not pid:
             message = "pidfile %s does not exist. Daemon not running?\n"
@@ -156,11 +140,16 @@ class Daemon:
         returns instance's priority                                                              
         """                                                                                      
         # Check for a pidfile to see if the daemon already runs                                  
-        pid = self.getpid()
+        try:                                                                                     
+            pf = file(self.pidfile,'r')                                                          
+            pid = int(pf.read().strip())                                                         
+            pf.close()                                                                           
+        except IOError:                                                                          
+            pid = None                                                                           
                                                                                                  
         status = 0                                                                               
                                                                                                  
-        if self.checkpid(pid):
+        if pid:                                                                                  
             message = "status: pidfile %s exist. Daemon is running\n"                            
             status = self.priority                                                               
         else:                                                                                    

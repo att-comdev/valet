@@ -52,29 +52,53 @@ class AppHandler:
         for app in _app_data:
             self.logger.debug("parse app")
 
-            app_id = app_topology.set_app_topology(app)
-
-            if app_id == None:
-                self.logger.error(app_topology.status)
-                self.status = app_topology.status
-                return None
+            stack_id = None
+            if "stack_id" in app.keys():
+                stack_id = app["stack_id"]
             else:
-                self.logger.info("application: " + app_id[1] + " with action = " + app_id[2])
+                stack_id = "none"
+            application_name = None
+            if "application_name" in app.keys():
+                application_name = app["application_name"]
+            else:
+                application_name = "none"
+            action = None
+            if "action" in app.keys():
+                action = app["action"]
+            else:
+                action = "any"
+ 
+            if action == "ping":
+                self.logger.debug("got ping")
+            elif action == "replan":
+                re_app = self._regenerate_app_topology(stack_id, app, app_topology)
+                if re_app == None:
+                    return None
 
-                if app_id[2] == "replan":
-                    re_app = self._regenerate_app_topology(app_id[0], app)
-                    if re_app == None:
-                        return None
-                    _app_data.append(re_app)
-                    continue
+                self.logger.debug("got replan: " + stack_id)
 
-                new_app = App(app_id[0], app_id[1], app_id[2])
+                app_id = app_topology.set_app_topology(re_app)
 
-                self.apps[app_id[0]] = new_app
+                if app_id == None:
+                    self.logger.error(app_topology.status)
+                    self.status = app_topology.status
+                    return None
 
-        if len(app_topology.vgroups) > 0 or \
-           len(app_topology.vms) > 0 or \
-           len(app_topology.volumes) > 0:
+                self.logger.info("replanned  application: " + app_id[1])
+            else:
+                app_id = app_topology.set_app_topology(app)
+
+                if app_id == None:
+                    self.logger.error(app_topology.status)
+                    self.status = app_topology.status
+                    return None
+
+                self.logger.info("got application: " + app_id[1])
+
+            new_app = App(stack_id, application_name, action)
+            self.apps[stack_id] = new_app
+
+        if len(app_topology.vgroups) > 0 or len(app_topology.vms) > 0 or len(app_topology.volumes) > 0:
             self.logger.debug("virtual resources are captured")
 
         app_topology.set_optimization_priority()
@@ -159,7 +183,7 @@ class AppHandler:
 
         return True
 
-    def _regenerate_app_topology(self, _stack_id, _app):
+    def _regenerate_app_topology(self, _stack_id, _app, _app_topology):
         re_app = {}
        
         old_app = self.db.get_app_info(_stack_id)
@@ -203,22 +227,20 @@ class AppHandler:
                         if ex_id not in exclusivity_groups.keys():
                             exclusivity_groups[ex_id] = []
                         exclusivity_groups[ex_id].append(vmk)
- 
-                resources[vmk]["properties"]["old_host"] = None
-                resources[vmk]["properties"]["candidate_host_list"] = []
-                if vmk == _app["orchestration_id"]:   # must replan
-                    resources[vmk]["properties"]["old_host"] = vm["host"]
-                    resources[vmk]["properties"]["candidate_host_list"] = _app["locations"]
-                elif vmk in _app["exclusions"]:
-                    resources[vmk]["properties"]["candidate_host_list"].append(vm["host"])
-                else:                                 # must replan
-                    resources[vmk]["properties"]["old_host"] = vm["host"]
 
+                if vmk == _app["orchestration_id"]:
+                    _app_topology.candidate_list_map[vmk] = _app["locations"]
+                elif vmk in _app["exclusions"]:
+                    _app_topology.planned_vm_map[vmk] = vm["host"]
+                _app_topology.old_vm_map[vmk] = (vm["host"], \
+                                                 float(vm["cpus"]), float(vm["mem"]), float(vm["local_volume"]))
+ 
         if "VGroups" in old_app.keys():
             for gk, affinity in old_app["VGroups"].iteritems():
                 resources[gk] = {}
                 resources[gk]["name"] = affinity["name"] 
-                resources[gk]["type"] = "ATT::CloudQoS::ResourceGroup"
+                #resources[gk]["type"] = "ATT::CloudQoS::ResourceGroup"
+                resources[gk]["type"] = "ATT::Valet::GroupAssignment"
                 properties = {}
                 properties["relationship"] = "affinity"
                 properties["level"] = affinity["level"]
@@ -246,7 +268,8 @@ class AppHandler:
         for div_id, resource_list in diversity_groups.iteritems():
             divk_level = div_id.split(":")
             resources[divk_level[0]] = {}
-            resources[divk_level[0]]["type"] = "ATT::CloudQoS::ResourceGroup"
+            #resources[divk_level[0]]["type"] = "ATT::CloudQoS::ResourceGroup"
+            resources[divk_level[0]]["type"] = "ATT::Valet::GroupAssignment"
             properties = {}
             properties["relationship"] = "diversity"
             properties["level"] = divk_level[1]
@@ -257,7 +280,8 @@ class AppHandler:
             exk_level_name = ex_id.split(":")
             resources[exk_level_name[0]] = {}
             resources[exk_level_name[0]]["name"] = exk_level_name[2]
-            resources[exk_level_name[0]]["type"] = "ATT::CloudQoS::ResourceGroup"
+            #resources[exk_level_name[0]]["type"] = "ATT::CloudQoS::ResourceGroup"
+            resources[exk_level_name[0]]["type"] = "ATT::Valet::GroupAssignment"
             properties = {}
             properties["relationship"] = "exclusivity"
             properties["level"] = exk_level_name[1]

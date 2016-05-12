@@ -47,6 +47,8 @@ class Search:
         self.bandwidth_usage = 0
         self.num_of_hosts = 0
 
+        self.planned_placements = {}
+
         # Optimization criteria
         self.nw_bandwidth_weight = -1
         self.CPU_weight = -1
@@ -85,6 +87,319 @@ class Search:
 
         return self._run_greedy(open_node_list, level, self.avail_hosts)
 
+    def replan_nodes(self, _app_topology, _resource):
+        self._init_placements()
+
+        self.app_topology = _app_topology
+        self.resource = _resource
+
+        self.constraint_solver = ConstraintSolver(self.logger)
+
+        self._create_avail_logical_groups()
+        self._create_avail_storage_hosts()
+        self._create_avail_switches()
+        self._create_avail_hosts()
+
+        self._compute_resource_weights()
+
+        self._place_planned_nodes()
+
+
+        # here
+        self._place_conflicted_node()
+
+    def _place_conflicted_node(self):
+        (conflicted_node, level) = self._create_conflicted_node(self.app_topology.vms, \
+                                                                self.app_topology.volumes, \
+                                                                self.app_topology.vgroups) 
+        
+        return self._run_greedy_for_conflicted_node(conflicted_node, level, self.avail_hosts)
+
+    def _run_greedy_for_conflicted_node(self, _conflicted_node, _level, _avail_hosts):
+        avail_resources = {}
+        if _level == "cluster":
+            for hk, h in _avail_hosts.iteritems():
+                if h.cluster_name not in avail_resources.keys():
+                    avail_resources[h.cluster_name] = h
+        elif _level == "rack":
+            for hk, h in _avail_hosts.iteritems():
+                if h.rack_name not in avail_resources.keys():
+                    avail_resources[h.rack_name] = h
+        elif _level == "host":
+            avail_resources = _avail_hosts
+
+        self.logger.debug("the conflicted node in level = " + _level)
+        self.logger.debug("    node = " + _conflicted_node.node.name)
+
+
+
+
+        best_resource = self._get_best_resource(_conflicted_node, _level, avail_resources)
+        if best_resource == None:
+            return False
+
+        debug_best_resource = None
+        if _level == "cluster":
+            debug_best_resource = best_resource.cluster_name
+        elif _level == "rack":
+            debug_best_resource = best_resource.rack_name
+        elif _level == "host":
+            if isinstance(n.node, VM) or isinstance(n.node, VGroup):
+                debug_best_resource = best_resource.host_name
+            #elif isinstance(n.node, Volume):
+                #debug_best_resource = best_resource.host_name + "@" + best_resource.storage.storage_name
+        self.logger.debug("best resource = " + debug_best_resource + " for node = " + _candidate_node.node.name)
+
+        self._deduct_reservation(_level, best_resource, _conflicted_node)
+
+
+
+        # here
+        self._close_node_placement(_level, best_resource, n.node)
+
+        return True
+
+    def _create_conflicted_node(self, _vms, _volumes, _vgroups):
+        conflicted_node = None
+        level = "host"
+
+        for vmk, vm in _vms.iteritems():
+            if vmk in self.app_topology.candidate_list_map.keys():
+                vm.host = self.app_topology.candidate_list_map[vmk]   # list
+                n = Node()
+                n.node = vm
+                #n.sort_base = self._set_virtual_capacity_based_sort(vm)
+                conflicted_node = n
+                break
+
+        # NOTE: volumes skip
+
+        if conflicted_node == None:
+            for gk, g in _vgroups.iteritems():
+                child_vm_id = self._check_conflicted_vm_grouping(g)
+                if child_vm_id != None:
+                    host_list = []
+                    for hk in self.app_topology.candidate_list_map[child_vm_id]:
+                        host_name = self._get_host_of_vgroup(hk, g.level)
+                        if host_name != None:
+                            host_list.append(host_name)
+                        else:
+                            self.logger.warn("cannot find host while replanning")
+                    g.host = host_list
+                    if LEVELS.index(g.level) > LEVELS.index(level):
+                        level = g.level
+
+                    n = Node()
+                    n.node = g
+                    #n.sort_base = self._set_virtual_capacity_based_sort(g)
+                    conflicted_node = n
+                    break
+
+        return (conflicted_node, level)
+
+    def _check_conflicted_vm_grouping(self, _g):
+        child_vm = None
+
+        for sgk, sg in _g.subvgroups.iteritems():
+            if isinstance(sg, VM): 
+                if sgk in self.app_topology.candidate_list_map.keys():
+                    child_vm = sgk
+                    break
+            elif isinstance(sg, VGroup):
+                child_vm = self._check_conflicted_vm_grouping(sg)
+                if child_vm != None:
+                    break
+
+        return child_vm
+
+    def _place_planned_nodes(self):
+        (planned_node_list, level) = self._create_planned_list(self.app_topology.vms, \
+                                                               self.app_topology.volumes, \
+                                                               self.app_topology.vgroups) 
+
+        return self._run_greedy_for_planned_nodes(planned_node_list, level, self.avail_hosts)
+
+    def _run_greedy_for_planned_nodes(self, _node_list, _level, _avail_hosts):
+        if len(_node_list) == 0:
+            return False
+
+        avail_resources = {}
+        if _level == "cluster":
+            for hk, h in _avail_hosts.iteritems():
+                if h.cluster_name not in avail_resources.keys():
+                    avail_resources[h.cluster_name] = h
+        elif _level == "rack":
+            for hk, h in _avail_hosts.iteritems():
+                if h.rack_name not in avail_resources.keys():
+                    avail_resources[h.rack_name] = h
+        elif _level == "host":
+            avail_resources = _avail_hosts
+
+        _node_list.sort(key=operator.attrgetter("sort_base"), reverse=True)
+
+        self.logger.debug("the order of planned node list in level = " + _level)
+        for on in _node_list:
+            self.logger.debug("    node = {}, value = {}".format(on.node.name, on.sort_base))
+
+        while len(_node_list) > 0:
+            n = _node_list.pop(0)
+
+            self.logger.debug("level = " + _level + ", placing node = " + n.node.name)
+
+            best_resource = self._get_best_resource_for_planned(n, _level, avail_resources)
+
+            if best_resource != None:
+                debug_best_resource = None
+                if _level == "cluster":
+                    debug_best_resource = best_resource.cluster_name
+                elif _level == "rack":
+                    debug_best_resource = best_resource.rack_name
+                elif _level == "host":
+                    if isinstance(n.node, VM) or isinstance(n.node, VGroup):
+                        debug_best_resource = best_resource.host_name
+                    #elif isinstance(n.node, Volume):
+                        #debug_best_resource = best_resource.host_name + "@" + best_resource.storage.storage_name
+                self.logger.debug("best resource = " + debug_best_resource + " for node = " + n.node.name)
+
+                self._deduct_reservation(_level, best_resource, n)
+                self._close_planned_placement(_level, best_resource, n.node)
+
+        return True
+
+    def _close_planned_placement(self, _level, _best, _v):
+        if _level == "host":
+            if _v not in self.planned_placements.keys():
+                self.planned_placements[_v] = _best
+        else:
+            if isinstance(_v, VGroup):
+                if _v not in self.planned_placements.keys():
+                    self.planned_placements[_v] = _best
+
+    def _get_best_resource_for_planned(self, _n, _level, _avail_resources):
+        best_resource = None
+
+        if _level == "host" and (isinstance(_n.node, VM) or isinstance(_n.node, Volume)):
+            if _n.node.uuid in self.app_topology.planned_vm_map.keys():
+                best_resource = copy.deepcopy(_avail_resources[_n.node.host])
+                best_resource.level = "host"
+                # NOTE: storage set
+        else:
+            vms = {}                                                                     
+            volumes = {}                                                                 
+            vgroups = {}                                                                 
+            if isinstance(_n.node, VGroup):                                              
+                if LEVELS.index(_n.node.level) < LEVELS.index(_level):                   
+                    vgroups[_n.node.uuid] = _n.node                                      
+                else:                                                                    
+                    for sgk, sg in _n.node.subvgroups.iteritems():                       
+                        if isinstance(sg, VM):                                           
+                            vms[sg.uuid] = sg                                            
+                        elif isinstance(sg, Volume):                                     
+                            volumes[sg.uuid] = sg                                        
+                        elif isinstance(sg, VGroup):                                     
+                            vgroups[sg.uuid] = sg                                        
+            else:                                                                        
+                if isinstance(_n.node, VM):                                              
+                    vms[_n.node.uuid] = _n.node                                          
+                elif isinstance(_n.node, Volume):                                        
+                    volumes[_n.node.uuid] = _n.node                                      
+                                                                                                 
+            (planned_node_list, level) = self._create_planned_list(vms, volumes, vgroups)      
+
+            host_name = None
+            if _n.node.level == _level:
+                host_name = _n.node.host
+            else:    
+                if _level == "rack":
+                    if _n.node.level == "host":
+                        for ahk, ah in self.avail_hosts.iteritems():
+                            if _n.node.host == ah.host_name:
+                                host_name = ah.rack_name
+                                break
+                # NOTE:elif _level == "cluster":
+
+            if host_name == None:
+                self.logger.warn("cannot find host while replanning")
+                return None
+                                                                                     
+            avail_hosts = {}                                                             
+            for hk, h in self.avail_hosts.iteritems():                                   
+                if _level == "cluster":                                                  
+                    if h.cluster_name == host_name:                                
+                        avail_hosts[hk] = h                                              
+                elif _level == "rack":                                                   
+                    if h.rack_name == host_name:                                      
+                        avail_hosts[hk] = h                                              
+                elif _level == "host":                                                   
+                    if h.host_name == host_name:                                      
+                        avail_hosts[hk] = h                                              
+                                                                                               
+            if self._run_greedy_for_planned_nodes(planned_node_list, level, avail_hosts) == True:
+                best_resource = copy.deepcopy(_avail_resources[host_name])
+                best_resource.level = _level  
+                                                                                                 
+        return best_resource
+
+    def _create_planned_list(self, _vms, _volumes, _vgroups):
+        planned_node_list = []
+        level = "host"
+
+        for vmk, vm in _vms.iteritems():
+            if vmk in self.app_topology.planned_vm_map.keys():
+                vm.host = self.app_topology.planned_vm_map[vmk]
+                n = Node()
+                n.node = vm
+                n.sort_base = self._set_virtual_capacity_based_sort(vm)
+                planned_node_list.append(n)
+
+        # NOTE: volumes skip
+
+        for gk, g in _vgroups.iteritems():
+            child_vm_id = self._check_planned_vm_grouping(g)
+            if child_vm_id != None:
+                g.host = self._get_host_of_vgroup(self.app_topology.planned_vm_map[child_vm_id], g.level)
+                if g.host != None:
+                    if LEVELS.index(g.level) > LEVELS.index(level):
+                        level = g.level
+
+                    n = Node()
+                    n.node = g
+                    n.sort_base = self._set_virtual_capacity_based_sort(g)
+                    planned_node_list.append(n)
+                else:
+                    self.logger.warn("host does not exist while replan with vgroup")
+
+        return (planned_node_list, level)
+
+    def _check_planned_vm_grouping(self, _g):
+        child_vm = None
+
+        for sgk, sg in _g.subvgroups.iteritems():
+            if isinstance(sg, VM): 
+                if sgk in self.app_topology.planned_vm_map.keys():
+                    child_vm = sgk
+                    break
+            elif isinstance(sg, VGroup):
+                child_vm = self._check_planned_vm_grouping(sg)
+                if child_vm != None:
+                    break
+
+        return child_vm
+
+    def _get_host_of_vgroup(self, _host, _level):
+        host = None
+
+        if _level == "host":
+            host = _host
+        elif _level == "rack":
+            if _host in self.avail_hosts.keys():
+                host = self.avail_hosts[_host].rack_name
+        elif _level == "cluster":
+            if _host in self.avail_hosts.keys():
+                host = self.avail_hosts[_host].cluster_name
+
+        return host
+
     def _init_placements(self):
         self.avail_hosts.clear()
         self.avail_logical_groups.clear()
@@ -94,6 +409,8 @@ class Search:
         self.node_placements.clear()
         self.bandwidth_usage = 0
         self.num_of_hosts = 0
+
+        self.planned_placements.clear()
 
         self.nw_bandwidth_weight = -1
         self.CPU_weight = -1

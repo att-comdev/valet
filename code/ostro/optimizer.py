@@ -34,6 +34,10 @@ class Optimizer:
 
     def place(self, _app_topology): 
         start_ts = time.time() 
+        if len(_app_topology.old_vm_map) > 0:
+            self._delete_old_vms(_app_topology.old_vm_map)
+            self.logger.debug("remove & deduct VMs' old placements for replan")
+
         success = self.search.place_nodes(_app_topology, self.resource)
         end_ts = time.time()
 
@@ -67,6 +71,14 @@ class Optimizer:
         else:
             self.status = self.search.status
             return None
+
+    def _delete_old_vms(self, _old_vm_map):
+        for h_uuid, info in _old_vm_map.iteritems():
+            self.resource.remove_vm_by_h_uuid_from_host(info[0], h_uuid, info[1], info[2], info[3])
+            self.resource.update_host_time(info[0])
+        
+            host = self.resource.hosts[info[0]]
+            self.resource.remove_vm_by_h_uuid_from_logical_groups(host, h_uuid) 
 
     def _update_resource_status(self):
         for v, np in self.search.node_placements.iteritems():
@@ -173,15 +185,4 @@ class Optimizer:
 
         if _v.survgroup != None:
             self._collect_logical_groups_of_vm(_v.survgroup, _vm_logical_groups)
-
-
-
-
-
-
-
-
-
-
-
 

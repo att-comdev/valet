@@ -147,7 +147,7 @@ class Ostro(object):
                         name=group_name).first()
                     if not group:
                         message = "Exclusivity group '%s' not found" % \
-                                  (group.name)
+                                  (group_name)
                     elif group and tenant_id not in group.members:
                         message = "Tenant ID %s not a member of " \
                                   "exclusivity group '%s' (%s)" % \

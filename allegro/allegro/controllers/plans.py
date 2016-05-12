@@ -113,15 +113,13 @@ class PlansItemController(object):
         # we cite it as a Valet error.
         if not ostro.build_request(**kwargs):
             message = ostro.response['status']['message']
-            error('/errors/conflict',
-                  _('Valet error: %s') % message)
+            error(ostro.error_uri, _('Valet error: %s') % message)
 
         ostro.send()
         status_type = ostro.response['status']['type']
         if status_type != 'ok':
             message = ostro.response['status']['message']
-            error('/errors/invalid',
-                  _('Ostro error: %s') % message)
+            error(ostro.error_uri, _('Ostro error: %s') % message)
 
         # TODO: See if we will eventually need these for Ostro.
         #plan_name = args['plan_name']
@@ -194,15 +192,13 @@ class PlansController(object):
         # we cite it as a Valet error.
         if not ostro.build_request(**kwargs):
             message = ostro.response['status']['message']
-            error('/errors/conflict',
-                  _('Valet error: %s') % message)
+            error(ostro.error_uri, _('Valet error: %s') % message)
 
         ostro.send()
         status_type = ostro.response['status']['type']
         if status_type != 'ok':
             message = ostro.response['status']['message']
-            error('/errors/server_error',
-                  _('Ostro error: %s') % message)
+            error(ostro.error_uri, _('Ostro error: %s') % message)
 
         plan_name = args['plan_name']
         stack_id = args['stack_id']

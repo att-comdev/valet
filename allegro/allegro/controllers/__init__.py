@@ -80,5 +80,4 @@ def error(url, msg=None, **kwargs):
         request.context['error_message'] = msg
     if kwargs:
         request.context['kwargs'] = kwargs
-    url = path.join(url, '?error_message=%s' % msg)
     redirect(url, internal=True)

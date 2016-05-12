@@ -4,7 +4,8 @@ Determines placement for cloud resources.
 
 ## General API information
 
-Authenticated calls that target a known URI but that use an HTTP method the implementation does not support return a 405 Method Not Allowed status. In addition, the HTTP OPTIONS method is supported for each known URI. In both cases, the Allow response header indicates the supported HTTP methods.
+Authenticated calls that target a known URI but that use an HTTP method the implementation does not support return a 405 Method Not Allowed status. In addition, the HTTP OPTIONS method is supported for each known URI. In both cases, the Allow response header indicates the supported HTTP methods. See the [API Errors](#api-errors) section for more information about the error response structure.
+
 
 ## API versions
 
@@ -307,7 +308,7 @@ This operation does not accept a request body and does not return a response bod
 
 This operation does not accept a request body and does not return a response body.
 
-## Optimizers
+## Status
 
 Documentation forthcoming.
 
@@ -318,3 +319,66 @@ Documentation forthcoming.
 ## Plans
 
 Documentation forthcoming.
+
+## API Errors
+
+In the event of an error with a status other than unauthorized (401), a detailed repsonse body is returned.
+
+### Response parameters
+
+| Parameter   | Style | Type       | Description                                       |
+|-------------|-------|------------|---------------------------------------------------|
+| title       | plain | xsd:string | Human-readable name.                              |
+| explanation | plain | xsd:string | Detailed explanation with remediation (if any).   |
+| code        | plain | xsd:string | HTTP Status Code.                                 |
+| error       | plain | xsd:string | Error dictionary.                                 |
+| message     | plain | xsd:string | Internal error message.                           |
+| traceback   | plain | xsd:string | Python traceback (if available).                  |
+| type        | plain | xsd:string | HTTP Status class name (from python-webob)        |
+
+#### Examples
+
+A group with the name "gro up" is considered a bad request because the name contains a space.
+
+```json
+{
+  "title": "Bad Request",
+  "explanation": "-> name -> gro up did not pass validation against callable: group_name_type (must contain only uppercase and lowercase letters, decimal digits, hyphens, periods, underscores, and tildes [RFC 3986, Section 2.3])",
+  "code": 400,
+  "error": {
+    "message": "The server could not comply with the request since it is either malformed or otherwise incorrect.",
+    "traceback": null,
+    "type": "HTTPBadRequest"
+  }
+}
+```
+
+The HTTP COPY method was attempted but is not allowed.
+
+```json
+{
+  "title": "Method Not Allowed",
+  "explanation": "The COPY method is not allowed.",
+  "code": 405,
+  "error": {
+    "message": "The server could not comply with the request since it is either malformed or otherwise incorrect.",
+    "traceback": null,
+    "type": "HTTPMethodNotAllowed"
+  }
+}
+```
+
+The exclusivity group named 'foosball' was not found.
+
+```json
+{
+  "title": "Conflict",
+  "explanation": "Valet error: Exclusivity group 'foosball' not found",
+  "code": 409,
+  "error": {
+    "message": "There was a conflict when trying to complete your request.",
+    "traceback": null,
+    "type": "HTTPConflict"
+  }
+}
+```

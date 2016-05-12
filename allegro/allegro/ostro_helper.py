@@ -35,6 +35,7 @@ class Ostro(object):
     args = None
     request = None
     response = None
+    error_uri = None
     tenant_id = None
 
     tries = None  # Number of times to poll for placement.
@@ -126,9 +127,10 @@ class Ostro(object):
         response = {
             'status': {
                 'type': 'error',
-                'message': 'Timed out waiting for placement result.',
+                'message': 'Timed out waiting for response.',
             }
         }
+        self.error_uri = '/errors/server_error'
         return simplejson.dumps(response)
 
     def _verify_exclusivity_groups(self, resources, tenant_id):
@@ -148,10 +150,12 @@ class Ostro(object):
                     if not group:
                         message = "Exclusivity group '%s' not found" % \
                                   (group_name)
+                        self.error_uri = '/errors/not_found'
                     elif group and tenant_id not in group.members:
                         message = "Tenant ID %s not a member of " \
                                   "exclusivity group '%s' (%s)" % \
                                   (self.tenant_id, group.name, group.id)
+                        self.error_uri = '/errors/conflict'
                     if message:
                         response = {
                             'status': {
@@ -171,6 +175,7 @@ class Ostro(object):
         self.args = kwargs.get('args')
         self.tenant_id = kwargs.get('tenant_id')
         self.response = None
+        self.error_uri = None
 
         resources = self.args['resources']
         if 'resources_update' in self.args:
@@ -207,6 +212,7 @@ class Ostro(object):
         stack_id = str(uuid.uuid4())
         self.args = { 'stack_id': stack_id }
         self.response = None
+        self.error_uri = None
         self.request = {
             "version": "1.0",
             "action": "ping",
@@ -217,6 +223,7 @@ class Ostro(object):
         '''Replan a placement.'''
         self.args = kwargs.get('args')
         self.response = None
+        self.error_uri = None
         self.request = {
             "version": "1.0",
             "action": "replan",
@@ -242,4 +249,9 @@ class Ostro(object):
             self._log(result, 'Result', append=True)
 
         self.response = simplejson.loads(result)
+
+        status_type = self.response['status']['type']
+        if status_type != 'ok':
+            self.error_uri = '/errors/server_error'
+
         return self.response

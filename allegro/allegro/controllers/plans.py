@@ -53,7 +53,7 @@ UPDATE_SCHEMA = (
 class PlansItemController(object):
     '''
     Plans Item Controller
-    /v1/{tenant_id}/plans/{plan_id}
+    /v1/plans/{plan_id}
     '''
 
     placements = None
@@ -145,7 +145,7 @@ class PlansItemController(object):
 class PlansController(object):
     '''
     Plans Controller
-    /v1/{tenant_id}/plans
+    /v1/plans
     '''
 
     @classmethod

@@ -51,7 +51,7 @@ MEMBERS_SCHEMA = (
 class MembersItemController(object):
     '''
     Members Item Controller
-    /v1/{tenant_id}/groups/{group_id}/members/{member_id}
+    /v1/groups/{group_id}/members/{member_id}
     '''
 
     def __init__(self, member_id):
@@ -97,7 +97,7 @@ class MembersItemController(object):
 class MembersController(object):
     '''
     Members Controller
-    /v1/{tenant_id}/groups/{group_id}/members
+    /v1/groups/{group_id}/members
     '''
 
     @classmethod
@@ -153,7 +153,7 @@ class MembersController(object):
 class GroupsItemController(object):
     '''
     Groups Item Controller
-    /v1/{tenant_id}/groups/{group_id}
+    /v1/groups/{group_id}
     '''
 
     members = MembersController()
@@ -217,7 +217,7 @@ class GroupsItemController(object):
 class GroupsController(object):
     '''
     Groups Controller
-    /v1/{tenant_id}/groups
+    /v1/groups
     '''
 
     @classmethod

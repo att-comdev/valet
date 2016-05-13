@@ -34,7 +34,7 @@ LOG = logging.getLogger(__name__)
 class StatusController(object):
     '''
     Status Controller
-    /v1/{tenant_id}/status
+    /v1/status
     '''
 
     def _ping(self):

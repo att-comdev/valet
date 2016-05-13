@@ -414,11 +414,13 @@ $ sudo service cinder-scheduler restart
 Tire-kick things using these example heat templates:
 
 Production:
+
 ```bash
 /usr/local/etc/heat/examples
 ```
 
 Development:
+
 ```bash
 $ALLEGRO_PATH/heat/examples
 ```

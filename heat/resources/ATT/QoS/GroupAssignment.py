@@ -39,12 +39,12 @@ LOG = logging.getLogger(__name__)
 class GroupAssignment(resource.Resource):
     """
     A Group Assignment describes one or more resources assigned
-    as a particular type of group. Assignments can reference other
+    to a particular type of group. Assignments can reference other
     assignments, so long as there are no circular references.
 
-    There are three types of groups, indicated by a relationship:
-    affinity, diversity, and exclusivity. Exclusivity relationships
-    require a unique group name, assigned through Valet.
+    There are three types of groups: affinity, diversity, and
+    exclusivity. Exclusivity groups have a unique name, assigned
+    through Valet.
 
     This resource is purely informational in nature and makes no
     changes to heat, nova, or cinder. The Valet Heat Lifecycle
@@ -58,15 +58,15 @@ class GroupAssignment(resource.Resource):
     )
 
     PROPERTIES = (
-        NAME, RELATIONSHIP, LEVEL, RESOURCES,
+        GROUP_NAME, GROUP_TYPE, LEVEL, RESOURCES,
     ) = (
-        'name', 'relationship', 'level', 'resources',
+        'group_name', 'group_type', 'level', 'resources',
     )
 
     properties_schema = {
-        NAME: properties.Schema(
+        GROUP_NAME: properties.Schema(
             properties.Schema.STRING,
-            _('Name of relationship. Required for exclusivity groups.'),
+            _('Group name. Required for exclusivity groups.'),
             # TODO: Add a custom constraint that ensures a valid
             # and allowed name when an exclusivity group is in use.
             # This is presently enforced by valet-api and can also
@@ -74,9 +74,9 @@ class GroupAssignment(resource.Resource):
             # orchestration.
             update_allowed=True
         ),
-        RELATIONSHIP: properties.Schema(
+        GROUP_TYPE: properties.Schema(
             properties.Schema.STRING,
-            _('Grouping relationship.'),
+            _('Type of group.'),
             constraints=[
                 constraints.AllowedValues([AFFINITY, DIVERSITY, EXCLUSIVITY])
             ],

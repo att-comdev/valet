@@ -6,46 +6,40 @@ The following is current as of Valet Release 1.0.
 
 ## ATT::Valet::GroupAssignment
 
-A Group Assignment describes one or more resources assigned
-to a particular type of group. Assignments can reference other
-assignments, so long as there are no circular references.
+A Group Assignment describes one or more resources assigned to a particular type of group. Assignments can reference other assignments, so long as there are no circular references.
 
-There are three types of groups: affinity, diversity, and
-exclusivity. Exclusivity groups have a unique name, assigned
-through Valet.
+There are three types of groups: affinity, diversity, and exclusivity. Exclusivity groups have a unique name, assigned through Valet.
 
-This resource is purely informational in nature and makes no
-changes to heat, nova, or cinder. The Valet Heat Lifecycle
-Plugin passes this information to the optimizer.
+This resource is purely informational in nature and makes no changes to heat, nova, or cinder. The Valet Heat Lifecycle Plugin passes this information to the optimizer.
 
 ### Properties
 
-- **group_name** (String)
+* ``group_name`` (String)
   - Name of group. Required for exclusivity groups.
   - Can be updated without replacement.
 
-- **group_type** (String)
+* ``group_type`` (String)
   - Type of group.
   - Allowed values: affinity, diversity, exclusivity
   - Can be updated without replacement.
   - Required property.
 
-- **level** (String)
+* ``level`` (String)
   - Level of relationship between resources.
   - See list below for allowed values.
   - Can be updated without replacement.
 
-- **resources** (List)
+* ``resources`` (List)
   - List of associated resource IDs.
   - Can be updated without replacement.
   - Required property.
 
 #### Levels
 
-- *cluster*: Across a cluster, one resource per cluster.
-- *rack*: Across racks, one resource per host.
-- *host*: All resources on a single host.
-- *any*: Any level.
+- ``cluster``: Across a cluster, one resource per cluster.
+- ``rack``: Across racks, one resource per host.
+- ``host``: All resources on a single host.
+- ``any``: Any level.
 
 ### Attributes
 
@@ -158,8 +152,8 @@ Future placement support will formally include block storage services (e.g., Cin
 
 Future levels could include:
 
-- *cluster*: Across a cluster, one resource per cluster.
-- *any*: Any level.
+* ``cluster``: Across a cluster, one resource per cluster.
+* ``any``: Any level.
 
 #### Proposed Notation for 'diverse-affinity'
 
@@ -182,7 +176,7 @@ Suppose we are given a set of server/volume pairs, and we'd like to treat each p
           - {get_resource: volume3}
 ```
 
-In this example, server1/volume1, server2/volume2, and server3/volume3 are each treated as their own affinity group. Then, each of these affinity groups is treated as a diversity group. The dash notation is specific to YAML (a superset of JSON and the markup language used by Heat).
+In this example, ``server1``/``volume1``, ``server2``/``volume2``, and ``server3``/``volume3`` are each treated as their own affinity group. Then, each of these affinity groups is treated as a diversity group. The dash notation is specific to YAML (a superset of JSON and the markup language used by Heat).
 
 Given a hypothetical example of a Ceph deployment with three monitors, twelve OSDs, and one client, each paired with a volume, we would only need to specify three Heat resources instead of eighteen.
 

@@ -6,20 +6,26 @@ The following is current as of Valet Release 1.0.
 
 ## ATT::Valet::GroupAssignment
 
-A Group Assignment describes one or more resources assigned to a particular type of group. Assignments can reference other assignments, so long as there are no circular references.
+A Group Assignment describes one or more resources assigned
+to a particular type of group. Assignments can reference other
+assignments, so long as there are no circular references.
 
-There are three types of groups, indicated by a relationship: affinity, diversity, and exclusivity. Exclusivity relationships require a unique group name, assigned through Valet.
+There are three types of groups: affinity, diversity, and
+exclusivity. Exclusivity groups have a unique name, assigned
+through Valet.
 
-This resource is purely informational in nature and makes no changes to heat, nova, or cinder. The Valet Heat Lifecycle Plugin passes this information to the optimizer.
+This resource is purely informational in nature and makes no
+changes to heat, nova, or cinder. The Valet Heat Lifecycle
+Plugin passes this information to the optimizer.
 
 ### Properties
 
-- **name** (String)
-  - Name of relationship. Required for exclusivity groups.
+- **group_name** (String)
+  - Name of group. Required for exclusivity groups.
   - Can be updated without replacement.
 
-- **relationship** (String)
-  - Grouping relationship.
+- **group_type** (String)
+  - Type of group.
   - Allowed values: affinity, diversity, exclusivity
   - Can be updated without replacement.
   - Required property.
@@ -54,7 +60,7 @@ Given a Heat template with two server resources, declare an affinity between the
     server_affinity:
       type: ATT::Valet::GroupAssignment
       properties:
-        relationship: affinity
+        group_type: affinity
         level: rack
         resources:
         - {get_resource: server1}
@@ -66,68 +72,70 @@ Given a Heat template with two server resources, declare an affinity between the
 Use the OpenStack Heat CLI command `heat resource-type-show ATT::Valet::GroupAssignment` to view the schema.
 
 ```json
-  {
-    "support_status": {
-      "status": "SUPPORTED", 
-      "message": null, 
-      "version": null, 
-      "previous_status": null
+{
+  "support_status": {
+    "status": "SUPPORTED", 
+    "message": null, 
+    "version": null, 
+    "previous_status": null
+  }, 
+  "attributes": {
+    "show": {
+      "type": "map", 
+      "description": "Detailed information about resource."
+    }
+  }, 
+  "properties": {
+    "level": {
+      "description": "Level of relationship between resources.", 
+      "required": false, 
+      "update_allowed": true, 
+      "type": "string", 
+      "immutable": false, 
+      "constraints": [
+        {
+          "allowed_values": [
+            "host", 
+            "rack", 
+            "cluster", 
+            "any"
+          ]
+        }
+      ]
     }, 
-    "attributes": {
-      "show": {
-        "type": "map", 
-        "description": "Detailed information about resource."
-      }
+    "resources": {
+      "type": "list", 
+      "required": true, 
+      "update_allowed": true, 
+      "description": "List of one or more resource IDs.", 
+      "immutable": false
     }, 
-    "properties": {
-      "resources": {
-        "type": "list", 
-        "required": true, 
-        "update_allowed": true, 
-        "description": "List of one or more resource IDs.", 
-        "immutable": false
-      }, 
-      "name": {
-        "type": "string", 
-        "required": false, 
-        "update_allowed": true, 
-        "description": "Name of relationship. Required for exclusivity groups.", 
-        "immutable": false
-      }, 
-      "relationship": {
-        "description": "Grouping relationship.", 
-        "required": true, 
-        "update_allowed": true, 
-        "type": "string", 
-        "immutable": false, 
-        "constraints": [
-          {
-            "allowed_values": [
-              "affinity", 
-              "diversity", 
-              "exclusivity"
-            ]
-          }
-        ]
-      }, 
-      "level": {
-        "description": "Level of relationship between resources.", 
-        "required": false, 
-        "update_allowed": true, 
-        "type": "string", 
-        "immutable": false, 
-        "constraints": [
-          {
-            "allowed_values": [
-              "host", 
-              "rack"
-            ]
-          }
-        ]
-      }
+    "group_type": {
+      "description": "Type of group.", 
+      "required": true, 
+      "update_allowed": true, 
+      "type": "string", 
+      "immutable": false, 
+      "constraints": [
+        {
+          "allowed_values": [
+            "affinity", 
+            "diversity", 
+            "exclusivity"
+          ]
+        }
+      ]
     }, 
-    "resource_type": "ATT::Valet::GroupAssignment"
-  }
+    "group_name": {
+      "type": "string", 
+      "required": false, 
+      "update_allowed": true, 
+      "description": "Group name. Required for exclusivity groups.", 
+      "immutable": false
+    }
+  }, 
+  "resource_type": "ATT::Valet::GroupAssignment"
+}
 ```
 
 ### Future Work
@@ -159,11 +167,11 @@ Suppose we are given a set of server/volume pairs, and we'd like to treat each p
 
 ```json
   resources:
-    qos_resource_group:
+    my_group_assignment:
       type: ATT::Valet::GroupAssignment
       properties:
-        name: my_even_awesomer_group
-        relationship: diverse-affinity
+        group_name: my_even_awesomer_group
+        group_type: diverse-affinity
         level: host
         resources:
         - - {get_resource: server1}

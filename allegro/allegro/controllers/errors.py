@@ -29,10 +29,10 @@ from pecan import expose, request, response
 
 def error_wrapper(func):
     '''Error decorator.'''
-    def func_wrapper(self):
+    def func_wrapper(self, **kw):
         '''Wrapper.'''
 
-        kwargs = func(self)
+        kwargs = func(self, **kw)
         status = status_map.get(response.status_code)
         message = getattr(status, 'explanation', '')
         explanation = request.context.get('error_message', message)
@@ -61,7 +61,7 @@ class ErrorsController(object):
 
     @expose('json')
     @error_wrapper
-    def schema(self):
+    def schema(self, **kw):
         '''400'''
         request.context['error_message'] = str(request.validation_error)
         response.status = 400
@@ -69,13 +69,13 @@ class ErrorsController(object):
 
     @expose('json')
     @error_wrapper
-    def invalid(self):
+    def invalid(self, **kw):
         '''400'''
         response.status = 400
         return request.context.get('kwargs')
 
     @expose()
-    def unauthorized(self):
+    def unauthorized(self, **kw):
         '''401'''
         # This error doesn't use the wrapper on purpose.
         response.status = 401
@@ -85,21 +85,21 @@ class ErrorsController(object):
 
     @expose('json')
     @error_wrapper
-    def forbidden(self):
+    def forbidden(self, **kw):
         '''403'''
         response.status = 403
         return request.context.get('kwargs')
 
     @expose('json')
     @error_wrapper
-    def not_found(self):
+    def not_found(self, **kw):
         '''404'''
         response.status = 404
         return request.context.get('kwargs')
 
     @expose('json')
     @error_wrapper
-    def not_allowed(self):
+    def not_allowed(self, **kw):
         '''405'''
         kwargs = request.context.get('kwargs')
         if kwargs:
@@ -111,21 +111,21 @@ class ErrorsController(object):
 
     @expose('json')
     @error_wrapper
-    def conflict(self, **kwargs):
+    def conflict(self, **kw):
         '''409'''
         response.status = 409
         return request.context.get('kwargs')
 
     @expose('json')
     @error_wrapper
-    def server_error(self, **kwargs):
+    def server_error(self, **kw):
         '''500'''
         response.status = 500
         return request.context.get('kwargs')
 
     @expose('json')
     @error_wrapper
-    def unavailable(self, **kwargs):
+    def unavailable(self, **kw):
         '''503'''
         response.status = 503
         return request.context.get('kwargs')

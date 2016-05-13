@@ -26,7 +26,7 @@ from allegro.models import PlacementRequest
 from allegro.models import PlacementResult
 from allegro.models import Query
 
-RESOURCE_TYPE = 'ATT::CloudQoS::ResourceGroup'
+RESOURCE_TYPE = 'ATT::Valet::GroupAssignment'
 
 
 class Ostro(object):

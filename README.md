@@ -63,28 +63,30 @@ Both allegro-openstack and allegro-api can be installed in production mode or de
 Install allegro-openstack on an OpenStack controller node containing heat-engine, nova-scheduler, and cinder-scheduler.
 
 Production:
+
 ```bash
 $ sudo pip install $ALLEGRO_PATH
 ```
 
 Development:
+
 ```bash
 $ sudo pip install --editable $ALLEGRO_PATH
 ```
 
 Install allegro-api in the venv on the designated allegro node (which could be the same as the controller node, but doesn't have to be):
 
+Production:
+
 ```bash
 $ . $PATH_TO_VENV/bin/activate
-```
-
-Production:
-```bash
 (VENV) $ pip install $ALLEGRO_PATH/allegro
 ```
 
 Development:
+
 ```bash
+$ . $PATH_TO_VENV/bin/activate
 (VENV) $ pip install --editable $ALLEGRO_PATH/allegro
 ```
 
@@ -202,7 +204,7 @@ If allegro-api is installed in a venv, append ``python-home=$PATH_TO_VENV`` to `
 
 Alternately, the following line can be added outside of the allegro ``VirtualHost`` directive. Note that this only makes sense if allegro will be the sole focal point of the apache installation as far as venvs are concerned.
 
-```
+```conf
 WSGIPythonHome $VENV_PATH
 ```
 
@@ -240,11 +242,13 @@ Postman users can import the included Postman collection of sample API calls, lo
 Link to the allegro-openstack resource plugin directory so that heat can locate the allegro plugins:
 
 Production:
+
 ```bash
 # ln -s /usr/local/etc/heat/resources /usr/lib/heat
 ```
 
 Development:
+
 ```bash
 # ln -s $ALLEGRO_PATH/heat/resources /usr/lib/heat
 ```
@@ -289,12 +293,14 @@ To mitigate, edit ``$ALLEGRO_PATH/allegro/config.py``. In the ``identity`` secti
 If the allegro-openstack resource plugin directory is not linked through the filesystem, set the ``plugin_dirs`` option in the ``[DEFAULT]`` section of ``/etc/heat/heat.conf``:
 
 Production:
+
 ```ini
 [DEFAULT]
 plugin_dirs = /usr/local/etc/heat/resources
 ```
 
 Development:
+
 ```ini
 [DEFAULT]
 plugin_dirs = $ALLEGRO_PATH/heat/resources
@@ -403,8 +409,7 @@ Restart cinder-scheduler:
 $ sudo service cinder-scheduler restart
 ```
 
-Try It Out
-----------
+## Try It Out
 
 Tire-kick things using these example heat templates:
 
@@ -420,8 +425,7 @@ $ALLEGRO_PATH/heat/examples
 
 The flavor, ssh key, image, net/subnet IDs, mtu adjustment requirement, and security groups are all specific to the OpenStack installation. It will be necessary to edit various parameters to suit the environment in question.
 
-Uninstallation
---------------
+## Uninstallation
 
 Activate a venv first if necessary. Use ``pip uninstall`` to uninstall allegro-api and allegro-openstack (same command for development or production modes). In this example, allegro-api is installed in a venv, while allegro-openstack is not. Note that venv activation is only during the uninstallation of allegro-api.
 
@@ -434,7 +438,6 @@ $ pip uninstall allegro-openstack
 
 Remove previously made configuration file changes, symbolic filesystem links, database configurations, user accounts, and other settings as needed.
 
-Contact
--------
+## Contact
 
 Joe D'Andrea <jdandrea@research.att.com>

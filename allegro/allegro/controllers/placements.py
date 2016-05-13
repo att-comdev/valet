@@ -35,7 +35,7 @@ LOG = logging.getLogger(__name__)
 class PlacementsItemController(object):
     '''
     Placements Item Controller
-    /v1/{tenant_id}/placements/{placement_id}
+    /v1/placements/{placement_id}
     '''
 
     def __init__(self, orchestration_id):
@@ -140,7 +140,7 @@ class PlacementsItemController(object):
 class PlacementsController(object):
     '''
     Placements Controller
-    /v1/{tenant_id}/placements
+    /v1/placements
     '''
 
     @classmethod

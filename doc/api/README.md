@@ -310,15 +310,59 @@ This operation does not accept a request body and does not return a response bod
 
 ## Status
 
-Documentation forthcoming.
+### Get status of all subsystems
+
+**HEAD** `/v1/status`
+
+**Normal response codes:** xxx
+**Error response codes:** internalServerError (500)
+
+This operation does not accept a request body and does not return a response body.
+
+### List status of all subsystems
+
+**GET** `/v1/status`
+
+**Normal response codes:** xxx
+**Error response codes:** internalServerError (500)
+
+#### Response parameters
+
+| Parameter   | Style | Type       | Description                                       |
+|-------------|-------|------------|---------------------------------------------------|
+| xxx         | plain | xsd:string | xxx                                               |
+
+This operation does not accept a request body.
+
+```json
+{
+  tbd
+}
+```
 
 ## Placements
 
 Documentation forthcoming.
 
+### List active placements
+
+### Show placement details (no reservation)
+
+### Reserve a placement (with possible replanning)
+
 ## Plans
 
 Documentation forthcoming.
+
+### Create a plan
+
+### List active plans
+
+### Show plan details
+
+### Update a plan
+
+### Delete a plan
 
 ## API Errors
 

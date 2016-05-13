@@ -24,7 +24,7 @@ from allegro.controllers import error
 from allegro.controllers.groups import GroupsController
 from allegro.controllers.placements import PlacementsController
 from allegro.controllers.plans import PlansController
-from allegro.controllers.optimizers import OptimizersController
+from allegro.controllers.status import StatusController
 from allegro.i18n import _
 
 from pecan import conf, expose, request
@@ -41,10 +41,12 @@ class V1Controller(SecureController):
     /v1
     '''
 
-    plans = PlansController()
-    placements = PlacementsController()
     groups = GroupsController()
-    optimizers = OptimizersController()
+    placements = PlacementsController()
+    plans = PlansController()
+    status = StatusController()
+
+    endpoints = ["groups", "placements", "plans", "status"]
 
     @classmethod
     def check_permissions(cls):
@@ -83,9 +85,8 @@ class V1Controller(SecureController):
     @index.when(method='GET', template='json')
     def index_get(self):
         '''Get canonical URL for each endpoint'''
-        endpoints = ["groups", "optimizers", "plans", "placements"]
         links = []
-        for endpoint in endpoints:
+        for endpoint in V1Controller.endpoints:
             links.append({
                 "href": "%(url)s/v1/%(endpoint)s/" % {
                     'url': request.application_url,

@@ -16,7 +16,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-'''Optimizers'''
+'''Status'''
 
 import logging
 
@@ -31,10 +31,10 @@ LOG = logging.getLogger(__name__)
 # pylint: disable=R0201
 
 
-class OptimizersController(object):
+class StatusController(object):
     '''
-    Optimizers Controller
-    /v1/{tenant_id}/optimizers
+    Status Controller
+    /v1/{tenant_id}/status
     '''
 
     def _ping(self):

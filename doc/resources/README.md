@@ -14,25 +14,29 @@ This resource is purely informational in nature and makes no changes to heat, no
 
 ### Properties
 
-* ``group_name`` (String)
-  * Name of group. Required for exclusivity groups.
-  * Can be updated without replacement.
+``group_name`` (String)
 
-* ``group_type`` (String)
-  * Type of group.
-  * Allowed values: affinity, diversity, exclusivity
-  * Can be updated without replacement.
-  * Required property.
+* Name of group. Required for exclusivity groups.
+* Can be updated without replacement.
 
-* ``level`` (String)
-  * Level of relationship between resources.
-  * See list below for allowed values.
-  * Can be updated without replacement.
+``group_type`` (String)
 
-* ``resources`` (List)
-  * List of associated resource IDs.
-  * Can be updated without replacement.
-  * Required property.
+* Type of group.
+* Allowed values: affinity, diversity, exclusivity
+* Can be updated without replacement.
+* Required property.
+
+``level`` (String)
+
+* Level of relationship between resources.
+* See list below for allowed values.
+* Can be updated without replacement.
+
+``resources`` (List)
+
+* List of associated resource IDs.
+* Can be updated without replacement.
+* Required property.
 
 #### Levels
 

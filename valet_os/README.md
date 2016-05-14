@@ -20,14 +20,14 @@ Throughout this document, the following installation-specific terms are used:
 * ``$VALET_HOST``: valet-api hostname or FQDN
 * ``$VALET_PATH``: Valet git repository filesystem path
 * ``$CODECLOUD_USER``: AT&T CodeCloud user id
-* ``$VALET_TENANT_NAME``: Valet user default project/tenant (e.g., service)
+* ``$VALET_TENANT_NAME``: Valet user default tenant (e.g., service)
 * ``$VALET_USERNAME``: Valet username (e.g., valet)
 * ``$VALET_PASSWORD``: Valet user password
 * ``$KEYSTONE_AUTH_API``: Keystone Auth API endpoint
 * ``$KEYSTONE_REGION``: Keystone Region (e.g., RegionOne)
 * ``$VENV``: Virtual Environment directory (if heat/nova was installed in a venv)
 
-Root or sudo privileges are required for some steps.
+Root or sufficient sudo privileges are required for some steps.
 
 ### A Note About Python Virtual Environments
 
@@ -35,9 +35,9 @@ As valet-openstack works in concert with OpenStack services, if heat and nova ha
 
 ## Installing valet-openstack
 
-valet-openstack is maintained in AT&T CodeCloud under the ST_CLOUDQOS project in a repository called 'allegro'.
+valet-openstack is maintained in AT&T CodeCloud under the CloudQoS project, in a repository called 'allegro'.
 
-*Note: The name 'Allegro' is no longer used. Apart from the repository name, use 'Valet' in place of 'Allegro' when referring to components.*
+*Note: Apart from the repository name, the word 'Allegro' is no longer used. Use the word 'Valet' in place of 'Allegro' when referring to components.*
 
 Clone the git repository from AT&T CodeCloud, using a ``$CODECLOUD_USER`` account with appropriate credentials:
 
@@ -90,7 +90,7 @@ The administrator may choose to use differing hostnames/IPs for public vs. admin
 
 The following changes are made in ``/etc/heat/heat.conf``.
 
-Set the ``plugin_dirs`` option in the ``[DEFAULT]`` section so that Heat can locate and use the Valet Stack Lifecycle Plugin. The directory used depends on how valet-openstack was installed.
+Set the ``plugin_dirs`` option in the ``[DEFAULT]`` section so that Heat can locate and use the Valet Stack Lifecycle Plugin. The directory path depends on how valet-openstack was installed.
 
 **Production:**
 
@@ -184,7 +184,7 @@ $ sudo service nova-scheduler restart
 Activate a virtual environment (venv) first if necessary. Uninstallation uses the same command regardless of development or production mode.
 
 ```bash
-$ pip uninstall valet-openstack
+$ sudo pip uninstall valet-openstack
 ```
 
 Remove previously made configuration file changes, OpenStack user accounts, and other settings as needed.

@@ -1,6 +1,6 @@
 # OpenStack Heat Resource Plugins
 
-[Valet](https://codecloud.web.att.com/plugins/servlet/readmeparser/display/ST_CLOUDQOS/allegro/atRef/refs/heads/master/renderFile/README.rst) works with OpenStack Heat through the use of Resource Plugins. This document explains what they are and how they work. As new plugins become formally introduced, they will be added here.
+[Valet](https://codecloud.web.att.com/plugins/servlet/readmeparser/display/ST_CLOUDQOS/allegro/atRef/refs/heads/master/renderFile/README.md) works with OpenStack Heat through the use of Resource Plugins. This document explains what they are and how they work. As new plugins become formally introduced, they will be added here.
 
 The following is current as of Valet Release 1.0.
 

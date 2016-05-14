@@ -4,7 +4,7 @@ Valet gives OpenStack the ability to optimize cloud resources while simultaneous
 
 This document covers installation of valet-openstack, a set of OpenStack plugins used to interact with Valet.
 
-**IMPORTANT**: [AT&T AIC Installation is covered in a separate document](https://codecloud.web.att.com/plugins/servlet/readmeparser/display/ST_CLOUDQOS/valet/atRef/refs/heads/master/renderFile/doc/aic/README.md). These instructions are independent of AIC.
+**IMPORTANT**: [Overall AT&T AIC Installation of Valet is covered in a separate document](https://codecloud.web.att.com/plugins/servlet/readmeparser/display/ST_CLOUDQOS/valet/atRef/refs/heads/master/renderFile/doc/aic/README.md). These instructions are a component of the overall AIC instructions.
 
 ## Prerequisites
 

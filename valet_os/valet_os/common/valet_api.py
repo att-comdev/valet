@@ -28,13 +28,13 @@ CONF = cfg.CONF
 LOG = logging.getLogger(__name__)
 
 
-class AllegroAPIError(Exception): pass
+class ValetAPIError(Exception): pass
 
-class AllegroAPIWrapper(object):
+class ValetAPIWrapper(object):
     def __init__(self):
         self.headers = {'Content-Type': 'application/json'}
-        self.opt_group_str = 'allegro'
-        self.opt_name_str = 'allegro_api_server_url'
+        self.opt_group_str = 'valet'
+        self.opt_name_str = 'url'
         self._register_opts()
 
     def _api_endpoint(self):
@@ -52,7 +52,7 @@ class AllegroAPIWrapper(object):
     def _register_opts(self):
         opts = []
         option = cfg.StrOpt(self.opt_name_str, default=None,
-                            help='Allegro API endpoint')
+                            help='Valet API endpoint')
         opts.append(option)
 
         opt_group = cfg.OptGroup(self.opt_group_str)
@@ -68,13 +68,13 @@ class AllegroAPIWrapper(object):
                       'No remediation available'),
                   'message': error.get('message', 'Unknown error')
             }
-            raise AllegroAPIError(msg)
+            raise ValetAPIError(msg)
         else:
             # TODO: Re-evaluate if this clause is necessary.
             exc_class, exc, traceback = exc_info
             msg = "%s for %s %s with body %s" % \
                   (exc, e.request.method, e.request.url, e.request.body)
-            my_exc = AllegroAPIError(msg)
+            my_exc = ValetAPIError(msg)
             # traceback can be added to the end of the raise
             raise my_exc.__class__, my_exc
 

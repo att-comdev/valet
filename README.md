@@ -322,11 +322,11 @@ tegu_uri=http://$TEGU_HOST:29444/tegu/api
 ioarbiter_uri=http://$IOARBITER_HOST:7999/v1/ctrl/0/policy
 ```
 
-Add an ``[allegro]`` section. This will be used by the allegro-openstack lifecycle plugin:
+Add a ``[valet]`` section. This will be used by the valet-openstack lifecycle plugin:
 
 ```ini
-[allegro]
-allegro_api_server_url = http://$ALLEGRO_HOST:8090/v1
+[valet]
+url = http://$ALLEGRO_HOST:8090/v1
 ```
 
 Restart heat-engine

@@ -13,7 +13,7 @@ Prior to installation:
 * Ubuntu 14.04 LTS
 * Python 2.7.6 with pip
 
-Valet is compatible with OpenStack heat-kilo, cinder-juno, and nova-juno.
+valet-openstack is compatible with OpenStack heat-kilo and nova-juno.
 
 Throughout this document, the following installation-specific terms are used:
 

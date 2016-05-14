@@ -108,8 +108,20 @@ class GroupAssignment(resource.Resource):
     def handle_delete(self):
         self.resource_id_set(None)
 
+class GroupAssignmentDeprecated(GroupAssignment):
+    """
+    DEPRECATED: Use ATT::Valet::GroupAssignment instead.
+    """
+
+    support_status = support.SupportStatus(
+        support.DEPRECATED,
+        _('ATT::CloudQoS::ResourceGroup is now ' \
+          'ATT::Valet::GroupAssignment.')
+    )
+
 def resource_mapping():
     """Map names to resources."""
     return {
-       'ATT::Valet::GroupAssignment': GroupAssignment
+       'ATT::CloudQoS::ResourceGroup': GroupAssignmentDeprecated,
+       'ATT::Valet::GroupAssignment': GroupAssignment,
     }

@@ -66,6 +66,7 @@ if __name__ == '__main__':
 
     mc = MusicClient(config)
 
+    '''
     time.sleep(5)
     mc.set_request("app_uuid1", "./test_inputs/simple_aggregates.json")
     time.sleep(5)
@@ -80,6 +81,7 @@ if __name__ == '__main__':
     for rowk, row in status.iteritems():
         resource = json.loads(row['resource'])
         print json.dumps(resource, indent=4)
+    '''
 
     '''
     time.sleep(5)
@@ -96,7 +98,9 @@ if __name__ == '__main__':
     for rowk, row in status.iteritems():
         resource = json.loads(row['resource'])
         print json.dumps(resource, indent=4)
+    '''
 
+    '''
     time.sleep(5)
     mc.set_request("app_uuid2", "./test_inputs/simple_exclusivity.json")
     time.sleep(5)
@@ -141,6 +145,7 @@ if __name__ == '__main__':
     for rowk, row in status.iteritems():
         resource = json.loads(row['resource'])
         print json.dumps(resource, indent=4)
+    '''
 
     time.sleep(5)
     mc.set_request("app_uuid5", "./test_inputs/simple_affinity.json")
@@ -157,6 +162,22 @@ if __name__ == '__main__':
         resource = json.loads(row['resource'])
         print json.dumps(resource, indent=4)
 
+    time.sleep(5)
+    mc.set_request("app_uuid5", "./test_inputs/simple_replan.json")
+    time.sleep(5)
+    results = mc.get_placements()
+    if results != None:
+        print "Placement result"
+        for rowk, row in results.iteritems():
+            placement = json.loads(row['placement'])
+            print json.dumps(placement, indent=4)
+    status = mc.get_resource_status()
+    print "Resource status"
+    for rowk, row in status.iteritems():
+        resource = json.loads(row['resource'])
+        print json.dumps(resource, indent=4)
+
+    '''
     time.sleep(5)
     mc.set_request("app_uuid6", "./test_inputs/simple_mix_affinity_affinity.json")
     time.sleep(5)

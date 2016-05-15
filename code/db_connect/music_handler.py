@@ -586,18 +586,21 @@ class MusicHandler:
             self.logger.error("MUSIC error: " + str(e))
             return False        
 
-        data = {                                                                                 
-            'stack_id': _k,     
-            'app': json.dumps(_app_data)                                               
-        }                                                                                        
-                        
-        try:                                                                         
-            self.music.create_row(self.config.db_keyspace, self.config.db_app_table, data)
-        except Exception, e:
-            self.logger.error("MUSIC error: " + str(e))
-            return False
+        self.logger.info("db: app deleted")
 
-        self.logger.info("db: app added")
+        if _app_data != None:
+            data = {                                                                                 
+                'stack_id': _k,     
+                'app': json.dumps(_app_data)                                               
+            }                                                                                        
+                        
+            try:                                                                         
+                self.music.create_row(self.config.db_keyspace, self.config.db_app_table, data)
+            except Exception, e:
+                self.logger.error("MUSIC error: " + str(e))
+                return False
+
+            self.logger.info("db: app added")
 
         return True
 

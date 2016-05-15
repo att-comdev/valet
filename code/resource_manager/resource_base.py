@@ -154,6 +154,16 @@ class HostGroup:
             else:
                 del self.memberships[lgk]
 
+    def remove_membership(self, _lg):
+        cleaned = False
+
+        if _lg.group_type == "EX" or _lg.group_type == "AFF":  
+            if self.name not in _lg.vms_per_host.keys():
+                del self.memberships[_lg.name]
+                cleaned = True
+    
+        return cleaned
+
     def check_availability(self):
         if self.status == "enabled":
             return True
@@ -244,6 +254,16 @@ class Host:
             #if lg.group_type == "EX" or lg.group_type == "AFF":  # NOTE: needed?
             if self.name not in lg.vms_per_host.keys():
                 del self.memberships[lgk]
+                cleaned = True
+    
+        return cleaned
+
+    def remove_membership(self, _lg):
+        cleaned = False
+
+        if _lg.group_type == "EX" or _lg.group_type == "AFF":  
+            if self.name not in _lg.vms_per_host.keys():
+                del self.memberships[_lg.name]
                 cleaned = True
     
         return cleaned
@@ -439,16 +459,18 @@ class LogicalGroup:
                 success = True
                 break
 
-        for host_vm_id in self.vms_per_host[_host_id]:
-            if host_vm_id[0] == _h_uuid:
-                self.vms_per_host[_host_id].remove(host_vm_id)
-                success = True
-                break 
+        if _host_id in self.vms_per_host.keys():
+            for host_vm_id in self.vms_per_host[_host_id]:
+                if host_vm_id[0] == _h_uuid:
+                    self.vms_per_host[_host_id].remove(host_vm_id)
+                    success = True
+                    break 
         
         if success == True:
             vm_id = (_h_uuid, vm_name, _uuid)
             self.vm_list.append(vm_id)
-            self.vms_per_host[_host_id].append(vm_id)
+            if _host_id in self.vms_per_host.keys():
+                self.vms_per_host[_host_id].append(vm_id)
 
         return success
 
@@ -463,16 +485,18 @@ class LogicalGroup:
                 success = True
                 break
 
-        for host_vm_id in self.vms_per_host[_host_id]:
-            if host_vm_id[2] == _uuid:
-                self.vms_per_host[_host_id].remove(host_vm_id)
-                success = True
-                break 
+        if _host_id in self.vms_per_host.keys():
+            for host_vm_id in self.vms_per_host[_host_id]:
+                if host_vm_id[2] == _uuid:
+                    self.vms_per_host[_host_id].remove(host_vm_id)
+                    success = True
+                    break 
         
         if success == True:
             vm_id = (_h_uuid, vm_name, _uuid)
             self.vm_list.append(vm_id)
-            self.vms_per_host[_host_id].append(vm_id)
+            if _host_id in self.vms_per_host.keys():
+                self.vms_per_host[_host_id].append(vm_id)
 
         return success
 
@@ -499,15 +523,16 @@ class LogicalGroup:
                 self.vm_list.remove(vm_id)
                 success = True
                 break
-
-        for host_vm_id in self.vms_per_host[_host_id]:
-            if host_vm_id[0] == _h_uuid:
-                self.vms_per_host[_host_id].remove(host_vm_id)
-                success = True
-                break
+        
+        if _host_id in self.vms_per_host.keys():
+            for host_vm_id in self.vms_per_host[_host_id]:
+                if host_vm_id[0] == _h_uuid:
+                    self.vms_per_host[_host_id].remove(host_vm_id)
+                    success = True
+                    break
          
         if self.group_type == "EX" or self.group_type == "AFF":
-            if len(self.vms_per_host[_host_id]) == 0:
+            if (_host_id in self.vms_per_host.keys()) and len(self.vms_per_host[_host_id]) == 0:
                 del self.vms_per_host[_host_id]
         
         return success
@@ -521,14 +546,15 @@ class LogicalGroup:
                 success = True
                 break
 
-        for host_vm_id in self.vms_per_host[_host_id]:
-            if host_vm_id[2] == _uuid:
-                self.vms_per_host[_host_id].remove(host_vm_id)
-                success = True
-                break
+        if _host_id in self.vms_per_host.keys():
+            for host_vm_id in self.vms_per_host[_host_id]:
+                if host_vm_id[2] == _uuid:
+                    self.vms_per_host[_host_id].remove(host_vm_id)
+                    success = True
+                    break
          
         if self.group_type == "EX" or self.group_type == "AFF":
-            if len(self.vms_per_host[_host_id]) == 0:
+            if (_host_id in self.vms_per_host.keys()) and len(self.vms_per_host[_host_id]) == 0:
                 del self.vms_per_host[_host_id]
         
         return success
@@ -541,13 +567,14 @@ class LogicalGroup:
                 self.vm_list.remove(vm_id)
                 success = True
 
-        for vm_id in self.vms_per_host[_host_id]:
-            if vm_id[2] == "none":
-                self.vms_per_host[_host_id].remove(vm_id) 
-                success = True
+        if _host_id in self.vms_per_host.keys():
+            for vm_id in self.vms_per_host[_host_id]:
+                if vm_id[2] == "none":
+                    self.vms_per_host[_host_id].remove(vm_id) 
+                    success = True
 
         if self.group_type == "EX" or self.group_type == "AFF":
-            if len(self.vms_per_host[_host_id]) == 0:
+            if (_host_id in self.vms_per_host.keys()) and len(self.vms_per_host[_host_id]) == 0:
                 del self.vms_per_host[_host_id]
 
         return success

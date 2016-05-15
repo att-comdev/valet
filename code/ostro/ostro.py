@@ -222,22 +222,21 @@ class Ostro:
         app_topology = self.app_handler.add_app(_app_data)
         if app_topology == None:                                                                 
             self.status = self.app_handler.status
-
-            self.logger.debug("error while register requested apps:" + self.status)
-
+            self.logger.debug("error while register requested apps: " + self.status)
             return None
                  
         placement_map = self.optimizer.place(app_topology) 
         if placement_map == None: 
             self.status = self.optimizer.status
+            self.logger.debug("error while optimizing app placement: " + self.status)
 
-            self.logger.debug("error while optimizing app placement:" + self.status)
+            self.app_handler.remove_placement()
 
             return None
 
         if len(placement_map) > 0:
             if self.resource.update_topology() == False:
-                # TODO: ignore?
+                # NOTE: ignore?
                 pass 
 
             self.app_handler.add_placement(placement_map, self.resource.current_timestamp)

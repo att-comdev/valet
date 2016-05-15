@@ -49,6 +49,7 @@ class Search:
 
         ''' for replan '''
         self.planned_placements = {}
+        self.conflicted_placements = {}
 
         ''' optimization criteria '''
         self.nw_bandwidth_weight = -1
@@ -72,6 +73,7 @@ class Search:
         self.num_of_hosts = 0
 
         self.planned_placements.clear()
+        self.conflicted_placements.clear()
 
         self.nw_bandwidth_weight = -1
         self.CPU_weight = -1
@@ -124,64 +126,310 @@ class Search:
 
         self._compute_resource_weights()
 
-        # NOTE: assume OpenStack rollback the whole stack or tenant re-create the stack if replan is failed
+        # NOTE: what if replan is failed, the current resource status?
 
         self.logger.debug("place already-planned nodes again")
         if self._place_planned_nodes() == False:
-            self.logger.error("PANIC!")
+            self.logg.error("PANIC!")
             return False
 
-        self.logger.debug("place to-be replanned nodes with conflicted")
+        self.logger.debug("place conflicted node")
+        if self._place_conflicted_node() == False:
+            return False  
+
+        self.logger.debug("place to-be replanned nodes")
         (open_node_list, level) = self._create_open_list(self.app_topology.vms, \
                                                          self.app_topology.volumes, \
-                                                         self.app_topology.vgroups)
-        if open_node_list == None:
-            self.logger.error("fail to replan")
-            return False
+                                                         self.app_topology.vgroups) 
 
         for v, ah in self.planned_placements.iteritems():
             self.node_placements[v] = ah
 
+        for cv in self.conflicted_placements.keys():
+            if cv in self.planned_placements.keys():
+                self.logger.debug("remove v(" + cv.name + ") from planned_placements")
+                del self.planned_placements[cv]
+            
         return self._run_greedy(open_node_list, level, self.avail_hosts)
 
-    def _create_conflicted_nodes(self, _vms, _volumes, _vgroups):
-        if len(self.app_topology.candidate_list_map) == 0:
-            return True
+    def _place_conflicted_node(self):
+        (conflicted_node, level) = self._create_conflicted_node(self.app_topology.vms, \
+                                                                self.app_topology.volumes, \
+                                                                self.app_topology.vgroups) 
+        if conflicted_node = None:
+            return False
+       
+        return self._run_greedy_for_conflicted_node(conflicted_node, level, self.avail_hosts)
+
+    def _create_conflicted_node(self, _vms, _volumes, _vgroups):
+        conflicted_node = None
+        level = "host"
 
         vm_h_uuid = self.app_topology.candidate_list_map.keys()[0]
-        h_name_list = self.app_topology.candidate_list_map[vm_h_uuid]
+        h_name_list = self.app_topology.candidate_list_map[vmk]
 
         for vmk, vm in _vms.iteritems():
             if vmk == vm_h_uuid:
                 vm.host = h_name_list
-                return True
+                n = Node()
+                n.node = vm
+                conflicted_node = n
+                break
 
         # NOTE: volumes skip
 
-        vgroup = self._get_vgroup_of_vm(vm_h_uuid, _vgroups)
-        if vgroup != None:
-            host_list = []
-            for hk in h_name_list:
-                host_name = self._get_host_of_vgroup(hk, vgroup.level)
-                if host_name != None:
-                    if host_name not in host_list:
-                        host_list.append(host_name)
-                else:
-                    self.logger.warn("panic: cannot find host while replanning")
-                    return False
-
-            if vgroup.host != None and len(vgroup.host) > 0: # planned one
-                if vgroup.host[0] not in host_list:
-                    self.logger.warn("conflicted to planned")
-                    return False
-                else:
-                    return True 
-            else:
+        if conflicted_node == None:
+            vgroup = self._get_vgroup_of_vm(vm_h_uuid, _vgroups)
+            if vgroup != None:
+                host_list = []
+                for hk in h_name_list:
+                    host_name = self._get_host_of_vgroup(hk, vgroup.level)
+                    if host_name != None:
+                        if host_name not in host_list:
+                            host_list.append(host_name)
+                    else:
+                        self.logger.warn("panic: cannot find host while replanning")
                 vgroup.host = host_list
-                return True
-        else:
-            self.logger.error("panic: vm is missing while replan")  
+                if LEVELS.index(vgroup.level) > LEVELS.index(level):
+                    level = vgroup.level
+                n = Node()
+                n.node = vgroup
+                conflicted_node = n
+            else:
+                self.logger.error("panic: vm is missing while replan")             
+
+        return (conflicted_node, level)
+
+    def _run_greedy_for_conflicted_node(self, _conflicted_node, _level, _avail_hosts):
+        avail_resources = {}
+        if _level == "cluster":
+            for hk, h in _avail_hosts.iteritems():
+                if h.cluster_name not in avail_resources.keys():
+                    avail_resources[h.cluster_name] = h
+        elif _level == "rack":
+            for hk, h in _avail_hosts.iteritems():
+                if h.rack_name not in avail_resources.keys():
+                    avail_resources[h.rack_name] = h
+        elif _level == "host":
+            avail_resources = _avail_hosts
+
+        self.logger.debug("level = " + _level)
+        self.logger.debug("node = " + _conflicted_node.node.name)
+
+        best_resource = self._get_best_resource_for_conflicted(_conflicted_node, _level, avail_resources)
+        if best_resource == None:
             return False
+
+        debug_best_resource = None
+        if _level == "cluster":
+            debug_best_resource = best_resource.cluster_name
+        elif _level == "rack":
+            debug_best_resource = best_resource.rack_name
+        elif _level == "host":
+            if isinstance(n.node, VM) or isinstance(n.node, VGroup):
+                debug_best_resource = best_resource.host_name
+            #elif isinstance(n.node, Volume):
+                #debug_best_resource = best_resource.host_name + "@" + best_resource.storage.storage_name
+        self.logger.debug("best resource = " + debug_best_resource + " for node = " + _candidate_node.node.name)
+
+        self._deduct_reservation(_level, best_resource, _conflicted_node)
+        self._close_planned_placement(_level, best_resource, _conflicted_node.node)
+        self._close_conflicted_placement(_level, best_resource, _conflicted_node.node)
+
+        return True
+
+    def _get_best_resource_for_conflicted(self, _n, _level, _avail_resources):
+        ''' aleady planned vgroup '''
+        planned_host = None
+        if _n.node in self.planned_placements.keys():
+            self.logger.debug("found node in already determined")
+            copied_host = self.planned_placements[_n.node]
+            if _level == "host": 
+                planned_host = _avail_resources[copied_host.host_name]  
+            elif _level == "rack":   
+                planned_host = _avail_resources[copied_host.rack_name]
+            elif _level == "cluster":   
+                planned_host = _avail_resources[copied_host.cluster_name]
+
+        if planned_host != None:
+            candidate_list.append(planned_host)
+        else:
+            candidate_list = self.constraint_solver.compute_candidate_list(_level, \
+                                                                           _n, \
+                                                                           self.planned_placements, \
+                                                                           _avail_resources, \
+                                                                           self.avail_logical_groups)
+        if len(candidate_list) == 0:
+            self.status = self.constraint_solver.status
+            return None
+
+        self.logger.debug("candidate list")
+        for c in candidate_list:
+            self.logger.debug("    candidate = " + c.get_resource_name(_level))
+
+        (target, weight) = self.app_topology.optimization_priority[0]
+        top_candidate_list = None
+        if target == "bw":
+            constrained_list = []
+            for cr in candidate_list:
+                cr.sort_base = self._estimate_max_bandwidth(_level, _n, cr)
+                if cr.sort_base == -1:
+                    constrained_list.append(cr)
+
+            for c in constrained_list:
+                if c in candidate_list:
+                    candidate_list.remove(c)
+
+            if len(candidate_list) == 0:                                                         
+                self.status = "no available network bandwidth left, for node = " + _n.node.name  
+                self.logger.error(self.status)                                                   
+                return None                                                                      
+                                                                                                 
+            candidate_list.sort(key=operator.attrgetter("sort_base"))                            
+            top_candidate_list = self._sort_highest_consolidation(_n, _level, candidate_list)    
+        else:                                                                                    
+            if target == "vol":                                                                  
+                if isinstance(_n.node, VGroup) or isinstance(_n.node, Volume):                   
+                    volume_class = None                                                          
+                    if isinstance(_n.node, Volume):                                              
+                        volume_class = _n.node.volume_class                                      
+                    else:                                                                        
+                        max_size = 0                                                             
+                        for vck in _n.node.volume_sizes.keys():                                  
+                            if _n.node.volume_sizes[vck] > max_size:                             
+                                max_size = _n.node.volume_sizes[vck]                             
+                                volume_class = vck                                               
+                                                                                                 
+                    self._set_disk_sort_base(_level, candidate_list, volume_class)               
+                    candidate_list.sort(key=operator.attrgetter("sort_base"), reverse=True)      
+                else:                                                                            
+                    self._set_compute_sort_base(_level, candidate_list)                          
+                    candidate_list.sort(key=operator.attrgetter("sort_base"))                    
+            else:                                                                                
+                if isinstance(_n.node, VGroup) or isinstance(_n.node, VM):                       
+                    self._set_compute_sort_base(_level, candidate_list)                          
+                    candidate_list.sort(key=operator.attrgetter("sort_base"))                    
+                else:                                                                            
+                    self._set_disk_sort_base(_level, candidate_list, _n.node.volume_class)       
+                    candidate_list.sort(key=operator.attrgetter("sort_base"), reverse=True)      
+                                                                                                 
+            top_candidate_list = self._sort_lowest_bandwidth_usage(_n, _level, candidate_list)   
+                                                                                                 
+            if len(top_candidate_list) == 0:                                                     
+                self.status = "no available network bandwidth left"                              
+                self.logger.error(self.status)                                                   
+                return None
+
+        best_resource = None                                                                     
+        if _level == "host" and (isinstance(_n.node, VM) or isinstance(_n.node, Volume)):  
+            best_resource = copy.deepcopy(top_candidate_list[0])                                 
+            best_resource.level = "host"                                                         
+            if isinstance(_n.node, Volume):                                                      
+                self._set_best_storage(_n, best_resource)                                        
+        else:                                                                                    
+            while True:                                                                          
+                                                                                                 
+                while len(top_candidate_list) > 0:                                               
+                    cr = top_candidate_list.pop(0)                                               
+                                                                                                 
+                    vms = {}                                                                     
+                    volumes = {}                                                                 
+                    vgroups = {}                                                                 
+                    if isinstance(_n.node, VGroup):                                              
+                        if LEVELS.index(_n.node.level) < LEVELS.index(_level):                   
+                            vgroups[_n.node.uuid] = _n.node                                      
+                        else:                                                                    
+                            for sgk, sg in _n.node.subvgroups.iteritems():                       
+                                if isinstance(sg, VM):                                           
+                                    vms[sg.uuid] = sg                                            
+                                elif isinstance(sg, Volume):                                     
+                                    volumes[sg.uuid] = sg                                        
+                                elif isinstance(sg, VGroup):                                     
+                                    vgroups[sg.uuid] = sg                                        
+                    else:                                                                        
+                        if isinstance(_n.node, VM):                                              
+                            vms[_n.node.uuid] = _n.node                                          
+                        elif isinstance(_n.node, Volume):                                        
+                            volumes[_n.node.uuid] = _n.node                                      
+    
+                    (cfn, level) = self._create_conflicted_node(vms, volumes, vgroups)      
+                                                                                                 
+                    avail_hosts = {}                                                             
+                    for hk, h in self.avail_hosts.iteritems():                                   
+                        if _level == "cluster":                                                  
+                            if h.cluster_name == cr.cluster_name:                                
+                                avail_hosts[hk] = h                                              
+                        elif _level == "rack":                                                   
+                            if h.rack_name == cr.rack_name:                                      
+                                avail_hosts[hk] = h                                              
+                        elif _level == "host":                                                   
+                            if h.host_name == cr.host_name:                                      
+                                avail_hosts[hk] = h  
+                                            
+                    if self._run_greedy_for_conflicted_node(cfn, level, avail_hosts) == True:   
+                        best_resource = copy.deepcopy(cr)                                        
+                        best_resource.level = _level                                             
+                        break                                                                    
+                    else:                                                                        
+                        debug_candidate_name = None                                              
+                        if _level == "cluster":                                                  
+                            debug_candidate_name = cr.cluster_name                               
+                        elif _level == "rack":                                                   
+                            debug_candidate_name = cr.rack_name                                  
+                        else:                                                                    
+                            debug_candidate_name = cr.host_name                                  
+                        self.logger.debug("rollback of candidate resource = " + debug_candidate_name)
+                                                           
+                        if planned_host == None:  
+                            self._rollback_reservation(_n.node) 
+                            self._rollback_planned_placement(_n.node) 
+                            self._rollback_conflicted_placement(_n.node) 
+                        else:
+                            break                                  
+                                                                                                 
+                if best_resource != None:                                                        
+                    break                                                                        
+                else:                                                                            
+                    if len(candidate_list) == 0:                                                 
+                        self.status = "no available hosts"                                       
+                        self.logger.warn(self.status)                                            
+                        break                                                                    
+                    else:                                                                        
+                        if target == "bw":                                                       
+                            top_candidate_list = self._sort_highest_consolidation(_n, _level, candidate_list)  
+                        else:                                                                    
+                            top_candidate_list = self._sort_lowest_bandwidth_usage(_n, _level, candidate_list) 
+                            if len(top_candidate_list) == 0:                                     
+                                self.status = "no available network bandwidth left"              
+                                self.logger.warn(self.status)                                    
+                                break                                                            
+                                                                                                 
+        return best_resource
+
+    def _close_conflicted_placement(self, _level, _best, _v):
+        if _level == "host":
+            if _v not in self.conflicted_placements.keys():
+                self.conflicted_placements[_v] = _best
+        else:
+            if isinstance(_v, VGroup):
+                if _v not in self.conflicted_placements.keys():
+                    self.conflicted_placements[_v] = _best
+
+    def _rollback_planned_placement(self, _v):
+        if _v in self.planned_placements.keys():
+            del self.planned_placements[_v]
+
+        if isinstance(_v, VGroup):
+            for sgk, sg in _v.subvgroups.iteritems():
+                self._rollback_planned_placement(sg)
+
+    def _rollback_conflicted_placement(self, _v):
+        if _v in self.conflicted_placements.keys():
+            del self.confilicted_placements[_v]
+
+        if isinstance(_v, VGroup):
+            for sgk, sg in _v.subvgroups.iteritems():
+                self._rollback_conflicted_placement(sg)
 
     def _place_planned_nodes(self):
         (planned_node_list, level) = self._create_planned_list(self.app_topology.vms, \
@@ -595,9 +843,6 @@ class Search:
         open_node_list = []
         level = "host"
 
-        if self._create_conflicted_nodes(_vms, _volumes, _vgroups) == False:
-            return (None, level)
-
         for vmk, vm in _vms.iteritems():
             n = Node()
             n.node = vm
@@ -682,13 +927,10 @@ class Search:
                     debug_best_resource = best_resource.host_name + "@" + best_resource.storage.storage_name
             self.logger.debug("best resource = " + debug_best_resource + " for node = " + n.node.name)
 
-            if n.node not in self.planned_placements.keys():
-                # For VM or Volume under host level only
-                self._deduct_reservation(_level, best_resource, n)
-                # Close all types of nodes under any level, but VM or Volume with above host level
-                self._close_node_placement(_level, best_resource, n.node)
-            else:
-                self.logger.debug("node (" + n.node.name + ") is already deducted")
+            # For VM or Volume under host level only
+            self._deduct_reservation(_level, best_resource, n)
+            # Close all types of nodes under any level, but VM or Volume with above host level
+            self._close_node_placement(_level, best_resource, n.node)
 
         return success
 
@@ -698,21 +940,6 @@ class Search:
         if _n.node in self.planned_placements.keys():
             self.logger.debug("found node in already determined")
             copied_host = self.planned_placements[_n.node]
-            '''
-            for ark, ar in _avail_resources.iteritems():
-                if _level == "host":
-                    if copied_host.host_name == ar.host_name:
-                        planned_host = ar 
-                        #break
-                elif _level == "rack":   
-                    if copied_host.rack_name == ar.rack_name:
-                        planned_host = ar
-                        #break 
-                elif _level == "cluster":   
-                    if copied_host.cluster_name == ar.cluster_name:
-                        planned_host = ar
-                        #break 
-            '''
             if _level == "host": 
                 planned_host = _avail_resources[copied_host.host_name]  
             elif _level == "rack":   
@@ -720,15 +947,23 @@ class Search:
             elif _level == "cluster":   
                 planned_host = _avail_resources[copied_host.cluster_name]
 
-        candidate_list = []
         if planned_host != None:
             candidate_list.append(planned_host)
         else:
             candidate_list = self.constraint_solver.compute_candidate_list(_level, \
                                                                            _n, \
-                                                                           self.node_placements, \
+                                                                           self.planned_placements, \
                                                                            _avail_resources, \
                                                                            self.avail_logical_groups)
+
+
+
+
+        candidate_list = self.constraint_solver.compute_candidate_list(_level, \
+                                                                       _n, \
+                                                                       self.node_placements, \
+                                                                       _avail_resources, \
+                                                                       self.avail_logical_groups)
         if len(candidate_list) == 0:
             self.status = self.constraint_solver.status
             return None
@@ -823,8 +1058,6 @@ class Search:
                             volumes[_n.node.uuid] = _n.node
 
                     (open_node_list, level) = self._create_open_list(vms, volumes, vgroups)
-                    if open_node_list == None:
-                        break
  
                     avail_hosts = {}
                     for hk, h in self.avail_hosts.iteritems():
@@ -853,13 +1086,10 @@ class Search:
                             debug_candidate_name = cr.host_name
                         self.logger.debug("rollback of candidate resource = " + debug_candidate_name)
 
-                        if planned_host == None:
-                            # Recursively rollback deductions of all child VMs and Volumes of _n
-                            self._rollback_reservation(_n.node)
-                            # Recursively rollback closing
-                            self._rollback_node_placement(_n.node)
-                        else:
-                            break
+                        # Recursively rollback deductions of all child VMs and Volumes of _n
+                        self._rollback_reservation(_n.node)
+                        # Recursively rollback closing
+                        self._rollback_node_placement(_n.node)
 
                 # After explore top candidate list for _n
                 if best_resource != None:
@@ -1352,16 +1582,17 @@ class Search:
                 sr.avail_bandwidths = [bw - _rsrv[2] for bw in sr.avail_bandwidths]    
  
     def _deduct_reservation(self, _level, _best, _n):
-        exclusivities = self.constraint_solver.get_exclusivities(_n.node.exclusivity_groups, _level)
-        exclusivity_id = None
-        if len(exclusivities) == 1:
-            exclusivity_id = exclusivities[exclusivities.keys()[0]]
-        if exclusivity_id != None:
-            self._add_exclusivity(_level, _best, exclusivity_id)
+        if _n.node not in self.planned_placements.keys():
+            exclusivities = self.constraint_solver.get_exclusivities(_n.node.exclusivity_groups, _level)
+            exclusivity_id = None
+            if len(exclusivities) == 1:
+                exclusivity_id = exclusivities[exclusivities.keys()[0]]
+            if exclusivity_id != None:
+                self._add_exclusivity(_level, _best, exclusivity_id)
 
-        affinity_id = _n.get_affinity_id()
-        if affinity_id != None:
-            self._add_affinity(_level, _best, affinity_id)
+            affinity_id = _n.get_affinity_id()
+            if affinity_id != None:
+                self._add_affinity(_level, _best, affinity_id)
 
         if isinstance(_n.node, VM) and _level == "host":
             self._deduct_vm_resources(_best, _n)

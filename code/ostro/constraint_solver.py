@@ -39,8 +39,22 @@ class ConstraintSolver:
 
     def compute_candidate_list(self, _level, _n, _node_placements, _avail_resources, _avail_logical_groups):
         candidate_list = []
-        for rk, r in _avail_resources.iteritems():
-            candidate_list.append(r)
+
+        # When replanning
+        if _n.node.host != None and len(_n.node.host) > 0:
+            self.logger.debug("node is conflicted one with length = " + str(len(_n.node.host)))
+            for hk in _n.node.host:
+                for ark, ar in _avail_resources.iteritems():
+                    if hk == ark:
+                        candidate_list.append(ar)
+                '''
+                if hk in _avail_resources.keys():
+                    candidate_list.append(_avail_resouces[hk])
+                '''
+        # When regular planning
+        else:
+            for rk, r in _avail_resources.iteritems():
+                candidate_list.append(r)
 
         # Availability Zone constraint
         if isinstance(_n.node, VGroup) or isinstance(_n.node, VM):

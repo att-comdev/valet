@@ -12,8 +12,10 @@
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
 # implied.
+#
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
 import json
 import requests
 import sys
@@ -26,13 +28,13 @@ CONF = cfg.CONF
 LOG = logging.getLogger(__name__)
 
 
-class AllegroAPIWrapperError(Exception): pass
+class ValetAPIError(Exception): pass
 
-class AllegroAPIWrapper(object):
+class ValetAPIWrapper(object):
     def __init__(self):
         self.headers = {'Content-Type': 'application/json'}
-        self.opt_group_str = 'allegro'
-        self.opt_name_str = 'allegro_api_server_url'
+        self.opt_group_str = 'valet'
+        self.opt_name_str = 'url'
         self._register_opts()
 
     def _api_endpoint(self):
@@ -44,13 +46,13 @@ class AllegroAPIWrapper(object):
             else:
                 raise
         except:
-            raise # exception.Error(_('Allegro API Endpoint not defined.'))
+            raise # exception.Error(_('API Endpoint not defined.'))
 
     # Register options
     def _register_opts(self):
         opts = []
         option = cfg.StrOpt(self.opt_name_str, default=None,
-                            help='API endpoint for Allegro')
+                            help='Valet API endpoint')
         opts.append(option)
 
         opt_group = cfg.OptGroup(self.opt_group_str)
@@ -58,23 +60,23 @@ class AllegroAPIWrapper(object):
         cfg.CONF.register_opts(opts, group=opt_group)
 
     def _exception(self, e, exc_info, req):
-        # TODO: Move into allegro proper and don't raise for status?
-        exc_class, exc, traceback = exc_info
         response = json.loads(req.text)
-        errors = response.get('errors')
-        if errors and len(errors) > 0:
-            error = errors[0]
-            msg = "%(userMessage)s (allegro-api: %(internalMessage)s)" % {
-                  'userMessage': error.get('userMessage'),
-                  'internalMessage': error.get('internalMessage')
+        if 'error' in response:
+            error = response.get('error')
+            msg = "%(explanation)s (valet-api: %(message)s)" % {
+                  'explanation': response.get('explanation',
+                      'No remediation available'),
+                  'message': error.get('message', 'Unknown error')
             }
-            my_exc = AllegroAPIWrapperError(msg)
+            raise ValetAPIError(msg)
         else:
+            # TODO: Re-evaluate if this clause is necessary.
+            exc_class, exc, traceback = exc_info
             msg = "%s for %s %s with body %s" % \
                   (exc, e.request.method, e.request.url, e.request.body)
-            my_exc = AllegroAPIWrapperError(msg)
+            my_exc = ValetAPIError(msg)
             # traceback can be added to the end of the raise
-        raise my_exc.__class__, my_exc
+            raise my_exc.__class__, my_exc
 
     def plans_create(self, stack, plan, auth_token=None):
         try:
@@ -95,7 +97,9 @@ class AllegroAPIWrapper(object):
             self._exception(e, sys.exc_info(), req)
 
     def placement(self, uuid, hosts=None, auth_token=None):
-        """Call Allegro API to get placement for an Orchestration ID."""
+        '''
+        Reserve placement previously made for an Orchestration ID.
+        '''
         try:
             url = self._api_endpoint() + '/placements/' + uuid
             self.headers['X-Auth-Token'] = auth_token
@@ -108,10 +112,9 @@ class AllegroAPIWrapper(object):
             else:
                 req = requests.get(url, headers=self.headers)
 
-            # TODO: If not 200 or timeout, honk
+            # TODO: Raise an exception if the scheduler can handle it
             #req.raise_for_status()
 
-            # TODO: Test key.
             placement = json.loads(req.text)
         except:
             placement = None

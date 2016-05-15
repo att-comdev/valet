@@ -12,6 +12,7 @@
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
 # implied.
+#
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
@@ -23,49 +24,65 @@ from pecan import conf
 
 
 class ClassPropertyDescriptor(object):
+    '''Supports the notion of a class property'''
 
     def __init__(self, fget, fset=None):
+        '''Initializer'''
         self.fget = fget
         self.fset = fset
 
     def __get__(self, obj, klass=None):
+        '''Get attribute'''
         if klass is None:
             klass = type(obj)
         return self.fget.__get__(obj, klass)()
 
     def __set__(self, obj, value):
+        '''Set attribute'''
         if not self.fset:
             raise AttributeError("can't set attribute")
         type_ = type(obj)
         return self.fset.__get__(obj, type_)(value)
 
     def setter(self, func):
+        '''Setter'''
         if not isinstance(func, (classmethod, staticmethod)):
             func = classmethod(func)
         self.fset = func
-        return self    
+        return self
+
 
 def classproperty(func):
+    '''Class Property decorator'''
     if not isinstance(func, (classmethod, staticmethod)):
         func = classmethod(func)
 
     return ClassPropertyDescriptor(func)
 
+
 class Results(list):
+    '''Query results'''
+
     def __init__(self, *args, **kwargs):
+        '''Initializer'''
         super(Results, self).__init__(args[0])
 
     def all(self):
+        '''Return all'''
         return self
 
     def first(self):
+        '''Return first'''
         if len(self) > 0:
             return self[0]
 
+
 class Query(object):
+    '''Data Query'''
     model = None
 
     def __init__(self, model):
+        '''Initializer'''
         if inspect.isclass(model):
             self.model = model
         elif isinstance(model, basestring):
@@ -81,6 +98,7 @@ class Query(object):
         return kwargs
 
     def __rows_to_objects(self, rows):
+        '''Convert query response rows to objects'''
         results = []
         pk_name = self.model.pk_name()
         for row_id, row in rows.iteritems():
@@ -91,30 +109,39 @@ class Query(object):
         return Results(results)
 
     def all(self):
+        '''Return all objects'''
         kwargs = self.__kwargs()
         rows = conf.music.engine.read_all_rows(**kwargs)
         return self.__rows_to_objects(rows)
 
     def filter_by(self, **kwargs):
+        '''Filter objects'''
         # Music doesn't allow filtering on anything but the primary key.
         # We need to get all items and then go looking for what we want.
         all_items = self.all()
         filtered_items = Results([])
-         
-        # Only look at the first key/value.
-        for key, value in kwargs.items():
-            for item in all_items:
-                if getattr(item, key) == value:
-                    filtered_items.append(item)
+
+        # For every candidate ...
+        for item in all_items:
+            passes = True
+            # All filters are AND-ed.
+            for key, value in kwargs.items():
+                if getattr(item, key) != value:
+                    passes = False
+                    break
+            if passes:
+                filtered_items.append(item)
         return filtered_items
-                    
+
+
 class Base(object):
-    """
+    '''
     A custom declarative base that provides some Elixir-inspired shortcuts.
-    """
+    '''
 
     @classproperty
     def query(cls):
+        '''Return a query object similar to sqlalchemy'''
         return Query(cls)
 
     @classmethod
@@ -144,7 +171,7 @@ class Base(object):
             kwargs['values'][pk_name] = the_id
             setattr(self, pk_name, the_id)
         conf.music.engine.create_row(**kwargs)
-        
+
     def update(self):
         '''Update row.'''
         kwargs = self.__kwargs()
@@ -162,22 +189,27 @@ class Base(object):
 
     @classmethod
     def filter_by(cls, **kwargs):
+        '''Filter objects'''
         return cls.query.filter_by(**kwargs)
 
     def flush(self, *args, **kwargs):
+        '''Flush changes to disk (not implemented)'''
         #object_session(self).flush([self], *args, **kwargs)
         pass
 
     #def delete(self, *args, **kwargs):
+    #    '''Delete an object'''
     #    #object_session(self).delete(self, *args, **kwargs)
     #    pass
 
     def as_dict(self):
+        '''Return object representation as a dictionary'''
         return dict((k, v) for k, v in self.__dict__.items()
                     if not k.startswith('_'))
 
+
 def init_model():
-    """
+    '''
     This is a stub method which is called at application startup time.
 
     If you need to bind to a parse database configuration, set up tables or
@@ -191,12 +223,14 @@ def init_model():
 
         Base.metadata.create_all(conf.music.engine)
 
-    """
+    '''
     conf.music.engine = _engine_from_config(conf.music)
     keyspace = conf.music.get('keyspace')
     conf.music.engine.create_keyspace(keyspace)
 
+
 def _engine_from_config(configuration):
+    '''Create database engine object based on configuration'''
     configuration = dict(configuration)
     kwargs = {
         'host': configuration.get('host'),
@@ -205,23 +239,36 @@ def _engine_from_config(configuration):
     }
     return Music(**kwargs)
 
+
 def start():
+    '''Start transaction'''
     pass
+
 
 def start_read_only():
+    '''Start read-only transaction'''
     start()
 
+
 def commit():
+    '''Commit transaction'''
     pass
+
 
 def rollback():
+    '''Rollback transaction'''
     pass
+
 
 def clear():
+    '''Clear transaction'''
     pass
 
+
 def flush():
+    '''Flush to disk'''
     pass
+
 
 from groups import Group  # noqa
 from plans import Plan  # noqa

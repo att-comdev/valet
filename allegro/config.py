@@ -1,8 +1,6 @@
 from pecan.hooks import TransactionHook, RequestViewerHook
 
-# TODO: Make this a driver plugin point instead so we can pick and choose.
-from allegro.models import music as models
-#from allegro.models import sqlalchemy as models
+from allegro import models
 
 
 # Server Specific Configurations

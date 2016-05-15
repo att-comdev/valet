@@ -12,19 +12,17 @@
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
 # implied.
+#
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#import uuid
 
-#from sqlalchemy import Column, Integer, String, Sequence
-#from sqlalchemy.orm import relationship, backref
-#from sqlalchemy.orm.exc import DetachedInstanceError
+'''Plan Model'''
 
-from allegro.models.music import Base, Query
-#from allegro.models.sqlalchemy import Base
+from . import Base, Query
 
 
 class Plan(Base):
+    '''Plan model'''
     __tablename__ = 'plans'
 
     id = None
@@ -38,24 +36,28 @@ class Plan(Base):
             'id': 'text',
             'name': 'text',
             'stack_id': 'text',
-            'PRIMARY KEY': '(id)'
+            'PRIMARY KEY': '(id)',
         }
         return schema
 
     @classmethod
     def pk_name(cls):
+        '''Primary key name'''
         return 'id'
 
     def pk_value(self):
+        '''Primary key value'''
         return self.id
 
     def values(self):
+        '''Values'''
         return {
             'name': self.name,
             'stack_id': self.stack_id,
         }
 
     def __init__(self, name, stack_id, _insert=True):
+        '''Initializer'''
         super(Plan, self).__init__()
         self.name = name
         self.stack_id = stack_id
@@ -63,6 +65,9 @@ class Plan(Base):
             self.insert()
 
     def placements(self):
+        '''Return list of placements'''
+
+        # TODO: Make this a property?
         all_results = Query("Placement").all()
         results = []
         for placement in all_results:
@@ -72,16 +77,16 @@ class Plan(Base):
 
     @property
     def orchestration_ids(self):
+        '''Return list of orchestration IDs'''
         #return list(set([p.orchestration_id for p in self.placements.all()]))
         return list(set([p.orchestration_id for p in self.placements()]))
 
     def __repr__(self):
-        try:
-            return '<Plan %r>' % self.name
-        except DetachedInstanceError:
-            return '<Plan detached>'
+        '''Object representation'''
+        return '<Plan %r>' % self.name
 
     def __json__(self):
+        '''JSON representation'''
         json_ = {}
         json_['id'] = self.id
         json_['stack_id'] = self.stack_id
@@ -91,6 +96,5 @@ class Plan(Base):
         for placement in self.placements():
             json_['placements'][placement.orchestration_id] = dict(
                 name=placement.name,
-                location=placement.location
-            )
+                location=placement.location)
         return json_

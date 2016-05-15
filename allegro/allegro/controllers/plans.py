@@ -22,9 +22,7 @@ import logging
 
 from allegro.controllers import set_placements, error
 from allegro.i18n import _
-# TODO: Make this a driver plugin point instead so we can pick and choose.
-from allegro.models.music import Plan
-#from allegro.models.sqlalchemy import Plan, Placement
+from allegro.models import Plan
 from allegro.ostro_helper import Ostro
 
 from notario import decorators
@@ -55,7 +53,7 @@ UPDATE_SCHEMA = (
 class PlansItemController(object):
     '''
     Plans Item Controller
-    /v1/{tenant_id}/plans/{plan_id}
+    /v1/plans/{plan_id}
     '''
 
     placements = None
@@ -101,20 +99,31 @@ class PlansItemController(object):
         # FIXME: Possible Ostro regression?
         # New placements are not being seen in the response, so
         # set_placements is currently failing as a result.
-        kwargs = request.json
         ostro = Ostro()
-        ostro.request(**kwargs)
-        ostro.send()
+        args = request.json
 
+        kwargs = {
+            'tenant_id': request.context['tenant_id'],
+            'args': args
+        }
+
+        # Prepare the request. If request prep fails,
+        # an error message will be in the response.
+        # Though the Ostro helper reports the error,
+        # we cite it as a Valet error.
+        if not ostro.build_request(**kwargs):
+            message = ostro.response['status']['message']
+            error(ostro.error_uri, _('Valet error: %s') % message)
+
+        ostro.send()
         status_type = ostro.response['status']['type']
         if status_type != 'ok':
             message = ostro.response['status']['message']
-            error('/errors/invalid',
-                  _('Ostro error: %s') % message)
+            error(ostro.error_uri, _('Ostro error: %s') % message)
 
         # TODO: See if we will eventually need these for Ostro.
-        #plan_name = kwargs['plan_name']
-        #stack_id = kwargs['stack_id']
+        #plan_name = args['plan_name']
+        #stack_id = args['stack_id']
         resources = ostro.request['resources_update']
         placements = ostro.response['resources']
 
@@ -136,7 +145,7 @@ class PlansItemController(object):
 class PlansController(object):
     '''
     Plans Controller
-    /v1/{tenant_id}/plans
+    /v1/plans
     '''
 
     @classmethod
@@ -169,19 +178,30 @@ class PlansController(object):
     @validate(CREATE_SCHEMA, '/errors/schema')
     def index_post(self):
         '''Create a Plan'''
-        kwargs = request.json
         ostro = Ostro()
-        ostro.request(**kwargs)
-        ostro.send()
+        args = request.json
 
+        kwargs = {
+            'tenant_id': request.context['tenant_id'],
+            'args': args
+        }
+
+        # Prepare the request. If request prep fails,
+        # an error message will be in the response.
+        # Though the Ostro helper reports the error,
+        # we cite it as a Valet error.
+        if not ostro.build_request(**kwargs):
+            message = ostro.response['status']['message']
+            error(ostro.error_uri, _('Valet error: %s') % message)
+
+        ostro.send()
         status_type = ostro.response['status']['type']
         if status_type != 'ok':
             message = ostro.response['status']['message']
-            error('/errors/server_error',
-                  _('Ostro error: %s') % message)
+            error(ostro.error_uri, _('Ostro error: %s') % message)
 
-        plan_name = kwargs['plan_name']
-        stack_id = kwargs['stack_id']
+        plan_name = args['plan_name']
+        stack_id = args['stack_id']
         resources = ostro.request['resources']
         placements = ostro.response['resources']
 

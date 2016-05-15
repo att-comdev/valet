@@ -12,8 +12,10 @@
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
 # implied.
+#
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
 import json
 import requests
 
@@ -24,15 +26,15 @@ from keystoneclient.v2_0 import client
 from nova.i18n import _LE, _LW
 from nova.scheduler import filters
 
-from qosorch import allegro_api
+from valet_os.common import valet_api
 
 CONF = cfg.CONF
 
 LOG = logging.getLogger(__name__)
 
 
-class AllegroFilter(filters.BaseHostFilter):
-    """Filter on Allegro assignment."""
+class ValetFilter(filters.BaseHostFilter):
+    """Filter on Valet assignment."""
 
     # Host state does not change within a request
     run_filter_once_per_request = True
@@ -41,12 +43,12 @@ class AllegroFilter(filters.BaseHostFilter):
     _auth_token = None
 
     def __init__(self):
-        self.api = allegro_api.AllegroAPIWrapper()
-        self.opt_group_str = 'allegro'
-        self.opt_project_name_str = 'allegro_project_name'
-        self.opt_username_str = 'allegro_user'
-        self.opt_password_str = 'allegro_password'
-        self.opt_auth_uri_str = 'auth_uri'
+        self.api = valet_api.ValetAPIWrapper()
+        self.opt_group_str = 'valet'
+        self.opt_project_name_str = 'admin_tenant_name'
+        self.opt_username_str = 'admin_username'
+        self.opt_password_str = 'admin_password'
+        self.opt_auth_uri_str = 'admin_auth_url'
         self._register_opts()
 
     def _authorize(self):
@@ -72,13 +74,13 @@ class AllegroFilter(filters.BaseHostFilter):
     def _register_opts(self):
         opts = []
         option = cfg.StrOpt(self.opt_project_name_str, default=None,
-                            help='Allegro Project Name')
+                            help='Valet Project Name')
         opts.append(option)
         option = cfg.StrOpt(self.opt_username_str, default=None,
-                            help='Allegro Username')
+                            help='Valet Username')
         opts.append(option)
         option = cfg.StrOpt(self.opt_password_str, default=None,
-                            help='Allegro Password')
+                            help='Valet Password')
         opts.append(option)
         option = cfg.StrOpt(self.opt_auth_uri_str, default=None,
                             help='Keystone Authorization API Endpoint')
@@ -100,7 +102,7 @@ class AllegroFilter(filters.BaseHostFilter):
         # If we don't have hints to process, yield (pass) all hosts
         # so other plugins have a fair shot. TODO: This will go away
         # once ostro can handle on-the-fly scheduling, except for cases
-        # where we can't reach Allegro at all, then we may opt to fail
+        # where we can't reach Valet at all, then we may opt to fail
         # all hosts depending on a TBD config flag.
         if not filter_properties.get(hints_key, {}).has_key(uuid_key):
             LOG.debug("Lifecycle Scheduler Hints not found, Skipping.")

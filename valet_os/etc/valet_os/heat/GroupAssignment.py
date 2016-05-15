@@ -1,18 +1,23 @@
+# -*- encoding: utf-8 -*-
 #
-#    Licensed under the Apache License, Version 2.0 (the "License"); you may
-#    not use this file except in compliance with the License. You may obtain
-#    a copy of the License at
+# Copyright (c) 2014-2016 AT&T
 #
-#         http://www.apache.org/licenses/LICENSE-2.0
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
 #
-#    Unless required by applicable law or agreed to in writing, software
-#    distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
-#    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
-#    License for the specific language governing permissions and limitations
-#    under the License.
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+# implied.
+#
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 '''
-ResourceGroup.py
+GroupAssignment.py
 
 Author: Joe D'Andrea
 Created: 11 June 2015
@@ -31,20 +36,19 @@ from heat.engine import support
 LOG = logging.getLogger(__name__)
 
 
-class ResourceGroup(resource.Resource):
+class GroupAssignment(resource.Resource):
     """
-    A QoS Resource Group describes one or more resources classified
-    as a particular type of group. Resource Groups can include other
-    groups, so long as there are no circular references.
+    A Group Assignment describes one or more resources assigned
+    to a particular type of group. Assignments can reference other
+    assignments, so long as there are no circular references.
 
-    This resource has no nutritional value to Heat. It is intended
-    for use by holistic placement tools when scheduling an entire
-    stack of related resources well in advance of instantiation vs.
-    one at a time, each independent of the other.
+    There are three types of groups: affinity, diversity, and
+    exclusivity. Exclusivity groups have a unique name, assigned
+    through Valet.
 
-    Note that the name of this resource is similar to that of
-    OS::Heat::ResourceGroup but they do not describe the same thing.
-    A more distinct name may be more desirable in a future revision.
+    This resource is purely informational in nature and makes no
+    changes to heat, nova, or cinder. The Valet Heat Lifecycle
+    Plugin passes this information to the optimizer.
     """
 
     _RELATIONSHIP_TYPES = (
@@ -54,22 +58,25 @@ class ResourceGroup(resource.Resource):
     )
 
     PROPERTIES = (
-        NAME, RELATIONSHIP, LEVEL, RESOURCES,
+        GROUP_NAME, GROUP_TYPE, LEVEL, RESOURCES,
     ) = (
-        'name', 'relationship', 'level', 'resources',
+        'group_name', 'group_type', 'level', 'resources',
     )
 
     properties_schema = {
-        NAME: properties.Schema(
+        GROUP_NAME: properties.Schema(
             properties.Schema.STRING,
-            _('Name of relationship. Required for exclusivity groups.'),
+            _('Group name. Required for exclusivity groups.'),
             # TODO: Add a custom constraint that ensures a valid
             # and allowed name when an exclusivity group is in use.
+            # This is presently enforced by valet-api and can also
+            # be pro-actively enforced here, so as to avoid unnecessary
+            # orchestration.
             update_allowed=True
         ),
-        RELATIONSHIP: properties.Schema(
+        GROUP_TYPE: properties.Schema(
             properties.Schema.STRING,
-            _('Grouping relationship.'),
+            _('Type of group.'),
             constraints=[
                 constraints.AllowedValues([AFFINITY, DIVERSITY, EXCLUSIVITY])
             ],
@@ -101,19 +108,20 @@ class ResourceGroup(resource.Resource):
     def handle_delete(self):
         self.resource_id_set(None)
 
-class ResourceGroupDeprecated(ResourceGroup):
+class GroupAssignmentDeprecated(GroupAssignment):
     """
-    DEPRECATED: Use ATT::CloudQoS::ResourceGroup instead.
+    DEPRECATED: Use ATT::Valet::GroupAssignment instead.
     """
 
     support_status = support.SupportStatus(
         support.DEPRECATED,
-        _('ATT::QoS is now ATT::CloudQoS.')
+        _('ATT::CloudQoS::ResourceGroup is now ' \
+          'ATT::Valet::GroupAssignment.')
     )
 
 def resource_mapping():
     """Map names to resources."""
     return {
-       'ATT::QoS::ResourceGroup': ResourceGroupDeprecated,
-       'ATT::CloudQoS::ResourceGroup': ResourceGroup
+       'ATT::CloudQoS::ResourceGroup': GroupAssignmentDeprecated,
+       'ATT::Valet::GroupAssignment': GroupAssignment,
     }

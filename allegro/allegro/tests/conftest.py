@@ -26,9 +26,7 @@ from pecan import configuration
 from sqlalchemy import create_engine
 from sqlalchemy.pool import NullPool
 
-# TODO: Make this a driver plugin point instead so we can pick and choose.
-#from allegro.models import music as _db
-from allegro.models import sqlalchemy as _db
+from allegro import models as _db
 import pytest
 
 PARAMS = 'charset=utf8'

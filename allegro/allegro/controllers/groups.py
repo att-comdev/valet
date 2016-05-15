@@ -20,11 +20,9 @@
 
 import logging
 
-from allegro.controllers import error
+from allegro.controllers import error, group_name_type
 from allegro.i18n import _
-# TODO: Make this a driver plugin point instead so we can pick and choose.
-from allegro.models.music import Group
-#from allegro.models.sqlalchemy import Group
+from allegro.models import Group
 
 from notario import decorators
 from notario.validators import types
@@ -34,15 +32,13 @@ from pecan_notario import validate
 LOG = logging.getLogger(__name__)
 
 GROUPS_SCHEMA = (
-    ('description', types.string),
-    ('name', types.string),
-    (decorators.optional('type'), types.string)
+    (decorators.optional('description'), types.string),
+    ('name', group_name_type),
+    ('type', types.string)
 )
 
 UPDATE_GROUPS_SCHEMA = (
-    (decorators.optional('description'), types.string),
-    (decorators.optional('name'), types.string),
-    (decorators.optional('type'), types.string)
+    (decorators.optional('description'), types.string)
 )
 
 MEMBERS_SCHEMA = (
@@ -55,7 +51,7 @@ MEMBERS_SCHEMA = (
 class MembersItemController(object):
     '''
     Members Item Controller
-    /v1/{tenant_id}/groups/{group_id}/members/{member_id}
+    /v1/groups/{group_id}/members/{member_id}
     '''
 
     def __init__(self, member_id):
@@ -101,13 +97,13 @@ class MembersItemController(object):
 class MembersController(object):
     '''
     Members Controller
-    /v1/{tenant_id}/groups/{group_id}/members
+    /v1/groups/{group_id}/members
     '''
 
     @classmethod
     def allow(cls):
         '''Allowed methods'''
-        return 'GET,POST,PUT,DELETE'
+        return 'PUT,DELETE'
 
     @expose(generic=True, template='json')
     def index(self):
@@ -121,31 +117,6 @@ class MembersController(object):
         '''Options'''
         response.headers['Allow'] = self.allow()
         response.status = 204
-
-    @index.when(method='GET', template='json')
-    def index_get(self):
-        '''List group members'''
-        group = request.context['group']
-        return {'members': group.members}
-
-    @index.when(method='POST', template='json')
-    @validate(MEMBERS_SCHEMA, '/errors/schema')
-    def index_post(self, **kwargs):
-        '''Set/replace all group members'''
-        new_members = kwargs.get('members', [])
-
-        if not conf.identity.engine.is_tenant_list_valid(new_members):
-            error('/errors/conflict',
-                  _('Member list contains invalid tenant IDs'))
-
-        group = request.context['group']
-        group.members = new_members
-        group.update()
-        response.status = 201
-
-        # Flush so that the DB is current.
-        group.flush()
-        return group
 
     @index.when(method='PUT', template='json')
     @validate(MEMBERS_SCHEMA, '/errors/schema')
@@ -182,7 +153,7 @@ class MembersController(object):
 class GroupsItemController(object):
     '''
     Groups Item Controller
-    /v1/{tenant_id}/groups/{group_id}
+    /v1/groups/{group_id}
     '''
 
     members = MembersController()
@@ -216,17 +187,16 @@ class GroupsItemController(object):
     @index.when(method='GET', template='json')
     def index_get(self):
         '''Display a group'''
-        return request.context['group']
+        return {"group": request.context['group']}
 
     @index.when(method='PUT', template='json')
     @validate(UPDATE_GROUPS_SCHEMA, '/errors/schema')
     def index_put(self, **kwargs):
         '''Update a group'''
-        # Members are updated in the /v1/groups/members controller.
+        # Name and type are immutable.
+        # Group Members are updated in MembersController.
         group = request.context['group']
-        group.name = kwargs.get('name', group.name)
         group.description = kwargs.get('description', group.description)
-        group.type = kwargs.get('type', group.type)
         group.update()
         response.status = 201
 
@@ -247,7 +217,7 @@ class GroupsItemController(object):
 class GroupsController(object):
     '''
     Groups Controller
-    /v1/{tenant_id}/groups
+    /v1/groups
     '''
 
     @classmethod

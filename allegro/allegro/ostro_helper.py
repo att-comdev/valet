@@ -21,9 +21,12 @@ import uuid
 from pecan import conf
 import simplejson
 
-from allegro.models.music import PlacementRequest
-from allegro.models.music import PlacementResult
-from allegro.models.music import Query
+from allegro.models import Group
+from allegro.models import PlacementRequest
+from allegro.models import PlacementResult
+from allegro.models import Query
+
+RESOURCE_TYPE = 'ATT::Valet::GroupAssignment'
 
 
 class Ostro(object):
@@ -32,10 +35,13 @@ class Ostro(object):
     args = None
     request = None
     response = None
+    error_uri = None
+    tenant_id = None
 
     tries = None  # Number of times to poll for placement.
     interval = None  # Interval in seconds to poll for placement.
 
+    # TODO: Make debug mode a setting. Write dump file to a log.
     debug = True
     debug_file = '/tmp/allegro-dump.txt'
 
@@ -75,6 +81,22 @@ class Ostro(object):
         print >>log, text
         log.close()
 
+    def _prepare_resources(self, resources):
+        '''
+        Pre-digests resource data for use by Ostro.
+        Maps Heat resource names to Orchestration UUIDs.
+        Ensures exclusivity groups exist and have tenant_id as a member.
+        '''
+        mapping = self._build_uuid_map(resources)
+        ostro_resources = self._map_names_to_uuids(mapping, resources)
+        self._sanitize_resources(ostro_resources)
+
+        verify_error = self._verify_exclusivity_groups(
+            ostro_resources, self.tenant_id)
+        if type(verify_error) is dict:
+            return verify_error
+        return {'resources': ostro_resources}
+
     def _sanitize_resources(self, resources):
         '''Ensure lowercase keys at the top level of each resource.'''
         for res in resources.itervalues():
@@ -105,24 +127,55 @@ class Ostro(object):
         response = {
             'status': {
                 'type': 'error',
-                'message': 'Timed out waiting for placement result.',
+                'message': 'Timed out waiting for response.',
             }
         }
+        self.error_uri = '/errors/server_error'
         return simplejson.dumps(response)
 
-    def ping(self):
-        '''Send a ping request and obtain a response.'''
-        stack_id = str(uuid.uuid4())
-        self.args = { 'stack_id': stack_id }
-        self.request = {
-            "version": "0.1",
-            "action": "ping",
-            "stack_id": stack_id
-        }
+    def _verify_exclusivity_groups(self, resources, tenant_id):
+        '''
+        Returns an error status dict if a nonexistant exclusivity group
+        is found or if the tenant is not a member. Returns None if ok.
+        '''
+        for res in resources.itervalues():
+            res_type = res.get('type')
+            if res_type == RESOURCE_TYPE:
+                properties = res.get('properties')
+                relationship = properties.get('relationship')
+                if relationship.lower() == 'exclusivity':
+                    group_name = properties.get('name')
+                    group = Group.query.filter_by(  # pylint: disable=E1101
+                        name=group_name).first()
+                    if not group:
+                        message = "Exclusivity group '%s' not found" % \
+                                  (group_name)
+                        self.error_uri = '/errors/not_found'
+                    elif group and tenant_id not in group.members:
+                        message = "Tenant ID %s not a member of " \
+                                  "exclusivity group '%s' (%s)" % \
+                                  (self.tenant_id, group.name, group.id)
+                        self.error_uri = '/errors/conflict'
+                    if message:
+                        response = {
+                            'status': {
+                                'type': 'error',
+                                'message': message,
+                            }
+                        }
+                        return response
 
-    def request(self, **kwargs):
-        self.args = kwargs
+    def build_request(self, **kwargs):
+        '''
+        Build an Ostro request. If False is returned,
+        the response attribute contains status as to the error.
+        '''
+
+        # TODO: Refactor this into create and update methods?
+        self.args = kwargs.get('args')
+        self.tenant_id = kwargs.get('tenant_id')
         self.response = None
+        self.error_uri = None
 
         resources = self.args['resources']
         if 'resources_update' in self.args:
@@ -130,26 +183,55 @@ class Ostro(object):
             resources_update = self.args['resources_update']
         else:
             action = 'create'
-            resources_update = {}
+            resources_update = None
 
-        mapping = self._build_uuid_map(resources)
-        ostro_resources = self._map_names_to_uuids(mapping, resources)
-        self._sanitize_resources(ostro_resources)
-
-        mapping = self._build_uuid_map(resources_update)
-        ostro_resources_update = \
-            self._map_names_to_uuids(mapping, resources_update)
-        self._sanitize_resources(ostro_resources_update)
+        # If we get any status in the response, it's an error. Bail.
+        self.response = self._prepare_resources(resources)
+        if 'status' in self.response:
+            return False
 
         self.request = {
-            "version": "0.1",
+            "version": "1.0",
             "action": action,
-            "resources": ostro_resources
+            "resources": self.response['resources'],
+            "stack_id": self.args['stack_id'],
         }
-        if ostro_resources_update:
-            self.request['resources_update'] = ostro_resources_update
 
-        self.request["stack_id"] = self.args['stack_id']
+        if resources_update:
+            # If we get any status in the response, it's an error. Bail.
+            self.response = self._prepare_resources(resources_update)
+            if 'status' in self.response:
+                return False
+            if ostro_resources_update:
+                self.request['resources_update'] = ostro_resources_update
+
+        return True
+
+    def ping(self):
+        '''Send a ping request and obtain a response.'''
+        stack_id = str(uuid.uuid4())
+        self.args = { 'stack_id': stack_id }
+        self.response = None
+        self.error_uri = None
+        self.request = {
+            "version": "1.0",
+            "action": "ping",
+            "stack_id": stack_id,
+        }
+
+    def replan(self, **kwargs):
+        '''Replan a placement.'''
+        self.args = kwargs.get('args')
+        self.response = None
+        self.error_uri = None
+        self.request = {
+            "version": "1.0",
+            "action": "replan",
+            "stack_id": self.args['stack_id'],
+            "locations": self.args['locations'],
+            "orchestration_id": self.args['orchestration_id'],
+            "exclusions": self.args['exclusions'],
+        }
 
     def send(self):
         '''Send the request and obtain a response.'''
@@ -160,11 +242,16 @@ class Ostro(object):
         if self.debug:
             self._log(request_json, 'Payload')
 
-        # TODO: Pass timeout value
+        # TODO: Pass timeout value?
         result = self._send(self.args['stack_id'], request_json)
 
         if self.debug:
             self._log(result, 'Result', append=True)
 
         self.response = simplejson.loads(result)
+
+        status_type = self.response['status']['type']
+        if status_type != 'ok':
+            self.error_uri = '/errors/server_error'
+
         return self.response

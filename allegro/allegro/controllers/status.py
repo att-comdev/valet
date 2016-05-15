@@ -16,7 +16,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-'''Optimizers'''
+'''Status'''
 
 import logging
 
@@ -31,10 +31,10 @@ LOG = logging.getLogger(__name__)
 # pylint: disable=R0201
 
 
-class OptimizersController(object):
+class StatusController(object):
     '''
-    Optimizers Controller
-    /v1/{tenant_id}/optimizers
+    Status Controller
+    /v1/status
     '''
 
     def _ping(self):
@@ -46,8 +46,7 @@ class OptimizersController(object):
         status_type = ostro.response['status']['type']
         if status_type != 'ok':
             message = ostro.response['status']['message']
-            error('/errors/server_error',
-                  _('Ostro error: %s') % message)
+            error(ostro.error_uri, _('Ostro error: %s') % message)
         return ostro.response
 
     @classmethod

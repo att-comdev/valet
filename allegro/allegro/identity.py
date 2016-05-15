@@ -79,19 +79,27 @@ class Identity(object):
                            interface=self._interface)
         return self._client
 
-    def is_admin(self, auth_token):
-        """Returns true if auth_token has an admin role"""
+    def validate_token(self, auth_token):
+        """Returns validated token or None if invalid"""
         kwargs = {
             'token': auth_token,
         }
         try:
-            token = self.client.tokens.validate(**kwargs)
+            return self.client.tokens.validate(**kwargs)
         except keystoneauth1.exceptions.http.NotFound:
-            return False
+            pass
+        return None
+
+    def is_token_admin(self, token):
+        """Returns true if decoded token has an admin role"""
         for role in token.user.get('roles', []):
             if role.get('name') == 'admin':
                 return True
         return False
+
+    def tenant_from_token(self, token):
+        """Returns tenant id from decoded token"""
+        return token.tenant.get('id', None)
 
     def is_tenant_list_valid(self, tenant_list):
         """Returns true if tenant list contains valid tenant IDs"""

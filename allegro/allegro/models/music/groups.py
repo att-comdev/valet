@@ -12,21 +12,19 @@
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
 # implied.
+#
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+'''Group Model'''
+
 import simplejson
-#import uuid
 
-#from sqlalchemy import Column, Integer, String, Sequence
-#from sqlalchemy.orm import relationship, backref
-#from sqlalchemy.orm.exc import DetachedInstanceError
-
-from allegro.models.music import Base, Query
-#from allegro.models.sqlalchemy import Base
+from . import Base
 
 
 class Group(Base):
+    '''Group model'''
     __tablename__ = 'groups'
 
     id = None
@@ -44,27 +42,32 @@ class Group(Base):
             'description': 'text',
             'type': 'text',
             'members': 'text',
-            'PRIMARY KEY': '(id)'
+            'PRIMARY KEY': '(id)',
         }
         return schema
 
     @classmethod
     def pk_name(cls):
+        '''Primary key name'''
         return 'id'
 
     def pk_value(self):
+        '''Primary key value'''
         return self.id
 
     def values(self):
-        # TODO: Support lists in Music (e.g., members)
+        '''Values'''
+        # Lists aren't directly supported in Music, so we have to
+        # convert to/from json on the way out/in.
         return {
             'name': self.name,
             'description': self.description,
             'type': self.type,
-            'members': simplejson.dumps(self.members)
+            'members': simplejson.dumps(self.members),
         }
 
     def __init__(self, name, description, type, members, _insert=True):
+        '''Initializer'''
         super(Group, self).__init__()
         self.name = name
         self.description = description
@@ -77,12 +80,11 @@ class Group(Base):
             self.members = simplejson.loads(members)
 
     def __repr__(self):
-        try:
-            return '<Group %r>' % self.name
-        except DetachedInstanceError:
-            return '<Group detached>'
+        '''Object representation'''
+        return '<Group %r>' % self.name
 
     def __json__(self):
+        '''JSON representation'''
         json_ = {}
         json_['id'] = self.id
         json_['name'] = self.name

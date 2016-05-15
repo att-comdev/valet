@@ -12,26 +12,25 @@ Prior to installation:
 
 * Ubuntu 14.04 LTS
 * Python 2.7.6 with pip
-
-valet-openstack is compatible with OpenStack heat-kilo and nova-juno.
+* An OpenStack Kilo cloud
 
 Throughout this document, the following installation-specific terms are used:
 
-* ``$VALET_HOST``: valet-api hostname or FQDN
-* ``$VALET_PATH``: Valet git repository filesystem path
 * ``$CODECLOUD_USER``: AT&T CodeCloud user id
-* ``$VALET_TENANT_NAME``: Valet user default tenant (e.g., service)
-* ``$VALET_USERNAME``: Valet username (e.g., valet)
-* ``$VALET_PASSWORD``: Valet user password
-* ``$KEYSTONE_AUTH_API``: Keystone Auth API endpoint
+* ``$VENV``: Python virtual environment path (if any)
+* ``$VALET_PATH``: Local git repository path
+* ``$VALET_HOST``: valet-api hostname or FQDN
+* ``$VALET_USERNAME``: OpenStack placement service username (e.g., valet)
+* ``$VALET_PASSWORD``: OpenStack placement service password
+* ``$VALET_TENANT_NAME``: OpenStack placement service default tenant (e.g., service)
+* ``$KEYSTONE_AUTH_API``: Keystone Auth API publicurl endpoint
 * ``$KEYSTONE_REGION``: Keystone Region (e.g., RegionOne)
-* ``$VENV``: Virtual Environment directory (if heat/nova was installed in a venv)
 
 Root or sufficient sudo privileges are required for some steps.
 
 ### A Note About Python Virtual Environments
 
-As valet-openstack works in concert with OpenStack services, if heat and nova have been installed in a python [virtual environment](http://docs.python-guide.org/en/latest/dev/virtualenvs/) (venv), valet-openstack must be installed in the same environment. (A venv helps avoid instabilities and conflicts within the default python environment.)
+As valet-openstack works in concert with OpenStack services, if heat and nova have been installed in a python [virtual environment](http://docs.python-guide.org/en/latest/dev/virtualenvs/) (venv), valet-openstack must be installed and configured in the same environment. (A venv helps avoid instabilities and conflicts within the default python environment.)
 
 ## Installing valet-openstack
 
@@ -70,11 +69,11 @@ valet-openstack requires edits to the heat and nova configuration files, and a r
 
 The following keystone commands must be performed by an OpenStack cloud administrator.
 
-Add a user ``$VALET_USERNAME``, giving it an ``admin`` role in the ``service`` tenant:
+Add a user ``$VALET_USERNAME``, giving it an ``admin`` role in the ``$VALET_TENANT_NAME`` tenant (usually ``service``):
 
 ```bash
 $ keystone user-create --name $VALET_USERNAME --pass $VALET_PASSWORD
-$ keystone user-role-add --user $VALET_USERNAME --tenant service --role admin
+$ keystone user-role-add --user $VALET_USERNAME --tenant $VALET_TENANT_NAME --role admin
 ```
 
 Create the service entity and API endpoints. While this is not used by Valet 1.0, it is reserved for future use.

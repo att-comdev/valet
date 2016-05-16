@@ -28,7 +28,7 @@ class VGroup:
         self.level = None              # host, rack, or cluster
 
         self.survgroup = None          # where this vgroup belong to 
-        self.subvgroups = {}       # child vgroups
+        self.subvgroups = {}           # child vgroups
 
         self.vgroup_list = []          # a list of links to VMs or Volumes
 

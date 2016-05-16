@@ -127,7 +127,7 @@ class AppHandler:
                         self.apps[v.app_uuid].add_vgroup(v, hg.name)
 
         if self._store_app_placements() == False:
-            # TODO: ignore?
+            # NOTE: ignore?
             pass
 
     def _store_app_placements(self):
@@ -165,6 +165,13 @@ class AppHandler:
                 return False
 
         return True
+
+    def remove_placement(self):
+        if self.db != None:
+            for appk, app in self.apps.iteritems():
+                if self.db.add_app(appk, None) == False:
+                    self.logger.error("error while adding app info to MUSIC")
+                    # NOTE: ignore?
    
     def get_vm_info(self, _s_uuid, _h_uuid, _host):
         vm_info = {}
@@ -210,19 +217,19 @@ class AppHandler:
                 resources[vmk]["type"] = "OS::Nova::Server"
                 properties = {}
                 properties["flavor"] = vm["flavor"]
-                if vm["availability_zone"] != "none":
-                    properties["availability_zone"] = vm["availability_zone"]
+                if vm["availability_zones"] != "none":
+                    properties["availability_zone"] = vm["availability_zones"]
                 resources[vmk]["properties"] = properties
 
                 if len(vm["diversity_groups"]) > 0:
-                    for divk, level in vm["diversity_groups"]:
+                    for divk, level in vm["diversity_groups"].iteritems():
                         div_id = divk + ":" + level
                         if div_id not in diversity_groups.keys():
                             diversity_groups[div_id] = []
                         diversity_groups[div_id].append(vmk)
 
                 if len(vm["exclusivity_groups"]) > 0:
-                    for exk, level_name in vm["exclusivity_groups"]:
+                    for exk, level_name in vm["exclusivity_groups"].iteritems():
                         ex_id = exk + ":" + level_name
                         if ex_id not in exclusivity_groups.keys():
                             exclusivity_groups[ex_id] = []
@@ -232,17 +239,17 @@ class AppHandler:
                     _app_topology.candidate_list_map[vmk] = _app["locations"]
                 elif vmk in _app["exclusions"]:
                     _app_topology.planned_vm_map[vmk] = vm["host"]
-                _app_topology.old_vm_map[vmk] = (vm["host"], \
-                                                 float(vm["cpus"]), float(vm["mem"]), float(vm["local_volume"]))
- 
+                _app_topology.old_vm_map[vmk] = (vm["host"], vm["cpus"], vm["mem"], vm["local_volume"])
+                #float(vm["cpus"]), float(vm["mem"]), float(vm["local_volume"]))
+        
         if "VGroups" in old_app.keys():
             for gk, affinity in old_app["VGroups"].iteritems():
                 resources[gk] = {}
-                resources[gk]["name"] = affinity["name"] 
+                resources[gk]["group_name"] = affinity["name"] 
                 #resources[gk]["type"] = "ATT::CloudQoS::ResourceGroup"
                 resources[gk]["type"] = "ATT::Valet::GroupAssignment"
                 properties = {}
-                properties["relationship"] = "affinity"
+                properties["group_type"] = "affinity"
                 properties["level"] = affinity["level"]
                 properties["resources"] = []
                 for r in affinity["subvgroup_list"]:
@@ -250,14 +257,14 @@ class AppHandler:
                 resources[gk]["properties"] = properties
 
                 if len(affinity["diversity_groups"]) > 0:
-                    for divk, level in affinity["diversity_groups"]:
+                    for divk, level in affinity["diversity_groups"].iteritems():
                         div_id = divk + ":" + level
                         if div_id not in diversity_groups.keys():
                             diversity_groups[div_id] = []
                         diversity_groups[div_id].append(gk)
 
                 if len(affinity["exclusivity_groups"]) > 0:
-                    for exk, level_name in affinity["exclusivity_groups"]:
+                    for exk, level_name in affinity["exclusivity_groups"].iteritems():
                         ex_id = exk + ":" + level_name
                         if ex_id not in exclusivity_groups.keys():
                             exclusivity_groups[ex_id] = []
@@ -271,7 +278,7 @@ class AppHandler:
             #resources[divk_level[0]]["type"] = "ATT::CloudQoS::ResourceGroup"
             resources[divk_level[0]]["type"] = "ATT::Valet::GroupAssignment"
             properties = {}
-            properties["relationship"] = "diversity"
+            properties["group_type"] = "diversity"
             properties["level"] = divk_level[1]
             properties["resources"] = resource_list
             resources[divk_level[0]]["properties"] = properties
@@ -279,11 +286,11 @@ class AppHandler:
         for ex_id, resource_list in exclusivity_groups.iteritems():
             exk_level_name = ex_id.split(":")
             resources[exk_level_name[0]] = {}
-            resources[exk_level_name[0]]["name"] = exk_level_name[2]
+            resources[exk_level_name[0]]["group_name"] = exk_level_name[2]
             #resources[exk_level_name[0]]["type"] = "ATT::CloudQoS::ResourceGroup"
             resources[exk_level_name[0]]["type"] = "ATT::Valet::GroupAssignment"
             properties = {}
-            properties["relationship"] = "exclusivity"
+            properties["group_type"] = "exclusivity"
             properties["level"] = exk_level_name[1]
             properties["resources"] = resource_list
             resources[exk_level_name[0]]["properties"] = properties

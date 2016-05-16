@@ -33,12 +33,25 @@ class Optimizer:
         self.status = "success"
 
     def place(self, _app_topology): 
-        start_ts = time.time() 
-        if len(_app_topology.old_vm_map) > 0:
-            self._delete_old_vms(_app_topology.old_vm_map)
-            self.logger.debug("remove & deduct VMs' old placements for replan")
+        success = False
 
-        success = self.search.place_nodes(_app_topology, self.resource)
+        start_ts = time.time() 
+
+        # Replan request
+        if len(_app_topology.candidate_list_map) > 0:
+            if len(_app_topology.old_vm_map) > 0:
+                self._delete_old_vms(_app_topology.old_vm_map)
+                self.logger.debug("remove & deduct VMs' old placements for replan")
+
+                if self.resource.update_topology() == False:                                         
+                    # NOTE: ignore?                                                                  
+                    pass
+
+            success = self.search.re_place_nodes(_app_topology, self.resource)
+        # Create request
+        else:
+            success = self.search.place_nodes(_app_topology, self.resource)
+
         end_ts = time.time()
 
         if success == True:
@@ -76,9 +89,11 @@ class Optimizer:
         for h_uuid, info in _old_vm_map.iteritems():
             self.resource.remove_vm_by_h_uuid_from_host(info[0], h_uuid, info[1], info[2], info[3])
             self.resource.update_host_time(info[0])
-        
+ 
             host = self.resource.hosts[info[0]]
+            self.logger.debug("test: start remove vm from lg")
             self.resource.remove_vm_by_h_uuid_from_logical_groups(host, h_uuid) 
+            self.logger.debug("test: done remove vm from lg")
 
     def _update_resource_status(self):
         for v, np in self.search.node_placements.iteritems():

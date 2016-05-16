@@ -36,7 +36,7 @@
           "vm13_uuid"
         ]
       },
-      "type": "ATT::CloudQoS::ResourceGroup"
+      "type": "ATT::Valet::GroupAssignment"
     }
   }
 }

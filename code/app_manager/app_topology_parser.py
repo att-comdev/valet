@@ -127,18 +127,18 @@ class Parser:
                 vgroup = VGroup(self.stack_id, rk)
 
                 vgroup.vgroup_type = None
-                if r["properties"]["relationship"] == "affinity":
+                if r["properties"]["group_type"] == "affinity":
                     vgroup.vgroup_type = "AFF"
-                elif r["properties"]["relationship"] == "diversity":
+                elif r["properties"]["group_type"] == "diversity":
                     vgroup.vgroup_type = "DIV"
-                elif r["properties"]["relationship"] == "exclusivity":
+                elif r["properties"]["group_type"] == "exclusivity":
                     vgroup.vgroup_type = "EX"
                 else:
-                    self.status = "unknown group = " + r["properties"]["relationship"]
+                    self.status = "unknown group = " + r["properties"]["group_type"]
                     return ({}, {}, {})
                   
-                if "name" in r.keys():
-                    vgroup.name = r["name"]
+                if "group_name" in r.keys():
+                    vgroup.name = r["group_name"]
                 else:
                     if vgroup.vgroup_type == "EX":
                         self.status = "no exclusivity identifier"
@@ -343,7 +343,7 @@ class Parser:
             for rk, r in _elements.iteritems():
                 #if r["type"] == "ATT::CloudQoS::ResourceGroup" and \
                 if r["type"] == "ATT::Valet::GroupAssignment" and \
-                   r["properties"]["relationship"] == "diversity" and \
+                   r["properties"]["group_type"] == "diversity" and \
                    r["properties"]["level"] == level:
 
                     vgroup = _vgroups[rk]
@@ -380,7 +380,7 @@ class Parser:
             for rk, r in _elements.iteritems():
                 #if r["type"] == "ATT::CloudQoS::ResourceGroup" and \
                 if r["type"] == "ATT::Valet::GroupAssignment" and \
-                   r["properties"]["relationship"] == "exclusivity" and \
+                   r["properties"]["group_type"] == "exclusivity" and \
                    r["properties"]["level"] == level:
 
                     vgroup = _vgroups[rk]
@@ -419,7 +419,7 @@ class Parser:
             for rk, r in _elements.iteritems():
                 #if r["type"] == "ATT::CloudQoS::ResourceGroup" and \
                 if r["type"] == "ATT::Valet::GroupAssignment" and \
-                   r["properties"]["relationship"] == "affinity" and \
+                   r["properties"]["group_type"] == "affinity" and \
                    r["properties"]["level"] == level:
 
                     vgroup = None

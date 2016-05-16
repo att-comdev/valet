@@ -15,6 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+'''Ostro helper library'''
+
 import time
 import uuid
 
@@ -50,11 +52,9 @@ class Ostro(object):
     debug = True
     debug_file = '/tmp/valet-dump.txt'
 
-    def __init__(self):
-        self.tries = conf.ostro.get('tries', 10)
-        self.interval = conf.ostro.get('interval', 1)
-
-    def _build_error(self, message):
+    @classmethod
+    def _build_error(cls, message):
+        '''Build an Ostro-style error message'''
         if not message:
             message = "Unknown error"
         error = {
@@ -65,7 +65,8 @@ class Ostro(object):
         }
         return error
 
-    def _build_uuid_map(self, resources):
+    @classmethod
+    def _build_uuid_map(cls, resources):
         '''Build a dict mapping names to UUIDs.'''
         mapping = {}
         for key in resources.iterkeys():
@@ -74,16 +75,30 @@ class Ostro(object):
                 mapping[name] = key
         return mapping
 
+    @classmethod
+    def _sanitize_resources(cls, resources):
+        '''Ensure lowercase keys at the top level of each resource.'''
+        for res in resources.itervalues():
+            for key in list(res.keys()):
+                if not key.islower():
+                    res[key.lower()] = res.pop(key)
+        return resources
+
+    def __init__(self):
+        '''Initializer'''
+        self.tries = conf.ostro.get('tries', 10)
+        self.interval = conf.ostro.get('interval', 1)
+
     def _map_names_to_uuids(self, mapping, data):
         '''Map resource names to their UUID equivalents.'''
-        if type(data) is dict:
+        if isinstance(data, dict):
             for key in data.iterkeys():
                 if key != 'name':
                     data[key] = self._map_names_to_uuids(mapping, data[key])
-        elif type(data) is list:
+        elif isinstance(data, list):
             for key, value in enumerate(data):
                 data[key] = self._map_names_to_uuids(mapping, value)
-        elif type(data) is str or type(data) is unicode:
+        elif isinstance(data, basestring):
             if data in mapping:
                 return mapping[data]
         return data
@@ -108,29 +123,22 @@ class Ostro(object):
         self._sanitize_resources(ostro_resources)
 
         verify_error = self._verify_groups(ostro_resources, self.tenant_id)
-        if type(verify_error) is dict:
+        if isinstance(verify_error, dict):
             return verify_error
         return {'resources': ostro_resources}
-
-    def _sanitize_resources(self, resources):
-        '''Ensure lowercase keys at the top level of each resource.'''
-        for res in resources.itervalues():
-            for key in list(res.keys()):
-                if not key.islower():
-                    res[key.lower()] = res.pop(key)
-        return resources
 
     # TODO: This really belongs in valet-engine once it exists.
     def _send(self, stack_id, request):
         ''''Send request.'''
 
         # Creating the placement request effectively enqueues it.
-        placement_request = PlacementRequest(
+        _placement_request = PlacementRequest(  # pylint: disable=W0612
             stack_id=stack_id, request=request
         )
 
-        # Wait for a response. Unfortunately this is blocking.
-        for tries in range(self.tries, 0, -1):
+        # Wait for a response.
+        # FIXME: This is a blocking operation at the moment.
+        for tries in range(self.tries, 0, -1):  # pylint: disable=W0612
             query = Query(PlacementResult)
             placement_result = query.filter_by(stack_id=stack_id).first()
             if placement_result:
@@ -139,13 +147,10 @@ class Ostro(object):
                 return placement
             else:
                 time.sleep(self.interval)
-        response = {
-            'status': {
-                'type': 'error',
-                'message': 'Timed out waiting for response.',
-            }
-        }
+
         self.error_uri = '/errors/server_error'
+        message = "Timed out waiting for a response."
+        response = self._build_error(message)
         return simplejson.dumps(response)
 
     def _verify_groups(self, resources, tenant_id):
@@ -237,15 +242,14 @@ class Ostro(object):
             self.response = self._prepare_resources(resources_update)
             if 'status' in self.response:
                 return False
-            if ostro_resources_update:
-                self.request['resources_update'] = ostro_resources_update
+            self.request['resources_update'] = self.response['resources']
 
         return True
 
     def ping(self):
         '''Send a ping request and obtain a response.'''
         stack_id = str(uuid.uuid4())
-        self.args = { 'stack_id': stack_id }
+        self.args = {'stack_id': stack_id}
         self.response = None
         self.error_uri = None
         self.request = {

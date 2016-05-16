@@ -16,6 +16,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+'''Application'''
+
 from pecan import make_app
 
 from valet_api import identity
@@ -23,6 +25,7 @@ from valet_api import models
 
 
 def setup_app(config):
+    '''App Setup'''
     identity.init_identity()
     models.init_model()
     app_conf = dict(config.app)

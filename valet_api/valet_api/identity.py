@@ -19,9 +19,6 @@
 """Identity helper library"""
 
 from datetime import datetime
-import os
-import sys
-import time
 
 import iso8601
 # https://github.com/openstack/python-keystoneclient/blob/
@@ -30,9 +27,6 @@ import keystoneauth1.exceptions
 from keystoneauth1.identity import v2
 from keystoneauth1 import session
 from keystoneclient.v2_0 import client
-from keystoneclient.exceptions import AuthorizationFailure
-from keystoneclient.exceptions import NotFound
-from keystoneclient.exceptions import Unauthorized
 from pecan import conf
 import pytz
 
@@ -46,6 +40,19 @@ class Identity(object):
     _args = None
     _client = None
     _interface = None
+
+    @classmethod
+    def is_token_admin(cls, token):
+        """Returns true if decoded token has an admin role"""
+        for role in token.user.get('roles', []):
+            if role.get('name') == 'admin':
+                return True
+        return False
+
+    @classmethod
+    def tenant_from_token(cls, token):
+        """Returns tenant id from decoded token"""
+        return token.tenant.get('id', None)
 
     def __init__(self, interface='admin', **kwargs):
         """Initializer."""
@@ -64,7 +71,7 @@ class Identity(object):
         token = self._client.auth_ref.get('token')
         if not token:
             return True
-        timestamp = token,get('expires')
+        timestamp = token.get('expires')
         if not timestamp:
             return True
         return iso8601.parse_date(timestamp) <= utcnow()
@@ -76,7 +83,7 @@ class Identity(object):
             auth = v2.Password(**self._args)
             sess = session.Session(auth=auth)
             self._client = client.Client(session=sess,
-                           interface=self._interface)
+                                         interface=self._interface)
         return self._client
 
     def validate_token(self, auth_token):
@@ -87,25 +94,14 @@ class Identity(object):
         try:
             return self.client.tokens.validate(**kwargs)
         except keystoneauth1.exceptions.http.NotFound:
-            # FIXME: Return a 404 or at least an auth required
+            # FIXME: Return a 404 or at least an auth required?
             pass
         return None
-
-    def is_token_admin(self, token):
-        """Returns true if decoded token has an admin role"""
-        for role in token.user.get('roles', []):
-            if role.get('name') == 'admin':
-                return True
-        return False
-
-    def tenant_from_token(self, token):
-        """Returns tenant id from decoded token"""
-        return token.tenant.get('id', None)
 
     def is_tenant_list_valid(self, tenant_list):
         """Returns true if tenant list contains valid tenant IDs"""
         tenants = self.client.tenants.list()
-        if type(tenant_list) is list:
+        if isinstance(tenant_list, list):
             for tenant_id in tenant_list:
                 found = False
                 for tenant in tenants:

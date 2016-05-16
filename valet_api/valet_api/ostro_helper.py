@@ -144,7 +144,7 @@ class Ostro(object):
                 properties = res.get('properties')
                 relationship = properties.get('group_type', '')
                 if relationship.lower() == 'exclusivity':
-                    group_name = properties.get('name')
+                    group_name = properties.get('group_name')
                     group = Group.query.filter_by(  # pylint: disable=E1101
                         name=group_name).first()
                     if not group:

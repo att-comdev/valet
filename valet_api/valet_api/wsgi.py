@@ -16,11 +16,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+'''WSGI Wrapper'''
+
 import os
 from pecan.deploy import deploy
 
 
 def config_file(file_name=None):
+    '''Returns absolute location of the config file'''
     file_name = file_name or 'config.py'
     _file = os.path.abspath(__file__)
     dirname = lambda x: os.path.dirname(x)
@@ -28,16 +31,17 @@ def config_file(file_name=None):
     return os.path.join(parent_dir, file_name)
 
 def application(environ, start_response):
+    '''Returns a WSGI app object'''
     wsgi_app = deploy(config_file('prod.py'))
     return wsgi_app(environ, start_response)
 
 if __name__ == '__main__':
-    from wsgiref.simple_server import make_server
+    from wsgiref.simple_server import make_server  # pylint: disable=C0411,C0413
     # at some point, it would be nice to use pecan_mount
     #import pecan_mount
-    #httpd = make_server('', 8090, pecan_mount.tree)
-    httpd = make_server('', 8090, deploy(config_file('config.py')))
+    #HTTPD = make_server('', 8090, pecan_mount.tree)
+    HTTPD = make_server('', 8090, deploy(config_file('config.py')))
     print "Serving HTTP on port 8090..."
 
     # Respond to requests until process is killed
-    httpd.serve_forever()
+    HTTPD.serve_forever()

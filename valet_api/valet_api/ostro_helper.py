@@ -26,7 +26,12 @@ from valet_api.models import PlacementRequest
 from valet_api.models import PlacementResult
 from valet_api.models import Query
 
-RESOURCE_TYPE = 'ATT::Valet::GroupAssignment'
+GROUP_ASSIGNMENT = 'ATT::Valet::GroupAssignment'
+GROUP_TYPE = 'group_type'
+GROUP_NAME = 'group_name'
+AFFINITY = 'affinity'
+DIVERSITY = 'diversity'
+EXCLUSIVITY = 'exclusivity'
 
 
 class Ostro(object):
@@ -48,6 +53,17 @@ class Ostro(object):
     def __init__(self):
         self.tries = conf.ostro.get('tries', 10)
         self.interval = conf.ostro.get('interval', 1)
+
+    def _build_error(self, message):
+        if not message:
+            message = "Unknown error"
+        error = {
+            'status': {
+                'type': 'error',
+                'message': message,
+            }
+        }
+        return error
 
     def _build_uuid_map(self, resources):
         '''Build a dict mapping names to UUIDs.'''
@@ -91,8 +107,7 @@ class Ostro(object):
         ostro_resources = self._map_names_to_uuids(mapping, resources)
         self._sanitize_resources(ostro_resources)
 
-        verify_error = self._verify_exclusivity_groups(
-            ostro_resources, self.tenant_id)
+        verify_error = self._verify_groups(ostro_resources, self.tenant_id)
         if type(verify_error) is dict:
             return verify_error
         return {'resources': ostro_resources}
@@ -133,37 +148,57 @@ class Ostro(object):
         self.error_uri = '/errors/server_error'
         return simplejson.dumps(response)
 
-    def _verify_exclusivity_groups(self, resources, tenant_id):
+    def _verify_groups(self, resources, tenant_id):
         '''
-        Returns an error status dict if a nonexistant exclusivity group
-        is found or if the tenant is not a member. Returns None if ok.
+        Verifies group settings. Returns an error status dict if the
+        group type is invalid, if a group name is used when the type
+        is affinity or diversity, if a nonexistant exclusivity group
+        is found, or if the tenant is not a group member.
+        Returns None if ok.
         '''
+        message = None
         for res in resources.itervalues():
             res_type = res.get('type')
-            if res_type == RESOURCE_TYPE:
+            if res_type == GROUP_ASSIGNMENT:
                 properties = res.get('properties')
-                relationship = properties.get('group_type', '')
-                if relationship.lower() == 'exclusivity':
-                    group_name = properties.get('group_name')
+                group_type = properties.get(GROUP_TYPE, '').lower()
+                group_name = properties.get(GROUP_NAME, '').lower()
+                if group_type == AFFINITY or \
+                   group_type == DIVERSITY:
+                    if group_name:
+                        self.error_uri = '/errors/conflict'
+                        message = "%s must not be used when " \
+                                  "%s is '%s'. " % \
+                                  (GROUP_NAME, GROUP_TYPE, group_type)
+                        break
+                elif group_type == EXCLUSIVITY:
+                    if not group_name:
+                        self.error_uri = '/errors/invalid'
+                        message = "%s must be used when " \
+                                  "%s is '%s'." % \
+                                  (GROUP_NAME, GROUP_TYPE, group_type)
+                        break
                     group = Group.query.filter_by(  # pylint: disable=E1101
                         name=group_name).first()
                     if not group:
-                        message = "Exclusivity group '%s' not found" % \
-                                  (group_name)
                         self.error_uri = '/errors/not_found'
+                        message = "%s '%s' not found" % \
+                                  (GROUP_NAME, group_name)
+                        break
                     elif group and tenant_id not in group.members:
-                        message = "Tenant ID %s not a member of " \
-                                  "exclusivity group '%s' (%s)" % \
-                                  (self.tenant_id, group.name, group.id)
                         self.error_uri = '/errors/conflict'
-                    if message:
-                        response = {
-                            'status': {
-                                'type': 'error',
-                                'message': message,
-                            }
-                        }
-                        return response
+                        message = "Tenant ID %s not a member of " \
+                                  "%s '%s' (%s)" % \
+                                  (self.tenant_id, GROUP_NAME, \
+                                  group.name, group.id)
+                        break
+                else:
+                    self.error_uri = '/errors/invalid'
+                    message = "%s '%s' is invalid." % \
+                              (GROUP_TYPE, group_type)
+                    break
+        if message:
+            return self._build_error(message)
 
     def build_request(self, **kwargs):
         '''

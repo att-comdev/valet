@@ -137,8 +137,8 @@ class Parser:
                     self.status = "unknown group = " + r["properties"]["group_type"]
                     return ({}, {}, {})
                   
-                if "group_name" in r.keys():
-                    vgroup.name = r["group_name"]
+                if "group_name" in r["properties"].keys():
+                    vgroup.name = r["properties"]["group_name"]
                 else:
                     if vgroup.vgroup_type == "EX":
                         self.status = "no exclusivity identifier"

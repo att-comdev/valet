@@ -1,4 +1,4 @@
-# Valet
+# valet-api
 
 Valet gives OpenStack the ability to optimize cloud resources while simultaneously meeting a cloud application's QoS requirements. Valet provides an api service, an optimizer (Ostro), and a set of OpenStack plugins.
 
@@ -13,7 +13,7 @@ Prior to installation:
 * Ubuntu 14.04 LTS
 * Python 2.7.6 with pip
 * An OpenStack Kilo cloud
-* Music 6.0
+* [Music](https://codecloud.web.att.com/plugins/servlet/readmeparser/display/ST_CLOUDQOS/music/atRef/refs/heads/master/renderFile/README.md) 6.0
 * [Ostro](https://codecloud.web.att.com/plugins/servlet/readmeparser/display/ST_CLOUDQOS/ostro/atRef/refs/heads/master/renderFile/README) 2.0
 
 Throughout this document, the following installation-specific terms are used:
@@ -70,7 +70,7 @@ If the following error appears when installing valet-api, and SSL access is requ
 
 ## User account
 
-Create an ubuntu user/group for the valet service user (usually ``valet``):
+Create an Ubuntu user/group for the valet service user (usually ``valet``):
 
 ```bash
 $ sudo adduser --gecos "valet service user" valet
@@ -165,9 +165,28 @@ Use the ``pecan serve`` command to run valet-api and verify installation.
 $ pecan serve $VALET_CONFIG_PATH/config.py
 ```
 
-Do not use this command to run valet-api in a production environment. A number of production-quality WSGI-compatible environments are available (e.g., apache2 httpd)..
+Visit ``http://$VALET_HOST:8090/v1/`` to check for a response from valet-api:
 
-## Configuring apache2 httpd for valet-api
+```json
+{
+    "versions": [{
+        "status": "CURRENT",
+        "id": "v1.0",
+        "links": [{
+            "href": "http://$VALET_HOST:8090/v1/",
+            "rel": "self"
+        }]
+    }]
+}
+```
+
+[Postman](http://www.getpostman.com/) users can import the included collection of sample API calls, located in ``$VALET_PATH/valet_api/valet_api/tests/Valet.json.postman_collection``. Change the URL targets to match ``$VALET_HOST``.
+
+*IMPORTANT: Do not use ``pecan serve`` to run valet-api in a production environment. A number of production-quality WSGI-compatible environments are available (e.g., apache2 httpd).*
+
+## Configuring apache2 httpd
+
+This section describes an example WSGI installation using apache2 httpd.
 
 ### Prerequisites
 
@@ -206,28 +225,9 @@ Syntax OK
 $ sudo apachectl graceful
 ```
 
-## Verify valet-api
-
-Visit ``http://$VALET_HOST:8090/v1/`` to check for a response from valet-api:
-
-```json
-{
-    "versions": [{
-        "status": "CURRENT",
-        "id": "v1.0",
-        "links": [{
-            "href": "http://$VALET_HOST:8090/v1/",
-            "rel": "self"
-        }]
-    }]
-}
-```
-
-[Postman](http://www.getpostman.com/) users can import the included collection of sample API calls, located in ``$VALET_PATH/valet_api/valet_api/tests/Valet.json.postman_collection``. Change the URL targets to match ``$VALET_HOST``.
-
 ## Usage
 
-See the ``doc`` directory for [API documentation](https://codecloud.web.att.com/plugins/servlet/readmeparser/display/ST_CLOUDQOS/allegro/atRef/refs/heads/master/renderFile/valet_api/doc/README.md).
+See the ``doc`` directory for placement service [API documentation](https://codecloud.web.att.com/plugins/servlet/readmeparser/display/ST_CLOUDQOS/allegro/atRef/refs/heads/master/renderFile/valet_api/doc/README.md).
 
 ## Uninstallation
 

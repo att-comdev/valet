@@ -13,6 +13,7 @@ Prior to installation:
 * Ubuntu 14.04 LTS
 * Python 2.7.6 with pip
 * An OpenStack Kilo cloud
+* Access to a [valet-api](https://codecloud.web.att.com/plugins/servlet/readmeparser/display/ST_CLOUDQOS/allegro/atRef/refs/heads/master/renderFile/valet_api/README.md) endpoint
 
 Throughout this document, the following installation-specific terms are used:
 
@@ -82,6 +83,8 @@ Create the service entity and API endpoints. While this is not used by Valet 1.0
 $ keystone service-create --type placement --name valet --description "OpenStack Placement"
 $ keystone endpoint-create --region $KEYSTONE_REGION --service valet --publicurl 'http://$VALET_HOST:8090/v1' --adminurl 'http://$VALET_HOST:8090/v1' --internalurl 'http://$VALET_HOST:8090/v1'
 ```
+
+*Note: In OpenStack parlance, Valet is canonically referred to as a **placement service**.*
 
 The administrator may choose to use differing hostnames/IPs for public vs. admin vs. internal URLs, depending on local architecture and requirements.
 

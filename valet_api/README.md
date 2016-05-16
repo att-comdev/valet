@@ -157,7 +157,7 @@ Any previously created tables will be left as-is and not deleted/re-created.
 
 *Note: Music does not support migrations. If necessary, schema changes in future versions will be noted here with specific upgrade instructions.*
 
-## Running
+## Running for the first time
 
 Use the ``pecan serve`` command to run valet-api and verify installation.
 

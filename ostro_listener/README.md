@@ -4,7 +4,7 @@ This script is based on a RabbitMQ message bus listener. It has been modified to
 
 This version of the listener does not use oslo.messaging. It listens directly to the message transport. Future revisions are expected to use oslo.messaging in order to keep the means of transport abstract.
 
-This script is not yet daemonized or packaged for pip installation.
+This script is daemonized and can be installed using pip. Instructions forthcoming.
 
 ## Usage
 

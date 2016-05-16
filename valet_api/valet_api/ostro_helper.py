@@ -142,7 +142,7 @@ class Ostro(object):
             res_type = res.get('type')
             if res_type == RESOURCE_TYPE:
                 properties = res.get('properties')
-                relationship = properties.get('relationship')
+                relationship = properties.get('group_type', '')
                 if relationship.lower() == 'exclusivity':
                     group_name = properties.get('name')
                     group = Group.query.filter_by(  # pylint: disable=E1101

@@ -36,7 +36,7 @@ import sys
 from urlparse import urlparse
 import yaml
 
-from allegro.models.music import Music
+from valet_api.models.music import Music
 from oslo_messages import OsloMessage
 
 import pika

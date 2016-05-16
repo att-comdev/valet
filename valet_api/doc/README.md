@@ -336,7 +336,17 @@ This operation does not accept a request body.
 
 ```json
 {
-  tbd
+  "status": {
+    "ostro": {
+      "status": {
+        "message": "ping",
+        "type": "ok"
+      },
+      "resources": {
+        "ip": "135.197.226.83"
+      }
+    }
+  }
 }
 ```
 

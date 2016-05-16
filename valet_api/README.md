@@ -182,6 +182,8 @@ Visit ``http://$VALET_HOST:8090/v1/`` to check for a response from valet-api:
 
 [Postman](http://www.getpostman.com/) users can import the included collection of sample API calls, located in ``$VALET_PATH/valet_api/valet_api/tests/Valet.json.postman_collection``. Change the URL targets to match ``$VALET_HOST``.
 
+See the ``doc`` directory for placement service [API documentation](https://codecloud.web.att.com/plugins/servlet/readmeparser/display/ST_CLOUDQOS/allegro/atRef/refs/heads/master/renderFile/valet_api/doc/README.md).
+
 *IMPORTANT: Do not use ``pecan serve`` to run valet-api in a production environment. A number of production-quality WSGI-compatible environments are available (e.g., apache2 httpd).*
 
 ## Configuring apache2 httpd
@@ -224,10 +226,6 @@ $ sudo apachectl -t
 Syntax OK
 $ sudo apachectl graceful
 ```
-
-## Usage
-
-See the ``doc`` directory for placement service [API documentation](https://codecloud.web.att.com/plugins/servlet/readmeparser/display/ST_CLOUDQOS/allegro/atRef/refs/heads/master/renderFile/valet_api/doc/README.md).
 
 ## Uninstallation
 

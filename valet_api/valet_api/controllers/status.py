@@ -78,4 +78,9 @@ class StatusController(object):
         '''Ping Ostro and return the response'''
         ostro_response = self._ping()
         response.status = 200
-        return ostro_response
+        _response = {
+            "status": {
+                "ostro": ostro_response
+            }
+        }
+        return _response

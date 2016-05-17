@@ -2,38 +2,38 @@
 {
   "version": "0.1",
   "action": "create",
-  "stack_id": "app_uuid2",
-  "application_name": "app2",
+  "stack_id": "app_uuid2-1",
+  "application_name": "app2-1",
   "resources": {
-    "vm3_uuid": {
-      "name": "vm3",
+    "vm3-1_uuid": {
+      "name": "vm3-1",
       "properties": {
         "flavor": "bflavor0"
       },
       "type": "OS::Nova::Server"
     },
-    "vm4_uuid": {
-      "name": "vm4",
+    "vm4-1_uuid": {
+      "name": "vm4-1",
       "properties": {
         "flavor": "bflavor0"
       },
       "type": "OS::Nova::Server"
     },
-    "vm5_uuid": {
-      "name": "vm5",
+    "vm5-1_uuid": {
+      "name": "vm5-1",
       "properties": {
         "flavor": "bflavor0"
       },
       "type": "OS::Nova::Server"
     },
-    "exclusivity0_uuid": {
+    "exclusivity0-1_uuid": {
       "group_name": "exclusivity0",
       "properties": {
         "group_type": "exclusivity",
         "level": "host",
         "resources": [
-          "vm3_uuid",
-          "vm4_uuid"
+          "vm3-1_uuid",
+          "vm4-1_uuid"
         ]
       },
       "type": "ATT::Valet::GroupAssignment"

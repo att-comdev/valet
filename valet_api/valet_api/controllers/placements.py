@@ -50,6 +50,8 @@ class PlacementsItemController(object):
             error('/errors/not_found',
                   _('Placement not found'))
         request.context['placement_id'] = self.placement.id
+        LOG.debug(_('Placement with orchestration id %s'), \
+                  self.placement.orchestration_id)
 
     @classmethod
     def allow(cls):
@@ -84,6 +86,8 @@ class PlacementsItemController(object):
         Once reserved, the location effectively becomes immutable.
         '''
         locations = kwargs.get('locations', [])
+        locations_str = ', '.join(locations)
+        LOG.debug(_('Candidate locations: %s'), locations_str)
         if self.placement.location in locations:
             # Ostro's placement is in the list of candidates. Good!
             reserve_placement(self.placement)
@@ -91,15 +95,25 @@ class PlacementsItemController(object):
         else:
             # Ostro's placement is NOT in the list of candidates.
             # Time for Plan B.
+            LOG.debug(_('Placement of %(orch_id)s in %(loc)s ' \
+                        'not allowed. Replanning.'),
+                      {'orch_id': self.placement.orchestration_id,
+                       'loc': self.placement.location})
+
+            # Unreserve the placement in case it was previously reserved.
+            reserve_placement(self.placement, False)
 
             # Find all the reserved placements for the related plan.
             reserved = Placement.query.filter_by(  # pylint: disable=E1101
                 plan_id=self.placement.plan_id, reserved=True)
 
-            # Extract all the orchestration IDs.
             # Keep this placement's orchestration ID handy.
-            exclusions = [x.orchestration_id for x in reserved]
             orchestration_id = self.placement.orchestration_id
+
+            # Extract all the orchestration IDs.
+            exclusions = [x.orchestration_id for x in reserved]
+            exclusions_str = ', '.join(exclusions)
+            LOG.debug(_('Excluded orchestration IDs: %s'), exclusions_str)
 
             # Ask Ostro to try again with new constraints.
             # We may get one or more updated placements in return.

@@ -18,13 +18,16 @@
 
 '''Controllers Package'''
 
+import logging
 from os import path
 import string
 
+from valet_api.common.i18n import _
 from valet_api.models import Placement
 
 from pecan import redirect, request
 
+LOG = logging.getLogger(__name__)
 
 #
 # Group Helpers
@@ -55,9 +58,13 @@ def set_placements(plan, resources, placements):
     return plan
 
 
-def reserve_placement(placement):
+def reserve_placement(placement, reserve=True):
+    '''Reserve placement (set reserve=False to unreserve)'''
     if placement:
-        placement.reserved = True
+        LOG.info(_('Reserving placement of %(orch_id)s in %(loc)s.'),
+                 {'orch_id': placement.orchestration_id,
+                  'loc': placement.location})
+        placement.reserved = reserve
         placement.update()
 
 def update_placements(placements, reserve_id=None):
@@ -68,7 +75,13 @@ def update_placements(placements, reserve_id=None):
         if placement:
             properties = placements[uuid]['properties']
             location = properties['host']
-            placement.location = location
+            if placement.location != location:
+                LOG.info(_('Changing placement of %(orch_id)s ' \
+                           'from %(old_loc)s to %(new_loc)s.'),
+                         {'orch_id': placement.orchestration_id,
+                          'old_loc': placement.location,
+                          'new_loc': location})
+                placement.location = location
             if reserve_id and placement.orchestration_id == reserve_id:
                 reserve_placement(placement)
             else:

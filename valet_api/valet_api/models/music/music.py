@@ -91,12 +91,16 @@ class REST(object):
             except requests.exceptions.Timeout as err:
                 response = requests.Response()
                 response.status_code = 408
+                response.url = url + path
+                response.text = err.message
                 response.raise_for_status()
                 # logger.error({"message": err.message})
                 pass
             except requests.exceptions.RequestException as err:
                 response = requests.Response()
                 response.status_code = 400
+                response.url = url + path
+                response.text = err.message
                 response.raise_for_status()
                 # logger.error({"message": err.message})
                 pass
@@ -230,6 +234,20 @@ class Music(object):
         if pk_name and pk_value:
             path += '?%s=%s' % (pk_name, pk_value)
         return path
+
+    def update_row_eventually(self, keyspace, table,  # pylint: disable=R0913
+                              pk_name, pk_value, values):
+        '''Update a row. Not atomic.'''
+        data = {
+            'values': values,
+            'consistencyInfo': {
+                'type': 'eventual',
+            },
+        }
+
+        path = self.__row_url_path(keyspace, table, pk_name, pk_value)
+        response = self.rest.request(method='put', path=path, data=data)
+        return response.ok
 
     def update_row_atomically(self, keyspace, table,  # pylint: disable=R0913
                               pk_name, pk_value, values):

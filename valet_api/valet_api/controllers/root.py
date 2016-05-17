@@ -23,7 +23,7 @@ import logging
 from valet_api.controllers import error
 from valet_api.controllers.errors import ErrorsController, error_wrapper
 from valet_api.controllers.v1 import V1Controller
-from valet_api.i18n import _
+from valet_api.common.i18n import _
 
 from pecan import expose, request, response
 from webob.exc import status_map
@@ -81,7 +81,7 @@ class RootController(object):
         return ver
 
     # TODO: See if we need this anymore. Thinking we don't.
-    @expose('error.html')
+    #@expose('error.html')
     @error_wrapper
     def error(self, status):
         '''Error handler'''

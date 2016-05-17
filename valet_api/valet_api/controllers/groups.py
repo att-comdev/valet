@@ -21,7 +21,7 @@
 import logging
 
 from valet_api.controllers import error, group_name_type
-from valet_api.i18n import _
+from valet_api.common.i18n import _
 from valet_api.models import Group
 
 from notario import decorators

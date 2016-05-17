@@ -88,7 +88,17 @@ class REST(object):
                                      timeout=self.timeout)
                 response.raise_for_status()
                 return response
-            except requests.exceptions.RequestException:
+            except requests.exceptions.Timeout as err:
+                response = requests.Response()
+                response.status_code = 408
+                response.raise_for_status()
+                # logger.error({"message": err.message})
+                pass
+            except requests.exceptions.RequestException as err:
+                response = requests.Response()
+                response.status_code = 400
+                response.raise_for_status()
+                # logger.error({"message": err.message})
                 pass
 
         # If we get here, an exception was raised for every url,

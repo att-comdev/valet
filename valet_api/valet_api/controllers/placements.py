@@ -23,9 +23,9 @@ import logging
 from valet_api.controllers import reserve_placement
 from valet_api.controllers import update_placements
 from valet_api.controllers import error
-from valet_api.i18n import _
+from valet_api.common.i18n import _
 from valet_api.models import Placement, Plan
-from valet_api.ostro_helper import Ostro
+from valet_api.common.ostro_helper import Ostro
 
 from pecan import expose, request, response
 
@@ -42,6 +42,7 @@ class PlacementsItemController(object):
 
     def __init__(self, orchestration_id):
         '''Initializer'''
+        # TODO: This should check the placement id outright as well.
         self.orchestration_id = orchestration_id
         self.placement = Placement.query.filter_by(  # pylint: disable=E1101
             orchestration_id=self.orchestration_id).first()
@@ -72,7 +73,7 @@ class PlacementsItemController(object):
     def index_get(self):
         '''
         Inspect a placement.
-        Use POST for confirming placements from a scheduler.
+        Use POST for reserving placements made by a scheduler.
         '''
         return self.placement
 

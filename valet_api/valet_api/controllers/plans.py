@@ -21,9 +21,9 @@
 import logging
 
 from valet_api.controllers import set_placements, error
-from valet_api.i18n import _
+from valet_api.common.i18n import _
 from valet_api.models import Plan
-from valet_api.ostro_helper import Ostro
+from valet_api.common.ostro_helper import Ostro
 
 from notario import decorators
 from notario.validators import types
@@ -96,7 +96,8 @@ class PlansItemController(object):
     @validate(UPDATE_SCHEMA, '/errors/schema')
     def index_put(self):
         '''Update a Plan'''
-        # FIXME: Possible Ostro regression?
+        # FIXME: This is broken. Unused for Valet 1.0.
+        # Possible Ostro regression?
         # New placements are not being seen in the response, so
         # set_placements is currently failing as a result.
         ostro = Ostro()

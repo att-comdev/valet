@@ -170,7 +170,7 @@ class Base(object):
         kwargs['pk_name'] = self.pk_name()
         kwargs['pk_value'] = self.pk_value()
         kwargs['values'] = self.values()
-        conf.music.engine.update_row_atomically(**kwargs)
+        conf.music.engine.update_row_eventually(**kwargs)
 
     def delete(self):
         '''Delete row.'''

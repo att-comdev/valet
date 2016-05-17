@@ -21,8 +21,8 @@
 import logging
 
 from valet_api.controllers import error
-from valet_api.i18n import _
-from valet_api.ostro_helper import Ostro
+from valet_api.common.i18n import _
+from valet_api.common.ostro_helper import Ostro
 
 from pecan import expose, request, response
 

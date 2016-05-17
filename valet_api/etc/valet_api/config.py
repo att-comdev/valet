@@ -1,6 +1,7 @@
 from pecan.hooks import TransactionHook, RequestViewerHook
 
 from valet_api import models
+from valet_api.common.hooks import NotFoundHook
 
 
 # Server Specific Configurations
@@ -15,6 +16,7 @@ app = {
     'modules': ['valet_api'],
     'default_renderer': 'json',
     'force_canonical': False,
+    'debug': False,
     'hooks': [
         TransactionHook(
             models.start,
@@ -23,10 +25,8 @@ app = {
             models.rollback,
             models.clear
         ),
+        NotFoundHook(),
     ],
-    #'static_root': '%(confdir)s/public',
-    'template_path': '%(confdir)s/valet_api/templates',
-    'debug': False,
 }
 
 logging = {

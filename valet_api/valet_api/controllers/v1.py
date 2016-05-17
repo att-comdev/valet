@@ -25,7 +25,7 @@ from valet_api.controllers.groups import GroupsController
 from valet_api.controllers.placements import PlacementsController
 from valet_api.controllers.plans import PlansController
 from valet_api.controllers.status import StatusController
-from valet_api.i18n import _
+from valet_api.common.i18n import _
 
 from pecan import conf, expose, request, response
 from pecan.secure import SecureController

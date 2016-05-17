@@ -16,22 +16,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-'''Application'''
+'''Hooks'''
 
-from pecan import make_app
+from pecan.hooks import PecanHook
 
-from valet_api.common import identity
-from valet_api import models
+from valet_api.common.i18n import _
+from valet_api.controllers import error
+
+import webob
 
 
-def setup_app(config):
-    '''App Setup'''
-    identity.init_identity()
-    models.init_model()
-    app_conf = dict(config.app)
-
-    return make_app(
-        app_conf.pop('root'),
-        logging=getattr(config, 'logging', {}),
-        **app_conf
-    )
+class NotFoundHook(PecanHook):
+    '''Catchall 'not found' hook for API'''
+    def on_error(self, state, exc):
+        '''Redirects to app-specific not_found endpoint if 404 only'''
+        if isinstance(exc, webob.exc.WSGIHTTPException):
+            if exc.code == 404:
+                message = _('The resource could not be found.')
+                error('/errors/not_found', message)

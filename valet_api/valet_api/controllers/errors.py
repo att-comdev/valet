@@ -18,11 +18,14 @@
 
 '''Errors'''
 
+import logging
 from webob.exc import status_map
 
-from valet_api.i18n import _
+from valet_api.common.i18n import _
 
 from pecan import expose, request, response
+
+# LOG = logging.getLogger(__name__)
 
 # pylint: disable=R0201
 
@@ -39,6 +42,8 @@ def error_wrapper(func):
         error_type = status.__name__
         title = status.title
         traceback = getattr(kwargs, 'traceback', None)
+
+        #LOG.error(explanation)
 
         # Modeled after Heat's format
         return {
@@ -83,6 +88,7 @@ class ErrorsController(object):
         response.status = 401
         response.content_type = 'text/plain'
         response.body = _('Authentication required')
+        # LOG.error(response.body)
         return response
 
     @expose('json')

@@ -20,9 +20,11 @@
 
 import logging
 
-from valet_api.controllers import update_placements, error
+from valet_api.controllers import reserve_placement
+from valet_api.controllers import update_placements
+from valet_api.controllers import error
 from valet_api.i18n import _
-from valet_api.models import Placement
+from valet_api.models import Placement, Plan
 from valet_api.ostro_helper import Ostro
 
 from pecan import expose, request, response
@@ -83,8 +85,8 @@ class PlacementsItemController(object):
         locations = kwargs.get('locations', [])
         if self.placement.location in locations:
             # Ostro's placement is in the list of candidates. Good!
+            reserve_placement(self.placement)
             response.status = 200
-            return self.placement
         else:
             # Ostro's placement is NOT in the list of candidates.
             # Time for Plan B.
@@ -102,8 +104,10 @@ class PlacementsItemController(object):
             # We may get one or more updated placements in return.
             # One of those will be the original placement
             # we are trying to reserve.
+            plan = Plan.query.filter_by(  # pylint: disable=E1101
+                id=self.placement.plan_id).first()
             args = {
-                "stack_id": self.placement.plan_id,
+                "stack_id": plan.stack_id,
                 "locations": locations,
                 "orchestration_id": orchestration_id,
                 "exclusions": exclusions
@@ -123,12 +127,11 @@ class PlacementsItemController(object):
             # Update all affected placements. Reserve the original one.
             placements = ostro.response['resources']
             update_placements(placements, reserve_id=orchestration_id)
-            placement = Placement.query.filter_by(  # pylint: disable=E1101
-                orchestration_id=orchestration_id).first()
-
             response.status = 201
 
-            return placement
+        placement = Placement.query.filter_by(  # pylint: disable=E1101
+            orchestration_id=self.placement.orchestration_id).first()
+        return placement
 
     @index.when(method='DELETE', template='json')
     def index_delete(self):

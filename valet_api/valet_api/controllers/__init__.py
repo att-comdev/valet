@@ -55,6 +55,11 @@ def set_placements(plan, resources, placements):
     return plan
 
 
+def reserve_placement(placement):
+    if placement:
+        placement.reserved = True
+        placement.update()
+
 def update_placements(placements, reserve_id=None):
     '''Update placements. Optionally reserve one placement.'''
     for uuid in placements.iterkeys():
@@ -65,8 +70,9 @@ def update_placements(placements, reserve_id=None):
             location = properties['host']
             placement.location = location
             if reserve_id and placement.orchestration_id == reserve_id:
-                placement.reserved = True
-            placement.update()
+                reserve_placement(placement)
+            else:
+                placement.update()
     return
 
 

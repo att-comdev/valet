@@ -88,7 +88,7 @@ class REST(object):
                                      timeout=self.timeout)
                 response.raise_for_status()
                 return response
-            except requests.exceptions.RequestException as e:
+            except requests.exceptions.RequestException:
                 pass
 
         # If we get here, an exception was raised for every url,
@@ -107,11 +107,13 @@ class Music(object):
     rest = None  # API Endpoint
     replication_factor = None  # Number of Music nodes to replicate across
 
-    def __init__(self, host=None, hosts=['localhost'],
+    def __init__(self, host=None, hosts=None,  # pylint: disable=R0913
                  port='8080', lock_timeout=10, replication_factor=1):
         '''Initializer. Accepts a lock_timeout for atomic operations.'''
 
         # If one host is provided, that overrides the list
+        if not hosts:
+            hosts = ['localhost']
         if host:
             hosts = [host]
 
@@ -154,9 +156,9 @@ class Music(object):
         }
 
         path = '/keyspaces/%(keyspace)s/tables/%(table)s/' % {
-                   'keyspace': keyspace,
-                   'table': table,
-               }
+            'keyspace': keyspace,
+            'table': table,
+        }
         response = self.rest.request(method='post', path=path, data=data)
         return response.ok
 
@@ -177,9 +179,9 @@ class Music(object):
         }
 
         path = '/keyspaces/%(keyspace)s/tables/%(table)s/rows' % {
-                   'keyspace': keyspace,
-                   'table': table,
-               }
+            'keyspace': keyspace,
+            'table': table,
+        }
         response = self.rest.request(method='post', path=path, data=data)
         return response.ok
 
@@ -211,15 +213,15 @@ class Music(object):
     def __row_url_path(keyspace, table, pk_name, pk_value):
         '''Returns a Music-compliant row URL path.'''
         path = '/keyspaces/%(keyspace)s/tables/%(table)s/rows' % {
-                   'keyspace': keyspace,
-                   'table': table,
-               }
+            'keyspace': keyspace,
+            'table': table,
+        }
 
         if pk_name and pk_value:
             path += '?%s=%s' % (pk_name, pk_value)
         return path
 
-    def update_row_atomically(self, keyspace, table,
+    def update_row_atomically(self, keyspace, table,  # pylint: disable=R0913
                               pk_name, pk_value, values):
         '''Update a row atomically.'''
 

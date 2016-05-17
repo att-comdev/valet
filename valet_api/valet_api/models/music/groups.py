@@ -27,10 +27,10 @@ class Group(Base):
     '''Group model'''
     __tablename__ = 'groups'
 
-    id = None
+    id = None  # pylint: disable=C0103
     name = None
     description = None
-    type = None
+    type = None  # pylint: disable=W0622
     members = None
 
     @classmethod
@@ -66,7 +66,7 @@ class Group(Base):
             'members': simplejson.dumps(self.members),
         }
 
-    def __init__(self, name, description, type, members, _insert=True):
+    def __init__(self, name, description, type, members, _insert=True):  # pylint: disable=W0622
         '''Initializer'''
         super(Group, self).__init__()
         self.name = name

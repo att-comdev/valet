@@ -53,6 +53,8 @@ def error_wrapper(func):
         }
     return func_wrapper
 
+
+# pylint: disable=W0613
 class ErrorsController(object):
     '''
     Errors Controller

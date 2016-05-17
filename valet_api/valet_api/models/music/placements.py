@@ -25,7 +25,7 @@ class Placement(Base):
     '''Placement Model'''
     __tablename__ = 'placements'
 
-    id = None
+    id = None  # pylint: disable=C0103
     name = None
     orchestration_id = None
     location = None
@@ -65,7 +65,7 @@ class Placement(Base):
             'plan_id': self.plan_id,
         }
 
-    def __init__(self, name, orchestration_id, plan=None,
+    def __init__(self, name, orchestration_id, plan=None,  # pylint: disable=R0913
                  plan_id=None, location=None, reserved=False, _insert=True):
         '''Initializer'''
         super(Placement, self).__init__()

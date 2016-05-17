@@ -16,18 +16,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+'''Plan Model'''
+
 import uuid
 
-from sqlalchemy import Column, Integer, String, Sequence
-from sqlalchemy.orm import relationship, backref
+from sqlalchemy import Column, String
 from sqlalchemy.orm.exc import DetachedInstanceError
 
 from valet_api.models.sqlalchemy import Base
 
 
-class Plan(Base):
+class Plan(Base):  # pylint: disable=R0903
+    '''Plan Model'''
     __tablename__ = 'plans'
-    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))  # pylint: disable=C0103
     name = Column(String(64), nullable=False, unique=True, index=True)
     stack_id = Column(String(36), nullable=False, unique=True, index=True)
 
@@ -37,6 +39,7 @@ class Plan(Base):
 
     @property
     def orchestration_ids(self):
+        '''Return a list of orchestration IDs'''
         return list(set([p.orchestration_id for p in self.placements.all()]))
 
     def __repr__(self):

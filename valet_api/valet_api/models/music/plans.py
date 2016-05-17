@@ -25,7 +25,7 @@ class Plan(Base):
     '''Plan model'''
     __tablename__ = 'plans'
 
-    id = None
+    id = None  # pylint: disable=C0103
     name = None
     stack_id = None
 

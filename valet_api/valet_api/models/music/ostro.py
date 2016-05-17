@@ -64,7 +64,7 @@ class PlacementRequest(Base):
 
     def __repr__(self):
         '''Object representation'''
-        return '<PlacementRequest %r>' % self.name
+        return '<PlacementRequest %r>' % self.stack_id
 
     def __json__(self):
         '''JSON representation'''

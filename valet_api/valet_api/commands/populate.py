@@ -12,11 +12,14 @@
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
 # implied.
+#
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+'''Populate command'''
+
 from pecan.commands.base import BaseCommand
-from pecan import conf
+#from pecan import conf
 
 from valet_api import models
 from valet_api.models import Group
@@ -28,13 +31,12 @@ from valet_api.models import PlacementResult
 
 
 def out(string):
+    '''Output helper'''
     print "==> %s" % string
 
 
 class PopulateCommand(BaseCommand):
-    """
-    Load a pecan environment and initializate the database.
-    """
+    '''Load a pecan environment and initializate the database.'''
 
     def run(self, args):
         super(PopulateCommand, self).run(args)

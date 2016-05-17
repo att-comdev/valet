@@ -16,14 +16,40 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+'''Music ORM - Common Methods'''
+
+from abc import ABCMeta, abstractmethod
+import ast
+import importlib
 import inspect
 import uuid
 
-from music import Music
+from valet_api.models.music.music import Music
+
 from pecan import conf
 
 
-class ClassPropertyDescriptor(object):
+def get_class(kls):
+    '''Returns a class given a fully qualified class name'''
+    parts = kls.split('.')
+    module = ".".join(parts[:-1])
+    m = __import__(module)
+    for comp in parts[1:]:
+        m = getattr(m, comp)            
+    return m
+
+
+class abstractclassmethod(classmethod):  # pylint: disable=C0103,R0903
+    '''Abstract Class Method from Python 3.3's abc module'''
+
+    __isabstractmethod__ = True
+
+    def __init__(self, callable):  # pylint: disable=W0622
+        callable.__isabstractmethod__ = True
+        super(abstractclassmethod, self).__init__(callable)
+
+
+class ClassPropertyDescriptor(object):  # pylint: disable=R0903
     '''Supports the notion of a class property'''
 
     def __init__(self, fget, fset=None):
@@ -63,7 +89,7 @@ def classproperty(func):
 class Results(list):
     '''Query results'''
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs):  # pylint: disable=W0613
         '''Initializer'''
         super(Results, self).__init__(args[0])
 
@@ -77,70 +103,16 @@ class Results(list):
             return self[0]
 
 
-class Query(object):
-    '''Data Query'''
-    model = None
-
-    def __init__(self, model):
-        '''Initializer'''
-        if inspect.isclass(model):
-            self.model = model
-        elif isinstance(model, basestring):
-            self.model = eval(model)
-
-    def __kwargs(self):
-        '''Return common keyword args.'''
-        keyspace = conf.music.get('keyspace')
-        kwargs = {
-            'keyspace': keyspace,
-            'table': self.model.__tablename__,
-        }
-        return kwargs
-
-    def __rows_to_objects(self, rows):
-        '''Convert query response rows to objects'''
-        results = []
-        pk_name = self.model.pk_name()
-        for row_id, row in rows.iteritems():
-            the_id = row.pop(pk_name)
-            result = self.model(_insert=False, **row)
-            setattr(result, pk_name, the_id)
-            results.append(result)
-        return Results(results)
-
-    def all(self):
-        '''Return all objects'''
-        kwargs = self.__kwargs()
-        rows = conf.music.engine.read_all_rows(**kwargs)
-        return self.__rows_to_objects(rows)
-
-    def filter_by(self, **kwargs):
-        '''Filter objects'''
-        # Music doesn't allow filtering on anything but the primary key.
-        # We need to get all items and then go looking for what we want.
-        all_items = self.all()
-        filtered_items = Results([])
-
-        # For every candidate ...
-        for item in all_items:
-            passes = True
-            # All filters are AND-ed.
-            for key, value in kwargs.items():
-                if getattr(item, key) != value:
-                    passes = False
-                    break
-            if passes:
-                filtered_items.append(item)
-        return filtered_items
-
-
 class Base(object):
     '''
     A custom declarative base that provides some Elixir-inspired shortcuts.
     '''
 
+    __metaclass__ = ABCMeta
+    __tablename__ = None
+
     @classproperty
-    def query(cls):
+    def query(cls):  # pylint: disable=E0213
         '''Return a query object similar to sqlalchemy'''
         return Query(cls)
 
@@ -160,6 +132,26 @@ class Base(object):
         kwargs = cls.__kwargs()
         kwargs['schema'] = cls.schema()
         conf.music.engine.create_table(**kwargs)
+
+    @abstractclassmethod
+    def schema(cls):
+        '''Return schema.'''
+        return cls()
+
+    @abstractclassmethod
+    def pk_name(cls):
+        '''Primary key name'''
+        return cls()
+
+    @abstractmethod
+    def pk_value(self):
+        '''Primary key value'''
+        pass
+
+    @abstractmethod
+    def values(self):
+        '''Values'''
+        pass
 
     def insert(self):
         '''Insert row.'''
@@ -190,7 +182,7 @@ class Base(object):
     @classmethod
     def filter_by(cls, **kwargs):
         '''Filter objects'''
-        return cls.query.filter_by(**kwargs)
+        return cls.query.filter_by(**kwargs)  # pylint: disable=E1101
 
     def flush(self, *args, **kwargs):
         '''Flush changes to disk (not implemented)'''
@@ -206,6 +198,64 @@ class Base(object):
         '''Return object representation as a dictionary'''
         return dict((k, v) for k, v in self.__dict__.items()
                     if not k.startswith('_'))
+
+
+class Query(object):
+    '''Data Query'''
+    model = None
+
+    def __init__(self, model):
+        '''Initializer'''
+        if inspect.isclass(model):
+            self.model = model
+        elif isinstance(model, basestring):
+            self.model = get_class('valet_api.models.' + model)
+        assert inspect.isclass(self.model)
+
+    def __kwargs(self):
+        '''Return common keyword args.'''
+        keyspace = conf.music.get('keyspace')
+        kwargs = {
+            'keyspace': keyspace,
+            'table': self.model.__tablename__,  # pylint: disable=E1101
+        }
+        return kwargs
+
+    def __rows_to_objects(self, rows):
+        '''Convert query response rows to objects'''
+        results = []
+        pk_name = self.model.pk_name()  # pylint: disable=E1101
+        for row_id, row in rows.iteritems():  # pylint: disable=W0612
+            the_id = row.pop(pk_name)
+            result = self.model(_insert=False, **row)
+            setattr(result, pk_name, the_id)
+            results.append(result)
+        return Results(results)
+
+    def all(self):
+        '''Return all objects'''
+        kwargs = self.__kwargs()
+        rows = conf.music.engine.read_all_rows(**kwargs)
+        return self.__rows_to_objects(rows)
+
+    def filter_by(self, **kwargs):
+        '''Filter objects'''
+        # Music doesn't allow filtering on anything but the primary key.
+        # We need to get all items and then go looking for what we want.
+        all_items = self.all()
+        filtered_items = Results([])
+
+        # For every candidate ...
+        for item in all_items:
+            passes = True
+            # All filters are AND-ed.
+            for key, value in kwargs.items():
+                if getattr(item, key) != value:
+                    passes = False
+                    break
+            if passes:
+                filtered_items.append(item)
+        return filtered_items
 
 
 def init_model():

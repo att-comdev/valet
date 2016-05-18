@@ -46,6 +46,7 @@ class V1Controller(SecureController):
     plans = PlansController()
     status = StatusController()
 
+    # Update this whenever a new endpoint is made.
     endpoints = ["groups", "placements", "plans", "status"]
 
     @classmethod

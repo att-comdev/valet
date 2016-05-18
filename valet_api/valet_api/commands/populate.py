@@ -22,6 +22,7 @@ from pecan.commands.base import BaseCommand
 #from pecan import conf
 
 from valet_api import models
+from valet_api.common.i18n import _
 from valet_api.models import Group
 from valet_api.models import Placement
 from valet_api.models import Plan
@@ -40,12 +41,14 @@ class PopulateCommand(BaseCommand):
 
     def run(self, args):
         super(PopulateCommand, self).run(args)
-        out("LOADING ENVIRONMENT")
+        out(_("Loading environment"))
         self.load_app()
-        out("BUILDING SCHEMA")
+        out(_("Building schema"))
         try:
-            out("STARTING A TRANSACTION...")
+            out(_("Starting a transaction..."))
             models.start()
+
+            # FIXME: There's no create_all equivalent for Music.
             #models.Base.metadata.create_all(conf.sqlalchemy.engine)
 
             # Valet
@@ -59,8 +62,8 @@ class PopulateCommand(BaseCommand):
             PlacementResult.create_table()
         except:
             models.rollback()
-            out("ROLLING BACK... ")
+            out(_("Rolling back..."))
             raise
         else:
-            out("COMMITING... ")
+            out(_("Committing."))
             models.commit()

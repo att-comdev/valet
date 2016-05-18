@@ -57,6 +57,7 @@ class Group(Base):
 
     def values(self):
         '''Values'''
+        # TODO: Support lists in Music
         # Lists aren't directly supported in Music, so we have to
         # convert to/from json on the way out/in.
         return {
@@ -70,7 +71,7 @@ class Group(Base):
         '''Initializer'''
         super(Group, self).__init__()
         self.name = name
-        self.description = description
+        self.description = description or ""
         self.type = type
         if _insert:
             self.members = []  # members ignored at init time

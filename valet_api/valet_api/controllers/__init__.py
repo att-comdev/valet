@@ -36,9 +36,9 @@ LOG = logging.getLogger(__name__)
 def group_name_type(value):
     '''Validator for group name type.'''
     assert set(value) <= set(string.letters + string.digits + "-._~"), \
-        "must contain only uppercase and lowercase letters, " \
+        _("must contain only uppercase and lowercase letters, " \
         "decimal digits, hyphens, periods, underscores, and tildes " \
-        "[RFC 3986, Section 2.3]"
+        "[RFC 3986, Section 2.3]")
 
 
 #

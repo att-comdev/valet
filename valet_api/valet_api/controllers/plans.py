@@ -59,6 +59,7 @@ class PlansItemController(object):
     placements = None
 
     def __init__(self, uuid4):
+        '''Initializer.'''
         self.uuid = uuid4
         self.plan = Plan.query.filter_by(  # pylint: disable=E1101
             id=self.uuid).first()
@@ -122,7 +123,7 @@ class PlansItemController(object):
             message = ostro.response['status']['message']
             error(ostro.error_uri, _('Ostro error: %s') % message)
 
-        # TODO: See if we will eventually need these for Ostro.
+        # TODO: Keep. See if we will eventually need these for Ostro.
         #plan_name = args['plan_name']
         #stack_id = args['stack_id']
         resources = ostro.request['resources_update']
@@ -140,7 +141,9 @@ class PlansItemController(object):
         '''Delete a Plan'''
         for placement in self.plan.placements():
             placement.delete()
+        stack_id = self.plan.stack_id
         self.plan.delete()
+        LOG.info(_('Plan with stack id %s deleted.'), stack_id)
         response.status = 204
 
 class PlansController(object):
@@ -213,6 +216,8 @@ class PlansController(object):
 
             # Flush so that the DB is current.
             plan.flush()
+            LOG.info(_('Plan with stack id %s created.'), \
+                plan.stack_id)
             return plan
         else:
             error('/errors/server_error',

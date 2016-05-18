@@ -37,17 +37,29 @@ class StatusController(object):
     /v1/status
     '''
 
-    def _ping(self):
-        '''Ping the optimizer.'''
+    @classmethod
+    def _ping_ostro(cls):
+        '''Ping Ostro'''
         ostro = Ostro()
         ostro.ping()
         ostro.send()
-
-        status_type = ostro.response['status']['type']
-        if status_type != 'ok':
-            message = ostro.response['status']['message']
-            error(ostro.error_uri, _('Ostro error: %s') % message)
         return ostro.response
+
+    @classmethod
+    def _ping(cls):
+        '''Ping each subsystem.'''
+        ostro_response = self._ping_ostro()
+        # TODO: Ping Music plus any others.
+        #music_response = self._ping_music()
+
+        response = {
+            "status": {
+                "ostro": ostro_response,
+                #"music": music_response,
+            }
+        }
+
+        return response
 
     @classmethod
     def allow(cls):
@@ -69,18 +81,14 @@ class StatusController(object):
 
     @index.when(method='HEAD', template='json')
     def index_head(self):
-        '''Ping Ostro'''
+        '''Ping each subsystem and return summary response'''
         _unused = self._ping()  # pylint: disable=W0612
         response.status = 204
 
     @index.when(method='GET', template='json')
     def index_get(self):
-        '''Ping Ostro and return the response'''
-        ostro_response = self._ping()
+        '''Ping each subsystem and return detailed response'''
+
+        _response = self._ping()
         response.status = 200
-        _response = {
-            "status": {
-                "ostro": ostro_response
-            }
-        }
         return _response

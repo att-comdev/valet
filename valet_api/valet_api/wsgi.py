@@ -19,6 +19,9 @@
 '''WSGI Wrapper'''
 
 import os
+
+from valet_api.common.i18n import _
+
 from pecan.deploy import deploy
 
 
@@ -37,11 +40,12 @@ def application(environ, start_response):
 
 if __name__ == '__main__':
     from wsgiref.simple_server import make_server  # pylint: disable=C0411,C0413
-    # at some point, it would be nice to use pecan_mount
+
+    # TODO: At some point, it would be nice to use pecan_mount
     #import pecan_mount
     #HTTPD = make_server('', 8090, pecan_mount.tree)
     HTTPD = make_server('', 8090, deploy(config_file('config.py')))
-    print "Serving HTTP on port 8090..."
+    print _("Serving HTTP on port 8090...")
 
     # Respond to requests until process is killed
     HTTPD.serve_forever()

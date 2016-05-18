@@ -16,14 +16,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import json
-import requests
+'''Valet Nova Scheduler Filter'''
 
 from oslo_config import cfg
 from oslo_log import log as logging
 
 from keystoneclient.v2_0 import client
-from nova.i18n import _LE, _LW
+from nova.i18n import _LI, _LW
 from nova.scheduler import filters
 
 from valet_os.common import valet_api
@@ -34,7 +33,7 @@ LOG = logging.getLogger(__name__)
 
 
 class ValetFilter(filters.BaseHostFilter):
-    """Filter on Valet assignment."""
+    '''Filter on Valet assignment.'''
 
     # Host state does not change within a request
     run_filter_once_per_request = True
@@ -43,6 +42,7 @@ class ValetFilter(filters.BaseHostFilter):
     _auth_token = None
 
     def __init__(self):
+        '''Initializer'''
         self.api = valet_api.ValetAPIWrapper()
         self.opt_group_str = 'valet'
         self.opt_project_name_str = 'admin_tenant_name'
@@ -52,6 +52,7 @@ class ValetFilter(filters.BaseHostFilter):
         self._register_opts()
 
     def _authorize(self):
+        '''Keystone AuthN'''
         opt = getattr(cfg.CONF, self.opt_group_str)
         project_name = opt[self.opt_project_name_str]
         username = opt[self.opt_username_str]
@@ -67,11 +68,12 @@ class ValetFilter(filters.BaseHostFilter):
         keystone_client = client.Client(**kwargs)
         self._auth_token = keystone_client.auth_token
 
-    def _is_same_host(self, host, location):
+    def _is_same_host(self, host, location):  # pylint: disable=R0201
+        '''Returns true if host matches location'''
         return host == location
 
-    # Register options
     def _register_opts(self):
+        '''Register Options'''
         opts = []
         option = cfg.StrOpt(self.opt_project_name_str, default=None,
                             help='Valet Project Name')
@@ -92,6 +94,7 @@ class ValetFilter(filters.BaseHostFilter):
 
     # TODO: Factor out common code to a qosorch library
     def filter_all(self, filter_obj_list, filter_properties):
+        '''Filter all hosts in one swell foop'''
         hints_key = 'scheduler_hints'
         uuid_key = 'heat_resource_uuid'
 
@@ -105,7 +108,8 @@ class ValetFilter(filters.BaseHostFilter):
         # where we can't reach Valet at all, then we may opt to fail
         # all hosts depending on a TBD config flag.
         if not filter_properties.get(hints_key, {}).has_key(uuid_key):
-            LOG.debug("Lifecycle Scheduler Hints not found, Skipping.")
+            LOG.warn(_LW("Valet: Heat Stack Lifecycle Scheduler Hints " \
+                     "not found. Abstaining from placement."))
             yield_all = True
         else:
             uuid = filter_properties[hints_key][uuid_key]
@@ -114,13 +118,13 @@ class ValetFilter(filters.BaseHostFilter):
             placement = self.api.placement(uuid, hosts=hosts,
                                            auth_token=self._auth_token)
 
-            # TODO: Ostro will give a matching format (e.g., mtmac2)
-            # Nova's format is host
+            # Ostro will give a matching format
             if placement and placement.get('location'):
                 location = placement['location']
 
             if not location:
-                LOG.debug("Placement unknown for resource: %s." % uuid)
+                LOG.warn(_LW("Valet placement unknown " \
+                         "for resource: %s.") % uuid)
                 yield_all = True
 
         # Yield the hosts that pass.
@@ -131,12 +135,12 @@ class ValetFilter(filters.BaseHostFilter):
             if location:
                 match = self._is_same_host(obj.host, location)
                 if match:
-                    LOG.debug("Placement for resource %s: %s." % \
-                              (uuid, obj.host))
+                    LOG.info(_LI("Valet placement for resource %s: %s." % \
+                              (uuid, obj.host)))
             if yield_all or match:
                 yield obj
 
-    # Do nothing here. Let filter_all handle it in one swell foop.
-    def host_passes(self, host_state, filter_properties):
-        """Return True if host has sufficient capacity."""
+    def host_passes(self, host_state, filter_properties):  # pylint: disable=W0613,R0201
+        '''Individual host pass check'''
+        # Intentionally let filter_all() handle in one swell foop.
         return False

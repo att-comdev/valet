@@ -16,28 +16,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-'''
-GroupAssignment.py
-
-Author: Joe D'Andrea
-Created: 11 June 2015
-Contact: jdandrea@research.att.com
-'''
-
-from oslo_log import log as logging
+'''GroupAssignment Heat Resource Plugin'''
 
 from heat.common.i18n import _
-from heat.engine import attributes
 from heat.engine import constraints
 from heat.engine import properties
 from heat.engine import resource
-from heat.engine import support
+
+from oslo_log import log as logging
 
 LOG = logging.getLogger(__name__)
 
 
 class GroupAssignment(resource.Resource):
-    """
+    '''
     A Group Assignment describes one or more resources assigned
     to a particular type of group. Assignments can reference other
     assignments, so long as there are no circular references.
@@ -49,7 +41,7 @@ class GroupAssignment(resource.Resource):
     This resource is purely informational in nature and makes no
     changes to heat, nova, or cinder. The Valet Heat Lifecycle
     Plugin passes this information to the optimizer.
-    """
+    '''
 
     _RELATIONSHIP_TYPES = (
         AFFINITY, DIVERSITY, EXCLUSIVITY,
@@ -67,8 +59,9 @@ class GroupAssignment(resource.Resource):
         GROUP_NAME: properties.Schema(
             properties.Schema.STRING,
             _('Group name. Required for exclusivity groups.'),
-            # TODO: Add a custom constraint that ensures a valid
-            # and allowed name when an exclusivity group is in use.
+            # TODO: Add a custom constraint
+            # Constraint must ensure a valid and allowed name
+            # when an exclusivity group is in use.
             # This is presently enforced by valet-api and can also
             # be pro-actively enforced here, so as to avoid unnecessary
             # orchestration.
@@ -98,30 +91,21 @@ class GroupAssignment(resource.Resource):
             update_allowed=True
         ),
     }
-    
+
     def handle_create(self):
+        '''Create resource'''
         self.resource_id_set(self.physical_resource_name())
 
-    def handle_update(self, json_snippet, templ_diff, prop_diff):
+    def handle_update(self, json_snippet, templ_diff, prop_diff):  # pylint: disable=W0613
+        '''Update resource'''
         self.resource_id_set(self.physical_resource_name())
 
     def handle_delete(self):
+        '''Delete resource'''
         self.resource_id_set(None)
 
-class GroupAssignmentDeprecated(GroupAssignment):
-    """
-    DEPRECATED: Use ATT::Valet::GroupAssignment instead.
-    """
-
-    support_status = support.SupportStatus(
-        support.DEPRECATED,
-        _('ATT::CloudQoS::ResourceGroup is now ' \
-          'ATT::Valet::GroupAssignment.')
-    )
-
 def resource_mapping():
-    """Map names to resources."""
+    '''Map names to resources.'''
     return {
-       'ATT::CloudQoS::ResourceGroup': GroupAssignmentDeprecated,
-       'ATT::Valet::GroupAssignment': GroupAssignment,
+        'ATT::Valet::GroupAssignment': GroupAssignment,
     }

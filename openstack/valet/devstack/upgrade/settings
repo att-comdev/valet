@@ -1,7 +1,0 @@
-register_project_for_upgrade valet
-
-devstack_localrc base enable_plugin valet git://git.openstack.org/openstack/valet
-devstack_localrc base enable_service valet-acompute valet-acentral valet-aipmi valet-anotification valet-collector valet-api valet-alarm-notifier valet-alarm-evaluator tempest
-
-devstack_localrc target enable_plugin valet git://git.openstack.org/openstack/valet
-devstack_localrc target enable_service valet-acompute valet-acentral valet-aipmi valet-anotification valet-collector valet-api valet-alarm-notifier valet-alarm-evaluator tempest

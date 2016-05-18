@@ -16,17 +16,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import json
-import requests
+'''Valet Plugins for Heat'''
+
 import string
 import uuid
 
 from oslo_config import cfg
 from oslo_log import log as logging
 
-from heat.common.i18n import _
-from heat.common import exception
-from heat.db import api as db_api
 from heat.engine import lifecycle_plugin
 from valet_os.common import valet_api
 
@@ -36,18 +33,18 @@ LOG = logging.getLogger(__name__)
 
 
 def validate_uuid4(uuid_string):
-    """
+    '''
     Validate that a UUID string is in fact a valid uuid4.
     Happily, the uuid module does the actual checking for us.
     It is vital that the 'version' kwarg be passed to the
     UUID() call, otherwise any 32-character hex string
     is considered valid.
-    """
+    '''
 
     try:
         val = uuid.UUID(uuid_string, version=4)
     except ValueError:
-        # If it's a value error, then the string 
+        # If it's a value error, then the string
         # is not a valid hex code for a UUID.
         return False
 
@@ -58,6 +55,7 @@ def validate_uuid4(uuid_string):
     # uuid_string will sometimes have separators.
     return string.replace(val.hex, '-', '') == \
            string.replace(uuid_string, '-', '')
+
 
 class ValetLifecyclePlugin(lifecycle_plugin.LifecyclePlugin):
     '''
@@ -72,7 +70,7 @@ class ValetLifecyclePlugin(lifecycle_plugin.LifecyclePlugin):
         cfg.CONF.import_opt('stack_scheduler_hints', 'heat.common.config')
         self.hints_enabled = cfg.CONF.stack_scheduler_hints
 
-    def _parse_stack_preview(self, dest, preview): 
+    def _parse_stack_preview(self, dest, preview):
         '''
         Walk the preview list (possibly nested), extracting
         parsed template dicts and storing modified versions in
@@ -82,23 +80,24 @@ class ValetLifecyclePlugin(lifecycle_plugin.LifecyclePlugin):
         if not isinstance(preview, list):
             # Heat does not assign orchestration UUIDs to
             # all resources, so we must make our own sometimes.
-            # TODO: Either propose uniform use of UUIDs within
-            # Heat, or store resource UUIDs within the parsed
-            # template and use only Valet-originating UUIDs
-            # as keys.
+            # This also means nested templates can't be supported yet.
+
+            # FIXME: Either propose uniform use of UUIDs within
+            # Heat (related to Heat bug 1516807), or store
+            # resource UUIDs within the parsed template and
+            # use only Valet-originating UUIDs as keys.
             if hasattr(preview, 'uuid') and \
                preview.uuid and validate_uuid4(preview.uuid):
                 key = preview.uuid
             else:
                 # TODO: Heat should be authoritative for UUID assignments.
                 # This will require a change to heat-engine.
-                # Looks like it does though: heat/db/sqlalchemy/models.py#L279
+                # Looks like it may be: heat/db/sqlalchemy/models.py#L279
                 # It could be that nested stacks aren't added to the DB yet.
                 key = str(uuid.uuid4())
             parsed = preview.parsed_template()
             parsed['name'] = preview.name
             # TODO: Replace resource referenced names with their UUIDs.
-            # (use logic from qosdeploy for this)
             dest[key] = parsed
         else:
             for item in preview:
@@ -134,10 +133,10 @@ class ValetLifecyclePlugin(lifecycle_plugin.LifecyclePlugin):
                 plan['specifications'] = specifications
             if reservations:
                 plan['reservations'] = reservations
-        
+
             self.api.plans_create(stack, plan, auth_token=cnxt.auth_token)
 
-    def do_post_op(self, cnxt, stack, current_stack=None, action=None,
+    def do_post_op(self, cnxt, stack, current_stack=None, action=None,  # pylint: disable=R0913
                    is_stack_failure=False):
         '''
         Method to be run by heat after stack operations, including failures.

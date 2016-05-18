@@ -24,6 +24,7 @@ import importlib
 import inspect
 import uuid
 
+from valet_api.common.i18n import _
 from valet_api.models.music.music import Music
 
 from pecan import conf
@@ -33,10 +34,10 @@ def get_class(kls):
     '''Returns a class given a fully qualified class name'''
     parts = kls.split('.')
     module = ".".join(parts[:-1])
-    m = __import__(module)
+    mod = __import__(module)
     for comp in parts[1:]:
-        m = getattr(m, comp)            
-    return m
+        mod = getattr(mod, comp)
+    return mod
 
 
 class abstractclassmethod(classmethod):  # pylint: disable=C0103,R0903
@@ -66,7 +67,7 @@ class ClassPropertyDescriptor(object):  # pylint: disable=R0903
     def __set__(self, obj, value):
         '''Set attribute'''
         if not self.fset:
-            raise AttributeError("can't set attribute")
+            raise AttributeError(_("Can't set attribute"))
         type_ = type(obj)
         return self.fset.__get__(obj, type_)(value)
 
@@ -113,12 +114,12 @@ class Base(object):
 
     @classproperty
     def query(cls):  # pylint: disable=E0213
-        '''Return a query object similar to sqlalchemy'''
+        '''Return a query object a la sqlalchemy'''
         return Query(cls)
 
     @classmethod
     def __kwargs(cls):
-        '''Return common keyword args.'''
+        '''Return common keyword args'''
         keyspace = conf.music.get('keyspace')
         kwargs = {
             'keyspace': keyspace,
@@ -128,14 +129,14 @@ class Base(object):
 
     @classmethod
     def create_table(cls):
-        '''Create table.'''
+        '''Create table'''
         kwargs = cls.__kwargs()
         kwargs['schema'] = cls.schema()
         conf.music.engine.create_table(**kwargs)
 
     @abstractclassmethod
     def schema(cls):
-        '''Return schema.'''
+        '''Return schema'''
         return cls()
 
     @abstractclassmethod
@@ -154,7 +155,7 @@ class Base(object):
         pass
 
     def insert(self):
-        '''Insert row.'''
+        '''Insert row'''
         kwargs = self.__kwargs()
         kwargs['values'] = self.values()
         pk_name = self.pk_name()
@@ -165,7 +166,7 @@ class Base(object):
         conf.music.engine.create_row(**kwargs)
 
     def update(self):
-        '''Update row.'''
+        '''Update row'''
         kwargs = self.__kwargs()
         kwargs['pk_name'] = self.pk_name()
         kwargs['pk_value'] = self.pk_value()
@@ -173,7 +174,7 @@ class Base(object):
         conf.music.engine.update_row_eventually(**kwargs)
 
     def delete(self):
-        '''Delete row.'''
+        '''Delete row'''
         kwargs = self.__kwargs()
         kwargs['pk_name'] = self.pk_name()
         kwargs['pk_value'] = self.pk_value()
@@ -185,14 +186,9 @@ class Base(object):
         return cls.query.filter_by(**kwargs)  # pylint: disable=E1101
 
     def flush(self, *args, **kwargs):
-        '''Flush changes to disk (not implemented)'''
-        #object_session(self).flush([self], *args, **kwargs)
+        '''Flush changes to storage'''
+        # TODO: Implement in music? May be a no-op
         pass
-
-    #def delete(self, *args, **kwargs):
-    #    '''Delete an object'''
-    #    #object_session(self).delete(self, *args, **kwargs)
-    #    pass
 
     def as_dict(self):
         '''Return object representation as a dictionary'''
@@ -213,7 +209,7 @@ class Query(object):
         assert inspect.isclass(self.model)
 
     def __kwargs(self):
-        '''Return common keyword args.'''
+        '''Return common keyword args'''
         keyspace = conf.music.get('keyspace')
         kwargs = {
             'keyspace': keyspace,
@@ -259,21 +255,7 @@ class Query(object):
 
 
 def init_model():
-    '''
-    This is a stub method which is called at application startup time.
-
-    If you need to bind to a parse database configuration, set up tables or
-    ORM classes, or perform any database initialization, this is the
-    recommended place to do it.
-
-    For more information working with databases, and some common recipes,
-    see http://pecan.readthedocs.org/en/latest/databases.html
-
-    For creating all metadata you would use::
-
-        Base.metadata.create_all(conf.music.engine)
-
-    '''
+    '''Data Store Initialization'''
     conf.music.engine = _engine_from_config(conf.music)
     keyspace = conf.music.get('keyspace')
     conf.music.engine.create_keyspace(keyspace)

@@ -25,7 +25,7 @@ from valet_api.common.i18n import _
 
 from pecan import expose, request, response
 
-# LOG = logging.getLogger(__name__)
+LOG = logging.getLogger(__name__)
 
 # pylint: disable=R0201
 
@@ -43,7 +43,7 @@ def error_wrapper(func):
         title = status.title
         traceback = getattr(kwargs, 'traceback', None)
 
-        #LOG.error(explanation)
+        LOG.error(explanation)
 
         # Modeled after Heat's format
         return {
@@ -84,11 +84,12 @@ class ErrorsController(object):
     @expose()
     def unauthorized(self, **kw):
         '''401'''
-        # This error doesn't use the wrapper on purpose.
+        # This error is terse and opaque on purpose.
+        # Don't give any clues to help AuthN along.
         response.status = 401
         response.content_type = 'text/plain'
         response.body = _('Authentication required')
-        # LOG.error(response.body)
+        LOG.error(response.body)
         return response
 
     @expose('json')

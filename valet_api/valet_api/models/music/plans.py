@@ -78,7 +78,6 @@ class Plan(Base):
     @property
     def orchestration_ids(self):
         '''Return list of orchestration IDs'''
-        #return list(set([p.orchestration_id for p in self.placements.all()]))
         return list(set([p.orchestration_id for p in self.placements()]))
 
     def __repr__(self):
@@ -92,7 +91,6 @@ class Plan(Base):
         json_['stack_id'] = self.stack_id
         json_['name'] = self.name
         json_['placements'] = {}
-        #for placement in self.placements.all():
         for placement in self.placements():
             json_['placements'][placement.orchestration_id] = dict(
                 name=placement.name,

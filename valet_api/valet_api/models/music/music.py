@@ -18,14 +18,15 @@
 
 '''Music Data Store API'''
 
-# Standard library imports
 import json
+import logging
 import time
 
-# Related third party imports
+from valet_api.common.i18n import _
+
 import requests
 
-# Local application/library specific imports
+LOG = logging.getLogger(__name__)
 
 
 class REST(object):
@@ -75,15 +76,18 @@ class REST(object):
                 path='/', data=None):
         '''Performs HTTP request.'''
         if method not in ('post', 'get', 'put', 'delete'):
-            raise KeyError("Method must be one of post, get, " \
-                           "put, or delete.")
+            raise KeyError(_("Method must be one of post, get, " \
+                           "put, or delete."))
         method_fn = getattr(requests, method)
 
         response = None
         for url in self.urls:
             # Try each url in turn. First one to succeed wins.
+            full_url = url + path
             try:
-                response = method_fn(url + path, data=json.dumps(data),
+                LOG.debug("Music Request: %s %s\n%s", \
+                   method.upper(), full_url, data)
+                response = method_fn(full_url, data=json.dumps(data),
                                      headers=self.__headers(content_type),
                                      timeout=self.timeout)
                 response.raise_for_status()
@@ -91,19 +95,15 @@ class REST(object):
             except requests.exceptions.Timeout as err:
                 response = requests.Response()
                 response.status_code = 408
-                response.url = url + path
+                response.url = full_url
                 response.text = err.message
-                response.raise_for_status()
-                # logger.error({"message": err.message})
-                pass
+                LOG.debug("Music: %s", err.message)
             except requests.exceptions.RequestException as err:
                 response = requests.Response()
                 response.status_code = 400
-                response.url = url + path
+                response.url = full_url
                 response.text = err.message
-                response.raise_for_status()
-                # logger.error({"message": err.message})
-                pass
+                LOG.debug("Music: %s", err.message)
 
         # If we get here, an exception was raised for every url,
         # but we passed so we could try each endpoint. Raise status
@@ -213,7 +213,6 @@ class Music(object):
                                      content_type='text/plain', path=path)
 
         status = (response.text.lower() == 'true')
-        # print "Server response .... \n" + response.text
         return status
 
     def release_lock(self, lock_id):
@@ -262,12 +261,11 @@ class Music(object):
         }
         self.lock_names.append(lock_name)
         lock_id = self.create_lock(lock_name)
-        # print "Server response .... \n" + lock_id
 
         time_now = time.time()
         while not self.acquire_lock(lock_id):
             if time.time() - time_now > self.lock_timeout:
-                raise IndexError('Lock acquire timeout: %s' % lock_name)
+                raise IndexError(_('Lock acquire timeout: %s') % lock_name)
 
         # Update entry now that we have the lock.
         data = {
@@ -283,7 +281,7 @@ class Music(object):
 
         # Release lock now that the operation is done.
         self.release_lock(lock_id)
-        # TODO: Wouldn't we delete the lock at this point?
+        # FIXME: Wouldn't we delete the lock at this point?
 
         return response.ok
 
@@ -326,7 +324,6 @@ class Music(object):
         path = '/locks/delete/%s' % lock_name
         response = self.rest.request(content_type='text/plain',
                                      method='delete', path=path)
-        # print "Server response .... \n" + response.text
         return response.ok
 
     def delete_all_locks(self):

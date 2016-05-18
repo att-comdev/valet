@@ -17,16 +17,20 @@
 
 '''Ostro helper library'''
 
+import logging
 import time
 import uuid
 
 from pecan import conf
 import simplejson
 
+from valet_api.common.i18n import _
 from valet_api.models import Group
 from valet_api.models import PlacementRequest
 from valet_api.models import PlacementResult
 from valet_api.models import Query
+
+LOG = logging.getLogger(__name__)
 
 GROUP_ASSIGNMENT = 'ATT::Valet::GroupAssignment'
 GROUP_TYPE = 'group_type'
@@ -34,6 +38,12 @@ GROUP_NAME = 'group_name'
 AFFINITY = 'affinity'
 DIVERSITY = 'diversity'
 EXCLUSIVITY = 'exclusivity'
+
+
+def _log(text, title):
+    '''Log helper'''
+    log_text = "%s:\n%s" % (title, text)
+    LOG.debug(log_text)
 
 
 class Ostro(object):
@@ -48,15 +58,11 @@ class Ostro(object):
     tries = None  # Number of times to poll for placement.
     interval = None  # Interval in seconds to poll for placement.
 
-    # TODO: Make debug mode a setting. Write dump file to a log.
-    debug = True
-    debug_file = '/tmp/valet-dump.txt'
-
     @classmethod
     def _build_error(cls, message):
         '''Build an Ostro-style error message'''
         if not message:
-            message = "Unknown error"
+            message = _("Unknown error")
         error = {
             'status': {
                 'type': 'error',
@@ -102,15 +108,6 @@ class Ostro(object):
             if data in mapping:
                 return mapping[data]
         return data
-
-    # TODO: Log to an actual logging facility and not a tmp file
-    def _log(self, text, title, append=False):
-        '''Log helper'''
-        flag = 'a' if append else 'w'
-        log = open(self.debug_file, flag)
-        print >>log, "===%s===" % title
-        print >>log, text
-        log.close()
 
     def _prepare_resources(self, resources):
         '''
@@ -172,15 +169,15 @@ class Ostro(object):
                    group_type == DIVERSITY:
                     if group_name:
                         self.error_uri = '/errors/conflict'
-                        message = "%s must not be used when " \
-                                  "%s is '%s'. " % \
+                        message = _("%s must not be used when " \
+                                  "%s is '%s'. ") % \
                                   (GROUP_NAME, GROUP_TYPE, group_type)
                         break
                 elif group_type == EXCLUSIVITY:
                     if not group_name:
                         self.error_uri = '/errors/invalid'
-                        message = "%s must be used when " \
-                                  "%s is '%s'." % \
+                        message = _("%s must be used when " \
+                                  "%s is '%s'.") % \
                                   (GROUP_NAME, GROUP_TYPE, group_type)
                         break
                     group = Group.query.filter_by(  # pylint: disable=E1101
@@ -192,14 +189,14 @@ class Ostro(object):
                         break
                     elif group and tenant_id not in group.members:
                         self.error_uri = '/errors/conflict'
-                        message = "Tenant ID %s not a member of " \
-                                  "%s '%s' (%s)" % \
+                        message = _("Tenant ID %s not a member of " \
+                                  "%s '%s' (%s)") % \
                                   (self.tenant_id, GROUP_NAME, \
                                   group.name, group.id)
                         break
                 else:
                     self.error_uri = '/errors/invalid'
-                    message = "%s '%s' is invalid." % \
+                    message = _("%s '%s' is invalid.") % \
                               (GROUP_TYPE, group_type)
                     break
         if message:
@@ -278,14 +275,10 @@ class Ostro(object):
             [self.request], sort_keys=True, indent=2 * ' '
         )
 
-        if self.debug:
-            self._log(request_json, 'Payload')
-
         # TODO: Pass timeout value?
+        _log(request_json, _('Ostro Request'))
         result = self._send(self.args['stack_id'], request_json)
-
-        if self.debug:
-            self._log(result, 'Result', append=True)
+        _log(result, _('Ostro Response'))
 
         self.response = simplejson.loads(result)
 

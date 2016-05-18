@@ -32,8 +32,12 @@ app = {
 logging = {
     'root': {'level': 'INFO', 'handlers': ['console']},
     'loggers': {
-        'valet_api': {'level': 'DEBUG', 'handlers': ['console']},
-        'pecan': {'level': 'DEBUG', 'handlers': ['console']},
+        'valet_api': {
+            'level': 'DEBUG', 'handlers': ['console'], 'propagate': False
+        },
+        'pecan': {
+            'level': 'DEBUG', 'handlers': ['console'], 'propagate': False
+        },
         'py.warnings': {'handlers': ['console']},
         '__force_dict__': True
     },
@@ -68,16 +72,8 @@ identity = {
         'username': 'valet',
         'password': 'password',
         'project_name': 'service',
-        'auth_url': 'http://qos101.research.att.com:5000/v2.0',
+        'auth_url': 'http://controller:5000/v2.0',
     }
-}
-
-sqlalchemy = {
-    'url': 'mysql+pymysql://valet:password@127.0.0.1/valet?charset=utf8',
-    'echo':          True,
-    'echo_pool':     True,
-    'pool_recycle':  3600,
-    'encoding':      'utf-8',
 }
 
 music = {

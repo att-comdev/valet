@@ -26,18 +26,18 @@ resources:
 
 
   test-affinity-group11:
-    type: ATT::CloudQoS::ResourceGroup
+    type: ATT::Valet::GroupAssignment
     properties:
-      relationship: affinity
+      group_type: affinity
       level: host
       resources:
       - {get_resource: my-instance-1}
       - {get_resource: my-instance-2}
  
   test-affinity-group12:
-    type: ATT::CloudQoS::ResourceGroup
+    type: ATT::Valet::GroupAssignment
     properties:
-      relationship: diversity 
+      group_type: diversity 
       level: host
       resources:
       - {get_resource: my-instance-1}

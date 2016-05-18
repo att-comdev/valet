@@ -1,0 +1,1339 @@
+test: request_data =  [
+{
+  "version": "0.1",
+  "action": "create",
+  "stack_id": "app_uuid2",
+  "application_name": "app2",
+  "resources": {
+    "vm3_uuid": {
+      "name": "vm3",
+      "properties": {
+        "flavor": "bflavor0"
+      },
+      "type": "OS::Nova::Server"
+    },
+    "vm4_uuid": {
+      "name": "vm4",
+      "properties": {
+        "flavor": "bflavor0"
+      },
+      "type": "OS::Nova::Server"
+    },
+    "vm5_uuid": {
+      "name": "vm5",
+      "properties": {
+        "flavor": "bflavor0"
+      },
+      "type": "OS::Nova::Server"
+    },
+    "exclusivity0_uuid": {
+      "group_name": "exclusivity0",
+      "properties": {
+        "group_type": "exclusivity",
+        "level": "host",
+        "resources": [
+          "vm3_uuid",
+          "vm4_uuid"
+        ]
+      },
+      "type": "ATT::Valet::GroupAssignment"
+    }
+  }
+}
+]
+
+Placement result
+{
+    "status": {
+        "message": "success", 
+        "type": "ok"
+    }, 
+    "resources": {
+        "vm3_uuid": {
+            "properties": {
+                "host": "sim0r0c0"
+            }
+        }, 
+        "vm4_uuid": {
+            "properties": {
+                "host": "sim0r0c0"
+            }
+        }, 
+        "vm5_uuid": {
+            "properties": {
+                "host": "sim0r1c0"
+            }
+        }
+    }
+}
+Resource status
+{
+    "flavors": {
+        "bflavor2": {
+            "status": "enabled", 
+            "mem": 6000.0, 
+            "last_update": 1463417212.082766, 
+            "vCPUs": 3.0, 
+            "extra_specs": {}, 
+            "flavor_id": null, 
+            "disk": 130.01953125
+        }, 
+        "bflavor0": {
+            "status": "enabled", 
+            "mem": 2000.0, 
+            "last_update": 1463417212.08289, 
+            "vCPUs": 1.0, 
+            "extra_specs": {}, 
+            "flavor_id": null, 
+            "disk": 50.01953125
+        }, 
+        "bflavor1": {
+            "status": "enabled", 
+            "mem": 4000.0, 
+            "last_update": 1463417212.08301, 
+            "vCPUs": 2.0, 
+            "extra_specs": {}, 
+            "flavor_id": null, 
+            "disk": 90.01953125
+        }, 
+        "sflavor0": {
+            "status": "enabled", 
+            "mem": 2000, 
+            "last_update": 1463417212.08315, 
+            "vCPUs": 1, 
+            "extra_specs": {
+                "cpu_allocation_ratio": "0.5"
+            }, 
+            "flavor_id": null, 
+            "disk": 40
+        }
+    }, 
+    "datacenter": {
+        "status": "enabled", 
+        "vm_list": [
+            [
+                "vm5_uuid", 
+                "vm5", 
+                "none"
+            ], 
+            [
+                "vm3_uuid", 
+                "vm3", 
+                "none"
+            ], 
+            [
+                "vm4_uuid", 
+                "vm4", 
+                "none"
+            ]
+        ], 
+        "avail_mem": 70800.0, 
+        "name": "sim", 
+        "original_mem": 64000.0, 
+        "mem": 76800.0, 
+        "avail_vCPUs": 419.40000000000003, 
+        "avail_local_disk": 3049.94140625, 
+        "children": [
+            "sim0r1", 
+            "sim0r0"
+        ], 
+        "storage_list": [], 
+        "last_update": 1463417233.312197, 
+        "local_disk": 3200.0, 
+        "vCPUs": 422.40000000000003, 
+        "membership_list": [
+            "aggregate0", 
+            "host:exclusivity0", 
+            "nova"
+        ], 
+        "volume_list": [], 
+        "original_vCPUs": 64.0, 
+        "region_code_list": [
+            "sim0"
+        ], 
+        "switch_list": [
+            "sim"
+        ], 
+        "last_link_update": 1463417212.087325, 
+        "original_local_disk": 4000.0
+    }, 
+    "logical_groups": {
+        "aggregate0": {
+            "status": "enabled", 
+            "vm_list": [], 
+            "vms_per_host": {
+                "sim0r0c0": [], 
+                "sim0r1c0": []
+            }, 
+            "volume_list": [], 
+            "last_update": 1463417212.079769, 
+            "group_type": "AGGR", 
+            "metadata": {
+                "cpu_allocation_ratio": "0.5"
+            }
+        }, 
+        "host:exclusivity0": {
+            "status": "enabled", 
+            "vm_list": [
+                [
+                    "vm3_uuid", 
+                    "vm3", 
+                    "none"
+                ], 
+                [
+                    "vm4_uuid", 
+                    "vm4", 
+                    "none"
+                ]
+            ], 
+            "vms_per_host": {
+                "sim0r0c0": [
+                    [
+                        "vm3_uuid", 
+                        "vm3", 
+                        "none"
+                    ], 
+                    [
+                        "vm4_uuid", 
+                        "vm4", 
+                        "none"
+                    ]
+                ]
+            }, 
+            "volume_list": [], 
+            "last_update": 1463417233.312187, 
+            "group_type": "EX", 
+            "metadata": {}
+        }, 
+        "nova": {
+            "status": "enabled", 
+            "vm_list": [], 
+            "vms_per_host": {
+                "sim0r0c0": [], 
+                "sim0r1c1": [], 
+                "sim0r0c1": [], 
+                "sim0r1c0": []
+            }, 
+            "volume_list": [], 
+            "last_update": 1463417212.079925, 
+            "group_type": "AZ", 
+            "metadata": {}
+        }
+    }, 
+    "timestamp": 1463417233.312197, 
+    "switches": {
+        "sim0r1": {
+            "status": "enabled", 
+            "switch_type": "ToR", 
+            "peer_links": {}, 
+            "up_links": {
+                "sim0r1-sim": {
+                    "avail_bandwidth": 9223372036854775807, 
+                    "bandwidth": 9223372036854775807, 
+                    "resource": "sim"
+                }
+            }, 
+            "last_update": 1463417212.084835
+        }, 
+        "sim0r0": {
+            "status": "enabled", 
+            "switch_type": "ToR", 
+            "peer_links": {}, 
+            "up_links": {
+                "sim0r0-sim": {
+                    "avail_bandwidth": 9223372036854775807, 
+                    "bandwidth": 9223372036854775807, 
+                    "resource": "sim"
+                }
+            }, 
+            "last_update": 1463417212.084919
+        }, 
+        "sim0r1c1": {
+            "status": "enabled", 
+            "switch_type": "leaf", 
+            "peer_links": {}, 
+            "up_links": {
+                "sim0r1c1-sim0r1": {
+                    "avail_bandwidth": 9223372036854775807, 
+                    "bandwidth": 9223372036854775807, 
+                    "resource": "sim0r1"
+                }
+            }, 
+            "last_update": 1463417212.085009
+        }, 
+        "sim0r1c0": {
+            "status": "enabled", 
+            "switch_type": "leaf", 
+            "peer_links": {}, 
+            "up_links": {
+                "sim0r1c0-sim0r1": {
+                    "avail_bandwidth": 9223372036854775807, 
+                    "bandwidth": 9223372036854775807, 
+                    "resource": "sim0r1"
+                }
+            }, 
+            "last_update": 1463417212.085105
+        }, 
+        "sim0r0c0": {
+            "status": "enabled", 
+            "switch_type": "leaf", 
+            "peer_links": {}, 
+            "up_links": {
+                "sim0r0c0-sim0r0": {
+                    "avail_bandwidth": 9223372036854775807, 
+                    "bandwidth": 9223372036854775807, 
+                    "resource": "sim0r0"
+                }
+            }, 
+            "last_update": 1463417212.085192
+        }, 
+        "sim0r0c1": {
+            "status": "enabled", 
+            "switch_type": "leaf", 
+            "peer_links": {}, 
+            "up_links": {
+                "sim0r0c1-sim0r0": {
+                    "avail_bandwidth": 9223372036854775807, 
+                    "bandwidth": 9223372036854775807, 
+                    "resource": "sim0r0"
+                }
+            }, 
+            "last_update": 1463417212.085325
+        }, 
+        "sim": {
+            "status": "enabled", 
+            "switch_type": "root", 
+            "peer_links": {}, 
+            "up_links": {}, 
+            "last_update": 1463417212.084493
+        }
+    }, 
+    "hosts": {
+        "sim0r1c1": {
+            "vm_list": [], 
+            "original_mem": 16000.0, 
+            "storage_list": [], 
+            "vCPUs": 204.8, 
+            "tag": [
+                "nova", 
+                "infra"
+            ], 
+            "free_disk_gb": 1000.0, 
+            "original_vCPUs": 16.0, 
+            "free_mem_mb": 16000.0, 
+            "avail_vCPUs": 204.8, 
+            "last_link_update": 1463417212.085698, 
+            "original_local_disk": 1000.0, 
+            "last_update": 1463417212.085697, 
+            "state": "up", 
+            "membership_list": [
+                "nova"
+            ], 
+            "status": "enabled", 
+            "avail_mem": 19200.0, 
+            "parent": "sim0r1", 
+            "vCPUs_used": 0.0, 
+            "mem": 19200.0, 
+            "volume_list": [], 
+            "disk_available_least": 1000.0, 
+            "switch_list": [
+                "sim0r1c1"
+            ], 
+            "avail_local_disk": 800.0, 
+            "local_disk": 800.0
+        }, 
+        "sim0r0c0": {
+            "vm_list": [
+                [
+                    "vm3_uuid", 
+                    "vm3", 
+                    "none"
+                ], 
+                [
+                    "vm4_uuid", 
+                    "vm4", 
+                    "none"
+                ]
+            ], 
+            "original_mem": 16000.0, 
+            "storage_list": [], 
+            "vCPUs": 6.4, 
+            "tag": [
+                "nova", 
+                "infra"
+            ], 
+            "free_disk_gb": 899.9609375, 
+            "original_vCPUs": 16.0, 
+            "free_mem_mb": 12000.0, 
+            "avail_vCPUs": 4.4, 
+            "last_link_update": 1463417212.085944, 
+            "original_local_disk": 1000.0, 
+            "last_update": 1463417233.312194, 
+            "state": "up", 
+            "membership_list": [
+                "aggregate0", 
+                "host:exclusivity0", 
+                "nova"
+            ], 
+            "status": "enabled", 
+            "avail_mem": 15200.0, 
+            "parent": "sim0r0", 
+            "vCPUs_used": 2.0, 
+            "mem": 19200.0, 
+            "volume_list": [], 
+            "disk_available_least": 899.9609375, 
+            "switch_list": [
+                "sim0r0c0"
+            ], 
+            "avail_local_disk": 699.9609375, 
+            "local_disk": 800.0
+        }, 
+        "sim0r0c1": {
+            "vm_list": [], 
+            "original_mem": 16000.0, 
+            "storage_list": [], 
+            "vCPUs": 204.8, 
+            "tag": [
+                "nova", 
+                "infra"
+            ], 
+            "free_disk_gb": 1000.0, 
+            "original_vCPUs": 16.0, 
+            "free_mem_mb": 16000.0, 
+            "avail_vCPUs": 204.8, 
+            "last_link_update": 1463417212.086172, 
+            "original_local_disk": 1000.0, 
+            "last_update": 1463417212.086171, 
+            "state": "up", 
+            "membership_list": [
+                "nova"
+            ], 
+            "status": "enabled", 
+            "avail_mem": 19200.0, 
+            "parent": "sim0r0", 
+            "vCPUs_used": 0.0, 
+            "mem": 19200.0, 
+            "volume_list": [], 
+            "disk_available_least": 1000.0, 
+            "switch_list": [
+                "sim0r0c1"
+            ], 
+            "avail_local_disk": 800.0, 
+            "local_disk": 800.0
+        }, 
+        "sim0r1c0": {
+            "vm_list": [
+                [
+                    "vm5_uuid", 
+                    "vm5", 
+                    "none"
+                ]
+            ], 
+            "original_mem": 16000.0, 
+            "storage_list": [], 
+            "vCPUs": 6.4, 
+            "tag": [
+                "nova", 
+                "infra"
+            ], 
+            "free_disk_gb": 949.98046875, 
+            "original_vCPUs": 16.0, 
+            "free_mem_mb": 14000.0, 
+            "avail_vCPUs": 5.4, 
+            "last_link_update": 1463417212.0864, 
+            "original_local_disk": 1000.0, 
+            "last_update": 1463417233.312166, 
+            "state": "up", 
+            "membership_list": [
+                "aggregate0", 
+                "nova"
+            ], 
+            "status": "enabled", 
+            "avail_mem": 17200.0, 
+            "parent": "sim0r1", 
+            "vCPUs_used": 1.0, 
+            "mem": 19200.0, 
+            "volume_list": [], 
+            "disk_available_least": 949.98046875, 
+            "switch_list": [
+                "sim0r1c0"
+            ], 
+            "avail_local_disk": 749.98046875, 
+            "local_disk": 800.0
+        }
+    }, 
+    "host_groups": {
+        "sim0r1": {
+            "status": "enabled", 
+            "vm_list": [
+                [
+                    "vm5_uuid", 
+                    "vm5", 
+                    "none"
+                ]
+            ], 
+            "avail_mem": 36400.0, 
+            "children": [
+                "sim0r1c1", 
+                "sim0r1c0"
+            ], 
+            "parent": "sim", 
+            "original_mem": 32000.0, 
+            "mem": 38400.0, 
+            "avail_vCPUs": 210.20000000000002, 
+            "avail_local_disk": 1549.98046875, 
+            "host_type": "rack", 
+            "storage_list": [], 
+            "last_update": 1463417233.312168, 
+            "local_disk": 1600.0, 
+            "vCPUs": 211.20000000000002, 
+            "membership_list": [
+                "aggregate0", 
+                "nova"
+            ], 
+            "volume_list": [], 
+            "original_vCPUs": 32.0, 
+            "switch_list": [
+                "sim0r1"
+            ], 
+            "last_link_update": 1463417212.086711, 
+            "original_local_disk": 2000.0
+        }, 
+        "sim0r0": {
+            "status": "enabled", 
+            "vm_list": [
+                [
+                    "vm3_uuid", 
+                    "vm3", 
+                    "none"
+                ], 
+                [
+                    "vm4_uuid", 
+                    "vm4", 
+                    "none"
+                ]
+            ], 
+            "avail_mem": 34400.0, 
+            "children": [
+                "sim0r0c0", 
+                "sim0r0c1"
+            ], 
+            "parent": "sim", 
+            "original_mem": 32000.0, 
+            "mem": 38400.0, 
+            "avail_vCPUs": 209.20000000000002, 
+            "avail_local_disk": 1499.9609375, 
+            "host_type": "rack", 
+            "storage_list": [], 
+            "last_update": 1463417233.312195, 
+            "local_disk": 1600.0, 
+            "vCPUs": 211.20000000000002, 
+            "membership_list": [
+                "aggregate0", 
+                "host:exclusivity0", 
+                "nova"
+            ], 
+            "volume_list": [], 
+            "original_vCPUs": 32.0, 
+            "switch_list": [
+                "sim0r0"
+            ], 
+            "last_link_update": 1463417212.087017, 
+            "original_local_disk": 2000.0
+        }
+    }
+}
+test: request_data =  [
+{
+  "version": "0.1",
+  "action": "create",
+  "stack_id": "app_uuid2-1",
+  "application_name": "app2-1",
+  "resources": {
+    "vm3-1_uuid": {
+      "name": "vm3-1",
+      "properties": {
+        "flavor": "bflavor0"
+      },
+      "type": "OS::Nova::Server"
+    },
+    "vm4-1_uuid": {
+      "name": "vm4-1",
+      "properties": {
+        "flavor": "bflavor0"
+      },
+      "type": "OS::Nova::Server"
+    },
+    "vm5-1_uuid": {
+      "name": "vm5-1",
+      "properties": {
+        "flavor": "bflavor0"
+      },
+      "type": "OS::Nova::Server"
+    },
+    "exclusivity0-1_uuid": {
+      "group_name": "exclusivity0",
+      "properties": {
+        "group_type": "exclusivity",
+        "level": "host",
+        "resources": [
+          "vm3-1_uuid",
+          "vm4-1_uuid"
+        ]
+      },
+      "type": "ATT::Valet::GroupAssignment"
+    }
+  }
+}
+]
+
+Placement result
+{
+    "status": {
+        "message": "success", 
+        "type": "ok"
+    }, 
+    "resources": {
+        "vm3-1_uuid": {
+            "properties": {
+                "host": "sim0r0c0"
+            }
+        }, 
+        "vm4-1_uuid": {
+            "properties": {
+                "host": "sim0r0c0"
+            }
+        }, 
+        "vm5-1_uuid": {
+            "properties": {
+                "host": "sim0r1c0"
+            }
+        }
+    }
+}
+{
+    "status": {
+        "message": "success", 
+        "type": "ok"
+    }, 
+    "resources": {
+        "vm3_uuid": {
+            "properties": {
+                "host": "sim0r0c0"
+            }
+        }, 
+        "vm4_uuid": {
+            "properties": {
+                "host": "sim0r0c0"
+            }
+        }, 
+        "vm5_uuid": {
+            "properties": {
+                "host": "sim0r1c0"
+            }
+        }
+    }
+}
+Resource status
+{
+    "flavors": {
+        "bflavor2": {
+            "status": "enabled", 
+            "mem": 6000.0, 
+            "last_update": 1463417212.082766, 
+            "vCPUs": 3.0, 
+            "extra_specs": {}, 
+            "flavor_id": null, 
+            "disk": 130.01953125
+        }, 
+        "bflavor0": {
+            "status": "enabled", 
+            "mem": 2000.0, 
+            "last_update": 1463417212.08289, 
+            "vCPUs": 1.0, 
+            "extra_specs": {}, 
+            "flavor_id": null, 
+            "disk": 50.01953125
+        }, 
+        "bflavor1": {
+            "status": "enabled", 
+            "mem": 4000.0, 
+            "last_update": 1463417212.08301, 
+            "vCPUs": 2.0, 
+            "extra_specs": {}, 
+            "flavor_id": null, 
+            "disk": 90.01953125
+        }, 
+        "sflavor0": {
+            "status": "enabled", 
+            "mem": 2000, 
+            "last_update": 1463417212.08315, 
+            "vCPUs": 1, 
+            "extra_specs": {
+                "cpu_allocation_ratio": "0.5"
+            }, 
+            "flavor_id": null, 
+            "disk": 40
+        }
+    }, 
+    "datacenter": {
+        "status": "enabled", 
+        "vm_list": [
+            [
+                "vm5_uuid", 
+                "vm5", 
+                "none"
+            ], 
+            [
+                "vm5-1_uuid", 
+                "vm5-1", 
+                "none"
+            ], 
+            [
+                "vm3_uuid", 
+                "vm3", 
+                "none"
+            ], 
+            [
+                "vm4_uuid", 
+                "vm4", 
+                "none"
+            ], 
+            [
+                "vm4-1_uuid", 
+                "vm4-1", 
+                "none"
+            ], 
+            [
+                "vm3-1_uuid", 
+                "vm3-1", 
+                "none"
+            ]
+        ], 
+        "avail_mem": 64800.0, 
+        "name": "sim", 
+        "original_mem": 64000.0, 
+        "mem": 76800.0, 
+        "avail_vCPUs": 416.40000000000003, 
+        "avail_local_disk": 2899.8828125, 
+        "children": [
+            "sim0r1", 
+            "sim0r0"
+        ], 
+        "storage_list": [], 
+        "last_update": 1463417242.688146, 
+        "local_disk": 3200.0, 
+        "vCPUs": 422.40000000000003, 
+        "membership_list": [
+            "aggregate0", 
+            "host:exclusivity0", 
+            "nova"
+        ], 
+        "volume_list": [], 
+        "original_vCPUs": 64.0, 
+        "region_code_list": [
+            "sim0"
+        ], 
+        "switch_list": [
+            "sim"
+        ], 
+        "last_link_update": 1463417212.087325, 
+        "original_local_disk": 4000.0
+    }, 
+    "logical_groups": {
+        "aggregate0": {
+            "status": "enabled", 
+            "vm_list": [], 
+            "vms_per_host": {
+                "sim0r0c0": [], 
+                "sim0r1c0": []
+            }, 
+            "volume_list": [], 
+            "last_update": 1463417212.079769, 
+            "group_type": "AGGR", 
+            "metadata": {
+                "cpu_allocation_ratio": "0.5"
+            }
+        }, 
+        "host:exclusivity0": {
+            "status": "enabled", 
+            "vm_list": [
+                [
+                    "vm3_uuid", 
+                    "vm3", 
+                    "none"
+                ], 
+                [
+                    "vm4_uuid", 
+                    "vm4", 
+                    "none"
+                ], 
+                [
+                    "vm4-1_uuid", 
+                    "vm4-1", 
+                    "none"
+                ], 
+                [
+                    "vm3-1_uuid", 
+                    "vm3-1", 
+                    "none"
+                ]
+            ], 
+            "vms_per_host": {
+                "sim0r0c0": [
+                    [
+                        "vm3_uuid", 
+                        "vm3", 
+                        "none"
+                    ], 
+                    [
+                        "vm4_uuid", 
+                        "vm4", 
+                        "none"
+                    ], 
+                    [
+                        "vm4-1_uuid", 
+                        "vm4-1", 
+                        "none"
+                    ], 
+                    [
+                        "vm3-1_uuid", 
+                        "vm3-1", 
+                        "none"
+                    ]
+                ]
+            }, 
+            "volume_list": [], 
+            "last_update": 1463417242.688134, 
+            "group_type": "EX", 
+            "metadata": {}
+        }, 
+        "nova": {
+            "status": "enabled", 
+            "vm_list": [], 
+            "vms_per_host": {
+                "sim0r1c1": [], 
+                "sim0r0c0": [], 
+                "sim0r0c1": [], 
+                "sim0r1c0": []
+            }, 
+            "volume_list": [], 
+            "last_update": 1463417212.079925, 
+            "group_type": "AZ", 
+            "metadata": {}
+        }
+    }, 
+    "timestamp": 1463417242.688146, 
+    "switches": {
+        "sim0r1": {
+            "status": "enabled", 
+            "switch_type": "ToR", 
+            "peer_links": {}, 
+            "up_links": {
+                "sim0r1-sim": {
+                    "resource": "sim", 
+                    "bandwidth": 9223372036854775807, 
+                    "avail_bandwidth": 9223372036854775807
+                }
+            }, 
+            "last_update": 1463417212.084835
+        }, 
+        "sim0r0": {
+            "status": "enabled", 
+            "switch_type": "ToR", 
+            "peer_links": {}, 
+            "up_links": {
+                "sim0r0-sim": {
+                    "resource": "sim", 
+                    "bandwidth": 9223372036854775807, 
+                    "avail_bandwidth": 9223372036854775807
+                }
+            }, 
+            "last_update": 1463417212.084919
+        }, 
+        "sim0r1c1": {
+            "status": "enabled", 
+            "switch_type": "leaf", 
+            "peer_links": {}, 
+            "up_links": {
+                "sim0r1c1-sim0r1": {
+                    "resource": "sim0r1", 
+                    "bandwidth": 9223372036854775807, 
+                    "avail_bandwidth": 9223372036854775807
+                }
+            }, 
+            "last_update": 1463417212.085009
+        }, 
+        "sim0r1c0": {
+            "status": "enabled", 
+            "switch_type": "leaf", 
+            "peer_links": {}, 
+            "up_links": {
+                "sim0r1c0-sim0r1": {
+                    "resource": "sim0r1", 
+                    "bandwidth": 9223372036854775807, 
+                    "avail_bandwidth": 9223372036854775807
+                }
+            }, 
+            "last_update": 1463417212.085105
+        }, 
+        "sim0r0c0": {
+            "status": "enabled", 
+            "switch_type": "leaf", 
+            "peer_links": {}, 
+            "up_links": {
+                "sim0r0c0-sim0r0": {
+                    "resource": "sim0r0", 
+                    "bandwidth": 9223372036854775807, 
+                    "avail_bandwidth": 9223372036854775807
+                }
+            }, 
+            "last_update": 1463417212.085192
+        }, 
+        "sim0r0c1": {
+            "status": "enabled", 
+            "switch_type": "leaf", 
+            "peer_links": {}, 
+            "up_links": {
+                "sim0r0c1-sim0r0": {
+                    "resource": "sim0r0", 
+                    "bandwidth": 9223372036854775807, 
+                    "avail_bandwidth": 9223372036854775807
+                }
+            }, 
+            "last_update": 1463417212.085325
+        }, 
+        "sim": {
+            "status": "enabled", 
+            "switch_type": "root", 
+            "peer_links": {}, 
+            "up_links": {}, 
+            "last_update": 1463417212.084493
+        }
+    }, 
+    "hosts": {
+        "sim0r0c0": {
+            "vm_list": [
+                [
+                    "vm3_uuid", 
+                    "vm3", 
+                    "none"
+                ], 
+                [
+                    "vm4_uuid", 
+                    "vm4", 
+                    "none"
+                ], 
+                [
+                    "vm4-1_uuid", 
+                    "vm4-1", 
+                    "none"
+                ], 
+                [
+                    "vm3-1_uuid", 
+                    "vm3-1", 
+                    "none"
+                ]
+            ], 
+            "original_mem": 16000.0, 
+            "storage_list": [], 
+            "vCPUs": 6.4, 
+            "tag": [
+                "nova", 
+                "infra"
+            ], 
+            "free_disk_gb": 799.921875, 
+            "original_vCPUs": 16.0, 
+            "free_mem_mb": 8000.0, 
+            "avail_vCPUs": 2.4000000000000004, 
+            "last_link_update": 1463417212.085944, 
+            "original_local_disk": 1000.0, 
+            "last_update": 1463417242.688142, 
+            "state": "up", 
+            "membership_list": [
+                "aggregate0", 
+                "host:exclusivity0", 
+                "nova"
+            ], 
+            "status": "enabled", 
+            "avail_mem": 11200.0, 
+            "parent": "sim0r0", 
+            "vCPUs_used": 4.0, 
+            "mem": 19200.0, 
+            "volume_list": [], 
+            "disk_available_least": 799.921875, 
+            "switch_list": [
+                "sim0r0c0"
+            ], 
+            "avail_local_disk": 599.921875, 
+            "local_disk": 800.0
+        }, 
+        "sim0r1c1": {
+            "vm_list": [], 
+            "original_mem": 16000.0, 
+            "storage_list": [], 
+            "vCPUs": 204.8, 
+            "tag": [
+                "nova", 
+                "infra"
+            ], 
+            "free_disk_gb": 1000.0, 
+            "original_vCPUs": 16.0, 
+            "free_mem_mb": 16000.0, 
+            "avail_vCPUs": 204.8, 
+            "last_link_update": 1463417212.085698, 
+            "original_local_disk": 1000.0, 
+            "last_update": 1463417212.085697, 
+            "state": "up", 
+            "membership_list": [
+                "nova"
+            ], 
+            "status": "enabled", 
+            "avail_mem": 19200.0, 
+            "parent": "sim0r1", 
+            "vCPUs_used": 0.0, 
+            "mem": 19200.0, 
+            "volume_list": [], 
+            "disk_available_least": 1000.0, 
+            "switch_list": [
+                "sim0r1c1"
+            ], 
+            "avail_local_disk": 800.0, 
+            "local_disk": 800.0
+        }, 
+        "sim0r0c1": {
+            "vm_list": [], 
+            "original_mem": 16000.0, 
+            "storage_list": [], 
+            "vCPUs": 204.8, 
+            "tag": [
+                "nova", 
+                "infra"
+            ], 
+            "free_disk_gb": 1000.0, 
+            "original_vCPUs": 16.0, 
+            "free_mem_mb": 16000.0, 
+            "avail_vCPUs": 204.8, 
+            "last_link_update": 1463417212.086172, 
+            "original_local_disk": 1000.0, 
+            "last_update": 1463417212.086171, 
+            "state": "up", 
+            "membership_list": [
+                "nova"
+            ], 
+            "status": "enabled", 
+            "avail_mem": 19200.0, 
+            "parent": "sim0r0", 
+            "vCPUs_used": 0.0, 
+            "mem": 19200.0, 
+            "volume_list": [], 
+            "disk_available_least": 1000.0, 
+            "switch_list": [
+                "sim0r0c1"
+            ], 
+            "avail_local_disk": 800.0, 
+            "local_disk": 800.0
+        }, 
+        "sim0r1c0": {
+            "vm_list": [
+                [
+                    "vm5_uuid", 
+                    "vm5", 
+                    "none"
+                ], 
+                [
+                    "vm5-1_uuid", 
+                    "vm5-1", 
+                    "none"
+                ]
+            ], 
+            "original_mem": 16000.0, 
+            "storage_list": [], 
+            "vCPUs": 6.4, 
+            "tag": [
+                "nova", 
+                "infra"
+            ], 
+            "free_disk_gb": 899.9609375, 
+            "original_vCPUs": 16.0, 
+            "free_mem_mb": 12000.0, 
+            "avail_vCPUs": 4.4, 
+            "last_link_update": 1463417212.0864, 
+            "original_local_disk": 1000.0, 
+            "last_update": 1463417242.688072, 
+            "state": "up", 
+            "membership_list": [
+                "aggregate0", 
+                "nova"
+            ], 
+            "status": "enabled", 
+            "avail_mem": 15200.0, 
+            "parent": "sim0r1", 
+            "vCPUs_used": 2.0, 
+            "mem": 19200.0, 
+            "volume_list": [], 
+            "disk_available_least": 899.9609375, 
+            "switch_list": [
+                "sim0r1c0"
+            ], 
+            "avail_local_disk": 699.9609375, 
+            "local_disk": 800.0
+        }
+    }, 
+    "host_groups": {
+        "sim0r1": {
+            "status": "enabled", 
+            "vm_list": [
+                [
+                    "vm5_uuid", 
+                    "vm5", 
+                    "none"
+                ], 
+                [
+                    "vm5-1_uuid", 
+                    "vm5-1", 
+                    "none"
+                ]
+            ], 
+            "avail_mem": 34400.0, 
+            "children": [
+                "sim0r1c1", 
+                "sim0r1c0"
+            ], 
+            "parent": "sim", 
+            "original_mem": 32000.0, 
+            "mem": 38400.0, 
+            "avail_vCPUs": 209.20000000000002, 
+            "avail_local_disk": 1499.9609375, 
+            "host_type": "rack", 
+            "storage_list": [], 
+            "last_update": 1463417242.688075, 
+            "local_disk": 1600.0, 
+            "vCPUs": 211.20000000000002, 
+            "membership_list": [
+                "aggregate0", 
+                "nova"
+            ], 
+            "volume_list": [], 
+            "original_vCPUs": 32.0, 
+            "switch_list": [
+                "sim0r1"
+            ], 
+            "last_link_update": 1463417212.086711, 
+            "original_local_disk": 2000.0
+        }, 
+        "sim0r0": {
+            "status": "enabled", 
+            "vm_list": [
+                [
+                    "vm3_uuid", 
+                    "vm3", 
+                    "none"
+                ], 
+                [
+                    "vm4_uuid", 
+                    "vm4", 
+                    "none"
+                ], 
+                [
+                    "vm4-1_uuid", 
+                    "vm4-1", 
+                    "none"
+                ], 
+                [
+                    "vm3-1_uuid", 
+                    "vm3-1", 
+                    "none"
+                ]
+            ], 
+            "avail_mem": 30400.0, 
+            "children": [
+                "sim0r0c0", 
+                "sim0r0c1"
+            ], 
+            "parent": "sim", 
+            "original_mem": 32000.0, 
+            "mem": 38400.0, 
+            "avail_vCPUs": 207.20000000000002, 
+            "avail_local_disk": 1399.921875, 
+            "host_type": "rack", 
+            "storage_list": [], 
+            "last_update": 1463417242.688144, 
+            "local_disk": 1600.0, 
+            "vCPUs": 211.20000000000002, 
+            "membership_list": [
+                "aggregate0", 
+                "host:exclusivity0", 
+                "nova"
+            ], 
+            "volume_list": [], 
+            "original_vCPUs": 32.0, 
+            "switch_list": [
+                "sim0r0"
+            ], 
+            "last_link_update": 1463417212.087017, 
+            "original_local_disk": 2000.0
+        }
+    }
+}
+Applications
+{
+    "VGroups": {}, 
+    "name": "app2-1", 
+    "stack_id": "app_uuid2-1", 
+    "timestamp": 1463417242.688146, 
+    "Volumes": {}, 
+    "action": "create", 
+    "VMs": {
+        "vm3-1_uuid": {
+            "status": "scheduled", 
+            "vm_list": [], 
+            "availability_zones": "none", 
+            "name": "vm3-1", 
+            "extra_specs_list": [], 
+            "diversity_groups": {}, 
+            "exclusivity_groups": {
+                "exclusivity0-1_uuid": "host:exclusivity0"
+            }, 
+            "survgroup": "none", 
+            "cpus": 1.0, 
+            "volume_list": [], 
+            "nw_bandwidth": 0, 
+            "mem": 2000.0, 
+            "host": "sim0r0c0", 
+            "cpu_weight": 0.002384358607534573, 
+            "io_bandwidth": 0, 
+            "local_volume": 50.01953125, 
+            "flavor": "bflavor0", 
+            "bandwidth_weight": 0.0, 
+            "mem_weight": 0.02824858757062147, 
+            "local_volume_weight": 0.016400161376051027
+        }, 
+        "vm4-1_uuid": {
+            "status": "scheduled", 
+            "vm_list": [], 
+            "availability_zones": "none", 
+            "name": "vm4-1", 
+            "extra_specs_list": [], 
+            "diversity_groups": {}, 
+            "exclusivity_groups": {
+                "exclusivity0-1_uuid": "host:exclusivity0"
+            }, 
+            "survgroup": "none", 
+            "cpus": 1.0, 
+            "volume_list": [], 
+            "nw_bandwidth": 0, 
+            "mem": 2000.0, 
+            "host": "sim0r0c0", 
+            "cpu_weight": 0.002384358607534573, 
+            "io_bandwidth": 0, 
+            "local_volume": 50.01953125, 
+            "flavor": "bflavor0", 
+            "bandwidth_weight": 0.0, 
+            "mem_weight": 0.02824858757062147, 
+            "local_volume_weight": 0.016400161376051027
+        }, 
+        "vm5-1_uuid": {
+            "status": "scheduled", 
+            "vm_list": [], 
+            "availability_zones": "none", 
+            "name": "vm5-1", 
+            "extra_specs_list": [], 
+            "diversity_groups": {}, 
+            "exclusivity_groups": {}, 
+            "survgroup": "none", 
+            "cpus": 1.0, 
+            "volume_list": [], 
+            "nw_bandwidth": 0, 
+            "mem": 2000.0, 
+            "host": "sim0r1c0", 
+            "cpu_weight": 0.002384358607534573, 
+            "io_bandwidth": 0, 
+            "local_volume": 50.01953125, 
+            "flavor": "bflavor0", 
+            "bandwidth_weight": 0.0, 
+            "mem_weight": 0.02824858757062147, 
+            "local_volume_weight": 0.016400161376051027
+        }
+    }
+}
+{
+    "VGroups": {}, 
+    "name": "app2", 
+    "stack_id": "app_uuid2", 
+    "timestamp": 1463417233.312197, 
+    "Volumes": {}, 
+    "action": "create", 
+    "VMs": {
+        "vm3_uuid": {
+            "status": "scheduled", 
+            "vm_list": [], 
+            "availability_zones": "none", 
+            "name": "vm3", 
+            "extra_specs_list": [], 
+            "diversity_groups": {}, 
+            "exclusivity_groups": {
+                "exclusivity0_uuid": "host:exclusivity0"
+            }, 
+            "survgroup": "none", 
+            "cpus": 1.0, 
+            "volume_list": [], 
+            "nw_bandwidth": 0, 
+            "mem": 2000.0, 
+            "host": "sim0r0c0", 
+            "cpu_weight": 0.002367424242424242, 
+            "io_bandwidth": 0, 
+            "local_volume": 50.01953125, 
+            "flavor": "bflavor0", 
+            "bandwidth_weight": 0.0, 
+            "mem_weight": 0.026041666666666668, 
+            "local_volume_weight": 0.015631103515625
+        }, 
+        "vm4_uuid": {
+            "status": "scheduled", 
+            "vm_list": [], 
+            "availability_zones": "none", 
+            "name": "vm4", 
+            "extra_specs_list": [], 
+            "diversity_groups": {}, 
+            "exclusivity_groups": {
+                "exclusivity0_uuid": "host:exclusivity0"
+            }, 
+            "survgroup": "none", 
+            "cpus": 1.0, 
+            "volume_list": [], 
+            "nw_bandwidth": 0, 
+            "mem": 2000.0, 
+            "host": "sim0r0c0", 
+            "cpu_weight": 0.002367424242424242, 
+            "io_bandwidth": 0, 
+            "local_volume": 50.01953125, 
+            "flavor": "bflavor0", 
+            "bandwidth_weight": 0.0, 
+            "mem_weight": 0.026041666666666668, 
+            "local_volume_weight": 0.015631103515625
+        }, 
+        "vm5_uuid": {
+            "status": "scheduled", 
+            "vm_list": [], 
+            "availability_zones": "none", 
+            "name": "vm5", 
+            "extra_specs_list": [], 
+            "diversity_groups": {}, 
+            "exclusivity_groups": {}, 
+            "survgroup": "none", 
+            "cpus": 1.0, 
+            "volume_list": [], 
+            "nw_bandwidth": 0, 
+            "mem": 2000.0, 
+            "host": "sim0r1c0", 
+            "cpu_weight": 0.002367424242424242, 
+            "io_bandwidth": 0, 
+            "local_volume": 50.01953125, 
+            "flavor": "bflavor0", 
+            "bandwidth_weight": 0.0, 
+            "mem_weight": 0.026041666666666668, 
+            "local_volume_weight": 0.015631103515625
+        }
+    }
+}

@@ -88,7 +88,6 @@ class Ostro:
 
                 if len(event_list) > 0:
                     self.logger.debug("got " + str(len(event_list)) + " events")
-
                     if self.handle_events(event_list) == False:
                         break
 
@@ -186,7 +185,8 @@ class Ostro:
         return True
 
     def place_app(self, _app_data):
-        self.data_lock.acquire(1) 
+        #self.data_lock.acquire(1) 
+        self.data_lock.acquire() 
 
         self.logger.info("--- start app placement ---")
 
@@ -209,6 +209,7 @@ class Ostro:
 
         if self.db.put_result(result) == False:
             self.logger.error("error while inserting placement result into MUSIC")
+            self.data_lock.release()
             return False
 
         self.logger.info("stat: total running time of place_app = " + str(end_time - start_time) + " sec")
@@ -229,9 +230,7 @@ class Ostro:
         if placement_map == None: 
             self.status = self.optimizer.status
             self.logger.debug("error while optimizing app placement: " + self.status)
-
             self.app_handler.remove_placement()
-
             return None
 
         if len(placement_map) > 0:
@@ -244,7 +243,8 @@ class Ostro:
         return placement_map
 
     def handle_events(self, _event_list):
-        self.data_lock.acquire(1) 
+        #self.data_lock.acquire(1) 
+        self.data_lock.acquire() 
 
         self.logger.info("--- start event handling ---")
 
@@ -260,6 +260,7 @@ class Ostro:
                 self.logger.debug("got build_and_run event")
                 if self.db.put_uuid(e) == False:
                     self.logger.error("error while inserting uuid into MUSIC")
+                    self.data_lock.release()
                     return False         
 
             elif e.method == "object_action":
@@ -268,6 +269,7 @@ class Ostro:
                     orch_id = self.db.get_uuid(e.uuid)  
                     if orch_id == None:
                         self.logger.error("error while getting orchestration ids from MUSIC")
+                        self.data_lock.release()
                         return False
 
                     if e.vm_state == "active": 
@@ -275,6 +277,7 @@ class Ostro:
                         vm_info = self.app_handler.get_vm_info(orch_id[1], orch_id[0], e.host)
                         if vm_info == None:
                             self.logger.error("error while getting app info from MUSIC")
+                            self.data_lock.release()
                             return False
 
                         if len(vm_info) == 0:
@@ -324,6 +327,7 @@ class Ostro:
 
                         if self.app_handler.update_vm_info(orch_id[1], orch_id[0]) == False:
                             self.logger.error("error while updating app in MUSIC")
+                            self.data_lock.release()
                             return False
 
                         resource_updated = True
@@ -357,12 +361,14 @@ class Ostro:
             self.logger.debug("delete event = " + e.event_id)
             if self.db.delete_event(e.event_id) == False:
                 self.logger.error("critical error while deleting event")
+                self.data_lock.release()
                 return False
             if e.method == "object_action":
                 if e.object_name == 'Instance':
                     if e.vm_state == "deleted":
                         self.logger.debug("delete uuid")
                         if self.db.delete_uuid(e.uuid) == False:
+                            self.data_lock.release()
                             return False
 
         self.logger.info("--- done event handling ---")

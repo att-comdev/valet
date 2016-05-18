@@ -127,18 +127,18 @@ class Parser:
                 vgroup = VGroup(self.stack_id, rk)
 
                 vgroup.vgroup_type = None
-                if r["properties"]["relationship"] == "affinity":
+                if r["properties"]["group_type"] == "affinity":
                     vgroup.vgroup_type = "AFF"
-                elif r["properties"]["relationship"] == "diversity":
+                elif r["properties"]["group_type"] == "diversity":
                     vgroup.vgroup_type = "DIV"
-                elif r["properties"]["relationship"] == "exclusivity":
+                elif r["properties"]["group_type"] == "exclusivity":
                     vgroup.vgroup_type = "EX"
                 else:
-                    self.status = "unknown group = " + r["properties"]["relationship"]
+                    self.status = "unknown group = " + r["properties"]["group_type"]
                     return ({}, {}, {})
                   
-                if "name" in r.keys():
-                    vgroup.name = r["name"]
+                if "group_name" in r["properties"].keys():
+                    vgroup.name = r["properties"]["group_name"]
                 else:
                     if vgroup.vgroup_type == "EX":
                         self.status = "no exclusivity identifier"
@@ -343,7 +343,7 @@ class Parser:
             for rk, r in _elements.iteritems():
                 #if r["type"] == "ATT::CloudQoS::ResourceGroup" and \
                 if r["type"] == "ATT::Valet::GroupAssignment" and \
-                   r["properties"]["relationship"] == "diversity" and \
+                   r["properties"]["group_type"] == "diversity" and \
                    r["properties"]["level"] == level:
 
                     vgroup = _vgroups[rk]
@@ -380,7 +380,7 @@ class Parser:
             for rk, r in _elements.iteritems():
                 #if r["type"] == "ATT::CloudQoS::ResourceGroup" and \
                 if r["type"] == "ATT::Valet::GroupAssignment" and \
-                   r["properties"]["relationship"] == "exclusivity" and \
+                   r["properties"]["group_type"] == "exclusivity" and \
                    r["properties"]["level"] == level:
 
                     vgroup = _vgroups[rk]
@@ -419,7 +419,7 @@ class Parser:
             for rk, r in _elements.iteritems():
                 #if r["type"] == "ATT::CloudQoS::ResourceGroup" and \
                 if r["type"] == "ATT::Valet::GroupAssignment" and \
-                   r["properties"]["relationship"] == "affinity" and \
+                   r["properties"]["group_type"] == "affinity" and \
                    r["properties"]["level"] == level:
 
                     vgroup = None
@@ -571,7 +571,7 @@ class Parser:
                     self.status = "invalid resource = " + vk
                     return False
 
-                if affinity_map[vk].uuid != _vgroup.uuid:
+                if _affinity_map[vk].uuid != _vgroup.uuid:
                     if self._exist_in_subgroups(vk, _vgroup) == None:
                         self._set_implicit_grouping(vk, _vgroup, _affinity_map, _vgroups)
 
@@ -811,7 +811,7 @@ class Parser:
         _vgroup.io_bandwidth += _link.io_bandwidth
         vgroup_link = self._get_vgroup_link(_link, _vgroup.vgroup_list)
         if vgroup_link != None:
-            link.io_bandwidth += _link.io_bandwidth
+            vgroup_link.io_bandwidth += _link.io_bandwidth
         else:
             link = VGroupLink(_link.node)
             link.io_bandwidth = _link.io_bandwidth

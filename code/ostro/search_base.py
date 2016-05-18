@@ -302,7 +302,7 @@ class Node:
     def get_affinity_id(self):
         aff_id = None
 
-        if isinstance(self.node, VGroup) and self.node.vgroup_type == "AFF":
+        if isinstance(self.node, VGroup) and self.node.vgroup_type == "AFF" and self.node.name != "any":
             aff_id = self.node.level + ":" + self.node.name
 
         return aff_id

@@ -100,9 +100,8 @@ if __name__ == '__main__':
         print json.dumps(resource, indent=4)
     '''
 
-    '''
     time.sleep(5)
-    mc.set_request("app_uuid2", "./test_inputs/simple_exclusivity.json")
+    mc.set_request("app_uuid2", "./test_inputs/simple_exclusivity0.json")
     time.sleep(5)
     results = mc.get_placements()
     if results != None:
@@ -116,6 +115,22 @@ if __name__ == '__main__':
         resource = json.loads(row['resource'])
         print json.dumps(resource, indent=4)
 
+    time.sleep(5)
+    mc.set_request("app_uuid2-1", "./test_inputs/simple_exclusivity1.json")
+    time.sleep(5)
+    results = mc.get_placements()
+    if results != None:
+        print "Placement result"
+        for rowk, row in results.iteritems():
+            placement = json.loads(row['placement'])
+            print json.dumps(placement, indent=4)
+    status = mc.get_resource_status()
+    print "Resource status"
+    for rowk, row in status.iteritems():
+        resource = json.loads(row['resource'])
+        print json.dumps(resource, indent=4)
+
+    '''
     time.sleep(5)
     mc.set_request("app_uuid3", "./test_inputs/simple_mix_aggregate_exclusivity.json")
     time.sleep(5)
@@ -147,6 +162,7 @@ if __name__ == '__main__':
         print json.dumps(resource, indent=4)
     '''
 
+    '''
     time.sleep(5)
     mc.set_request("app_uuid5", "./test_inputs/simple_affinity.json")
     time.sleep(5)
@@ -176,6 +192,7 @@ if __name__ == '__main__':
     for rowk, row in status.iteritems():
         resource = json.loads(row['resource'])
         print json.dumps(resource, indent=4)
+    '''
 
     '''
     time.sleep(5)

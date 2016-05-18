@@ -46,7 +46,8 @@ class TopologyManager(threading.Thread):
             period_end = time.time() + self.config.topology_trigger_freq
 
             while self.end_of_process == False:
-                time.sleep(1)
+                #time.sleep(1)
+                time.sleep(10)
 
                 if time.time() > period_end:
                     self._run()
@@ -60,7 +61,8 @@ class TopologyManager(threading.Thread):
             timeout = False
 
             while self.end_of_process == False:
-                time.sleep(1)
+                #time.sleep(1)
+                time.sleep(10)
 
                 now = time.localtime()
                 if timeout == False and \
@@ -84,18 +86,20 @@ class TopologyManager(threading.Thread):
         self.logger.info("exit " + self.thread_name)
 
     def _run(self):
-        self.data_lock.acquire(1)
 
         self.logger.info("--- start topology status update ---")
 
-        if self.set_topology() == True:
-            if self.resource.update_topology() == False:
-                # TODO: ignore?
-                pass
+        #self.data_lock.acquire(1)
+        self.data_lock.acquire()
+        try:
+            if self.set_topology() == True:
+                if self.resource.update_topology() == False:
+                    # TODO: ignore?
+                    pass
+        finally:
+            self.data_lock.release()
 
         self.logger.info("--- done topology status update ---")
-
-        self.data_lock.release()
 
     def set_topology(self):
         datacenter = None

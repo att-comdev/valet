@@ -51,7 +51,8 @@ class ComputeManager(threading.Thread):
             period_end = time.time() + self.config.compute_trigger_freq
 
             while self.end_of_process == False:
-                time.sleep(1)
+                #time.sleep(1)
+                time.sleep(10)
 
                 if time.time() > period_end:
                     self._run()
@@ -65,7 +66,8 @@ class ComputeManager(threading.Thread):
             timeout = False
 
             while self.end_of_process == False:
-                time.sleep(1)
+                #time.sleep(1)
+                time.sleep(10)
 
                 now = time.localtime()
                 if timeout == False and \
@@ -89,24 +91,25 @@ class ComputeManager(threading.Thread):
         self.logger.info("exit " + self.thread_name)
 
     def _run(self):
-        self.data_lock.acquire(1)
-
         self.logger.info("--- start compute_nodes status update ---")
 
-        triggered_host_updates = self.set_hosts()
-        triggered_flavor_updates = self.set_flavors()
+        #self.data_lock.acquire(1)
+        self.data_lock.acquire()
+        try:
+            triggered_host_updates = self.set_hosts()
+            triggered_flavor_updates = self.set_flavors()
 
-        if triggered_host_updates == True and triggered_flavor_updates == True:
-            if self.resource.update_topology() == False:
-                # TODO: error in MUSIC. ignore?
+            if triggered_host_updates == True and triggered_flavor_updates == True:
+                if self.resource.update_topology() == False:
+                    # TODO: error in MUSIC. ignore?
+                    pass
+            else:
+                # TODO: error handling, e.g., 3 times failure then stop Ostro?
                 pass
-        else:
-            # TODO: error handling, e.g., 3 times failure then stop Ostro?
-            pass
+        finally:
+            self.data_lock.release()
 
         self.logger.info("--- done compute_nodes status update ---")
-
-        self.data_lock.release()
 
         return True
 

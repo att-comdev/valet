@@ -245,11 +245,11 @@ class AppHandler:
         if "VGroups" in old_app.keys():
             for gk, affinity in old_app["VGroups"].iteritems():
                 resources[gk] = {}
-                resources[gk]["name"] = affinity["name"] 
                 #resources[gk]["type"] = "ATT::CloudQoS::ResourceGroup"
                 resources[gk]["type"] = "ATT::Valet::GroupAssignment"
                 properties = {}
-                properties["relationship"] = "affinity"
+                properties["group_type"] = "affinity"
+                properties["group_name"] = affinity["name"]
                 properties["level"] = affinity["level"]
                 properties["resources"] = []
                 for r in affinity["subvgroup_list"]:
@@ -278,7 +278,7 @@ class AppHandler:
             #resources[divk_level[0]]["type"] = "ATT::CloudQoS::ResourceGroup"
             resources[divk_level[0]]["type"] = "ATT::Valet::GroupAssignment"
             properties = {}
-            properties["relationship"] = "diversity"
+            properties["group_type"] = "diversity"
             properties["level"] = divk_level[1]
             properties["resources"] = resource_list
             resources[divk_level[0]]["properties"] = properties
@@ -286,11 +286,11 @@ class AppHandler:
         for ex_id, resource_list in exclusivity_groups.iteritems():
             exk_level_name = ex_id.split(":")
             resources[exk_level_name[0]] = {}
-            resources[exk_level_name[0]]["name"] = exk_level_name[2]
             #resources[exk_level_name[0]]["type"] = "ATT::CloudQoS::ResourceGroup"
             resources[exk_level_name[0]]["type"] = "ATT::Valet::GroupAssignment"
             properties = {}
-            properties["relationship"] = "exclusivity"
+            properties["group_type"] = "exclusivity"
+            properties["group_name"] = exk_level_name[2]
             properties["level"] = exk_level_name[1]
             properties["resources"] = resource_list
             resources[exk_level_name[0]]["properties"] = properties

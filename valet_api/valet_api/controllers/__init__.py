@@ -61,8 +61,9 @@ def set_placements(plan, resources, placements):
 def reserve_placement(placement, reserve=True):
     '''Reserve placement (set reserve=False to unreserve)'''
     if placement:
-        LOG.info(_('Reserving placement of %(orch_id)s in %(loc)s.'),
-                 {'orch_id': placement.orchestration_id,
+        LOG.info(_('%(rsrv)s placement of %(orch_id)s in %(loc)s.'),
+                 {'rsrv': _("Reserving") if reserve else _("Unreserving"),
+                  'orch_id': placement.orchestration_id,
                   'loc': placement.location})
         placement.reserved = reserve
         placement.update()

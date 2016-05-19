@@ -40,15 +40,16 @@ class PlacementsItemController(object):
     /v1/placements/{placement_id}
     '''
 
-    def __init__(self, orchestration_id):
-        '''Initializer'''
-        # TODO: This should check the placement id outright as well.
-        self.orchestration_id = orchestration_id
+    def __init__(self, uuid4):
+        '''Initializer.'''
+        self.uuid = uuid4
         self.placement = Placement.query.filter_by(  # pylint: disable=E1101
-            orchestration_id=self.orchestration_id).first()
+            id=self.uuid).first()
         if not self.placement:
-            error('/errors/not_found',
-                  _('Placement not found'))
+            self.placement = Placement.query.filter_by(  # pylint: disable=E1101
+                orchestration_id=self.uuid).first()
+            if not self.placement:
+                error('/errors/not_found', _('Placement not found'))
         request.context['placement_id'] = self.placement.id
 
     @classmethod
@@ -83,9 +84,11 @@ class PlacementsItemController(object):
         Reserve a placement. This and other placements may be replanned.
         Once reserved, the location effectively becomes immutable.
         '''
+        LOG.info(_('Placement reservation request for orchestration id %s'),
+                 self.placement.orchestration_id)
         locations = kwargs.get('locations', [])
         locations_str = ', '.join(locations)
-        LOG.debug(_('Candidate locations: %s'), locations_str)
+        LOG.info(_('Candidate locations: %s'), locations_str)
         if self.placement.location in locations:
             # Ostro's placement is in the list of candidates. Good!
             reserve_placement(self.placement)
@@ -110,8 +113,12 @@ class PlacementsItemController(object):
 
             # Extract all the orchestration IDs.
             exclusions = [x.orchestration_id for x in reserved]
-            exclusions_str = ', '.join(exclusions)
-            LOG.debug(_('Excluded orchestration IDs: %s'), exclusions_str)
+            if exclusions:
+                exclusions_str = ', '.join(exclusions)
+                LOG.info(_('Excluded orchestration IDs: %s'),
+                         exclusions_str)
+            else:
+                LOG.info(_('No excluded orchestration IDs.'))
 
             # Ask Ostro to try again with new constraints.
             # We may get one or more updated placements in return.
@@ -123,7 +130,7 @@ class PlacementsItemController(object):
                 "stack_id": plan.stack_id,
                 "locations": locations,
                 "orchestration_id": orchestration_id,
-                "exclusions": exclusions
+                "exclusions": exclusions,
             }
             ostro_kwargs = {
                 "args": args,
@@ -151,7 +158,7 @@ class PlacementsItemController(object):
         '''Delete a Placement'''
         orch_id = self.placement.orchestration_id
         self.placement.delete()
-        LOG.debug(_('Placement with orchestration id %s deleted.'), orch_id)
+        LOG.info(_('Placement with orchestration id %s deleted.'), orch_id)
         response.status = 204
 
 
@@ -188,6 +195,6 @@ class PlacementsController(object):
         return placements_array
 
     @expose()
-    def _lookup(self, orchestration_id, *remainder):
+    def _lookup(self, uuid4, *remainder):
         '''Pecan subcontroller routing callback'''
-        return PlacementsItemController(orchestration_id), remainder
+        return PlacementsItemController(uuid4), remainder

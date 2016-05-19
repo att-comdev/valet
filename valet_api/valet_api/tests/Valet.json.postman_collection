@@ -235,11 +235,11 @@
 			"tests": "var data = JSON.parse(responseBody);\npostman.setEnvironmentVariable(\"plan_id\", data['id']);",
 			"currentHelper": "normal",
 			"helperAttributes": {},
-			"time": 1463148982579,
+			"time": 1463418010964,
 			"name": "Create plan with Exclusivity Group",
 			"description": "Create a plan.",
 			"collectionId": "1d5ba476-f6c7-a0c0-d664-a331c00926c3",
-			"rawModeData": "{\n    \"plan_name\": \"e624474b-fc80-4053-ab5f-45cc1030e692\",\n    \"resources\": {\n        \"56c6f15a-5af6-4540-8258-53cc020d26a9\": {\n            \"Properties\": {\n                \"name\": \"group\",\n                \"relationship\": \"exclusivity\",\n                \"level\": \"host\",\n                \"resources\": [\n                    \"b71bedad-dd57-4942-a7bd-ab074b72d652\"\n                ]\n            },\n            \"Type\": \"ATT::Valet::GroupAssignment\",\n            \"name\": \"my_group_assignment\"\n        },\n        \"b71bedad-dd57-4942-a7bd-ab074b72d652\": {\n            \"Properties\": {\n                \"flavor\": \"m1.small\",\n                \"image\": \"ubuntu12_04\",\n                \"key_name\": \"demo\",\n                \"networks\": [\n                    {\n                        \"network\": \"demo-net\"\n                    }\n                ]\n            },\n            \"Type\": \"OS::Nova::Server\",\n            \"name\": \"my_instance\"\n        }\n    },\n    \"stack_id\": \"e624474b-fc80-4053-ab5f-45cc1030e692\",\n    \"timeout\": \"60 sec\"\n}"
+			"rawModeData": "{\n    \"plan_name\": \"e624474b-fc80-4053-ab5f-45cc1030e692\",\n    \"resources\": {\n        \"56c6f15a-5af6-4540-8258-53cc020d26a9\": {\n            \"Properties\": {\n                \"group_name\": \"group\",\n                \"group_type\": \"exclusivity\",\n                \"level\": \"host\",\n                \"resources\": [\n                    \"b71bedad-dd57-4942-a7bd-ab074b72d652\"\n                ]\n            },\n            \"Type\": \"ATT::Valet::GroupAssignment\",\n            \"name\": \"my_group_assignment\"\n        },\n        \"b71bedad-dd57-4942-a7bd-ab074b72d652\": {\n            \"Properties\": {\n                \"name\": \"test\",\n                \"flavor\": \"m1.small\",\n                \"image\": \"ubuntu12_04\",\n                \"key_name\": \"demo\",\n                \"networks\": [\n                    {\n                        \"network\": \"demo-net\"\n                    }\n                ]\n            },\n            \"Type\": \"OS::Nova::Server\",\n            \"name\": \"my_instance\"\n        }\n    },\n    \"stack_id\": \"e624474b-fc80-4053-ab5f-45cc1030e692\",\n    \"timeout\": \"60 sec\"\n}"
 		},
 		{
 			"id": "1ec2b0eb-5b1d-dab2-822e-db21a392e41a",
@@ -567,11 +567,11 @@
 			"tests": "",
 			"currentHelper": "normal",
 			"helperAttributes": {},
-			"time": 1462993688515,
+			"time": 1463498507681,
 			"name": "List placements with replan",
 			"description": "List and possibly replan placements given an orchestration id",
 			"collectionId": "1d5ba476-f6c7-a0c0-d664-a331c00926c3",
-			"rawModeData": "{\n    \"locations\": [\"qos101\", \"qos102\", \"qos104\", \"qos106\", \"qos107\"]\n}"
+			"rawModeData": "{\n    \"locations\": [\"qos102\", \"qos103\", \"qos104\", \"qos106\", \"qos107\"]\n}"
 		},
 		{
 			"id": "a0b31366-660a-99a2-6bae-03089b1001b5",

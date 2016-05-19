@@ -4,3 +4,4 @@
 
 pip
 python-daemon
+valet-api

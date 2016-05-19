@@ -26,9 +26,9 @@ resources:
 
 
   test-affinity-group:
-    type: ATT::CloudQoS::ResourceGroup
+    type: ATT::Valet::GroupAssignment
     properties:
-      relationship: affinity
+      group_type: affinity
       level: host
       resources:
       - {get_resource: my-instance-1}

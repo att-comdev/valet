@@ -35,6 +35,9 @@ logging = {
         'valet_api': {
             'level': 'DEBUG', 'handlers': ['console'], 'propagate': False
         },
+        'valet_api.models': {
+            'level': 'INFO', 'handlers': ['console'], 'propagate': False
+        },
         'pecan': {
             'level': 'DEBUG', 'handlers': ['console'], 'propagate': False
         },

@@ -129,6 +129,7 @@ class Search:
         self.logger.debug("place already-planned nodes again")
         if self._place_planned_nodes() == False:
             self.logger.error("PANIC!")
+            self.status = "cannot replan VMs that was planned"
             return False
 
         self.logger.debug("place to-be replanned nodes with conflicted")
@@ -210,7 +211,7 @@ class Search:
             # NOTE: volumes skip
 
             else: 
-                vgroup = self._get_vgroup_of_vm(_vmk, _vgroups)
+                vgroup = self._get_vgroup_of_vm(vmk, _vgroups)
                 if vgroup != None:
                     if vgroup.host == None:
                         vgroup.host = []
@@ -218,12 +219,14 @@ class Search:
                     if host_name == None:
                         self.logger.error("panic: host does not exist while replan with vgroup")
                     else:
-                        if LEVELS.index(vgroup.level) > LEVELS.index(level):
-                            level = vgroup.level
-                        n = Node()
-                        n.node = vgroup
-                        n.sort_base = self._set_virtual_capacity_based_sort(vgroup)
-                        planned_node_list.append(n)
+                        if len(vgroup.host) == 0:
+                            vgroup.host.append(host_name)
+                            if LEVELS.index(vgroup.level) > LEVELS.index(level):
+                                level = vgroup.level
+                            n = Node()
+                            n.node = vgroup
+                            n.sort_base = self._set_virtual_capacity_based_sort(vgroup)
+                            planned_node_list.append(n)
                 else:
                     self.logger.error("panic: planned vm is missing while replan")             
 
@@ -596,6 +599,7 @@ class Search:
         level = "host"
 
         if self._create_conflicted_nodes(_vms, _volumes, _vgroups) == False:
+            self.status = "conflicted while replan"
             return (None, level)
 
         for vmk, vm in _vms.iteritems():
@@ -659,11 +663,13 @@ class Search:
         _open_node_list.sort(key=operator.attrgetter("sort_base"), reverse=True)
         self.logger.debug("the order of open node list in level = " + _level)
         for on in _open_node_list:
-            self.logger.debug("    node = {}, value = {}".format(on.node.name, on.sort_base))
+            self.logger.debug("    node = {}, id = {}, value = {}".format(on.node.name, \
+                                                                          on.node.uuid, \
+                                                                          on.sort_base))
 
         while len(_open_node_list) > 0:
             n = _open_node_list.pop(0)
-            self.logger.debug("level = " + _level + ", placing node = " + n.node.name)
+            self.logger.debug("level = " + _level + ", placing node = " + n.node.name + ", id = " + n.node.uuid)
 
             best_resource = self._get_best_resource(n, _level, avail_resources)
             if best_resource == None:

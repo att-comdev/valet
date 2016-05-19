@@ -249,7 +249,7 @@ class AppHandler:
                 resources[gk]["type"] = "ATT::Valet::GroupAssignment"
                 properties = {}
                 properties["group_type"] = "affinity"
-                properties["group_name"] = affinity["name"]
+                #properties["group_name"] = affinity["name"]
                 properties["level"] = affinity["level"]
                 properties["resources"] = []
                 for r in affinity["subvgroup_list"]:

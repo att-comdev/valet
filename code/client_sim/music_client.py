@@ -100,6 +100,7 @@ if __name__ == '__main__':
         print json.dumps(resource, indent=4)
     '''
 
+    '''
     time.sleep(5)
     mc.set_request("app_uuid2", "./test_inputs/simple_exclusivity0.json")
     time.sleep(5)
@@ -129,6 +130,7 @@ if __name__ == '__main__':
     for rowk, row in status.iteritems():
         resource = json.loads(row['resource'])
         print json.dumps(resource, indent=4)
+    '''
 
     '''
     time.sleep(5)
@@ -162,9 +164,8 @@ if __name__ == '__main__':
         print json.dumps(resource, indent=4)
     '''
 
-    '''
     time.sleep(5)
-    mc.set_request("app_uuid5", "./test_inputs/simple_affinity.json")
+    mc.set_request("app_uuid5", "./test_inputs/simple_affinity0.json")
     time.sleep(5)
     results = mc.get_placements()
     if results != None:
@@ -179,7 +180,7 @@ if __name__ == '__main__':
         print json.dumps(resource, indent=4)
 
     time.sleep(5)
-    mc.set_request("app_uuid5", "./test_inputs/simple_replan.json")
+    mc.set_request("app_uuid5", "./test_inputs/simple_replan0.json")
     time.sleep(5)
     results = mc.get_placements()
     if results != None:
@@ -192,7 +193,6 @@ if __name__ == '__main__':
     for rowk, row in status.iteritems():
         resource = json.loads(row['resource'])
         print json.dumps(resource, indent=4)
-    '''
 
     '''
     time.sleep(5)

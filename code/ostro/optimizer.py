@@ -39,6 +39,19 @@ class Optimizer:
 
         # Replan request
         if len(_app_topology.candidate_list_map) > 0:
+
+            '''
+            self.logger.debug("test: check replanned inputs")
+            for cvk, loc_list in _app_topology.candidate_list_map.iteritems():
+                self.logger.debug("    test: conflicted vm = " + cvk)
+                for loc in loc_list:
+                    self.logger.debug("        test: loc = " + loc)
+            for pvk, loc in _app_topology.planned_vm_map.iteritems():
+                self.logger.debug("    test: planned vm = " + pvk + " in " + loc)
+            for ovk, info in _app_topology.old_vm_map.iteritems():
+                self.logger.debug("    test: old vm = " + ovk + " with " + info[0] + ", " + str(info[1]))
+            '''
+
             if len(_app_topology.old_vm_map) > 0:
                 self._delete_old_vms(_app_topology.old_vm_map)
                 self.logger.debug("remove & deduct VMs' old placements for replan")
@@ -91,9 +104,7 @@ class Optimizer:
             self.resource.update_host_time(info[0])
  
             host = self.resource.hosts[info[0]]
-            self.logger.debug("test: start remove vm from lg")
             self.resource.remove_vm_by_h_uuid_from_logical_groups(host, h_uuid) 
-            self.logger.debug("test: done remove vm from lg")
 
     def _update_resource_status(self):
         for v, np in self.search.node_placements.iteritems():

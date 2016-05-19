@@ -136,6 +136,8 @@ class ValetFilter(filters.BaseHostFilter):
                 if match:
                     LOG.info(_LI("Valet placement for resource %s: %s." % \
                               (uuid, obj.host)))
+            else:
+                match = None
             if yield_all or match:
                 yield obj
 

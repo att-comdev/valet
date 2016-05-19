@@ -123,14 +123,13 @@ class ValetFilter(filters.BaseHostFilter):
                 location = placement['location']
 
             if not location:
-                LOG.warn(_LW("Valet placement unknown " \
-                         "for resource: %s.") % uuid)
-                yield_all = True
+                LOG.error(_LW("Valet placement unknown " \
+                          "for resource: %s.") % uuid)
+                yield_all = False
 
         # Yield the hosts that pass.
         # Like the Highlander, there can (should) be only one.
-        # TODO: If no hosts pass, do alternate scheduling.
-        # If we can't be sure of a placement, yield all hosts for now.
+        # It's possible there could be none if Valet can't solve it.
         for obj in filter_obj_list:
             if location:
                 match = self._is_same_host(obj.host, location)

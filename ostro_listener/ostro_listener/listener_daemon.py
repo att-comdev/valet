@@ -1,11 +1,27 @@
-# To kick off the script, run the following from the python directory:
-#   PYTHONPATH=`pwd` python daemon.py start
+#!/usr/bin/env python
+# -*- encoding: utf-8 -*-
+#
+# Copyright (c) 2014-2016 AT&T
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+# implied.
+#
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
-# standard python libs
+'''Ostro Event Listener Daemon'''
+
 import logging
 import os
 import sys
-import time
 
 import listener
 
@@ -14,42 +30,35 @@ from daemon import runner
 PIDFILE_PATH = os.environ.get('PIDFILE_PATH', 'ostro-listener.pid')
 PIDFILE_TIMEOUT = int(os.environ.get('PIDFILE_TIMEOUT', 5))
 LOGFILE = os.environ.get('LOGFILE', 'ostro-listener.log')
-LOGNAME = "OstroListener"
 LOGFORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 
+LOG = logging.getLogger(__name__)
 
-class App():
+# pylint: disable=R0903
+
+
+class App(object):
+    '''Ostro Event Listener App Wrapper'''
+
     def __init__(self):
+        '''Initializer'''
         self.stdin_path = '/dev/null'
         self.stdout_path = '/dev/tty'
         self.stderr_path = '/dev/tty'
         self.pidfile_path = PIDFILE_PATH
         self.pidfile_timeout = PIDFILE_TIMEOUT
-            
-    def run(self):
+
+    def run(self):  # pylint: disable=R0201
+        '''Run loop'''
         # python-daemon doesn't slurp these out, so we do it.
         for option in ('start', 'stop', 'restart'):
             if option in sys.argv:
                 sys.argv.remove(option)
         listener.main()
 
-# TODO: Move all of this log stuff into listener
-# TODO: Allow log level in config
-logger = logging.getLogger(LOGNAME)
-logger.setLevel(logging.INFO)
-formatter = logging.Formatter(LOGFORMAT)
-handler = logging.FileHandler(LOGFILE)
-handler.setFormatter(formatter)
-logger.addHandler(handler)
-'''
-logger.debug("Debug message")
-logger.info("Info message")
-logger.warn("Warning message")
-logger.error("Error message")
-'''
-
-# Preserve the logger file handle so it isn't closed during daemonization
-app = App()
-daemon_runner = runner.DaemonRunner(app)
-daemon_runner.daemon_context.files_preserve=[handler.stream]
-daemon_runner.do_action()
+# Preserve logger file handle so it isn't closed during daemonization
+APP = App()
+HANDLER = listener.setup_logging(LOGFORMAT, LOGFILE)
+DAEMON_RUNNER = runner.DaemonRunner(APP)
+DAEMON_RUNNER.daemon_context.files_preserve = [HANDLER.stream]
+DAEMON_RUNNER.do_action()

@@ -16,10 +16,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-'''
-OsloMessage Database Model
-This is based on Music models used in Valet.
-'''
+'''OsloMessage Database Model'''
+
+# This is based on Music models used in Valet.
 
 
 class OsloMessage(object):
@@ -84,12 +83,6 @@ class OsloMessage(object):
         self.method = method
         if _insert:
             self.insert()
-
-    #def __repr__(self):
-    #    try:
-    #        return '<OsloMessage %r>' % self.name
-    #    except DetachedInstanceError:
-    #        return '<OsloMessage detached>'
 
     def __json__(self):
         json_ = {}

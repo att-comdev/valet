@@ -23,14 +23,15 @@ Ostro-specific OpenStack Event Listener
 
 # Based on work by Pramod Jamkhedkar and Jon Wright
 
-# TODO: Get rid of globals, turn into package/classes, and daemonize
+# TODO: Get rid of globals, turn into package/classes
 
-from __future__ import print_function
+#from __future__ import print_function
 
 import argparse
 import ConfigParser
 from datetime import datetime
 import json
+import logging
 import os
 import pprint
 import stat
@@ -42,6 +43,10 @@ from valet_api.models.music import Music
 from oslo_messages import OsloMessage
 
 import pika
+
+LOG = logging.getLogger(__name__)
+
+LOGFORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 
 _ARGS = None
 MUSIC = None  # Database Engine
@@ -61,7 +66,7 @@ def store_message(message):
         'method': method,
         'database': MUSIC,
     }
-    _ = OsloMessage(**kwargs)
+    _unused = OsloMessage(**kwargs)  # pylint: disable=W0612
 
 def is_message_wanted(message):
     '''
@@ -115,25 +120,21 @@ def on_message(channel, method_frame,
     else:
         return
 
-    print("\nMessage No:", method_frame.delivery_tag, "\n")
-    #print body
+    LOG.debug("\nMessage No: %s\n", method_frame.delivery_tag)
     message_obj = yaml.load(body)
     if 'oslo.message' in message_obj.keys():
         message_obj = yaml.load(message_obj['oslo.message'])
-    #if "admin" in message_obj['_context_roles']:
     if _ARGS.output_format == 'json':
-        print(json.dumps(message_obj, sort_keys=True, indent=2))
+        LOG.debug(json.dumps(message_obj, sort_keys=True, indent=2))
     elif _ARGS.output_format == 'yaml':
-        print(yaml.dump(message_obj))
+        LOG.debug(yaml.dump(message_obj))
     else:
-        # args.output_format == 'dict'
         pprint.pprint(message_obj)
     channel.basic_ack(delivery_tag=method_frame.delivery_tag)
 
 def safe_file(filename):
     '''Determine if a file is safe to read'''
     status = os.stat(filename)
-    # pylint: disable=R0916
     if bool(status.st_mode & stat.S_IRGRP) or \
        bool(status.st_mode & stat.S_IWGRP) or \
        bool(status.st_mode & stat.S_IXGRP) or \
@@ -141,7 +142,6 @@ def safe_file(filename):
        bool(status.st_mode & stat.S_IROTH) or \
        bool(status.st_mode & stat.S_IWOTH):
         return False
-    # pylint: enable=R0916
     return True
 
 def _parse_arguments():
@@ -149,9 +149,8 @@ def _parse_arguments():
 
     # http://blog.vwelch.com/2011/04/
     #    combining-configparser-and-argparse.html
-    conf_parser = argparse.ArgumentParser(
-        # Turn off help, so we print all options in response to -h
-        add_help=False)
+    # Turn off help, so we print all options in response to -h
+    conf_parser = argparse.ArgumentParser(add_help=False)
     conf_parser.add_argument("-c", "--conf_file",
                              help="Specify config file", metavar="FILE")
     args, remaining_argv = conf_parser.parse_known_args()
@@ -175,7 +174,7 @@ def _parse_arguments():
         conf_file = args.conf_file
     else:
         conf_file = os.environ.get('OSTRO_LISTENER_CONFIG')
-    print('config file is %s' % conf_file)
+    LOG.info('Config file is %s', conf_file)
 
     if conf_file:
         config = ConfigParser.SafeConfigParser()
@@ -236,6 +235,18 @@ def _parse_arguments():
         help='music replication factor')
     return parser.parse_args(remaining_argv)
 
+def setup_logging(logformat, logfile=None):
+    '''Setup Logging and return handler'''
+    LOG.setLevel(logging.DEBUG)
+    if logfile:
+        handler = logging.FileHandler(logfile)
+    else:
+        handler = logging.StreamHandler(sys.stdout)
+    formatter = logging.Formatter(logformat)
+    handler.setFormatter(formatter)
+    LOG.addHandler(handler)
+    return handler
+
 def main():
     '''Entry point'''
     global _ARGS  # pylint: disable=W0603
@@ -248,14 +259,13 @@ def main():
     # and the default username and password are guest and guest.
     # credentials = pika.PlainCredentials("guest", "PASSWORD")
 
-    # check for safety of rabbitmq password file
+    # Check for safety of rabbitmq password file
     passwd = ''
     if os.path.exists(_ARGS.passwdfile):
         if not safe_file(_ARGS.passwdfile):
-            print('ERROR: existing password file',
-                  _ARGS.passwdfile,
-                  'is readable/writable by group/other',
-                  file=sys.stderr)
+            LOG.error('ERROR: existing password file %s ' \
+                      'is readable/writable by group/other',
+                      _ARGS.passwdfile)
             sys.exit(1)
         with open(_ARGS.passwdfile, 'rb') as filed:
             for line in filed:
@@ -267,11 +277,8 @@ def main():
                     flds[0].startswith(_ARGS.host):
                     passwd = flds[1]
     if passwd == '':
-        print('ERROR: Host',
-              _ARGS.host,
-              'not found in password file',
-              _ARGS.passwdfile,
-              file=sys.stderr)
+        LOG.error('ERROR: Host %s not found in password file %s',
+                  _ARGS.host, _ARGS.passwdfile)
         sys.exit(2)
 
     if _ARGS.store:
@@ -322,8 +329,8 @@ def main():
     # Bind the queue to the selected exchange
     channel.queue_bind(exchange=exchange_name, queue=queue_name,
                        routing_key=binding_key)
-    print('channel is bound!!!')
-    print('listening on', _ARGS.host, _ARGS.exchange)
+    LOG.info('Channel is bound, listening on %s %s', \
+             _ARGS.host, _ARGS.exchange)
 
     # Start consuming messages
     channel.basic_consume(on_message, queue_name)
@@ -337,4 +344,5 @@ def main():
     connection.close()
 
 if __name__ == '__main__':
+    setup_logging(LOGFORMAT)
     main()

@@ -20,13 +20,14 @@
 
 from pecan import make_app
 
-from valet_api.common import identity
+from valet_api.common import identity, messaging
 from valet_api import models
 
 
 def setup_app(config):
     '''App Setup'''
     identity.init_identity()
+    messaging.init_messaging()
     models.init_model()
     app_conf = dict(config.app)
 

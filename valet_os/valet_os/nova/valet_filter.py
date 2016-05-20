@@ -147,11 +147,13 @@ class ValetFilter(filters.BaseHostFilter):
                           "ad hoc placement request."))
                 response = None
 
-            if response and response.get('placements'):
-                placements = response['placements']
-                if placements.get(uuid):
-                    placement = placements.get(uuid)
-                    location = placement['location']
+            if response and response.get('plan'):
+                plan = response['plan']
+                if plan and plan.get('placements'):
+                    placements = plan['placements']
+                    if placements.get(uuid):
+                        placement = placements.get(uuid)
+                        location = placement['location']
 
             if not location:
                 LOG.error(_LW("Valet ad-hoc placement unknown " \
@@ -163,16 +165,17 @@ class ValetFilter(filters.BaseHostFilter):
             hosts = [obj.host for obj in filter_obj_list]
 
             try:
-                placement = self.api.placement(uuid, hosts=hosts,
+                response = self.api.placement(uuid, hosts=hosts,
                                                auth_token=self._auth_token)
             except:
                 LOG.error(_LW("Valet did not respond to " \
                           "placement request."))
-                placement = None
+                response = None
 
-            # Ostro will give a matching format
-            if placement and placement.get('location'):
-                location = placement['location']
+            if response and response.get('placement'):
+                placement = response['placement']
+                if placement.get('location'):
+                    location = placement['location']
 
             if not location:
                 # TODO: Get context from exception

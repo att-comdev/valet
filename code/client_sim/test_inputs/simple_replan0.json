@@ -1,9 +1,0 @@
-[
-{
-    "action":"replan",
-    "stack_id":"app_uuid5",
-    "locations":["sim0r0c1"],
-    "orchestration_id":"vm13_uuid",
-    "exclusions":["vm12_uuid"]
-}
-]

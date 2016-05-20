@@ -20,7 +20,7 @@
 
 import logging
 
-from valet_api.controllers import error, group_name_type
+from valet_api.controllers import error, group_name_type, notify
 from valet_api.common.i18n import _
 from valet_api.models import Group
 
@@ -92,6 +92,7 @@ class MembersItemController(object):
         member_id = request.context['member_id']
         group.members.remove(member_id)
         group.update()
+        notify(sub_event_type='group.update', data=group)
         response.status = 204
 
 class MembersController(object):
@@ -131,6 +132,7 @@ class MembersController(object):
         group = request.context['group']
         group.members = list(set(group.members + new_members))
         group.update()
+        notify(sub_event_type='group.update', data=group)
         response.status = 201
 
         # Flush so that the DB is current.
@@ -143,6 +145,7 @@ class MembersController(object):
         group = request.context['group']
         group.members = []
         group.update()
+        notify(sub_event_type='group.update', data=group)
         response.status = 204
 
     @expose()
@@ -198,6 +201,7 @@ class GroupsItemController(object):
         group = request.context['group']
         group.description = kwargs.get('description', group.description)
         group.update()
+        notify(sub_event_type='group.update', data=group)
         response.status = 201
 
         # Flush so that the DB is current.
@@ -211,6 +215,7 @@ class GroupsItemController(object):
         if isinstance(group.members, list) and len(group.members) > 0:
             error('/errors/conflict',
                   _('Unable to delete a Group with members.'))
+        notify(sub_event_type='group.delete', data=group)
         group.delete()
         response.status = 204
 
@@ -258,6 +263,7 @@ class GroupsController(object):
         group = Group(group_name, description, group_type, members)
         if group:
             response.status = 201
+            notify(sub_event_type='group.create', data=group)
 
             # Flush so that the DB is current.
             group.flush()

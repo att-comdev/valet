@@ -25,9 +25,24 @@ import string
 from valet_api.common.i18n import _
 from valet_api.models import Placement
 
-from pecan import redirect, request
+from pecan import conf, redirect, request
 
 LOG = logging.getLogger(__name__)
+
+#
+# Notification Helpers
+#
+
+def notify(**kwargs):
+    '''Post notification to Oslo Message Bus'''
+    ctxt = kwargs.get('ctxt', {})
+    sub_event_type = kwargs.get('sub_event_type', '')
+    event_type = 'valet'
+    if sub_event_type:
+        event_type += '.' + sub_event_type
+    data = kwargs.get('data', {})
+    payload = data.__json__()
+    conf.messaging.notifier.info(ctxt, event_type, payload)
 
 #
 # Group Helpers

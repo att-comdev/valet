@@ -70,6 +70,12 @@ ostro = {
     'interval': 1,
 }
 
+messaging = {
+    'config': {
+        'transport_url': 'rabbit://username:password@127.0.0.1:5672/',
+    }
+}
+
 identity = {
     'config': {
         'username': 'valet',

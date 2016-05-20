@@ -269,6 +269,19 @@ class Ostro(object):
             "exclusions": self.args['exclusions'],
         }
 
+    def migrate(self, **kwargs):
+        '''Replan the placement for an existing resource.'''
+        self.args = kwargs.get('args')
+        self.response = None
+        self.error_uri = None
+        self.request = {
+            "version": "1.0",
+            "action": "migrate",
+            "stack_id": self.args['stack_id'],
+            "excluded_hosts": self.args['excluded_hosts'],
+            "orchestration_id": self.args['orchestration_id'],
+        }
+
     def send(self):
         '''Send the request and obtain a response.'''
         request_json = simplejson.dumps(

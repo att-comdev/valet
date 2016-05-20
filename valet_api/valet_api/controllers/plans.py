@@ -20,7 +20,7 @@
 
 import logging
 
-from valet_api.controllers import set_placements, error
+from valet_api.controllers import set_placements, update_placements, error
 from valet_api.common.i18n import _
 from valet_api.models import Plan
 from valet_api.common.ostro_helper import Ostro
@@ -40,9 +40,11 @@ CREATE_SCHEMA = (
 )
 
 UPDATE_SCHEMA = (
-    ('plan_name', types.string),
-    ('resources', types.dictionary),
-    ('resources_update', types.dictionary),
+    (decorators.optional('excluded_hosts'), types.array),
+    (decorators.optional('orchestration_id'), types.string),
+    (decorators.optional('plan_name'), types.string),
+    (decorators.optional('resources'), types.dictionary),
+    (decorators.optional('resources_update'), types.dictionary),
     ('stack_id', types.string),
     (decorators.optional('timeout'), types.string)
 )
@@ -55,8 +57,6 @@ class PlansItemController(object):
     Plans Item Controller
     /v1/plans/{plan_id}
     '''
-
-    placements = None
 
     def __init__(self, uuid4):
         '''Initializer.'''
@@ -95,10 +95,51 @@ class PlansItemController(object):
 
     @index.when(method='PUT', template='json')
     @validate(UPDATE_SCHEMA, '/errors/schema')
-    def index_put(self):
+    def index_put(self, **kwargs):
         '''Update a Plan'''
-        # FIXME: This is broken. Unused for Valet 1.0.
-        # Possible Ostro regression?
+
+        ostro = Ostro()
+
+        stack_id = kwargs.get('stack_id')
+        excluded_hosts = kwargs.get('excluded_hosts')
+        orch_id = kwargs.get('orchestration_id')
+        if stack_id and excluded_hosts and orch_id:
+            # Replan the placement of an existing resource.
+            LOG.info(_('Migration request for ' \
+                       'orchestration id %s'), orch_id)
+            args = {
+                "stack_id": stack_id,
+                "excluded_hosts": excluded_hosts,
+                "orchestration_id": orch_id,
+            }
+            ostro_kwargs = {
+                "args": args,
+            }
+            ostro.migrate(**ostro_kwargs)
+            ostro.send()
+
+            status_type = ostro.response['status']['type']
+            if status_type != 'ok':
+                message = ostro.response['status']['message']
+                error(ostro.error_uri, _('Ostro error: %s') % message)
+
+            placements = ostro.response['resources']
+            update_placements(placements, unlock_all=True)
+            response.status = 201
+
+            # Flush so that the DB is current.
+            self.plan.flush()
+            self.plan = Plan.query.filter_by(  # pylint: disable=E1101
+                stack_id=stack_id).first()
+            LOG.info(_('Plan with stack id %s updated.'), \
+                self.plan.stack_id)
+            return self.plan
+
+        # TODO: Throw unimplemented error?
+
+        # pylint: disable=W0612
+        _unused = '''
+        # FIXME: This is broken. Save for Valet 1.1
         # New placements are not being seen in the response, so
         # set_placements is currently failing as a result.
         ostro = Ostro()
@@ -135,6 +176,8 @@ class PlansItemController(object):
         # Flush so that the DB is current.
         self.plan.flush()
         return self.plan
+        '''
+        # pylint: enable=W0612
 
     @index.when(method='DELETE', template='json')
     def index_delete(self):

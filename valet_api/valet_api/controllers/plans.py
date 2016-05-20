@@ -91,7 +91,7 @@ class PlansItemController(object):
     @index.when(method='GET', template='json')
     def index_get(self):
         '''Get plan'''
-        return self.plan
+        return {"plan": self.plan}
 
     @index.when(method='PUT', template='json')
     @validate(UPDATE_SCHEMA, '/errors/schema')
@@ -133,7 +133,7 @@ class PlansItemController(object):
                 stack_id=stack_id).first()
             LOG.info(_('Plan with stack id %s updated.'), \
                 self.plan.stack_id)
-            return self.plan
+            return {"plan": self.plan}
 
         # TODO: Throw unimplemented error?
 
@@ -218,8 +218,8 @@ class PlansController(object):
         '''Get all the plans'''
         plans_array = []
         for plan in Plan.query.all():  # pylint: disable=E1101
-            plans_array.append(plan.name)
-        return plans_array
+            plans_array.append(plan)
+        return {"plans": plans_array}
 
     @index.when(method='POST', template='json')
     @validate(CREATE_SCHEMA, '/errors/schema')
@@ -261,7 +261,7 @@ class PlansController(object):
             plan.flush()
             LOG.info(_('Plan with stack id %s created.'), \
                 plan.stack_id)
-            return plan
+            return {"plan": plan}
         else:
             error('/errors/server_error',
                   _('Unable to create Plan.'))

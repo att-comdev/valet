@@ -102,10 +102,10 @@ class ValetAPIWrapper(object):
             self.headers['X-Auth-Token'] = auth_token
             req = requests.post(url, data=payload, headers=self.headers)
             req.raise_for_status()
-            plan = json.loads(req.text)
+            response = json.loads(req.text)
         except requests.exceptions.HTTPError as exc:
             _exception(exc, sys.exc_info(), req)
-        return plan
+        return response
 
     # TODO: Keep stack param for now. We may need it again.
     def plans_delete(self, stack, auth_token=None):  # pylint: disable=W0613
@@ -114,8 +114,10 @@ class ValetAPIWrapper(object):
             url = self._api_endpoint() + '/plans/' + stack.id
             self.headers['X-Auth-Token'] = auth_token
             req = requests.delete(url, headers=self.headers)
+            response = json.loads(req.text)
         except requests.exceptions.HTTPError as exc:
             _exception(exc, sys.exc_info(), req)
+        return response
 
     def placement(self, uuid, hosts=None, auth_token=None):
         '''
@@ -136,9 +138,9 @@ class ValetAPIWrapper(object):
             # TODO: Raise an exception IFF the scheduler can handle it
             #req.raise_for_status()
 
-            placement = json.loads(req.text)
+            response = json.loads(req.text)
         except:  # pylint: disable=W0702
             # FIXME: Find which exceptions we should really handle here.
-            placement = None
+            response = None
 
-        return placement
+        return response

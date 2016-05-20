@@ -89,7 +89,7 @@ class REST(object):
                 data_json = simplejson.dumps(
                     data, sort_keys=True, indent=2 * ' '
                 ) if data else None
-                LOG.debug(_("Music Request: %s %s%s"), \
+                LOG.debug("Music Request: %s %s%s", \
                     method.upper(), full_url, \
                     '\n'+data_json if data else '')
                 response = method_fn(full_url, data=data_json,
@@ -102,13 +102,13 @@ class REST(object):
                 response.status_code = 408
                 response.url = full_url
                 response.text = err.message
-                LOG.debug(_("Music: %s"), err.message)
+                LOG.debug("Music: %s", err.message)
             except requests.exceptions.RequestException as err:
                 response = requests.Response()
                 response.status_code = 400
                 response.url = full_url
                 response.text = err.message
-                LOG.debug(_("Music: %s"), err.message)
+                LOG.debug("Music: %s", err.message)
 
         # If we get here, an exception was raised for every url,
         # but we passed so we could try each endpoint. Raise status

@@ -40,7 +40,7 @@ DIVERSITY = 'diversity'
 EXCLUSIVITY = 'exclusivity'
 
 
-def _log(text, title):
+def _log(text, title="Ostro"):
     '''Log helper'''
     log_text = "%s:\n%s" % (title, text)
     LOG.debug(log_text)
@@ -228,7 +228,6 @@ class Ostro(object):
             return False
 
         self.request = {
-            "version": "1.0",
             "action": action,
             "resources": self.response['resources'],
             "stack_id": self.args['stack_id'],
@@ -250,7 +249,6 @@ class Ostro(object):
         self.response = None
         self.error_uri = None
         self.request = {
-            "version": "1.0",
             "action": "ping",
             "stack_id": stack_id,
         }
@@ -261,7 +259,6 @@ class Ostro(object):
         self.response = None
         self.error_uri = None
         self.request = {
-            "version": "1.0",
             "action": "replan",
             "stack_id": self.args['stack_id'],
             "locations": self.args['locations'],
@@ -275,7 +272,6 @@ class Ostro(object):
         self.response = None
         self.error_uri = None
         self.request = {
-            "version": "1.0",
             "action": "migrate",
             "stack_id": self.args['stack_id'],
             "excluded_hosts": self.args['excluded_hosts'],
@@ -289,9 +285,9 @@ class Ostro(object):
         )
 
         # TODO: Pass timeout value?
-        _log(request_json, _('Ostro Request'))
+        _log(request_json, 'Ostro Request')
         result = self._send(self.args['stack_id'], request_json)
-        _log(result, _('Ostro Response'))
+        _log(result, 'Ostro Response')
 
         self.response = simplejson.loads(result)
 

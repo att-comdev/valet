@@ -76,7 +76,7 @@ class PlacementsItemController(object):
         Inspect a placement.
         Use POST for reserving placements made by a scheduler.
         '''
-        return self.placement
+        return {"placement": self.placement}
 
     @index.when(method='POST', template='json')
     def index_post(self, **kwargs):
@@ -92,7 +92,7 @@ class PlacementsItemController(object):
         if self.placement.location in locations:
             # Ostro's placement is in the list of candidates. Good!
             reserve_placement(self.placement)
-            response.status = 200
+            response.status = 201
         else:
             # Ostro's placement is NOT in the list of candidates.
             # Time for Plan B.
@@ -151,7 +151,7 @@ class PlacementsItemController(object):
 
         placement = Placement.query.filter_by(  # pylint: disable=E1101
             orchestration_id=self.placement.orchestration_id).first()
-        return placement
+        return {"placement": placement}
 
     @index.when(method='DELETE', template='json')
     def index_delete(self):
@@ -192,7 +192,7 @@ class PlacementsController(object):
         placements_array = []
         for placement in Placement.query.all():  # pylint: disable=E1101
             placements_array.append(placement)
-        return placements_array
+        return {"placements": placements_array}
 
     @expose()
     def _lookup(self, uuid4, *remainder):

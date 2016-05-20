@@ -102,8 +102,10 @@ class ValetAPIWrapper(object):
             self.headers['X-Auth-Token'] = auth_token
             req = requests.post(url, data=payload, headers=self.headers)
             req.raise_for_status()
+            plan = json.loads(req.text)
         except requests.exceptions.HTTPError as exc:
             _exception(exc, sys.exc_info(), req)
+        return plan
 
     # TODO: Keep stack param for now. We may need it again.
     def plans_delete(self, stack, auth_token=None):  # pylint: disable=W0613

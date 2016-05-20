@@ -68,7 +68,7 @@ def reserve_placement(placement, reserve=True):
         placement.reserved = reserve
         placement.update()
 
-def update_placements(placements, reserve_id=None):
+def update_placements(placements, reserve_id=None, unlock_all=False):
     '''Update placements. Optionally reserve one placement.'''
     for uuid in placements.iterkeys():
         placement = Placement.query.filter_by(  # pylint: disable=E1101
@@ -83,7 +83,9 @@ def update_placements(placements, reserve_id=None):
                           'old_loc': placement.location,
                           'new_loc': location})
                 placement.location = location
-            if reserve_id and placement.orchestration_id == reserve_id:
+            if unlock_all:
+                reserve_placement(placement, False)
+            elif reserve_id and placement.orchestration_id == reserve_id:
                 reserve_placement(placement)
             else:
                 placement.update()

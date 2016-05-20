@@ -60,6 +60,7 @@
 				"6717d467-8a9e-fe53-1fcc-b7a0af7f5516",
 				"32b82f81-bd62-392d-1370-09db2373b020",
 				"183647df-e27b-069f-90a1-2d007dca552d",
+				"a37d1925-6cd8-c48b-705b-72c9643b3fb1",
 				"a62314a3-9dbf-07bf-b978-83b12f14d6d3",
 				"157b06f2-2de5-584f-9892-930740fbb64d",
 				"a0b31366-660a-99a2-6bae-03089b1001b5",
@@ -592,6 +593,24 @@
 			"rawModeData": ""
 		},
 		{
+			"id": "a37d1925-6cd8-c48b-705b-72c9643b3fb1",
+			"headers": "Content-Type: application/json\nX-Auth-Token: {{auth_token}}\n",
+			"url": "{{allegro}}/v1/plans/e624474b-fc80-4053-ab5f-45cc1030e692",
+			"preRequestScript": "",
+			"pathVariables": {},
+			"method": "PUT",
+			"data": [],
+			"dataMode": "raw",
+			"tests": "",
+			"currentHelper": "normal",
+			"helperAttributes": {},
+			"time": 1463714050765,
+			"name": "Migrate Resource in a Plan",
+			"description": "Migrate a single resource in a plan.",
+			"collectionId": "1d5ba476-f6c7-a0c0-d664-a331c00926c3",
+			"rawModeData": "{\n   \"stack_id\": \"e624474b-fc80-4053-ab5f-45cc1030e692\",\n   \"excluded_hosts\": [\"qos104\", \"qos106\", \"qos107\"],\n   \"orchestration_id\": \"b71bedad-dd57-4942-a7bd-ab074b72d652\"\n}"
+		},
+		{
 			"id": "a62314a3-9dbf-07bf-b978-83b12f14d6d3",
 			"headers": "Content-Type: application/json\nX-Auth-Token: {{auth_token}}\n",
 			"url": "{{allegro}}/v1/plans/e624474b-fc80-4053-ab5f-45cc1030e692",
@@ -604,7 +623,7 @@
 			"currentHelper": "normal",
 			"helperAttributes": {},
 			"time": 1462485774917,
-			"name": "Update a plan",
+			"name": "Update a plan (not yet used)",
 			"description": "Updates a plan by ID.",
 			"collectionId": "1d5ba476-f6c7-a0c0-d664-a331c00926c3",
 			"rawModeData": "{\n    \"plan_name\": \"e624474b-fc80-4053-ab5f-45cc1030e692\",\n    \"resources\": {\n        \"64421fbc-f39d-4a41-b5c1-4aeae2ebf757\": {\n            \"Properties\": {\n                \"size\": 1\n            },\n            \"Type\": \"OS::Cinder::Volume\",\n            \"name\": \"my_volume\"\n        },\n        \"b71bedad-dd57-4942-a7bd-ab074b72d652\": {\n            \"Properties\": {\n                \"flavor\": \"m1.small\",\n                \"image\": \"ubuntu12_04\",\n                \"key_name\": \"demo\",\n                \"networks\": [\n                    {\n                        \"network\": \"demo-net\"\n                    }\n                ]\n            },\n            \"Type\": \"OS::Nova::Server\",\n            \"name\": \"my_instance\"\n        }\n    },\n    \"resources_update\": {\n        \"a649424b-dd57-1431-befc-45cc4b72d653\": {\n            \"Properties\": {\n                \"flavor\": \"m1.small\",\n                \"image\": \"ubuntu12_04\",\n                \"key_name\": \"demo\",\n                \"networks\": [\n                    {\n                        \"network\": \"demo-net\"\n                    }\n                ]\n            },\n            \"Type\": \"OS::Nova::Server\",\n            \"name\": \"my_new_instance\"\n        }\n    },\n    \"stack_id\": \"e624474b-fc80-4053-ab5f-45cc1030e692\",\n    \"timeout\": \"60 sec\"\n}\n"

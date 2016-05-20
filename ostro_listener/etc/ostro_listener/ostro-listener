@@ -27,31 +27,47 @@
 # Should-Stop:
 # Default-Start:  3 5
 # Default-Stop:   0 1 2 6
-# Short-Description: Ostro Event Listener
-# Description: Ostro Event Listener
+# Short-Description: Ostro event listener
+# Description: Runs up the ostro event listener process
 ### END INIT INFO
 
-# Activate the python virtual environment
-source /usr/share/ostro-listener/daemon/bin/activate
+# Uncomment to set a python virtual environment, if any
+export VENV=/opt/stack/heat.venv
+
+export NAME=ostro-listener
+
+export PIDFILE_TIMEOUT=5
+export PIDFILE_PATH="/var/run/$NAME/$NAME"
+export LOGFILE_PATH="/var/log/$NAME"
+export CONFIG_PATH="/etc/$NAME"
+
+if [ "$VENV" ]
+then
+  source $VENV/bin/activate
+fi
+
+export ROOT="/home/ubuntu/git/allegro/ostro_listener"
+export LOGFILE="$LOGFILE_PATH/$NAME.log"
+export OSTRO_LISTENER_CONFIG="$CONFIG_PATH/$NAME.conf"
 
 case "$1" in
   start)
-    echo "Starting server"
+    echo "Starting $NAME"
     # Start the daemon 
-    python /usr/share/testdaemon/testdaemon.py start
+    python $ROOT/ostro_listener/listener_daemon.py start
     ;;
   stop)
-    echo "Stopping server"
+    echo "Stopping $NAME"
     # Stop the daemon
-    python /usr/share/testdaemon/testdaemon.py stop
+    python $ROOT/ostro_listener/listener_daemon.py stop
     ;;
   restart)
-    echo "Restarting server"
-    python /usr/share/testdaemon/testdaemon.py restart
+    echo "Restarting $NAME"
+    python $ROOT/ostro_listener/listener_daemon.py restart
     ;;
   *)
     # Refuse to do other stuff
-    echo "Usage: /etc/init.d/testdaemon {start|stop|restart}"
+    echo "Usage: /etc/init.d/$NAME {start|stop|restart}"
     exit 1
     ;;
 esac

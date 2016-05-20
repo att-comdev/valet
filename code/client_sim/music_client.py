@@ -180,6 +180,22 @@ if __name__ == '__main__':
         print json.dumps(resource, indent=4)
 
     time.sleep(5)
+    mc.set_request("app_uuid5", "./test_inputs/simple_migrate0.json")
+    time.sleep(5)
+    results = mc.get_placements()
+    if results != None:
+        print "Placement result"
+        for rowk, row in results.iteritems():
+            placement = json.loads(row['placement'])
+            print json.dumps(placement, indent=4)
+    status = mc.get_resource_status()
+    print "Resource status"
+    for rowk, row in status.iteritems():
+        resource = json.loads(row['resource'])
+        print json.dumps(resource, indent=4)
+
+    '''
+    time.sleep(5)
     mc.set_request("app_uuid5", "./test_inputs/simple_replan0.json")
     time.sleep(5)
     results = mc.get_placements()
@@ -193,6 +209,7 @@ if __name__ == '__main__':
     for rowk, row in status.iteritems():
         resource = json.loads(row['resource'])
         print json.dumps(resource, indent=4)
+    '''
 
     '''
     time.sleep(5)

@@ -1,0 +1,8 @@
+[
+{
+    "action":"migrate",
+    "stack_id":"app_uuid5",
+    "orchestration_id":"vm13_uuid",
+    "excluded_hosts":["sim0r0c0", "sim0r0c1"]
+}
+]

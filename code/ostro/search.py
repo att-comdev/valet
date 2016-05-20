@@ -79,6 +79,16 @@ class Search:
         self.local_disk_weight = -1
         self.disk_weight = -1
 
+    def copy_resource_status(self, _resource):
+        self._init_placements()
+
+        self.resource = _resource
+
+        self._create_avail_logical_groups()
+        self._create_avail_storage_hosts()
+        self._create_avail_switches()
+        self._create_avail_hosts()
+
     def place_nodes(self, _app_topology, _resource):
         self._init_placements()
 
@@ -124,9 +134,11 @@ class Search:
 
         self._compute_resource_weights()
 
-        # NOTE: assume OpenStack rollback the whole stack or tenant re-create the stack if replan is failed
-
         self.logger.debug("place already-planned nodes again")
+
+        if len(_app_topology.exclusion_list_map) > 0:
+            self._get_planned_list()
+
         if self._place_planned_nodes() == False:
             self.logger.error("PANIC!")
             self.status = "cannot replan VMs that was planned"
@@ -144,6 +156,29 @@ class Search:
             self.node_placements[v] = ah
 
         return self._run_greedy(open_node_list, level, self.avail_hosts)
+
+    def _get_planned_list(self):
+        migrated_vm_id = self.app_topology.candidate_list_map.keys()[0]
+
+        if migrated_vm_id not in self.app_topology.vms.keys():
+            vgroup = self._get_vgroup_of_vm(migrated_vm_id, self.app_topology.vgroups)
+            if vgroup != None:
+                vm_list = []
+                self._get_child_vms(vgroup, vm_list, migrated_vm_id)
+                for vk in vm_list:
+                    self.logger.debug("test: should not planned vm = " + vk)
+                    if vk in self.app_topology.planned_vm_map.keys():
+                        del self.app_topology.planned_vm_map[vk]
+            else:
+                self.logger.error("panic: migrated vm is missing while replan")             
+
+    def _get_child_vms(self, _g, _vm_list, _e_vmk):
+        for sgk, sg in _g.subvgroups.iteritems():
+            if isinstance(sg, VM):
+                if sgk != _e_vmk:
+                    _vm_list.append(sgk)
+            else:
+                self._get_child_vms(sg, _vm_list, _e_vmk)
 
     def _create_conflicted_nodes(self, _vms, _volumes, _vgroups):
         if len(self.app_topology.candidate_list_map) == 0:
@@ -644,7 +679,7 @@ class Search:
                         self.disk_weight * _v.volume_weight
  
         return sort_base
-        
+       
     def _run_greedy(self, _open_node_list, _level, _avail_hosts):
         success = True
 

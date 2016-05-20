@@ -557,6 +557,11 @@ class Resource:
             if isinstance(cluster, HostGroup):
                 self.datacenter.last_update = time.time()
 
+    def get_uuid(self, _h_uuid, _host_name):
+        host = self.hosts[_host_name]
+       
+        return host.get_uuid(_h_uuid)
+
     # Call by optimizer and event handler
     def add_vm_to_host(self, _host_name, _vm_id, _vcpus, _mem, _ldisk):
         host = self.hosts[_host_name]

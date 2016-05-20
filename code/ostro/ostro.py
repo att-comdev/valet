@@ -230,7 +230,7 @@ class Ostro:
         if placement_map == None: 
             self.status = self.optimizer.status
             self.logger.debug("error while optimizing app placement: " + self.status)
-            self.app_handler.remove_placement()
+            #self.app_handler.remove_placement()
             return None
 
         if len(placement_map) > 0:
@@ -240,6 +240,11 @@ class Ostro:
 
             self.app_handler.add_placement(placement_map, self.resource.current_timestamp)
 
+            if len(app_topology.exclusion_list_map) > 0 and len(app_topology.planned_vm_map) > 0:
+                for vk in app_topology.planned_vm_map.keys():
+                    if vk in placement_map.keys():
+                        del placement_map[vk]
+    
         return placement_map
 
     def handle_events(self, _event_list):

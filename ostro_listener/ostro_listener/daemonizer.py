@@ -27,12 +27,12 @@ import listener
 
 from daemon import runner
 
-PIDFILE_PATH = os.environ.get('PIDFILE_PATH', 'ostro-listener.pid')
+PIDFILE_PATH = os.environ.get('PIDFILE_PATH')
 PIDFILE_TIMEOUT = int(os.environ.get('PIDFILE_TIMEOUT', 5))
-LOGFILE = os.environ.get('LOGFILE', 'ostro-listener.log')
+LOGFILE = os.environ.get('LOGFILE')
 LOGFORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 
-LOG = logging.getLogger(__name__)
+LOG = logging.getLogger('OstroListener')
 
 # pylint: disable=R0903
 
@@ -43,8 +43,8 @@ class App(object):
     def __init__(self):
         '''Initializer'''
         self.stdin_path = '/dev/null'
-        self.stdout_path = '/dev/tty'
-        self.stderr_path = '/dev/tty'
+        self.stdout_path = '/dev/null'
+        self.stderr_path = '/dev/null'
         self.pidfile_path = PIDFILE_PATH
         self.pidfile_timeout = PIDFILE_TIMEOUT
 
@@ -56,9 +56,16 @@ class App(object):
                 sys.argv.remove(option)
         listener.main()
 
-# Preserve logger file handle so it isn't closed during daemonization
-APP = App()
-HANDLER = listener.setup_logging(LOGFORMAT, LOGFILE)
-DAEMON_RUNNER = runner.DaemonRunner(APP)
-DAEMON_RUNNER.daemon_context.files_preserve = [HANDLER.stream]
-DAEMON_RUNNER.do_action()
+def main():
+    # Preserve logger file handle so it isn't closed during daemonization
+    if not PIDFILE_PATH or not LOGFILE:
+        print "Must specify PIDFILE_PATH and LOGFILE in environment."
+        exit(1)
+    app = App()
+    handler = listener.setup_logging(LOGFORMAT, LOGFILE)
+    daemon_runner = runner.DaemonRunner(app)
+    daemon_runner.daemon_context.files_preserve = [handler.stream]
+    daemon_runner.do_action()
+
+if __name__ == '__main__':
+    main()

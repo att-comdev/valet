@@ -25,6 +25,8 @@ import string
 from valet_api.common.i18n import _
 from valet_api.models import Placement
 
+from notario import ensure
+from notario.decorators import instance_of
 from pecan import conf, redirect, request
 
 LOG = logging.getLogger(__name__)
@@ -45,15 +47,25 @@ def notify(**kwargs):
     conf.messaging.notifier.info(ctxt, event_type, payload)
 
 #
-# Group Helpers
+# Notario Helpers
 #
 
-def group_name_type(value):
+def valid_group_name(value):
     '''Validator for group name type.'''
     assert set(value) <= set(string.letters + string.digits + "-._~"), \
         _("must contain only uppercase and lowercase letters, " \
         "decimal digits, hyphens, periods, underscores, and tildes " \
         "[RFC 3986, Section 2.3]")
+
+@instance_of((list, dict))
+def valid_plan_resources(value):
+    '''Validator for plan resources.'''
+    ensure(len(value) > 0)
+
+def valid_plan_update_action(value):
+    '''Validator for plan update action.'''
+    assert value in ['update', 'migrate'], \
+        _("must be update or migrate")
 
 
 #

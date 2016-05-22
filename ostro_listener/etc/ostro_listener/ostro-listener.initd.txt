@@ -32,12 +32,12 @@
 ### END INIT INFO
 
 # Uncomment to set a python virtual environment, if any
-export VENV=/opt/stack/heat.venv
+#export VENV=/path/to/venv
 
 export NAME=ostro-listener
 
 export PIDFILE_TIMEOUT=5
-export PIDFILE_PATH="/var/run/$NAME/$NAME"
+export PIDFILE_PATH="/var/run/$NAME/${NAME}.pid"
 export LOGFILE_PATH="/var/log/$NAME"
 export CONFIG_PATH="/etc/$NAME"
 
@@ -46,7 +46,6 @@ then
   source $VENV/bin/activate
 fi
 
-export ROOT="/home/ubuntu/git/allegro/ostro_listener"
 export LOGFILE="$LOGFILE_PATH/$NAME.log"
 export OSTRO_LISTENER_CONFIG="$CONFIG_PATH/$NAME.conf"
 
@@ -54,16 +53,16 @@ case "$1" in
   start)
     echo "Starting $NAME"
     # Start the daemon 
-    python $ROOT/ostro_listener/listener_daemon.py start
+    ostro_listenerdaemon start
     ;;
   stop)
     echo "Stopping $NAME"
     # Stop the daemon
-    python $ROOT/ostro_listener/listener_daemon.py stop
+    ostro_listenerdaemon stop
     ;;
   restart)
     echo "Restarting $NAME"
-    python $ROOT/ostro_listener/listener_daemon.py restart
+    ostro_listenerdaemon restart
     ;;
   *)
     # Refuse to do other stuff

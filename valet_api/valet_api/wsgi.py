@@ -38,6 +38,8 @@ def application(environ, start_response):
     wsgi_app = deploy(config_file('prod.py'))
     return wsgi_app(environ, start_response)
 
+# TODO: Integrate this with a python entry point
+# This way we can run valet-api from the command line in a pinch.
 if __name__ == '__main__':
     from wsgiref.simple_server import make_server  # pylint: disable=C0411,C0413
 

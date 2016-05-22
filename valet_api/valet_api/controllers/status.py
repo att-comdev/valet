@@ -48,9 +48,9 @@ class StatusController(object):
     @classmethod
     def _ping(cls):
         '''Ping each subsystem.'''
-        ostro_response = self._ping_ostro()
+        ostro_response = StatusController._ping_ostro()
         # TODO: Ping Music plus any others.
-        #music_response = self._ping_music()
+        #music_response = StatusController._ping_music()
 
         response = {
             "status": {

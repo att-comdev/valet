@@ -44,7 +44,7 @@ from oslo_messages import OsloMessage
 
 import pika
 
-LOG = logging.getLogger(__name__)
+LOG = logging.getLogger('OstroListener')
 
 LOGFORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 
@@ -129,7 +129,7 @@ def on_message(channel, method_frame,
     elif _ARGS.output_format == 'yaml':
         LOG.debug(yaml.dump(message_obj))
     else:
-        pprint.pprint(message_obj)
+        LOG.debug(pprint.pformat(message_obj))
     channel.basic_ack(delivery_tag=method_frame.delivery_tag)
 
 def safe_file(filename):
@@ -152,7 +152,8 @@ def _parse_arguments():
     # Turn off help, so we print all options in response to -h
     conf_parser = argparse.ArgumentParser(add_help=False)
     conf_parser.add_argument("-c", "--conf_file",
-                             help="Specify config file", metavar="FILE")
+                             help="Defaults to env[OSTRO_LISTENER_CONFIG]",
+                             metavar="OSTRO_LISTENER_CONFIG")
     args, remaining_argv = conf_parser.parse_known_args()
 
     defaults = {
@@ -170,11 +171,13 @@ def _parse_arguments():
         'replication_factor': 1}
 
     # Command line-supplied config overrides the environment
+    conf_file = None
     if args.conf_file:
         conf_file = args.conf_file
     else:
         conf_file = os.environ.get('OSTRO_LISTENER_CONFIG')
-    LOG.info('Config file is %s', conf_file)
+    if conf_file:
+        LOG.info('Config file is %s', conf_file)
 
     if conf_file:
         config = ConfigParser.SafeConfigParser()
@@ -238,6 +241,7 @@ def _parse_arguments():
 def setup_logging(logformat, logfile=None):
     '''Setup Logging and return handler'''
     LOG.setLevel(logging.DEBUG)
+    LOG.propagate = False
     if logfile:
         handler = logging.FileHandler(logfile)
     else:
@@ -343,6 +347,10 @@ def main():
     channel.close()
     connection.close()
 
-if __name__ == '__main__':
+def main_cmd():
+    # Leave this level of indirection. Daemon sets up its own logging.
     setup_logging(LOGFORMAT)
     main()
+
+if __name__ == '__main__':
+    main_cmd()

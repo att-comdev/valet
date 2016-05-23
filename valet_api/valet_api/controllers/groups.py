@@ -20,7 +20,7 @@
 
 import logging
 
-from valet_api.controllers import error, group_name_type, notify
+from valet_api.controllers import error, valid_group_name, notify
 from valet_api.common.i18n import _
 from valet_api.models import Group
 
@@ -33,7 +33,7 @@ LOG = logging.getLogger(__name__)
 
 GROUPS_SCHEMA = (
     (decorators.optional('description'), types.string),
-    ('name', group_name_type),
+    ('name', valid_group_name),
     ('type', types.string)
 )
 

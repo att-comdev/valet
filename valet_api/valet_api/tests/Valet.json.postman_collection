@@ -131,11 +131,11 @@
 			"tests": "var data = JSON.parse(responseBody);\npostman.setEnvironmentVariable(\"plan_id\", data['id']);",
 			"currentHelper": "normal",
 			"helperAttributes": {},
-			"time": 1463772945056,
+			"time": 1463873704816,
 			"name": "Create plan",
 			"description": "Create a plan.",
 			"collectionId": "1d5ba476-f6c7-a0c0-d664-a331c00926c3",
-			"rawModeData": "{\n    \"plan_name\": \"e624474b-fc80-4053-ab5f-45cc1030e692\",\n    \"resources\": {\n        \"64421fbc-f39d-4a41-b5c1-4aeae2ebf757\": {\n            \"Properties\": {\n                \"size\": 1\n            },\n            \"Type\": \"OS::Cinder::Volume\",\n            \"name\": \"my_volume\"\n        },\n        \"b71bedad-dd57-4942-a7bd-ab074b72d652\": {\n            \"Properties\": {\n                \"flavor\": \"m1.small\",\n                \"image\": \"ubuntu12_04\",\n                \"key_name\": \"demo\",\n                \"networks\": [\n                    {\n                        \"network\": \"demo-net\"\n                    }\n                ]\n            },\n            \"Type\": \"OS::Nova::Server\",\n            \"name\": \"my_instance\"\n        }\n    },\n    \"stack_id\": \"e624474b-fc80-4053-ab5f-45cc1030e692\",\n    \"timeout\": \"60 sec\"\n}\n"
+			"rawModeData": "{\n    \"plan_name\": \"e624474b-fc80-4053-ab5f-45cc1030e692\",\n    \"resources\": {\n        \"64421fbc-f39d-4a41-b5c1-4aeae2ebf757\": {\n            \"properties\": {\n                \"size\": 1\n            },\n            \"type\": \"OS::Cinder::Volume\",\n            \"name\": \"my_volume\"\n        },\n        \"b71bedad-dd57-4942-a7bd-ab074b72d652\": {\n            \"properties\": {\n                \"flavor\": \"m1.small\",\n                \"image\": \"ubuntu12_04\",\n                \"key_name\": \"demo\",\n                \"networks\": [\n                    {\n                        \"network\": \"demo-net\"\n                    }\n                ]\n            },\n            \"type\": \"OS::Nova::Server\",\n            \"name\": \"my_instance\"\n        }\n    },\n    \"stack_id\": \"e624474b-fc80-4053-ab5f-45cc1030e692\",\n    \"timeout\": \"60 sec\"\n}\n"
 		},
 		{
 			"id": "0731ab7b-52d4-be45-b66f-f20aee7ca3de",
@@ -604,11 +604,11 @@
 			"tests": "",
 			"currentHelper": "normal",
 			"helperAttributes": {},
-			"time": 1463772963383,
+			"time": 1463877618440,
 			"name": "Migrate Resource in a Plan",
 			"description": "Migrate a single resource in a plan.",
 			"collectionId": "1d5ba476-f6c7-a0c0-d664-a331c00926c3",
-			"rawModeData": "{\n   \"stack_id\": \"e624474b-fc80-4053-ab5f-45cc1030e692\",\n   \"excluded_hosts\": [\"qos104\", \"qos106\", \"qos107\"],\n   \"orchestration_id\": \"b71bedad-dd57-4942-a7bd-ab074b72d652\"\n}"
+			"rawModeData": "{\n    \"action\": \"migrate\",\n    \"excluded_hosts\": [\"qos104\", \"qos106\", \"qos107\"],\n    \"resources\": [\"b71bedad-dd57-4942-a7bd-ab074b72d652\"],\n    \"timeout\": \"60 sec\"\n}"
 		},
 		{
 			"id": "a62314a3-9dbf-07bf-b978-83b12f14d6d3",
@@ -622,11 +622,11 @@
 			"tests": "",
 			"currentHelper": "normal",
 			"helperAttributes": {},
-			"time": 1463772970077,
+			"time": 1463873686204,
 			"name": "Update a plan (not yet used)",
 			"description": "Updates a plan by ID.",
 			"collectionId": "1d5ba476-f6c7-a0c0-d664-a331c00926c3",
-			"rawModeData": "{\n    \"plan_name\": \"e624474b-fc80-4053-ab5f-45cc1030e692\",\n    \"resources\": {\n        \"64421fbc-f39d-4a41-b5c1-4aeae2ebf757\": {\n            \"Properties\": {\n                \"size\": 1\n            },\n            \"Type\": \"OS::Cinder::Volume\",\n            \"name\": \"my_volume\"\n        },\n        \"b71bedad-dd57-4942-a7bd-ab074b72d652\": {\n            \"Properties\": {\n                \"flavor\": \"m1.small\",\n                \"image\": \"ubuntu12_04\",\n                \"key_name\": \"demo\",\n                \"networks\": [\n                    {\n                        \"network\": \"demo-net\"\n                    }\n                ]\n            },\n            \"Type\": \"OS::Nova::Server\",\n            \"name\": \"my_instance\"\n        }\n    },\n    \"resources_update\": {\n        \"a649424b-dd57-1431-befc-45cc4b72d653\": {\n            \"Properties\": {\n                \"flavor\": \"m1.small\",\n                \"image\": \"ubuntu12_04\",\n                \"key_name\": \"demo\",\n                \"networks\": [\n                    {\n                        \"network\": \"demo-net\"\n                    }\n                ]\n            },\n            \"Type\": \"OS::Nova::Server\",\n            \"name\": \"my_new_instance\"\n        }\n    },\n    \"stack_id\": \"e624474b-fc80-4053-ab5f-45cc1030e692\",\n    \"timeout\": \"60 sec\"\n}\n"
+			"rawModeData": "{\n    \"action\": \"update\",\n    \"resources\": {\n        \"a649424b-dd57-1431-befc-45cc4b72d653\": {\n            \"properties\": {\n                \"flavor\": \"m1.small\",\n                \"image\": \"ubuntu12_04\",\n                \"key_name\": \"demo\",\n                \"networks\": [\n                    {\n                        \"network\": \"demo-net\"\n                    }\n                ]\n            },\n            \"type\": \"OS::Nova::Server\",\n            \"name\": \"my_new_instance\"\n        }\n    },\n    \"timeout\": \"60 sec\"\n}\n"
 		},
 		{
 			"id": "ab18d511-890d-d13e-baea-49cb77121a3b",

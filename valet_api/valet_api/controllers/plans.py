@@ -20,13 +20,17 @@
 
 import logging
 
-from valet_api.controllers import set_placements, update_placements, error
+from valet_api.controllers import error
+from valet_api.controllers import set_placements
+from valet_api.controllers import update_placements
+#from valet_api.controllers import valid_plan_resources
+from valet_api.controllers import valid_plan_update_action
 from valet_api.common.i18n import _
 from valet_api.models import Plan
 from valet_api.common.ostro_helper import Ostro
 
 from notario import decorators
-from notario.validators import types
+from notario.validators import chainable, types
 from pecan import expose, request, response
 from pecan_notario import validate
 
@@ -40,12 +44,11 @@ CREATE_SCHEMA = (
 )
 
 UPDATE_SCHEMA = (
+    ('action', valid_plan_update_action),
     (decorators.optional('excluded_hosts'), types.array),
-    (decorators.optional('orchestration_id'), types.string),
     (decorators.optional('plan_name'), types.string),
-    (decorators.optional('resources'), types.dictionary),
-    (decorators.optional('resources_update'), types.dictionary),
-    ('stack_id', types.string),
+    # FIXME: resources needs to work against valid_plan_resources
+    ('resources', types.array),
     (decorators.optional('timeout'), types.string)
 )
 
@@ -98,23 +101,29 @@ class PlansItemController(object):
     def index_put(self, **kwargs):
         '''Update a Plan'''
 
-        ostro = Ostro()
-
-        stack_id = kwargs.get('stack_id')
-        excluded_hosts = kwargs.get('excluded_hosts')
-        orch_id = kwargs.get('orchestration_id')
-        if stack_id and excluded_hosts and orch_id:
+        action = kwargs.get('action')
+        if action == 'migrate':
             # Replan the placement of an existing resource.
+            excluded_hosts = kwargs.get('excluded_hosts', [])
+            resources = kwargs.get('resources', [])
+
+            # TODO: Support replan of more than one existing resource
+            if not isinstance(resources, list) or len(resources) != 1:
+                error('/errors/invalid',
+                      _('resources must be a list of length 1.'))
+            orch_id = resources[0]
+
             LOG.info(_('Migration request for ' \
                        'orchestration id %s'), orch_id)
             args = {
-                "stack_id": stack_id,
+                "stack_id": self.plan.stack_id,
                 "excluded_hosts": excluded_hosts,
                 "orchestration_id": orch_id,
             }
             ostro_kwargs = {
                 "args": args,
             }
+            ostro = Ostro()
             ostro.migrate(**ostro_kwargs)
             ostro.send()
 
@@ -130,7 +139,7 @@ class PlansItemController(object):
             # Flush so that the DB is current.
             self.plan.flush()
             self.plan = Plan.query.filter_by(  # pylint: disable=E1101
-                stack_id=stack_id).first()
+                stack_id=self.plan.stack_id).first()
             LOG.info(_('Plan with stack id %s updated.'), \
                 self.plan.stack_id)
             return {"plan": self.plan}

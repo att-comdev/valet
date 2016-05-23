@@ -496,16 +496,10 @@ This operation does not accept a request body.
 | Parameter   | Style | Type       | Description                                       |
 |-------------|-------|------------|---------------------------------------------------|
 | plan_name   | plain | xsd:string | The name of the plan.                             |
-| resources   | plain | xsd:string | A dictionary of resources to be planned. Each is  |
-|             |       |            | keyed by an orchestration uuid. This is a UUID    |
-|             |       |            | provided by an orchestration engine (e.g., heat-engine)  |
-|             |       |            | prior to instantiation of a resource.             |
-|             |       |            |                                                   |
-|             |       |            | The dictionary contains three keys: |
-|             |       |            |                                                   |
-|             |       |            | * name: resource name                             |
-|             |       |            | * type: resource type (in Heat Orchestration Template format) |
-|             |       |            | * properties: resource properties (in Heat Orchestration Template format)                |
+| resources   | plain | xsd:string | A dictionary of resources to be planned. Each is keyed by an orchestration uuid. This is a UUID provided by an orchestration engine (e.g., heat-engine) prior to instantiation of a resource. The dictionary contains three keys: |
+|             |       |            | **name**: resource name                             |
+|             |       |            | **type**: resource type (in Heat Orchestration Template format) |
+|             |       |            | **properties**: resource properties (in Heat Orchestration Template format)                |
 | stack_id    | plain | csapi:UUID | The UUID of the stack.                            |
 
 #### Response parameters
@@ -514,15 +508,9 @@ This operation does not accept a request body.
 |-------------|-------|------------|---------------------------------------------------|
 | stack_id    | plain | csapi:UUID | The UUID of the stack.                            |
 | id          | plain | csapi:UUID | The UUID of the plan.                             |
-| placements  | plain | xsd:string | A dictionary of planned resources. Each is        |
-|             |       |            | keyed by an orchestration uuid. This is a UUID    |
-|             |       |            | provided by an orchestration engine (e.g., heat-engine)  |
-|             |       |            | prior to instantiation of a resource.             |
-|             |       |            |                                                   |
-|             |       |            | The dictionary contains two keys:                 |
-|             |       |            |                                                   |
-|             |       |            | * location: resource placement                    |
-|             |       |            | * name: resource name                             |
+| placements  | plain | xsd:string | A dictionary of planned resources. Each is keyed by an orchestration uuid. This is a UUID provided by an orchestration engine (e.g., heat-engine) prior to instantiation of a resource. The dictionary contains two keys:                 |
+|             |       |            | **location**: resource placement                    |
+|             |       |            | **name**: resource name                             |
 | name        | plain | xsd:string | The name of the plan.                             |
 
 ```json
@@ -577,15 +565,9 @@ This operation does not accept a request body.
 |-------------|-------|------------|---------------------------------------------------|
 | stack_id    | plain | csapi:UUID | The UUID of the stack.                            |
 | id          | plain | csapi:UUID | The UUID of the plan.                             |
-| placements  | plain | xsd:string | A dictionary of planned resources. Each is        |
-|             |       |            | keyed by an orchestration uuid. This is a UUID    |
-|             |       |            | provided by an orchestration engine (e.g., heat)  |
-|             |       |            | prior to instantiation of a resource.             |
-|             |       |            |                                                   |
-|             |       |            | The dictionary contains two keys:                 |
-|             |       |            |                                                   |
-|             |       |            | * location: resource placement                    |
-|             |       |            | * name: resource name                             |
+| placements  | plain | xsd:string | A dictionary of planned resources. Each is keyed by an orchestration uuid. This is a UUID provided by an orchestration engine (e.g., heat) prior to instantiation of a resource. The dictionary contains two keys:                 |
+|             |       |            | **location**: resource placement                    |
+|             |       |            | **name**: resource name                             |
 | name        | plain | xsd:string | The name of the plan.                             |
 
 This operation does not accept a request body.
@@ -638,15 +620,9 @@ This operation does not accept a request body.
 |-------------|-------|------------|---------------------------------------------------|
 | stack_id    | plain | csapi:UUID | The UUID of the stack.                            |
 | id          | plain | csapi:UUID | The UUID of the plan.                             |
-| placements  | plain | xsd:string | A dictionary of planned resources. Each is        |
-|             |       |            | keyed by an orchestration UUID. This is           |
-|             |       |            | provided by an orchestration engine (e.g., heat)  |
-|             |       |            | prior to instantiation of a resource.             |
-|             |       |            |                                                   |
-|             |       |            | The dictionary contains two keys:                 |
-|             |       |            |                                                   |
-|             |       |            | * location: resource placement                    |
-|             |       |            | * name: resource name                             |
+| placements  | plain | xsd:string | A dictionary of planned resources. Each is keyed by an orchestration UUID. This is provided by an orchestration engine (e.g., heat) prior to instantiation of a resource. The dictionary contains two keys:                 |
+|             |       |            | **location**: resource placement                    |
+|             |       |            | **name**: resource name                             |
 | name        | plain | xsd:string | The name of the plan.                             |
 
 This operation does not accept a request body.
@@ -679,10 +655,8 @@ This operation does not accept a request body.
 | Parameter   | Style | Type       | Description                                       |
 |-------------|-------|------------|---------------------------------------------------|
 | plan_id     | plain | xsd:string | The UUID of the plan or its associated stack id.  |
-| action      | plain | xsd:string | The plan update action. There is only one valid   |
-|             |       |            | option at this time.                              |
-|             |       |            |                                                   |
-|             |       |            | * migrate: Replan a single resource               |
+| action      | plain | xsd:string | The plan update action. There is only one valid option at this time.                              |
+|             |       |            | **migrate**: Replan a single resource               |
 | excluded_hosts | plain | xsd:list | A list of hosts that must not be considered when replanning |
 | resources   | plain | xsd:string | When action="migrate" this is an orchestration id list of length one. |
 
@@ -692,15 +666,9 @@ This operation does not accept a request body.
 |-------------|-------|------------|---------------------------------------------------|
 | stack_id    | plain | csapi:UUID | The UUID of the stack.                            |
 | id          | plain | csapi:UUID | The UUID of the plan.                             |
-| placements  | plain | xsd:string | A dictionary of planned resources. Each is        |
-|             |       |            | keyed by an orchestration uuid. This is           |
-|             |       |            | provided by an orchestration engine (e.g., heat)  |
-|             |       |            | prior to instantiation of a resource.             |
-|             |       |            |                                                   |
-|             |       |            | The dictionary contains two keys:                 |
-|             |       |            |                                                   |
-|             |       |            | * location: resource placement                    |
-|             |       |            | * name: resource name                             |
+| placements  | plain | xsd:string | A dictionary of planned resources. Each is keyed by an orchestration uuid. This is provided by an orchestration engine (e.g., heat) prior to instantiation of a resource. The dictionary contains two keys:                 |
+|             |       |            | **location**: resource placement                    |
+|             |       |            | **name**: resource name                             |
 
 ```json
 {

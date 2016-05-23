@@ -92,7 +92,11 @@ This operation does not accept a request body.
 
 | Parameter   | Style | Type       | Description                                       |
 |-------------|-------|------------|---------------------------------------------------|
-| groups      | plain | xsd:list   | A list of active group UUIDs.                     |
+| description | plain | xsd:string | The group description.                            |
+| id          | plain | csapi:UUID | The UUID of the group.                            |
+| members     | plain | xsd:list   | A list of group members. Initially empty.         |
+| name        | plain | xsd:string | The group name.                                   |
+| type        | plain | xsd:string | The group type.                                   |
 
 This operation does not accept a request body.
 
@@ -310,27 +314,27 @@ This operation does not accept a request body and does not return a response bod
 
 ## Status
 
-### Get status of all subsystems
+### Get summary status of all subsystems
 
 **HEAD** `/v1/status`
 
-**Normal response codes:** xxx
+**Normal response codes:** 200
 **Error response codes:** internalServerError (500)
 
 This operation does not accept a request body and does not return a response body.
 
-### List status of all subsystems
+### List detailed status of all subsystems
 
 **GET** `/v1/status`
 
-**Normal response codes:** xxx
+**Normal response codes:** 200
 **Error response codes:** internalServerError (500)
 
 #### Response parameters
 
 | Parameter   | Style | Type       | Description                                       |
 |-------------|-------|------------|---------------------------------------------------|
-| xxx         | plain | xsd:string | xxx                                               |
+| status      | plain | xsd:dict   | A dictionary of statuses from each subsystem, keyed by name. |
 
 This operation does not accept a request body.
 
@@ -352,93 +356,89 @@ This operation does not accept a request body.
 
 ## Placements
 
-Documentation forthcoming.
-
 ### List active placements
 
 **GET** `/v1/placements`
 
-**Normal response codes:** xxx
-**Error response codes:** xxx
+**Normal response codes:** 200
+**Error response codes:** unauthorized (401)
 
 #### Response parameters
 
 | Parameter   | Style | Type       | Description                                       |
 |-------------|-------|------------|---------------------------------------------------|
-| xxx         | plain | xsd:string | xxx                                               |
-
-This operation does not accept a request body.
-
-```json
-[
-  {
-    "plan_id": "1853a7e7-0075-465b-9019-8908db680f2e",
-    "name": "my_instance",
-    "orchestration_id": "b71bedad-dd57-4942-a7bd-ab074b72d652",
-    "location": "qos103",
-    "reserved": null,
-    "id": "e8ffb1b4-47d3-4ba4-b10c-7f58c937a0ba"
-  }
-]
-```
-
-### Show placement details - no reservation
-
-**GET** `/v1/placements/{placement_id}`
-
-**Normal response codes:** xxx
-**Error response codes:** xxx
-
-#### Response parameters
-
-| Parameter   | Style | Type       | Description                                       |
-|-------------|-------|------------|---------------------------------------------------|
-| xxx         | plain | xsd:string | xxx                                               |
+| id          | plain | csapi:UUID | The UUID of the placement.                        |
+| location    | plain | xsd:string | The placement location of the resource.           |
+| name        | plain | xsd:string | The name of the resource.                         |
+| orchestration_id | plain | csapi:UUID | The UUID provided by an orchestration engine (e.g., heat-engine) prior to instantiation of the resource.             |
+| plan_id     | plain | csapi:UUID | The UUID of the plan.                             |
+| reserved    | plain | xsd:boolean | Set to true if the placement was successfully reserved. |
 
 This operation does not accept a request body.
 
 ```json
 {
-  "plan_id": "1853a7e7-0075-465b-9019-8908db680f2e",
-  "name": "my_instance",
-  "orchestration_id": "b71bedad-dd57-4942-a7bd-ab074b72d652",
-  "location": "qos103",
-  "reserved": null,
-  "id": "e8ffb1b4-47d3-4ba4-b10c-7f58c937a0ba"
+  "placements": [
+    {
+      "plan_id": "e01ae778-52c8-4e52-9f32-a486584f0e89",
+      "name": "my-instance-1",
+      "orchestration_id": "f8cfab7e-83d0-4a7d-8551-905ea8a43a39",
+      "location": "qos104",
+      "reserved": true,
+      "id": "55f4aee9-b7df-44d0-85d3-3234c08dbfb4"
+    },
+    {
+      "plan_id": "c8b8e9d9-227f-4652-8a18-523cd37b86c0",
+      "name": "ad_hoc_instance",
+      "orchestration_id": "23ffc206-cb57-4b99-9393-6e01837855bc",
+      "location": "qos101",
+      "reserved": false,
+      "id": "dbbc9ae2-3ba2-4409-8765-03cdbfcd0dcb"
+    }
+  ]
 }
 ```
 
-### Recommend a placement for an existing resource
+### Show placement details with no reservation
 
-**POST** `/v1/placements`
+**GET** `/v1/placements/{placement_id}`
 
-**Normal response codes:** xxx
-**Error response codes:** xxx
+**Normal response codes:** 200
+**Error response codes:** unauthorized (401), itemNotFound (404)
 
 #### Request parameters
 
 | Parameter   | Style | Type       | Description                                       |
 |-------------|-------|------------|---------------------------------------------------|
-| xxx         | plain | xsd:string | xxx                                               |
+| placement_id | plain | csapi:UUID | The UUID of the placement or its associated orchestration UUID. |
 
 #### Response parameters
 
 | Parameter   | Style | Type       | Description                                       |
 |-------------|-------|------------|---------------------------------------------------|
-| xxx         | plain | xsd:string | xxx                                               |
+| id          | plain | csapi:UUID | The UUID of the placement.                        |
+| location    | plain | xsd:string | The placement location of the resource.           |
+| name        | plain | xsd:string | The name of the resource.                         |
+| orchestration_id | plain | csapi:UUID | The UUID provided by an orchestration engine (e.g., heat-engine) prior to instantiation of the resource.             |
+| plan_id     | plain | csapi:UUID | The UUID of the plan.                             |
+| reserved    | plain | xsd:boolean | Set to true if the placement was successfully reserved. |
+
+This operation does not accept a request body.
 
 ```json
 {
-  "resource_id": "68f61b2-26f3-cbc1-7981-5f52c937c0cd"
-  "locations": ["qos101", "qos102", "qos104", "qos106", "qos107"]
+  "placement": {
+    "plan_id": "a78d1936-0b63-4ce3-9450-832f71ebf160",
+    "name": "my_instance",
+    "orchestration_id": "b71bedad-dd57-4942-a7bd-ab074b72d652",
+    "location": "qos105",
+    "reserved": false,
+    "id": "b7116936-5210-448a-b21f-c35f33e9bcc2"
+  }
 }
 ```
 
-```json
-tbd
-```
-
-### Reserve a placement - with possible replanning
+### Reserve a placement with possible replanning
 
 **POST** `/v1/placements/{placement_id}`
 
@@ -449,13 +449,19 @@ tbd
 
 | Parameter   | Style | Type       | Description                                       |
 |-------------|-------|------------|---------------------------------------------------|
-| xxx         | plain | xsd:string | xxx                                               |
+| locations | plain | xsd:list | A list of available locations. If the placement was not planned in one of these locations, the placement for this resource (and any others in the same plan not yet reserved) will be replanned on-the-fly. |
+| placement_id | plain | csapi:UUID | The UUID of the placement or its associated orchestration UUID. |
 
 #### Response parameters
 
 | Parameter   | Style | Type       | Description                                       |
 |-------------|-------|------------|---------------------------------------------------|
-| xxx         | plain | xsd:string | xxx                                               |
+| id          | plain | csapi:UUID | The UUID of the placement.                        |
+| location    | plain | xsd:string | The placement location of the resource.           |
+| name        | plain | xsd:string | The name of the resource.                         |
+| orchestration_id | plain | csapi:UUID | The UUID provided by an orchestration engine (e.g., heat-engine) prior to instantiation of the resource.             |
+| plan_id     | plain | csapi:UUID | The UUID of the plan.                             |
+| reserved    | plain | xsd:boolean | Set to true if the placement was successfully reserved. |
 
 ```json
 {
@@ -465,76 +471,96 @@ tbd
 
 ```json
 {
-  "plan_id": "1853a7e7-0075-465b-9019-8908db680f2e",
-  "name": "my_instance",
-  "orchestration_id": "b71bedad-dd57-4942-a7bd-ab074b72d652",
-  "location": "qos103",
-  "reserved": null,
-  "id": "e8ffb1b4-47d3-4ba4-b10c-7f58c937a0ba"
+  "placement": {
+    "plan_id": "a78d1936-0b63-4ce3-9450-832f71ebf160",
+    "name": "my_instance",
+    "orchestration_id": "b71bedad-dd57-4942-a7bd-ab074b72d652",
+    "location": "qos101",
+    "reserved": true,
+    "id": "b7116936-5210-448a-b21f-c35f33e9bcc2"
+  }
 }
 ```
 
 ## Plans
 
-Documentation forthcoming.
-
 ### Create a plan
 
 **POST** `/v1/plans`
 
-**Normal response codes:** xxx
-**Error response codes:** xxx
+**Normal response codes:** 201
+**Error response codes:** badRequest (400), unauthorized (401), internalServerError (500)
 
 #### Request parameters
 
 | Parameter   | Style | Type       | Description                                       |
 |-------------|-------|------------|---------------------------------------------------|
-| plan_name   | plain | xsd:string | xxx                                               |
-| resources   | plain | xsd:string | xxx                                               |
-| stack_id    | plain | xsd:string | xxx                                               |
-| timeout     | plain | xsd:string | xxx                                               |
+| plan_name   | plain | xsd:string | The name of the plan.                             |
+| resources   | plain | xsd:string | A dictionary of resources to be planned. Each is  |
+|             |       |            | keyed by an orchestration uuid. This is a UUID    |
+|             |       |            | provided by an orchestration engine (e.g., heat-engine)  |
+|             |       |            | prior to instantiation of a resource.             |
+|             |       |            |                                                   |
+|             |       |            | The dictionary contains three keys: |
+|             |       |            |                                                   |
+|             |       |            | * name: resource name                             |
+|             |       |            | * type: resource type (in Heat Orchestration Template format) |
+|             |       |            | * properties: resource properties (in Heat Orchestration Template format)                |
+| stack_id    | plain | csapi:UUID | The UUID of the stack.                            |
 
 #### Response parameters
 
 | Parameter   | Style | Type       | Description                                       |
 |-------------|-------|------------|---------------------------------------------------|
-| xxx         | plain | xsd:string | xxx                                               |
+| stack_id    | plain | csapi:UUID | The UUID of the stack.                            |
+| id          | plain | csapi:UUID | The UUID of the plan.                             |
+| placements  | plain | xsd:string | A dictionary of planned resources. Each is        |
+|             |       |            | keyed by an orchestration uuid. This is a UUID    |
+|             |       |            | provided by an orchestration engine (e.g., heat-engine)  |
+|             |       |            | prior to instantiation of a resource.             |
+|             |       |            |                                                   |
+|             |       |            | The dictionary contains two keys:                 |
+|             |       |            |                                                   |
+|             |       |            | * location: resource placement                    |
+|             |       |            | * name: resource name                             |
+| name        | plain | xsd:string | The name of the plan.                             |
 
 ```json
 {
-    "plan_name": "e624474b-fc80-4053-ab5f-45cc1030e692",
-    "resources": {
-        "b71bedad-dd57-4942-a7bd-ab074b72d652": {
-            "properties": {
-                "flavor": "m1.small",
-                "image": "ubuntu12_04",
-                "key_name": "demo",
-                "networks": [
-                    {
-                        "network": "demo-net"
-                    }
-                ]
-            },
-            "type": "OS::Nova::Server",
-            "name": "my_instance"
-        }
-    },
-    "stack_id": "e624474b-fc80-4053-ab5f-45cc1030e692",
-    "timeout": "60 sec"
+  "plan_name": "e624474b-fc80-4053-ab5f-45cc1030e692",
+  "resources": {
+    "b71bedad-dd57-4942-a7bd-ab074b72d652": {
+      "properties": {
+        "flavor": "m1.small",
+        "image": "ubuntu12_04",
+        "key_name": "demo",
+        "networks": [
+          {
+            "network": "demo-net"
+          }
+        ]
+      },
+      "type": "OS::Nova::Server",
+      "name": "my_instance"
+    }
+  },
+  "stack_id": "e624474b-fc80-4053-ab5f-45cc1030e692"
 }
 ```
 
 ```json
 {
-  "stack_id": "e624474b-fc80-4053-ab5f-45cc1030e692",
-  "id": "1853a7e7-0075-465b-9019-8908db680f2e",
-  "placements": {
-    "b71bedad-dd57-4942-a7bd-ab074b72d652": {
-      "location": "qos103",
-      "name": "my_instance"
-    }
-  },
-  "name": "e624474b-fc80-4053-ab5f-45cc1030e692"
+  "plan" {
+    "stack_id": "e624474b-fc80-4053-ab5f-45cc1030e692",
+    "id": "1853a7e7-0075-465b-9019-8908db680f2e",
+    "placements": {
+      "b71bedad-dd57-4942-a7bd-ab074b72d652": {
+        "location": "qos103",
+        "name": "my_instance"
+      }
+    },
+    "name": "e624474b-fc80-4053-ab5f-45cc1030e692"
+  }
 }
 ```
 
@@ -542,52 +568,102 @@ Documentation forthcoming.
 
 **GET** `/v1/plans`
 
-**Normal response codes:** xxx
-**Error response codes:** xxx
+**Normal response codes:** 200
+**Error response codes:** unauthorized (401)
+
+#### Response parameters
+
+| Parameter   | Style | Type       | Description                                       |
+|-------------|-------|------------|---------------------------------------------------|
+| stack_id    | plain | csapi:UUID | The UUID of the stack.                            |
+| id          | plain | csapi:UUID | The UUID of the plan.                             |
+| placements  | plain | xsd:string | A dictionary of planned resources. Each is        |
+|             |       |            | keyed by an orchestration uuid. This is a UUID    |
+|             |       |            | provided by an orchestration engine (e.g., heat)  |
+|             |       |            | prior to instantiation of a resource.             |
+|             |       |            |                                                   |
+|             |       |            | The dictionary contains two keys:                 |
+|             |       |            |                                                   |
+|             |       |            | * location: resource placement                    |
+|             |       |            | * name: resource name                             |
+| name        | plain | xsd:string | The name of the plan.                             |
 
 This operation does not accept a request body.
 
 ```json
-[
-  "e624474b-fc80-4053-ab5f-45cc1030e692"
-]
+{
+  "plans": [
+    {
+      "stack_id": "e624474b-fc80-4053-ab5f-45cc1030e692",
+      "id": "f1a81397-e4d4-46de-8445-dfadef633beb",
+      "placements": {
+        "b71bedad-dd57-4942-a7bd-ab074b72d652": {
+          "location": "qos101",
+          "name": "my_instance"
+        }
+      },
+      "name": "e624474b-fc80-4053-ab5f-45cc1030e692"
+    },
+    {
+      "stack_id": "8e06301e-7375-465f-9fc7-70fb13763927",
+      "id": "f56391b0-61bb-4e18-b9ca-23c0ff2e4508",
+      "placements": {
+        "8e06301e-7375-465f-9fc7-70fb13763927": {
+          "location": "qos101",
+          "name": "ad_hoc_instance"
+        }
+      },
+      "name": "8e06301e-7375-465f-9fc7-70fb13763927"
+    }
+  ]
+}
 ```
 
 ### Show plan details
 
 **GET** `/v1/plans/{plan_id}`
 
-**Normal response codes:** xxx
-**Error response codes:** xxx
+**Normal response codes:** 200
+**Error response codes:** unauthorized (401), itemNotFound (404)
 
-### Request parameters
-
-| Parameter   | Style | Type       | Description                                       |
-|-------------|-------|------------|---------------------------------------------------|
-| plan_id     | plain | xsd:string | The UUID of the plan.                             |
-
-### Response parameters
+#### Request parameters
 
 | Parameter   | Style | Type       | Description                                       |
 |-------------|-------|------------|---------------------------------------------------|
+| plan_id     | plain | xsd:string | The UUID of the plan or its associated stack UUID. |
+
+#### Response parameters
+
+| Parameter   | Style | Type       | Description                                       |
+|-------------|-------|------------|---------------------------------------------------|
+| stack_id    | plain | csapi:UUID | The UUID of the stack.                            |
+| id          | plain | csapi:UUID | The UUID of the plan.                             |
+| placements  | plain | xsd:string | A dictionary of planned resources. Each is        |
+|             |       |            | keyed by an orchestration UUID. This is           |
+|             |       |            | provided by an orchestration engine (e.g., heat)  |
+|             |       |            | prior to instantiation of a resource.             |
+|             |       |            |                                                   |
+|             |       |            | The dictionary contains two keys:                 |
+|             |       |            |                                                   |
+|             |       |            | * location: resource placement                    |
+|             |       |            | * name: resource name                             |
 | name        | plain | xsd:string | The name of the plan.                             |
-| id          | plain | xsd:string | The UUID of the plan.                             |
-| placements  | plain | xsd:string | A dictionary of placements. Each placement is keyed by the Orchestration UUID and contains a ``location`` and ``name`` corresponding to the host placement and Heat resource name, respectively. |
-| stack_id    | plain | xsd:string | The UUID of the stack.                            |
 
 This operation does not accept a request body.
 
 ```json
 {
-  "stack_id": "e624474b-fc80-4053-ab5f-45cc1030e692",
-  "id": "1853a7e7-0075-465b-9019-8908db680f2e",
-  "placements": {
-    "b71bedad-dd57-4942-a7bd-ab074b72d652": {
-      "location": "qos103",
-      "name": "my_instance"
-    }
-  },
-  "name": "e624474b-fc80-4053-ab5f-45cc1030e692"
+  "plan": {
+    "stack_id": "e624474b-fc80-4053-ab5f-45cc1030e692",
+    "id": "1853a7e7-0075-465b-9019-8908db680f2e",
+    "placements": {
+      "b71bedad-dd57-4942-a7bd-ab074b72d652": {
+        "location": "qos103",
+        "name": "my_instance"
+      }
+    },
+    "name": "e624474b-fc80-4053-ab5f-45cc1030e692"
+  }
 }
 ```
 
@@ -595,65 +671,59 @@ This operation does not accept a request body.
 
 **PUT** `/v1/plans/{plan_id}`
 
-**Normal response codes:** xxx
-**Error response codes:** xxx
+**Normal response codes:** 201
+**Error response codes:** badRequest (400), unauthorized (401), itemNotFound (404)
 
-### Request parameters
+#### Request parameters
 
 | Parameter   | Style | Type       | Description                                       |
 |-------------|-------|------------|---------------------------------------------------|
-| plan_name   | plain | xsd:string | xxx                                               |
-| resources   | plain | xsd:string | xxx                                               |
-| resources_update | plain | xsd:string | xxx                                               |
-| stack_id    | plain | xsd:string | xxx                                               |
-| timeout     | plain | xsd:string | xxx                                               |
+| plan_id     | plain | xsd:string | The UUID of the plan or its associated stack id.  |
+| action      | plain | xsd:string | The plan update action. There is only one valid   |
+|             |       |            | option at this time.                              |
+|             |       |            |                                                   |
+|             |       |            | * migrate: Replan a single resource               |
+| excluded_hosts | plain | xsd:list | A list of hosts that must not be considered when replanning |
+| resources   | plain | xsd:string | When action="migrate" this is an orchestration id list of length one. |
 
-### Response parameters
+#### Response parameters
 
-tbd
+| Parameter   | Style | Type       | Description                                       |
+|-------------|-------|------------|---------------------------------------------------|
+| stack_id    | plain | csapi:UUID | The UUID of the stack.                            |
+| id          | plain | csapi:UUID | The UUID of the plan.                             |
+| placements  | plain | xsd:string | A dictionary of planned resources. Each is        |
+|             |       |            | keyed by an orchestration uuid. This is           |
+|             |       |            | provided by an orchestration engine (e.g., heat)  |
+|             |       |            | prior to instantiation of a resource.             |
+|             |       |            |                                                   |
+|             |       |            | The dictionary contains two keys:                 |
+|             |       |            |                                                   |
+|             |       |            | * location: resource placement                    |
+|             |       |            | * name: resource name                             |
 
 ```json
 {
-    "plan_name": "e624474b-fc80-4053-ab5f-45cc1030e692",
-    "resources": {
-        "b71bedad-dd57-4942-a7bd-ab074b72d652": {
-            "Properties": {
-                "flavor": "m1.small",
-                "image": "ubuntu12_04",
-                "key_name": "demo",
-                "networks": [
-                    {
-                        "network": "demo-net"
-                    }
-                ]
-            },
-            "Type": "OS::Nova::Server",
-            "name": "my_instance"
-        }
-    },
-    "resources_update": {
-        "a649424b-dd57-1431-befc-45cc4b72d653": {
-            "Properties": {
-                "flavor": "m1.small",
-                "image": "ubuntu12_04",
-                "key_name": "demo",
-                "networks": [
-                    {
-                        "network": "demo-net"
-                    }
-                ]
-            },
-            "Type": "OS::Nova::Server",
-            "name": "my_new_instance"
-        }
-    },
-    "stack_id": "e624474b-fc80-4053-ab5f-45cc1030e692",
-    "timeout": "60 sec"
+  "action": "migrate",
+  "excluded_hosts": ["qos104", "qos106", "qos107"],
+  "resources": ["b71bedad-dd57-4942-a7bd-ab074b72d652"]
 }
 ```
 
 ```json
-tbd
+{
+  "plan": {
+    "stack_id": "e624474b-fc80-4053-ab5f-45cc1030e692",
+    "id": "a78d1936-0b63-4ce3-9450-832f71ebf160",
+    "placements": {
+      "b71bedad-dd57-4942-a7bd-ab074b72d652": {
+        "location": "qos105",
+        "name": "my_instance"
+      }
+    },
+    "name": "e624474b-fc80-4053-ab5f-45cc1030e692"
+  }
+}
 ```
 
 ### Delete a plan
@@ -663,7 +733,7 @@ tbd
 **Normal response codes:** 204
 **Error response codes:** badRequest (400), unauthorized (401), itemNotFound (404)
 
-### Request parameters
+#### Request parameters
 
 | Parameter   | Style | Type       | Description                                       |
 |-------------|-------|------------|---------------------------------------------------|

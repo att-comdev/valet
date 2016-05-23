@@ -51,7 +51,7 @@ class ComputeManager(threading.Thread):
             period_end = time.time() + self.config.compute_trigger_freq
 
             while self.end_of_process == False:
-                time.sleep(1)
+                time.sleep(60)
 
                 if time.time() > period_end:
                     self._run()
@@ -59,24 +59,17 @@ class ComputeManager(threading.Thread):
 
         else:
             (alarm_HH, alarm_MM) = self.config.compute_trigger_time.split(':')
-            last_trigger_year = 0
-            last_trigger_mon = 0
-            last_trigger_mday = 0
-            timeout = False
+
+            now = time.localtime()
+            timeout = True
+            last_trigger_year = now.tm_year
+            last_trigger_mon = now.tm_mon
+            last_trigger_mday = now.tm_mday
 
             while self.end_of_process == False:
-                time.sleep(1)
+                time.sleep(60)
 
                 now = time.localtime()
-                if timeout == False and \
-                   now.tm_hour >= int(alarm_HH) and now.tm_min >= int(alarm_MM):
-                    self._run()
-
-                    timeout = True
-                    last_trigger_year = now.tm_year
-                    last_trigger_mon = now.tm_mon
-                    last_trigger_mday = now.tm_mday
-
                 if now.tm_year > last_trigger_year:
                     timeout = False
                 else:
@@ -86,27 +79,37 @@ class ComputeManager(threading.Thread):
                         if now.tm_mday > last_trigger_mday:
                             timeout = False
 
+                if timeout == False and \
+                   now.tm_hour >= int(alarm_HH) and now.tm_min >= int(alarm_MM):
+                    self._run()
+
+                    timeout = True
+                    last_trigger_year = now.tm_year
+                    last_trigger_mon = now.tm_mon
+                    last_trigger_mday = now.tm_mday
+
         self.logger.info("exit " + self.thread_name)
 
     def _run(self):
-        self.data_lock.acquire(1)
-
         self.logger.info("--- start compute_nodes status update ---")
 
-        triggered_host_updates = self.set_hosts()
-        triggered_flavor_updates = self.set_flavors()
+        #self.data_lock.acquire(1)
+        self.data_lock.acquire()
+        try:
+            triggered_host_updates = self.set_hosts()
+            triggered_flavor_updates = self.set_flavors()
 
-        if triggered_host_updates == True and triggered_flavor_updates == True:
-            if self.resource.update_topology() == False:
-                # TODO: error in MUSIC. ignore?
+            if triggered_host_updates == True and triggered_flavor_updates == True:
+                if self.resource.update_topology() == False:
+                    # TODO: error in MUSIC. ignore?
+                    pass
+            else:
+                # TODO: error handling, e.g., 3 times failure then stop Ostro?
                 pass
-        else:
-            # TODO: error handling, e.g., 3 times failure then stop Ostro?
-            pass
+        finally:
+            self.data_lock.release()
 
         self.logger.info("--- done compute_nodes status update ---")
-
-        self.data_lock.release()
 
         return True
 

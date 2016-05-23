@@ -79,6 +79,16 @@ class Search:
         self.local_disk_weight = -1
         self.disk_weight = -1
 
+    def copy_resource_status(self, _resource):
+        self._init_placements()
+
+        self.resource = _resource
+
+        self._create_avail_logical_groups()
+        self._create_avail_storage_hosts()
+        self._create_avail_switches()
+        self._create_avail_hosts()
+
     def place_nodes(self, _app_topology, _resource):
         self._init_placements()
 
@@ -124,11 +134,14 @@ class Search:
 
         self._compute_resource_weights()
 
-        # NOTE: assume OpenStack rollback the whole stack or tenant re-create the stack if replan is failed
-
         self.logger.debug("place already-planned nodes again")
+
+        if len(_app_topology.exclusion_list_map) > 0:
+            self._get_planned_list()
+
         if self._place_planned_nodes() == False:
             self.logger.error("PANIC!")
+            self.status = "cannot replan VMs that was planned"
             return False
 
         self.logger.debug("place to-be replanned nodes with conflicted")
@@ -143,6 +156,29 @@ class Search:
             self.node_placements[v] = ah
 
         return self._run_greedy(open_node_list, level, self.avail_hosts)
+
+    def _get_planned_list(self):
+        migrated_vm_id = self.app_topology.candidate_list_map.keys()[0]
+
+        if migrated_vm_id not in self.app_topology.vms.keys():
+            vgroup = self._get_vgroup_of_vm(migrated_vm_id, self.app_topology.vgroups)
+            if vgroup != None:
+                vm_list = []
+                self._get_child_vms(vgroup, vm_list, migrated_vm_id)
+                for vk in vm_list:
+                    self.logger.debug("test: should not planned vm = " + vk)
+                    if vk in self.app_topology.planned_vm_map.keys():
+                        del self.app_topology.planned_vm_map[vk]
+            else:
+                self.logger.error("panic: migrated vm is missing while replan")             
+
+    def _get_child_vms(self, _g, _vm_list, _e_vmk):
+        for sgk, sg in _g.subvgroups.iteritems():
+            if isinstance(sg, VM):
+                if sgk != _e_vmk:
+                    _vm_list.append(sgk)
+            else:
+                self._get_child_vms(sg, _vm_list, _e_vmk)
 
     def _create_conflicted_nodes(self, _vms, _volumes, _vgroups):
         if len(self.app_topology.candidate_list_map) == 0:
@@ -210,7 +246,7 @@ class Search:
             # NOTE: volumes skip
 
             else: 
-                vgroup = self._get_vgroup_of_vm(_vmk, _vgroups)
+                vgroup = self._get_vgroup_of_vm(vmk, _vgroups)
                 if vgroup != None:
                     if vgroup.host == None:
                         vgroup.host = []
@@ -218,12 +254,14 @@ class Search:
                     if host_name == None:
                         self.logger.error("panic: host does not exist while replan with vgroup")
                     else:
-                        if LEVELS.index(vgroup.level) > LEVELS.index(level):
-                            level = vgroup.level
-                        n = Node()
-                        n.node = vgroup
-                        n.sort_base = self._set_virtual_capacity_based_sort(vgroup)
-                        planned_node_list.append(n)
+                        if len(vgroup.host) == 0:
+                            vgroup.host.append(host_name)
+                            if LEVELS.index(vgroup.level) > LEVELS.index(level):
+                                level = vgroup.level
+                            n = Node()
+                            n.node = vgroup
+                            n.sort_base = self._set_virtual_capacity_based_sort(vgroup)
+                            planned_node_list.append(n)
                 else:
                     self.logger.error("panic: planned vm is missing while replan")             
 
@@ -596,6 +634,7 @@ class Search:
         level = "host"
 
         if self._create_conflicted_nodes(_vms, _volumes, _vgroups) == False:
+            self.status = "conflicted while replan"
             return (None, level)
 
         for vmk, vm in _vms.iteritems():
@@ -640,7 +679,7 @@ class Search:
                         self.disk_weight * _v.volume_weight
  
         return sort_base
-        
+       
     def _run_greedy(self, _open_node_list, _level, _avail_hosts):
         success = True
 
@@ -659,11 +698,13 @@ class Search:
         _open_node_list.sort(key=operator.attrgetter("sort_base"), reverse=True)
         self.logger.debug("the order of open node list in level = " + _level)
         for on in _open_node_list:
-            self.logger.debug("    node = {}, value = {}".format(on.node.name, on.sort_base))
+            self.logger.debug("    node = {}, id = {}, value = {}".format(on.node.name, \
+                                                                          on.node.uuid, \
+                                                                          on.sort_base))
 
         while len(_open_node_list) > 0:
             n = _open_node_list.pop(0)
-            self.logger.debug("level = " + _level + ", placing node = " + n.node.name)
+            self.logger.debug("level = " + _level + ", placing node = " + n.node.name + ", id = " + n.node.uuid)
 
             best_resource = self._get_best_resource(n, _level, avail_resources)
             if best_resource == None:

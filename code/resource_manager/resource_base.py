@@ -275,6 +275,16 @@ class Host:
         else:
             return False
 
+    def get_uuid(self, _h_uuid):
+        uuid = None
+
+        for vm_id in self.vm_list:
+            if vm_id[0] == _h_uuid:
+                uuid = vm_id[2]
+                break
+  
+        return uuid
+
     def exist_vm_by_h_uuid(self, _h_uuid):
         exist = False
 

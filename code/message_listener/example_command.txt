@@ -1,1 +1,0 @@
-/listener -x cinder-volume_fanout -t fanout -a -H cirrus201.research.att.com -u openstack -o json

@@ -46,7 +46,7 @@ class TopologyManager(threading.Thread):
             period_end = time.time() + self.config.topology_trigger_freq
 
             while self.end_of_process == False:
-                time.sleep(1)
+                time.sleep(70)
 
                 if time.time() > period_end:
                     self._run()
@@ -54,24 +54,16 @@ class TopologyManager(threading.Thread):
 
         else:
             (alarm_HH, alarm_MM) = self.config.topology_trigger_time.split(':')
-            last_trigger_year = 0
-            last_trigger_mon = 0
-            last_trigger_mday = 0
-            timeout = False
+            now = time.localtime()
+            timeout = True
+            last_trigger_year = now.tm_year
+            last_trigger_mon = now.tm_mon
+            last_trigger_mday = now.tm_mday
 
             while self.end_of_process == False:
-                time.sleep(1)
+                time.sleep(70)
 
                 now = time.localtime()
-                if timeout == False and \
-                   now.tm_hour >= int(alarm_HH) and now.tm_min >= int(alarm_MM):
-                    self._run()
-
-                    timeout = True
-                    last_trigger_year = now.tm_year
-                    last_trigger_mon = now.tm_mon
-                    last_trigger_mday = now.tm_mday
-
                 if now.tm_year > last_trigger_year:
                     timeout = False
                 else:
@@ -81,21 +73,32 @@ class TopologyManager(threading.Thread):
                         if now.tm_mday > last_trigger_mday:
                             timeout = False
 
+                if timeout == False and \
+                   now.tm_hour >= int(alarm_HH) and now.tm_min >= int(alarm_MM):
+                    self._run()
+
+                    timeout = True
+                    last_trigger_year = now.tm_year
+                    last_trigger_mon = now.tm_mon
+                    last_trigger_mday = now.tm_mday
+
         self.logger.info("exit " + self.thread_name)
 
     def _run(self):
-        self.data_lock.acquire(1)
 
         self.logger.info("--- start topology status update ---")
 
-        if self.set_topology() == True:
-            if self.resource.update_topology() == False:
-                # TODO: ignore?
-                pass
+        #self.data_lock.acquire(1)
+        self.data_lock.acquire()
+        try:
+            if self.set_topology() == True:
+                if self.resource.update_topology() == False:
+                    # TODO: ignore?
+                    pass
+        finally:
+            self.data_lock.release()
 
         self.logger.info("--- done topology status update ---")
-
-        self.data_lock.release()
 
     def set_topology(self):
         datacenter = None

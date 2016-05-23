@@ -14,6 +14,7 @@
 
 import time
 import sys
+import copy
 
 from search import Search
 
@@ -35,12 +36,46 @@ class Optimizer:
     def place(self, _app_topology): 
         success = False
 
+        uuid_map = None
+        '''
+        avail_hosts = {}
+        avail_logical_groups = {}
+        avail_storage_hosts = {}
+        avail_switches = {}
+        '''
+
         start_ts = time.time() 
 
         # Replan request
         if len(_app_topology.candidate_list_map) > 0:
             if len(_app_topology.old_vm_map) > 0:
                 self._delete_old_vms(_app_topology.old_vm_map)
+                self.logger.debug("remove & deduct VMs' old placements for replan")
+
+                if self.resource.update_topology() == False:                                         
+                    # NOTE: ignore?                                                                  
+                    pass
+
+            success = self.search.re_place_nodes(_app_topology, self.resource)
+        # Migration-tip
+        elif len(_app_topology.exclusion_list_map) > 0:
+            '''
+            self.search.copy_resource_status(self.resource)
+            avail_hosts = copy.deepcopy(self.search.avail_hosts)
+            avail_logical_groups = copy.deepcopy(self.search.avail_logical_groups)
+            avail_storage_hosts = copy.deepcopy(self.search.avail_storage_hosts)
+            avail_switches = copy.deepcopy(self.search.avail_switches)
+            '''
+
+            vm_id = _app_topology.exclusion_list_map.keys()[0]
+            candidate_host_list = []  
+            for hk in self.resource.hosts.keys():
+                if hk not in _app_topology.exclusion_list_map[vm_id]:
+                    candidate_host_list.append(hk)
+            _app_topology.candidate_list_map[vm_id] = candidate_host_list
+
+            if len(_app_topology.old_vm_map) > 0:
+                uuid_map = self._delete_old_vms(_app_topology.old_vm_map)
                 self.logger.debug("remove & deduct VMs' old placements for replan")
 
                 if self.resource.update_topology() == False:                                         
@@ -77,7 +112,13 @@ class Optimizer:
             
                 self.logger.debug("    vm (" + v.name + ") placed in " + placement_map[v])
 
-            self._update_resource_status()
+            '''
+            if tip == True:
+                node_placements
+                uuid  using old_vm_map
+                avail_hosts
+            '''
+            self._update_resource_status(uuid_map)
 
             return placement_map
 
@@ -86,21 +127,34 @@ class Optimizer:
             return None
 
     def _delete_old_vms(self, _old_vm_map):
+        uuid_map = {}
+
         for h_uuid, info in _old_vm_map.iteritems():
+            uuid = self.resource.get_uuid(h_uuid, info[0])
+            if uuid != None:
+                uuid_map[h_uuid] = uuid
+
             self.resource.remove_vm_by_h_uuid_from_host(info[0], h_uuid, info[1], info[2], info[3])
             self.resource.update_host_time(info[0])
  
             host = self.resource.hosts[info[0]]
-            self.logger.debug("test: start remove vm from lg")
             self.resource.remove_vm_by_h_uuid_from_logical_groups(host, h_uuid) 
-            self.logger.debug("test: done remove vm from lg")
 
-    def _update_resource_status(self):
+        return uuid_map
+
+    def _update_resource_status(self, _uuid_map):
         for v, np in self.search.node_placements.iteritems():
 
             if isinstance(v, VM):
+                uuid = "none"
+                if _uuid_map != None:
+                    if v.uuid in _uuid_map.keys():
+                        uuid = _uuid_map[v.uuid]
+
+                self.logger.debug("resource update with vm uuid = " + uuid)
+
                 self.resource.add_vm_to_host(np.host_name, \
-                                             (v.uuid, v.name, "none"), \
+                                             (v.uuid, v.name, uuid), \
                                              v.vCPUs, \
                                              v.mem, \
                                              v.local_volume_size)
@@ -119,7 +173,7 @@ class Optimizer:
 
                     self.resource.deduct_bandwidth(np.host_name, placement_level, voll.io_bandwidth)
 
-                self._update_logical_grouping(v, self.search.avail_hosts[np.host_name])
+                self._update_logical_grouping(v, self.search.avail_hosts[np.host_name], uuid)
 
                 self.resource.update_host_time(np.host_name)
 
@@ -138,7 +192,7 @@ class Optimizer:
 
                 self.resource.update_storage_time(np.storage.storage_name)
 
-    def _update_logical_grouping(self, _v, _avail_host):
+    def _update_logical_grouping(self, _v, _avail_host, _uuid):
         for lgk, lg in _avail_host.host_memberships.iteritems():
             if lg.group_type == "EX" or lg.group_type == "AFF":
                 lg_name = lgk.split(":")
@@ -163,7 +217,7 @@ class Optimizer:
         self._collect_logical_groups_of_vm(_v, vm_logical_groups)
 
         host = self.resource.hosts[_avail_host.host_name]
-        self.resource.add_vm_to_logical_groups(host, (_v.uuid, _v.name, "none"), vm_logical_groups)
+        self.resource.add_vm_to_logical_groups(host, (_v.uuid, _v.name, _uuid), vm_logical_groups)
 
     def _collect_logical_groups_of_vm(self, _v, _vm_logical_groups):
         if isinstance(_v, VM):

@@ -571,7 +571,7 @@ class Parser:
                     self.status = "invalid resource = " + vk
                     return False
 
-                if affinity_map[vk].uuid != _vgroup.uuid:
+                if _affinity_map[vk].uuid != _vgroup.uuid:
                     if self._exist_in_subgroups(vk, _vgroup) == None:
                         self._set_implicit_grouping(vk, _vgroup, _affinity_map, _vgroups)
 
@@ -811,7 +811,7 @@ class Parser:
         _vgroup.io_bandwidth += _link.io_bandwidth
         vgroup_link = self._get_vgroup_link(_link, _vgroup.vgroup_list)
         if vgroup_link != None:
-            link.io_bandwidth += _link.io_bandwidth
+            vgroup_link.io_bandwidth += _link.io_bandwidth
         else:
             link = VGroupLink(_link.node)
             link.io_bandwidth = _link.io_bandwidth

@@ -24,10 +24,13 @@ class AppTopology:
         self.vms = {}
         self.volumes = {}
 
-        # for replan
+        ''' for replan '''
         self.old_vm_map = {}
         self.planned_vm_map = {}
         self.candidate_list_map = {}
+
+        ''' for migration-tip '''
+        self.exclusion_list_map = {}
 
         self.resource = _resource
         self.logger = _logger

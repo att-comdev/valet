@@ -442,8 +442,8 @@ This operation does not accept a request body.
 
 **POST** `/v1/placements/{placement_id}`
 
-**Normal response codes:** xxx
-**Error response codes:** xxx
+**Normal response codes:** 201
+**Error response codes:** unauthorized (401), itemNotFound (404), internalServerError (500)
 
 #### Request parameters
 

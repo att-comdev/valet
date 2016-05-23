@@ -496,7 +496,7 @@ This operation does not accept a request body.
 | Parameter   | Style | Type       | Description                                       |
 |-------------|-------|------------|---------------------------------------------------|
 | plan_name   | plain | xsd:string | The name of the plan.                             |
-| resources   | plain | xsd:string | A dictionary of resources to be planned. Each is keyed by an orchestration uuid. This is a UUID provided by an orchestration engine (e.g., heat-engine) prior to instantiation of a resource. The dictionary contains three keys: |
+| resources   | plain | xsd:dict   | A dictionary of resources to be planned. Each is keyed by an orchestration uuid. This is a UUID provided by an orchestration engine (e.g., heat-engine) prior to instantiation of a resource. The dictionary contains three keys: |
 |             |       |            | **name**: resource name                             |
 |             |       |            | **type**: resource type (in Heat Orchestration Template format) |
 |             |       |            | **properties**: resource properties (in Heat Orchestration Template format)                |
@@ -508,7 +508,7 @@ This operation does not accept a request body.
 |-------------|-------|------------|---------------------------------------------------|
 | stack_id    | plain | csapi:UUID | The UUID of the stack.                            |
 | id          | plain | csapi:UUID | The UUID of the plan.                             |
-| placements  | plain | xsd:string | A dictionary of planned resources. Each is keyed by an orchestration uuid. This is a UUID provided by an orchestration engine (e.g., heat-engine) prior to instantiation of a resource. The dictionary contains two keys:                 |
+| placements  | plain | xsd:dict   | A dictionary of planned resources. Each is keyed by an orchestration uuid. This is a UUID provided by an orchestration engine (e.g., heat-engine) prior to instantiation of a resource. The dictionary contains two keys:                 |
 |             |       |            | **location**: resource placement                    |
 |             |       |            | **name**: resource name                             |
 | name        | plain | xsd:string | The name of the plan.                             |
@@ -565,7 +565,7 @@ This operation does not accept a request body.
 |-------------|-------|------------|---------------------------------------------------|
 | stack_id    | plain | csapi:UUID | The UUID of the stack.                            |
 | id          | plain | csapi:UUID | The UUID of the plan.                             |
-| placements  | plain | xsd:string | A dictionary of planned resources. Each is keyed by an orchestration uuid. This is a UUID provided by an orchestration engine (e.g., heat) prior to instantiation of a resource. The dictionary contains two keys:                 |
+| placements  | plain | xsd:dict   | A dictionary of planned resources. Each is keyed by an orchestration uuid. This is a UUID provided by an orchestration engine (e.g., heat) prior to instantiation of a resource. The dictionary contains two keys:                 |
 |             |       |            | **location**: resource placement                    |
 |             |       |            | **name**: resource name                             |
 | name        | plain | xsd:string | The name of the plan.                             |
@@ -612,7 +612,7 @@ This operation does not accept a request body.
 
 | Parameter   | Style | Type       | Description                                       |
 |-------------|-------|------------|---------------------------------------------------|
-| plan_id     | plain | xsd:string | The UUID of the plan or its associated stack UUID. |
+| plan_id     | plain | csapi:UUID | The UUID of the plan or its associated stack UUID. |
 
 #### Response parameters
 
@@ -620,7 +620,7 @@ This operation does not accept a request body.
 |-------------|-------|------------|---------------------------------------------------|
 | stack_id    | plain | csapi:UUID | The UUID of the stack.                            |
 | id          | plain | csapi:UUID | The UUID of the plan.                             |
-| placements  | plain | xsd:string | A dictionary of planned resources. Each is keyed by an orchestration UUID. This is provided by an orchestration engine (e.g., heat) prior to instantiation of a resource. The dictionary contains two keys:                 |
+| placements  | plain | xsd:dict   | A dictionary of planned resources. Each is keyed by an orchestration UUID. This is provided by an orchestration engine (e.g., heat) prior to instantiation of a resource. The dictionary contains two keys:                 |
 |             |       |            | **location**: resource placement                    |
 |             |       |            | **name**: resource name                             |
 | name        | plain | xsd:string | The name of the plan.                             |
@@ -654,11 +654,11 @@ This operation does not accept a request body.
 
 | Parameter   | Style | Type       | Description                                       |
 |-------------|-------|------------|---------------------------------------------------|
-| plan_id     | plain | xsd:string | The UUID of the plan or its associated stack id.  |
+| plan_id     | plain | csapi:UUID | The UUID of the plan or its associated stack id.  |
 | action      | plain | xsd:string | The plan update action. There is only one valid option at this time.                              |
 |             |       |            | **migrate**: Replan a single resource               |
 | excluded_hosts | plain | xsd:list | A list of hosts that must not be considered when replanning |
-| resources   | plain | xsd:string | When action="migrate" this is an orchestration id list of length one. |
+| resources   | plain | xsd:list | When action="migrate" this is an orchestration id list of length one. |
 
 #### Response parameters
 
@@ -666,7 +666,7 @@ This operation does not accept a request body.
 |-------------|-------|------------|---------------------------------------------------|
 | stack_id    | plain | csapi:UUID | The UUID of the stack.                            |
 | id          | plain | csapi:UUID | The UUID of the plan.                             |
-| placements  | plain | xsd:string | A dictionary of planned resources. Each is keyed by an orchestration uuid. This is provided by an orchestration engine (e.g., heat) prior to instantiation of a resource. The dictionary contains two keys:                 |
+| placements  | plain | xsd:dict   | A dictionary of planned resources. Each is keyed by an orchestration uuid. This is provided by an orchestration engine (e.g., heat) prior to instantiation of a resource. The dictionary contains two keys:                 |
 |             |       |            | **location**: resource placement                    |
 |             |       |            | **name**: resource name                             |
 
@@ -705,7 +705,7 @@ This operation does not accept a request body.
 
 | Parameter   | Style | Type       | Description                                       |
 |-------------|-------|------------|---------------------------------------------------|
-| plan_id     | plain | xsd:string | The UUID of the plan.                             |
+| plan_id     | plain | csapi:UUID | The UUID of the plan or its associated stack id.  |
 
 This operation does not accept a request body and does not return a response body.
 
@@ -719,8 +719,8 @@ In the event of an error with a status other than unauthorized (401), a detailed
 |-------------|-------|------------|---------------------------------------------------|
 | title       | plain | xsd:string | Human-readable name.                              |
 | explanation | plain | xsd:string | Detailed explanation with remediation (if any).   |
-| code        | plain | xsd:string | HTTP Status Code.                                 |
-| error       | plain | xsd:string | Error dictionary.                                 |
+| code        | plain | xsd:int    | HTTP Status Code.                                 |
+| error       | plain | xsd:dict   | Error dictionary. Keys include **message**, **traceback** (currently reserved / unused), and **type**. |
 | message     | plain | xsd:string | Internal error message.                           |
 | traceback   | plain | xsd:string | Python traceback (if available).                  |
 | type        | plain | xsd:string | HTTP Status class name (from python-webob)        |

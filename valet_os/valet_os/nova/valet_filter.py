@@ -22,7 +22,8 @@ from oslo_config import cfg
 from oslo_log import log as logging
 
 from keystoneclient.v2_0 import client
-from nova.i18n import _LI, _LW
+from nova.i18n import _
+from nova.i18n import _LI, _LW, _LE
 from nova.scheduler import filters
 
 from valet_os.common import valet_api
@@ -45,6 +46,7 @@ class ValetFilter(filters.BaseHostFilter):
         '''Initializer'''
         self.api = valet_api.ValetAPIWrapper()
         self.opt_group_str = 'valet'
+        self.opt_failure_mode_str = 'failure_mode'
         self.opt_project_name_str = 'admin_tenant_name'
         self.opt_username_str = 'admin_username'
         self.opt_password_str = 'admin_password'
@@ -75,17 +77,22 @@ class ValetFilter(filters.BaseHostFilter):
     def _register_opts(self):
         '''Register Options'''
         opts = []
+        option = cfg.StrOpt(self.opt_failure_mode_str,
+                            choices=['reject', 'yield'], default='reject',
+                            help=_('Mode to operate in if Valet planning '
+                                   'fails for any reason.'))
+        opts.append(option)
         option = cfg.StrOpt(self.opt_project_name_str, default=None,
-                            help='Valet Project Name')
+                            help=_('Valet Project Name'))
         opts.append(option)
         option = cfg.StrOpt(self.opt_username_str, default=None,
-                            help='Valet Username')
+                            help=_('Valet Username'))
         opts.append(option)
         option = cfg.StrOpt(self.opt_password_str, default=None,
-                            help='Valet Password')
+                            help=_('Valet Password'))
         opts.append(option)
         option = cfg.StrOpt(self.opt_auth_uri_str, default=None,
-                            help='Keystone Authorization API Endpoint')
+                            help=_('Keystone Authorization API Endpoint'))
         opts.append(option)
 
         opt_group = cfg.OptGroup(self.opt_group_str)
@@ -102,6 +109,9 @@ class ValetFilter(filters.BaseHostFilter):
         yield_all = False
         location = None
         uuid = None
+
+        opt = getattr(cfg.CONF, self.opt_group_str)
+        failure_mode = opt[self.opt_failure_mode_str]
 
         # TODO: If we can't reach Valet at all, we may opt to fail
         # TODO: all hosts depending on a TBD config flag.
@@ -143,7 +153,7 @@ class ValetFilter(filters.BaseHostFilter):
                                None, plan, auth_token=self._auth_token)
             except:
                 # TODO: Get context from exception
-                LOG.error(_LW("Valet did not respond to " \
+                LOG.error(_LE("Valet did not respond to " \
                           "ad hoc placement request."))
                 response = None
 
@@ -156,9 +166,14 @@ class ValetFilter(filters.BaseHostFilter):
                         location = placement['location']
 
             if not location:
-                LOG.error(_LW("Valet ad-hoc placement unknown " \
+                LOG.error(_LE("Valet ad-hoc placement unknown " \
                           "for physical resource: %s.") % uuid)
-                yield_all = False
+                if failure_mode == 'yield':
+                    LOG.warn(_LW("Valet will yield to Nova for " \
+                             "placement decisions."))
+                    yield_all = True
+                else:
+                    yield_all = False
         else:
             uuid = filter_properties[hints_key][uuid_key]
             self._authorize()
@@ -166,7 +181,7 @@ class ValetFilter(filters.BaseHostFilter):
 
             try:
                 response = self.api.placement(uuid, hosts=hosts,
-                                               auth_token=self._auth_token)
+                                              auth_token=self._auth_token)
             except:
                 LOG.error(_LW("Valet did not respond to " \
                           "placement request."))
@@ -179,9 +194,14 @@ class ValetFilter(filters.BaseHostFilter):
 
             if not location:
                 # TODO: Get context from exception
-                LOG.error(_LW("Valet placement unknown " \
-                          "for resource: %s.") % uuid)
-                yield_all = False
+                LOG.error(_LE("Valet placement unknown " \
+                          "for planned resource: %s.") % uuid)
+                if failure_mode == 'yield':
+                    LOG.warn(_LW("Valet will yield to Nova for " \
+                             "placement decisions."))
+                    yield_all = True
+                else:
+                    yield_all = False
 
         # Yield the hosts that pass.
         # Like the Highlander, there can (should) be only one.
@@ -192,10 +212,11 @@ class ValetFilter(filters.BaseHostFilter):
                 if match:
                     if ad_hoc:
                         msg = "Valet ad-hoc placement for " \
-                              "physical resource %s: %s."
+                              "ad-hoc resource %s: %s."
                     else:
-                        msg = "Valet placement for resource %s: %s."
-                    LOG.info(_LI(msg % (uuid, obj.host)))
+                        msg = "Valet placement for " \
+                              "planned resource %s: %s."
+                    LOG.info(_LI(msg) % (uuid, obj.host))
             else:
                 match = None
             if yield_all or match:

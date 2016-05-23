@@ -28,6 +28,9 @@ Throughout this document, the following installation-specific terms are used:
 * ``$KEYSTONE_AUTH_API``: Keystone Auth API publicurl endpoint
 * ``$VALET_CONFIG_PATH``: Valet configuration directory (e.g., /etc/valet)
 * ``$APACHE2_CONFIG_PATH``: apache2 httpd server configuration path
+* ``$OSLO_MSG_USERNAME``: Oslo Messaging Service username
+* ``$OSLO_MSG_PASSWORD``: Oslo Message Service password
+* ``$OSLO_MSG_HOST``: Oslo Messaging Service host
 
 Root or sufficient sudo privileges are required for some steps.
 
@@ -129,10 +132,24 @@ If the Keystone adminurl endpoint is not reachable, Valet will not be able to ob
 * Add an additional identity config setting named ``'interface'``, set to ``'public'``.
 * In the OpenStack cloud, ensure ``$VALET_USERNAME`` is a member of every tenant. Keep current as needed.
 
+### Messaging
+
+* Set ``transport_url`` to match the OpenStack Oslo Messaging Service endpoint.
+
+```python
+messaging = {
+    'config': {
+        'transport_url': 'rabbit://$OSLO_MSG_USERNAME:$OSLO_MSG_PASSWORD@$OSLO_MSG_HOST:5672/',
+    }
+}
+```
+
 ### Music
 
 * Set ``host``, ``port``, ``keyspace``, and ``replication_factor`` as needed for access to Music.
 * Alternately, set ``hosts`` (plural) to a python list of hosts if more than one host is used.
+
+For example, if Music is hosted on ``127.0.0.1`` port ``8080`` with a keyspace of ``valet`` and replication factor of ``3``:
 
 ```python
 music = {

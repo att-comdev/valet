@@ -24,6 +24,7 @@ Throughout this document, the following installation-specific terms are used:
 * ``$VALET_USERNAME``: OpenStack placement service username (e.g., valet)
 * ``$VALET_PASSWORD``: OpenStack placement service password
 * ``$VALET_TENANT_NAME``: OpenStack placement service default tenant (e.g., service)
+* ``$VALET_FAILURE_MODE``: Desired failure mode for Nova ValetFilter (yield or reject)
 * ``$KEYSTONE_AUTH_API``: Keystone Auth API publicurl endpoint
 * ``$KEYSTONE_REGION``: Keystone Region (e.g., RegionOne)
 
@@ -169,11 +170,14 @@ Add a ``[valet]`` section. This will be used by the Valet Scheduler Filter:
 ```ini
 [valet]
 url = http://$VALET_HOST:8090/v1
+failure_mode = $VALET_FAILURE_MODE
 admin_tenant_name = $VALET_TENANT_NAME
 admin_username = $VALET_USERNAME
 admin_password = $VALET_PASSWORD
 admin_auth_url = $KEYSTONE_AUTH_API
 ```
+
+``$VALET_FAILURE_MODE`` can be ``yield`` or ``reject``. The default is ``reject``. If Valet exclusivity groups will never be used, it is acceptable to set this to ``yield``, as there will be no chance of encroaching upon them.
 
 Restart nova-scheduler:
 

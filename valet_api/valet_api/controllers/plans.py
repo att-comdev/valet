@@ -139,7 +139,7 @@ class PlansItemController(object):
             # Flush so that the DB is current.
             self.plan.flush()
             self.plan = Plan.query.filter_by(  # pylint: disable=E1101
-                stack_id=stack_id).first()
+                stack_id=self.plan.stack_id).first()
             LOG.info(_('Plan with stack id %s updated.'), \
                 self.plan.stack_id)
             return {"plan": self.plan}

@@ -70,18 +70,24 @@ class AppHandler:
  
             if action == "ping":
                 self.logger.debug("got ping")
-            elif action == "replan":
-                re_app = self._regenerate_app_topology(stack_id, app, app_topology)
+            elif action == "replan" or action == "migrate":
+                re_app = self._regenerate_app_topology(stack_id, app, app_topology, action)
                 if re_app == None:
+                    self.apps[stack_id] = None
+                    self.status = "cannot locate the original plan for stack = " + stack_id
                     return None
 
-                self.logger.debug("got replan: " + stack_id)
+                if action == "replan":
+                    self.logger.debug("got replan: " + stack_id)
+                elif action == "migrate":
+                    self.logger.debug("got migration: " + stack_id)
 
                 app_id = app_topology.set_app_topology(re_app)
 
                 if app_id == None:
                     self.logger.error(app_topology.status)
                     self.status = app_topology.status
+                    self.apps[stack_id] = None
                     return None
 
                 self.logger.info("replanned  application: " + app_id[1])
@@ -91,6 +97,7 @@ class AppHandler:
                 if app_id == None:
                     self.logger.error(app_topology.status)
                     self.status = app_topology.status
+                    self.apps[stack_id] = None
                     return None
 
                 self.logger.info("got application: " + app_id[1])
@@ -190,7 +197,7 @@ class AppHandler:
 
         return True
 
-    def _regenerate_app_topology(self, _stack_id, _app, _app_topology):
+    def _regenerate_app_topology(self, _stack_id, _app, _app_topology, _action):
         re_app = {}
        
         old_app = self.db.get_app_info(_stack_id)
@@ -234,13 +241,20 @@ class AppHandler:
                         if ex_id not in exclusivity_groups.keys():
                             exclusivity_groups[ex_id] = []
                         exclusivity_groups[ex_id].append(vmk)
-
-                if vmk == _app["orchestration_id"]:
-                    _app_topology.candidate_list_map[vmk] = _app["locations"]
-                elif vmk in _app["exclusions"]:
-                    _app_topology.planned_vm_map[vmk] = vm["host"]
+           
+                if _action == "replan":
+                    if vmk == _app["orchestration_id"]:
+                        _app_topology.candidate_list_map[vmk] = _app["locations"]
+                    elif vmk in _app["exclusions"]:
+                        _app_topology.planned_vm_map[vmk] = vm["host"]
+                elif _action == "migrate":
+                    if vmk == _app["orchestration_id"]:
+                        _app_topology.exclusion_list_map[vmk] = _app["excluded_hosts"]
+                        if vm["host"] not in _app["excluded_hosts"]:
+                            _app_topology.exclusion_list_map[vmk].append(vm["host"])
+                    else:
+                        _app_topology.planned_vm_map[vmk] = vm["host"]
                 _app_topology.old_vm_map[vmk] = (vm["host"], vm["cpus"], vm["mem"], vm["local_volume"])
-                #float(vm["cpus"]), float(vm["mem"]), float(vm["local_volume"]))
         
         if "VGroups" in old_app.keys():
             for gk, affinity in old_app["VGroups"].iteritems():
@@ -249,7 +263,7 @@ class AppHandler:
                 resources[gk]["type"] = "ATT::Valet::GroupAssignment"
                 properties = {}
                 properties["group_type"] = "affinity"
-                properties["group_name"] = affinity["name"]
+                #properties["group_name"] = affinity["name"]
                 properties["level"] = affinity["level"]
                 properties["resources"] = []
                 for r in affinity["subvgroup_list"]:
@@ -298,4 +312,5 @@ class AppHandler:
         re_app["resources"] = resources
 
         return re_app       
+
 

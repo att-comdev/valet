@@ -20,9 +20,9 @@ Valet consists of the following components:
 
 Additional documents:
 
-* [OpenStack Heat Resource Plugins](https://codecloud.web.att.com/plugins/servlet/readmeparser/display/ST_CLOUDQOS/allegro/atRef/refs/heads/master/renderFile/havalet/README.rst): Heat resources
+* [OpenStack Heat Resource Plugins](https://codecloud.web.att.com/plugins/servlet/readmeparser/display/ST_CLOUDQOS/allegro/atRef/refs/heads/master/renderFile/valet_os/etc/valet_os/heat/README.md): Heat resources
 * [Placement API](https://codecloud.web.att.com/plugins/servlet/readmeparser/display/ST_CLOUDQOS/allegro/atRef/refs/heads/master/renderFile/valet_api/doc/README.md): API requests/responses
-* [Using Postman with valet-api](https://codecloud.web.att.com/plugins/servlet/readmeparser/display/ST_CLOUDQOS/allegro/atRef/refs/heads/master/renderFile/valet_api/valet_api/README.md): Postman support
+* [Using Postman with valet-api](https://codecloud.web.att.com/plugins/servlet/readmeparser/display/ST_CLOUDQOS/allegro/atRef/refs/heads/master/renderFile/valet_api/valet_api/tests/README.md): Postman support
 
 ## Contact
 

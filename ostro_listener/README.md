@@ -10,7 +10,8 @@ Prior to installation:
 
 * Ubuntu 14.04 LTS
 * Python 2.7.6 with pip
-* Access to a RabbitMQ endpoint
+* Access to an OpenStack Kilo cloud (RabbitMQ in particular)
+* Access to [Music](https://codecloud.web.att.com/plugins/servlet/readmeparser/display/ST_CLOUDQOS/music/atRef/refs/heads/master/renderFile/README.md) 6.0 with tables previously configured by [Ostro](https://codecloud.web.att.com/plugins/servlet/readmeparser/display/ST_CLOUDQOS/ostro/atRef/refs/heads/master/renderFile/README) 2.0
 
 Throughout this document, the following installation-specific terms are used:
 

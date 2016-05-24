@@ -1,20 +1,78 @@
 # OpenStack Event Listener for Ostro
 
-This script is based on a RabbitMQ message bus listener. It has been modified to listen for specific messages needed by Ostro and persist digested versions of the messages to Music.
+This script listens for specific messages needed by Ostro to maintain up-to-date cloud state. It can persist digested versions of the messages to Music, which Ostro then picks up.
 
-This version of the listener does not use oslo.messaging. It listens directly to the message transport. Future revisions are expected to use oslo.messaging in order to keep the means of transport abstract.
+**Note: This version of the listener does not use oslo.messaging. It listens directly to RabbitMQ. Future revisions are expected to use oslo.messaging in order to keep the means of transport abstract.**
 
-This script is daemonized and can be installed using pip. Instructions forthcoming.
+## Prerequisites
+
+Prior to installation:
+
+* Ubuntu 14.04 LTS
+* Python 2.7.6 with pip
+* Access to a RabbitMQ endpoint
+
+Throughout this document, the following installation-specific terms are used:
+
+* ``$CODECLOUD_USER``: AT&T CodeCloud user id
+* ``$VENV``: Python virtual environment path (if any)
+* ``$CONFIG_FILE``: Event Listener configuration file
+* ``$RABBITMQ_HOST``: RabbitMQ hostname or IP address
+* ``$RABBITMQ_USERNAME``: RabbitMQ username
+* ``$RABBITMQ_PASSWORD_FILE``: Full path to RabbitMQ password file
+* ``$MUSIC_URL``: Music API endpoint and port in URL format
+* ``$MUSIC_KEYSPACE``: Music keyspace (e.g., valet)
+* ``$MUSIC_REPLICATION_FACTOR``: Local git repository path
+
+Root or sufficient sudo privileges are required for some steps.
+
+### A Note About Python Virtual Environments
+
+It is recommended to consider using a python [virtual environment](http://docs.python-guide.org/en/latest/dev/virtualenvs/) (venv). A venv helps avoid instabilities and conflicts within the default python environment.
+
+## Installing ostro-listener
+
+ostro-listener is maintained in AT&T CodeCloud under the CloudQoS project, in a repository called 'allegro'.
+
+*Note: Apart from the repository name, the word 'Allegro' is no longer used. Use the word 'Valet' in place of 'Allegro' when referring to components.*
+
+Clone the git repository from AT&T CodeCloud, using a ``$CODECLOUD_USER`` account with appropriate credentials:
+
+```bash
+$ git clone https://$CODECLOUD_USER@codecloud.web.att.com/scm/st_cloudqos/allegro.git
+$ cd allegro
+```
+
+Install ostro-listener on any node with line-of-sight to the RabbitMQ endpoint.
+
+ostro-listener can be installed in production mode or development mode.
+
+**Production:**
+
+```bash
+$ sudo pip install $VALET_PATH/ostro_listener
+```
+
+**Development:**
+
+```bash
+$ sudo pip install --editable $VALET_PATH/ostro_listener
+```
 
 ## Usage
 
 ```
-usage: listener.py [-h] [-x EXCHANGE] [-t {topic,fanout}] [-a] [-H HOST]
-                   [-p PORT] [-u USER] [-P PASSWDFILE] [-o {yaml,json,dict}]
-                   [-s] [-m MUSIC] [-k KEYSPACE] [-r REPLICATION_FACTOR]
+usage: ostro-listener [-h] [-c OSTRO_LISTENER_CONFIG] [-x EXCHANGE]
+                      [-t {topic,fanout}] [-a] [-H HOST] [-p PORT]
+                      [-u USERNAME] [-P PASSWDFILE] [-o {yaml,json,dict}] [-s]
+                      [-m MUSIC] [-k KEYSPACE] [-r REPLICATION_FACTOR]
+
+Ostro-specific OpenStack Event Listener
 
 optional arguments:
   -h, --help            show this help message and exit
+  -c OSTRO_LISTENER_CONFIG, --conf_file OSTRO_LISTENER_CONFIG
+                        Defaults to env[OSTRO_LISTENER_CONFIG]
   -x EXCHANGE, --exchange EXCHANGE
                         rabbit exchange to listen to
   -t {topic,fanout}, --exchange_type {topic,fanout}
@@ -22,7 +80,7 @@ optional arguments:
   -a, --auto_delete     autodelete exchange (default=False)
   -H HOST, --host HOST  compute node on which rabbitmq is running
   -p PORT, --port PORT  port on which rabbitmq is running
-  -u USER, --username USER
+  -u USERNAME, --username USERNAME
                         rabbitmq username (default="guest")
   -P PASSWDFILE, --passwdfile PASSWDFILE
                         file containing host rabbitmq passwords
@@ -37,41 +95,27 @@ optional arguments:
                         music replication factor
 ```
 
-## Example Invocation
+## Example Command Line Invocation
 
 Split across lines for readability.
 
 ```
-./listener.py -x nova -t topic -s -r 3
-              -k KEYSPACE -H RABBITMQ -u USERNAME
-              -P PASSWDFILE -m MUSICURL
+# ostro-listener -x nova -t topic -s
+                 -H $RABBITMQ_HOST
+                 -u $RABBITMQ_USERNAME
+                 -P $RABBITMQ_PASSWORD_FILE
+                 -m $MUSIC_URL
+                 -k $MUSIC_KEYSPACE
+                 -r $MUSIC_REPLICATION_FACTOR
 ```
-
-Where:
-
-**-x nova:** Listen to the rabbitmq exchange 'nova'
-**-t topic:** The rabbitmq exchange type is 'topic'
-**-s:** Store messages in Music
-**-r 3:** Use a Music replication factor of 3
-
-Implied/default options:
-
-**-p 5672:** The rabbitmq port
-**-o dict:** Output to the console in python dictionary format
-
-Other options that must be set based on the individual setup:
-
-**-k KEYSPACE:** Use the KEYSPACE keyspace
-**-H RABBITMQ:** The rabbitmq domain/ip
-**-u USERNAME:** The rabbitmq username
-**-P PASSWDFILE:** File with rabbitmq username/password pairs
-**-m MUSICURL:** Music API endpoint/port
 
 ## Password File
 
+A sample password file can be found in ``$VALET_PATH/ostro_listener/etc/ostro_listener/passwd.txt``:
+
 The password file must not be readable by group/other. It is often set to root ownership.
 
-Separate usernames and passwords with a single space. For example:
+Separate hosts/IPs and passwords with a single space. For example:
 
 ```
 127.0.0.1 password
@@ -79,3 +123,105 @@ localhost password
 myhost password
 myhost.at.att.com password
 ```
+
+Hosts/IPs will match based on the value of $RABBITMQ_HOST.
+
+## Using a Configuration File
+
+A sample configuration file can be found in ``$VALET_PATH/ostro_listener/etc/ostro_listener/ostro-listener.conf.txt``:
+
+```ini
+[DEFAULT]
+exchange = nova
+exchange_type = topic
+auto_delete = false
+host = localhost
+port = 5672
+username = guest
+passwdfile = passwd
+output_format = dict
+store = false
+music = http://127.0.0.1:8080/
+keyspace = music
+replication_factor = 1
+```
+
+Configuration files may be referenced in one of two ways, through the ``--config-file`` option:
+
+```bash
+# ostro-listener --config-file $CONFIG_FILE
+```
+
+... or via an environment variable:
+
+```bash
+# export OSTRO_EVENT_LISTENER_CONFIG=$CONFIG_FILE
+# ostro-listener
+```
+
+## Running as an Ubunbu Service
+
+A sample Ubuntu init.d script can be found in ``$VALET_PATH/ostro_listener/etc/ostro_listener/ostro-listener.initd.txt``.
+
+To use, first copy this script to ``/etc/init.d``:
+
+```bash
+# cp $VALET_PATH/ostro_listener/etc/ostro_listener/ostro-listener.initd.txt /etc/init.d/ostro-listener
+# chown root:root /etc/init.d/ostro-listener
+# chmod 755 /etc/init.d/ostro-listener
+```
+
+If ostro-listener was installed in a Python virtual environment, edit the copied file, uncomment the VENV export and adjust as needed, for example:
+
+```bash
+export VENV=/opt/stack/heat.venv
+```
+
+Create ``/var/log`` and ``/var/run`` directories for use by the service:
+
+```bash
+$ sudo mkdir /var/log/ostro-listener
+$ sudo mkdir /var/run/ostro-listener
+$ sudo chmod 750 /var/log/ostro-listener
+$ sudo chmod 755 /var/run/ostro-listener
+```
+
+Set the run level defaults, then enable ostro-listener as a service:
+
+```bash
+$ sudo update-rc.d ostro-listener defaults
+$ sudo update-rc.d ostro-listener enable
+```
+
+To start the ostro-listener service:
+
+```bash
+$ sudo service ostro-listener start
+```
+
+While running, a process ID file will be found in ``/var/run/ostro-listener/ostro-listener.pid``, and a log file will be found in ``/var/log/ostro-listener/ostro-listener.log``. The log is appended to upon subsequent starts. Log rotation is left to the discretion of the server administrator.
+
+To stop the ostro-listener service:
+
+```bash
+$ sudo service ostro-listener stop
+```
+
+The process ID file will be removed from ``/var/run/ostro-listener`` upon stopping.
+
+## Uninstallation
+
+Activate a virtual environment (venv) first if necessary. Uninstallation uses the same command regardless of development or production mode.
+
+Disable ostro-listener as a service, then uninstall the python package:
+
+```bash
+$ sudo update-rc.d ostro-listener disable
+$ sudo pip uninstall ostro-listener
+```
+
+Remove previously made configuration file changes, files, and other settings as needed.
+
+## Contact
+
+Joe D'Andrea <jdandrea@research.att.com>

@@ -3,5 +3,6 @@
 # process, which may cause wedges in the gate later.
 
 pip
+pika
 python-daemon
 valet-api

@@ -1,6 +1,6 @@
 # Using Postman with valet-api
 
-The placement API (valet-api) can be exercised using [Postman](http://www.get-postman.com/), by importing the file ``Valet.json.postman_collection``.
+The placement API (valet-api) can be exercised using [Postman](http://www.getpostman.com/), by importing the file ``Valet.json.postman_collection``.
 
 Before using the collection, create a Postman environment with the following settings:
 

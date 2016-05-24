@@ -4,7 +4,7 @@ Valet gives OpenStack the ability to optimize cloud resources while simultaneous
 
 This document covers installation of valet-api, the API engine used to interact with Valet.
 
-**IMPORTANT**: [Overall AT&T AIC Installation of Valet is covered in a separate document](https://codecloud.web.att.com/plugins/servlet/readmeparser/display/ST_CLOUDQOS/valet/atRef/refs/heads/master/renderFile/doc/aic/README.md). These instructions are to be used by the Bedminster and Tel Aviv development teams.
+**IMPORTANT**: [Overall AT&T AIC Installation of Valet is covered in a separate document](https://codecloud.web.att.com/plugins/servlet/readmeparser/display/ST_CLOUDQOS/allegro/atRef/refs/heads/master/renderFile/doc/aic/README.md). These instructions are to be used by the Bedminster and Tel Aviv development teams.
 
 ## Prerequisites
 

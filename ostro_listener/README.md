@@ -111,11 +111,11 @@ Split across lines for readability.
                  -r $MUSIC_REPLICATION_FACTOR
 ```
 
-Always use the nova exchange (``-x nova``) and topic exchange type ``-t topic``.
+*Note: This script has kept its original flexibility in that it may also be used to listen to other exchanges/topics.*
 
-This script has kept its original flexibility in that it may also be used to listen to other exchanges/topics.
+Always use the nova exchange (``-x nova``) and topic exchange type (``-t topic``) when using in conjunction with Ostro and Music.
 
-**Important**: Always use topic exchanges for "listening on the wire." Failure to do so could risk other RabbitMQ users (e.g., OpenStack services) missing important messages.
+**Important**: Always use topic exchanges for "listening on the wire" to OpenStack message traffic. Failure to do so could risk other RabbitMQ users (e.g., OpenStack services) missing important messages.
 
 ## Password File
 

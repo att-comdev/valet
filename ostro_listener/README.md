@@ -2,7 +2,7 @@
 
 This script listens for specific messages needed by Ostro to maintain up-to-date cloud state. It can persist digested versions of the messages to Music, which Ostro then picks up.
 
-**Note: This version of the listener does not use oslo.messaging. It listens directly to RabbitMQ. Future revisions are expected to use oslo.messaging in order to keep the means of transport abstract.**
+*Note: This version of the listener does not use oslo.messaging. It listens directly to RabbitMQ. Future revisions are expected to use oslo.messaging in order to keep the means of transport abstract.*
 
 ## Prerequisites
 
@@ -16,6 +16,7 @@ Throughout this document, the following installation-specific terms are used:
 
 * ``$CODECLOUD_USER``: AT&T CodeCloud user id
 * ``$VENV``: Python virtual environment path (if any)
+* ``$VALET_PATH``: Local git repository path
 * ``$CONFIG_FILE``: Event Listener configuration file
 * ``$RABBITMQ_HOST``: RabbitMQ hostname or IP address
 * ``$RABBITMQ_USERNAME``: RabbitMQ username
@@ -43,7 +44,7 @@ $ git clone https://$CODECLOUD_USER@codecloud.web.att.com/scm/st_cloudqos/allegr
 $ cd allegro
 ```
 
-Install ostro-listener on any node with line-of-sight to the RabbitMQ endpoint.
+Install ostro-listener on any node with line-of-sight to the RabbitMQ endpoint from which messages are to be monitored.
 
 ostro-listener can be installed in production mode or development mode.
 
@@ -59,7 +60,7 @@ $ sudo pip install $VALET_PATH/ostro_listener
 $ sudo pip install --editable $VALET_PATH/ostro_listener
 ```
 
-## Usage
+## Command Line Usage
 
 ```
 usage: ostro-listener [-h] [-c OSTRO_LISTENER_CONFIG] [-x EXCHANGE]
@@ -95,7 +96,7 @@ optional arguments:
                         music replication factor
 ```
 
-## Example Command Line Invocation
+## Example Invocation
 
 Split across lines for readability.
 
@@ -109,13 +110,21 @@ Split across lines for readability.
                  -r $MUSIC_REPLICATION_FACTOR
 ```
 
+Always use the nova exchange (``-x nova``) and topic exchange type ``-t topic``.
+
+This script has kept its original flexibility in that it may also be used to listen to other exchanges/topics.
+
+**Important**: Always use topic exchanges for "listening on the wire." Failure to do so could risk other RabbitMQ users (e.g., OpenStack services) missing important messages.
+
 ## Password File
 
-A sample password file can be found in ``$VALET_PATH/ostro_listener/etc/ostro_listener/passwd.txt``:
+A sample password file can be found in ``$VALET_PATH/ostro_listener/etc/ostro_listener/passwd.txt``.
 
-The password file must not be readable by group/other. It is often set to root ownership.
+Copy this file to another location before editing.
 
-Separate hosts/IPs and passwords with a single space. For example:
+The password file must be protected. In particular, it must not be readable by group/other users. It is often set to root ownership.
+
+Within the file, separate hosts/IPs and passwords with a single space. For example:
 
 ```
 127.0.0.1 password
@@ -146,6 +155,8 @@ keyspace = music
 replication_factor = 1
 ```
 
+Copy this file to another location before editing.
+
 Configuration files may be referenced in one of two ways, through the ``--config-file`` option:
 
 ```bash
@@ -166,12 +177,11 @@ A sample Ubuntu init.d script can be found in ``$VALET_PATH/ostro_listener/etc/o
 To use, first copy this script to ``/etc/init.d``:
 
 ```bash
-# cp $VALET_PATH/ostro_listener/etc/ostro_listener/ostro-listener.initd.txt /etc/init.d/ostro-listener
-# chown root:root /etc/init.d/ostro-listener
-# chmod 755 /etc/init.d/ostro-listener
+$ sudo cp $VALET_PATH/ostro_listener/etc/ostro_listener/ostro-listener.initd.txt /etc/init.d/ostro-listener
+$ sudo chmod 755 /etc/init.d/ostro-listener
 ```
 
-If ostro-listener was installed in a Python virtual environment, edit the copied file, uncomment the VENV export and adjust as needed, for example:
+If ostro-listener was installed in a Python virtual environment, edit ``/etc/init.d/ostro-listener``, uncomment the ``export VENV`` line, and adjust as needed, for example:
 
 ```bash
 export VENV=/opt/stack/heat.venv

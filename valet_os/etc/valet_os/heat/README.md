@@ -16,7 +16,7 @@ This resource is purely informational in nature and makes no changes to heat, no
 
 ``group_name`` (String)
 
-* Name of group. Required for exclusivity groups.
+* Name of group. Required for exclusivity groups. NOT permitted for affinity and diversity groups at this time.
 * Can be updated without replacement.
 
 ``group_type`` (String)
@@ -31,6 +31,7 @@ This resource is purely informational in nature and makes no changes to heat, no
 * Level of relationship between resources.
 * See list below for allowed values.
 * Can be updated without replacement.
+* Required property.
 
 ``resources`` (List)
 
@@ -40,10 +41,8 @@ This resource is purely informational in nature and makes no changes to heat, no
 
 #### Levels
 
-* ``cluster``: Across a cluster, one resource per cluster.
 * ``rack``: Across racks, one resource per host.
 * ``host``: All resources on a single host.
-* ``any``: Any level.
 
 ### Attributes
 
@@ -86,7 +85,7 @@ Use the OpenStack Heat CLI command `heat resource-type-show ATT::Valet::GroupAss
   "properties": {
     "level": {
       "description": "Level of relationship between resources.", 
-      "required": false, 
+      "required": true, 
       "update_allowed": true, 
       "type": "string", 
       "immutable": false, 
@@ -94,9 +93,7 @@ Use the OpenStack Heat CLI command `heat resource-type-show ATT::Valet::GroupAss
         {
           "allowed_values": [
             "host", 
-            "rack", 
-            "cluster", 
-            "any"
+            "rack"
           ]
         }
       ]

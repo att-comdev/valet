@@ -4,6 +4,11 @@ Valet gives OpenStack the ability to optimize cloud resources while simultaneous
 
 **IMPORTANT**: [Overall AT&T AIC Installation of Valet is covered in a separate document](https://codecloud.web.att.com/plugins/servlet/readmeparser/display/ST_CLOUDQOS/valet/atRef/refs/heads/master/renderFile/doc/aic/README.md).
 
+Learn more about Valet:
+
+* [OpenStack Newton Summit Presentation](https://www.openstack.org/videos/video/valet-holistic-data-center-optimization-for-openstack) (Austin, TX, 27 April 2016)
+* [Presentation Slides](http://www.research.att.com/export/sites/att_labs/techdocs/TD_101806.pdf) (PDF)
+
 Valet consists of the following components:
 
 * [valet-openstack](https://codecloud.web.att.com/plugins/servlet/readmeparser/display/ST_CLOUDQOS/allegro/atRef/refs/heads/master/renderFile/valet_os/README.md): a set of OpenStack plugins used to interact with Valet

@@ -134,7 +134,7 @@ myhost password
 myhost.at.att.com password
 ```
 
-Hosts/IPs will match based on the value of $RABBITMQ_HOST.
+Hosts/IPs will match based on the value of ``$RABBITMQ_HOST``.
 
 ## Using a Configuration File
 

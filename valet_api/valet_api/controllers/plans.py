@@ -250,6 +250,14 @@ class PlansController(object):
             message = ostro.response['status']['message']
             error(ostro.error_uri, _('Valet error: %s') % message)
 
+        # If there are no serviceable resources, bail. Not an error.
+        # Treat it as if an "empty plan" was created.
+        # FIXME: Ostro should likely handle this and not error out.
+        if not ostro.is_request_serviceable():
+            LOG.info(_('Plan has no serviceable resources. Skipping.'))
+            response.status = 201
+            return {"plan": {}}
+
         ostro.send()
         status_type = ostro.response['status']['type']
         if status_type != 'ok':

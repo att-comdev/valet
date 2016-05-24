@@ -32,6 +32,9 @@ from valet_api.models import Query
 
 LOG = logging.getLogger(__name__)
 
+SERVICEABLE_RESOURCES = [
+    'OS::Nova::Server'
+]
 GROUP_ASSIGNMENT = 'ATT::Valet::GroupAssignment'
 GROUP_TYPE = 'group_type'
 GROUP_NAME = 'group_name'
@@ -241,6 +244,19 @@ class Ostro(object):
             self.request['resources_update'] = self.response['resources']
 
         return True
+
+    def is_request_serviceable(self):
+        '''
+        Returns true if the request has at least
+        one serviceable resource.
+        '''
+        # FIXME: Ostro should return no placements vs throw an error.
+        resources = self.request.get('resources', {})
+        for res in resources.itervalues():
+            res_type = res.get('type')
+            if res_type and res_type in SERVICEABLE_RESOURCES: 
+                return True
+        return False
 
     def ping(self):
         '''Send a ping request and obtain a response.'''

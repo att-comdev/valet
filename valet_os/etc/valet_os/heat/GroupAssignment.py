@@ -80,8 +80,9 @@ class GroupAssignment(resource.Resource):
             properties.Schema.STRING,
             _('Level of relationship between resources.'),
             constraints=[
-                constraints.AllowedValues(['host', 'rack', 'cluster', 'any']),
+                constraints.AllowedValues(['host', 'rack']),
             ],
+            required=True,
             update_allowed=True
         ),
         RESOURCES: properties.Schema(

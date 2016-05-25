@@ -248,7 +248,7 @@ $ sudo apachectl graceful
 
 ## Uninstallation
 
-Activate a virtual environment (venv) first if necessary. Uninstallation uses the same command regardless of development or production mode.
+Activate a virtual environment (venv) first if necessary, then uninstall with:
 
 ```bash
 $ sudo pip uninstall valet-api

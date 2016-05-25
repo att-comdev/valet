@@ -50,6 +50,13 @@ Clone the git repository from AT&T CodeCloud, using a ``$CODECLOUD_USER`` accoun
 
 ```bash
 $ git clone https://$CODECLOUD_USER@codecloud.web.att.com/scm/st_cloudqos/allegro.git
+Cloning into 'allegro'...
+remote: Counting objects: 3562, done.
+remote: Compressing objects: 100% (3179/3179), done.
+remote: Total 3562 (delta 2007), reused 1076 (delta 247)
+Receiving objects: 100% (3562/3562), 1.83 MiB | 2.11 MiB/s, done.
+Resolving deltas: 100% (2007/2007), done.
+Checking connectivity... done.
 $ cd allegro/valet_api
 ```
 

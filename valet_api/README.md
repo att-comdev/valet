@@ -25,13 +25,13 @@ Throughout this document, the following installation-specific items are required
 | ``$VALET_API_PATH`` | Local git repository's ``valet_api`` directory | ``/home/jd0616/git/allegro/valet_api`` |
 | ``$VALET_HOST`` | valet-api hostname | ``localhost`` |
 | ``$VALET_USERNAME`` | OpenStack placement service username | ``valet`` |
-| ``$VALET_PASSWORD`` | OpenStack placement service password | ``\*\*\*\*\*\*\*\*``|
+| ``$VALET_PASSWORD`` | OpenStack placement service password | |
 | ``$VALET_TENANT_NAME`` | OpenStack placement service default tenant | ``service`` |
 | ``$KEYSTONE_AUTH_API`` | Keystone Auth API publicurl endpoint | ``http://controller:5000/`` |
 | ``$VALET_CONFIG_PATH`` | Valet configuration directory | ``/var/www/valet`` |
 | ``$APACHE2_CONFIG_PATH`` | apache2 httpd server configuration path | ``/etc/apache2`` |
 | ``$OSLO_MSG_USERNAME`` | Oslo Messaging Service username | ``messaging`` |
-| ``$OSLO_MSG_PASSWORD`` | Oslo Message Service password | ``\*\*\*\*\*\*\*\*`` |
+| ``$OSLO_MSG_PASSWORD`` | Oslo Message Service password | |
 | ``$OSLO_MSG_HOST`` | Oslo Messaging Service host | ``controller`` |
 
 Root or sufficient sudo privileges are required for some steps.

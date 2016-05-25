@@ -16,21 +16,23 @@ Prior to installation:
 * [Music](https://codecloud.web.att.com/plugins/servlet/readmeparser/display/ST_CLOUDQOS/music/atRef/refs/heads/master/renderFile/README.md) 6.0
 * [Ostro](https://codecloud.web.att.com/plugins/servlet/readmeparser/display/ST_CLOUDQOS/ostro/atRef/refs/heads/master/renderFile/README) 2.0
 
-Throughout this document, the following installation-specific terms are used:
+Throughout this document, the following installation-specific items are required. Have values for these prepared and ready before continuing.
 
-* ``$CODECLOUD_USER``: AT&T CodeCloud user id
-* ``$VENV``: Python virtual environment path (if any)
-* ``$VALET_PATH``: Local git repository path
-* ``$VALET_HOST``: valet-api hostname or FQDN
-* ``$VALET_USERNAME``: OpenStack placement service username (e.g., valet)
-* ``$VALET_PASSWORD``: OpenStack placement service password
-* ``$VALET_TENANT_NAME``: OpenStack placement service default tenant (e.g., service)
-* ``$KEYSTONE_AUTH_API``: Keystone Auth API publicurl endpoint
-* ``$VALET_CONFIG_PATH``: Valet configuration directory (e.g., /etc/valet)
-* ``$APACHE2_CONFIG_PATH``: apache2 httpd server configuration path
-* ``$OSLO_MSG_USERNAME``: Oslo Messaging Service username
-* ``$OSLO_MSG_PASSWORD``: Oslo Message Service password
-* ``$OSLO_MSG_HOST``: Oslo Messaging Service host
+| Name | Description | ------------------- Value ------------------- |
+|------|-------------|-------|
+| ``$CODECLOUD_USER`` | AT&T CodeCloud user id |  |
+| ``$VENV`` | Python virtual environment path (if any) | |
+| ``$VALET_API_PATH`` | Path to the git repository's ``valet_api`` directory | |
+| ``$VALET_HOST`` | valet-api hostname or FQDN | |
+| ``$VALET_USERNAME`` | OpenStack placement service username (e.g., ``valet``) | |
+| ``$VALET_PASSWORD`` | OpenStack placement service password | |
+| ``$VALET_TENANT_NAME`` | OpenStack placement service default tenant (e.g., ``service``) | |
+| ``$KEYSTONE_AUTH_API`` | Keystone Auth API publicurl endpoint | |
+| ``$VALET_CONFIG_PATH`` | Valet configuration directory (e.g., ``/etc/valet``) | |
+| ``$APACHE2_CONFIG_PATH`` | apache2 httpd server configuration path | |
+| ``$OSLO_MSG_USERNAME`` | Oslo Messaging Service username | |
+| ``$OSLO_MSG_PASSWORD`` | Oslo Message Service password | |
+| ``$OSLO_MSG_HOST`` | Oslo Messaging Service host | |
 
 Root or sufficient sudo privileges are required for some steps.
 
@@ -58,13 +60,13 @@ valet-api can be installed in production mode or development mode.
 **Production:**
 
 ```bash
-$ sudo pip install $VALET_PATH/valet_api
+$ sudo pip install $VALET_API_PATH
 ```
 
 **Development:**
 
 ```bash
-$ sudo pip install --editable $VALET_PATH/valet_api
+$ sudo pip install --editable $VALET_API_PATH
 ```
 
 If the following error appears when installing valet-api, and SSL access is required (e.g., if Keystone can only be reached via SSL), use a newer Python 2.7 Ubuntu package.
@@ -88,7 +90,7 @@ $ sudo groupmod -g $DESIRED_ID valet
 
 ## Configuration
 
-Copy ``$VALET_PATH/etc/valet_api/config.py`` to a suitable ``$VALET_CONFIG_PATH`` (e.g., ``/var/www/valet/config.py``). As the config file will contain sensitive passwords, ``$VALET_CONFIG_PATH`` must have limited visibility and be accessible only to the user running valet-api.
+Copy ``$VALET_API_PATH/etc/valet_api/config.py`` to a suitable ``$VALET_CONFIG_PATH`` (e.g., ``/var/www/valet/config.py``). As the config file will contain sensitive passwords, ``$VALET_CONFIG_PATH`` must have limited visibility and be accessible only to the user running valet-api.
 
 Edit the following sections in the ``config.py`` copy. See the [valet-openstack README](https://codecloud.web.att.com/plugins/servlet/readmeparser/display/ST_CLOUDQOS/allegro/atRef/refs/heads/master/renderFile/valet_os/README.md) for additional context around the ``server`` and ``identity`` sections.
 
@@ -197,7 +199,7 @@ Visit ``http://$VALET_HOST:8090/v1/`` to check for a response from valet-api:
 }
 ```
 
-[Postman](http://www.getpostman.com/) users can import the included collection of sample API calls, located in ``$VALET_PATH/valet_api/valet_api/tests/Valet.json.postman_collection``. Change the URL targets to match ``$VALET_HOST``.
+[Postman](http://www.getpostman.com/) users can import the included collection of sample API calls, located in ``$VALET_API_PATH/valet_api/tests/Valet.json.postman_collection``. Change the URL targets to match ``$VALET_HOST``.
 
 See the ``doc`` directory for placement service [API documentation](https://codecloud.web.att.com/plugins/servlet/readmeparser/display/ST_CLOUDQOS/allegro/atRef/refs/heads/master/renderFile/valet_api/doc/README.md).
 
@@ -220,7 +222,7 @@ Set up directories and ownership. ``$VALET_CONFIG_PATH`` is usually set to ``/va
 ```bash
 $ sudo mkdir $VALET_CONFIG_PATH
 $ sudo mkdir /var/log/apache2/valet
-$ sudo cp -p $VALET_PATH/etc/valet_api/app.wsgi $VALET_PATH/etc/valet_api/config.py $VALET_CONFIG_PATH
+$ sudo cp -p $VALET_API_PATH/etc/valet_api/app.wsgi $VALET_API_PATH/etc/valet_api/config.py $VALET_CONFIG_PATH
 $ sudo chown -R valet:valet /var/log/apache2/valet $VALET_CONFIG_PATH
 ```
 
@@ -228,7 +230,7 @@ Set up valet-api as a site. ``$APACHE2_CONFIG_PATH`` may be ``/opt/apache2`` or 
 
 ```bash
 $ sudo cd $APACHE2_CONFIG_PATH/sites-available
-$ sudo cp -p $VALET_PATH/etc/valet_api/app.apache2 valet.conf
+$ sudo cp -p $VALET_API_PATH/etc/valet_api/app.apache2 valet.conf
 $ sudo chown root:root valet.conf
 ```
 

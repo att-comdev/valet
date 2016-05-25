@@ -114,10 +114,9 @@ class ValetAPIWrapper(object):
             url = self._api_endpoint() + '/plans/' + stack.id
             self.headers['X-Auth-Token'] = auth_token
             req = requests.delete(url, headers=self.headers)
-            response = json.loads(req.text)
         except requests.exceptions.HTTPError as exc:
             _exception(exc, sys.exc_info(), req)
-        return response
+        # Delete does not return a response body.
 
     def placement(self, uuid, hosts=None, auth_token=None):
         '''

@@ -32,15 +32,17 @@ standy_by_list
 
 ### Notes
 
-* The return value of ``test_command`` **must not** be 0 and should reflect the monitored process priority.
-
-Process priority is used in conjunction with active/stand-by scenarios. Unless a process is down, its priority **must** be greater than 0. The lower the number, the higher the priority.
-
-For example, an instance returning ``1`` (in response to ``test_command``) will take precedence over an instance returning ``2``. A priority of 0 means the process is down.
+* The return value of ``test_command`` **must not** be 0 and should reflect the monitored process priority (see next section).
 
 * ``stand_by_list`` is an optional comma-delimited list of hosts used in conjunction with active/stand-by scenarios. ha_valet will attempt to restart the instance with the lower priority. If that instance fails to start, ha_valet will try restarting the process of the next host in the list.
         
 * ``priority`` is used to establish the primary/secondary hierarchy. It **must** be greater than 0. The lower the number, the higher the priority.
+
+### Monitored Process Priority
+
+Monitored process priority is used in conjunction with active/stand-by scenarios. Unless a process is down, its priority **must** be greater than 0. The lower the number, the higher the priority.
+
+For example, an instance returning ``1`` (in response to ``test_command``) will take precedence over an instance returning ``2``. A priority of 0 means the process is down.
 
 ## Examples
 

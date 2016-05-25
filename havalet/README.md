@@ -1,11 +1,6 @@
 # High Availability Valet Tools
 
-
-## Features
-
-This tool monitors all (or a specific) configured processes for high availability.
-
-Launch from the command line using:
+This tool monitors one or more configured processes to maintain high availability.
 
 ```bash
 $ python ./ha_valet.py [-p name]
@@ -13,7 +8,9 @@ $ python ./ha_valet.py [-p name]
 
 ## ha_valet.cfg
 
-This file contains a list of dictionaries. List keys are logical process names. List values are dictionaries representing a monitored Valet-related process. Each **must** contain the following properties:
+The ha_valet configuration file contains a list of dictionaries. List keys are logical process names. List values are dictionaries representing a monitored Valet-related process.
+
+Each dictionary **must** contain the following properties:
 
 ```
 host
@@ -25,11 +22,19 @@ stop_command
 test_command
 ```
 
-**IMPORTANT notes:**
+Optional properties include:
+
+```
+order
+priority
+standy_by_list
+```
+
+### Notes
 
 * The return value of ``test_command`` **must not** be 0 and should reflect the monitored process priority.
 
-* Process priority is used in conjunction with active/stand-by scenarios. Unless a process is down, its priority **must** be greater than 0. The lower the number, the higher the priority.
+Process priority is used in conjunction with active/stand-by scenarios. Unless a process is down, its priority **must** be greater than 0. The lower the number, the higher the priority.
 
 For example, an instance returning ``1`` (in response to ``test_command``) will take precedence over an instance returning ``2``. A priority of 0 means the process is down.
 
@@ -44,7 +49,7 @@ For example, an instance returning ``1`` (in response to ``test_command``) will 
 ```
 :Ostro
     host = Host_A
-    stand_by = Host_A,Host_B
+    stand_by_list = Host_A,Host_B
     user = stack
     port = 8091
     protocol = http
@@ -71,7 +76,7 @@ For example, an instance returning ``1`` (in response to ``test_command``) will 
 ```
 :Ostro
     host = Host_B
-    stand_by = Host_A,Host_B
+    stand_by_list = Host_A,Host_B
     user = stack
     port = 8091
     protocol = http

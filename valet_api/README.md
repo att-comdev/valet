@@ -197,7 +197,7 @@ Visit ``http://$VALET_HOST:8090/v1/`` to check for a response from valet-api:
 }
 ```
 
-[Postman](http://www.getpostman.com/) users can import the included collection of sample API calls, located in ``$VALET_API_PATH/valet_api/tests/Valet.json.postman_collection``. Change the URL targets to match ``$VALET_HOST``.
+valet-api comes with a [Postman](http://www.getpostman.com/) collection of sample API calls, located in ``$VALET_API_PATH/valet_api/tests``. [Learn more](https://codecloud.web.att.com/plugins/servlet/readmeparser/display/ST_CLOUDQOS/allegro/atRef/refs/heads/master/renderFile/valet_api/valet_api/tests/README.md).
 
 See the ``doc`` directory for placement service [API documentation](https://codecloud.web.att.com/plugins/servlet/readmeparser/display/ST_CLOUDQOS/allegro/atRef/refs/heads/master/renderFile/valet_api/doc/README.md).
 

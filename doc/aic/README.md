@@ -1,4 +1,4 @@
-# Valet 1.0 for AT&T AIC 3.5
+# Valet 1.0 for AT&T Integrated Cloud (AIC) 3.5
 
 ## Installation Documentation
 

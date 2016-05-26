@@ -17,18 +17,20 @@ Prior to installation:
 * An OpenStack Kilo cloud
 * Access to a [valet-api](https://codecloud.web.att.com/plugins/servlet/readmeparser/display/ST_CLOUDQOS/allegro/atRef/refs/heads/master/renderFile/valet_api/README.md) endpoint
 
-Throughout this document, the following installation-specific terms are used:
+Throughout this document, the following installation-specific items are required. Have values for these prepared and ready before continuing.
 
-* ``$CODECLOUD_USER``: AT&T CodeCloud user id
-* ``$VENV``: Python virtual environment path (if any)
-* ``$VALET_PATH``: Local git repository path
-* ``$VALET_HOST``: valet-api hostname or FQDN
-* ``$VALET_USERNAME``: OpenStack placement service username (e.g., valet)
-* ``$VALET_PASSWORD``: OpenStack placement service password
-* ``$VALET_TENANT_NAME``: OpenStack placement service default tenant (e.g., service)
-* ``$VALET_FAILURE_MODE``: Desired failure mode for Nova ValetFilter (yield or reject)
-* ``$KEYSTONE_AUTH_API``: Keystone Auth API publicurl endpoint
-* ``$KEYSTONE_REGION``: Keystone Region (e.g., RegionOne)
+| Name | Description | Example |
+|------|-------------|-------|
+| ``$CODECLOUD_USER`` | AT&T CodeCloud user id | ``jd0616`` |
+| ``$VENV`` | Python virtual environment path (if any) | ``/etc/valet/venv`` |
+| ``$VALET_OS_PATH`` | Local git repository's ``valet_os`` directory | ``/home/jd0616/git/allegro/valet_os`` |
+| ``$VALET_HOST`` | valet-api hostname | ``localhost`` |
+| ``$VALET_USERNAME`` | OpenStack placement service username | ``valet`` |
+| ``$VALET_PASSWORD`` | OpenStack placement service password | |
+| ``$VALET_TENANT_NAME`` | OpenStack placement service default tenant | ``service`` |
+| ``$VALET_FAILURE_MODE`` | Desired failure mode for Nova ValetFilter | ``reject`` |
+| ``$KEYSTONE_AUTH_API`` | Keystone Auth API publicurl endpoint | ``http://controller:5000/`` |
+| ``$KEYSTONE_REGION`` | Keystone Region | ``RegionOne`` |
 
 Root or sufficient sudo privileges are required for some steps.
 
@@ -46,28 +48,25 @@ Clone the git repository from AT&T CodeCloud, using a ``$CODECLOUD_USER`` accoun
 
 ```bash
 $ git clone https://$CODECLOUD_USER@codecloud.web.att.com/scm/st_cloudqos/allegro.git
-$ cd allegro
+Cloning into 'allegro'...
+remote: Counting objects: 3562, done.
+remote: Compressing objects: 100% (3179/3179), done.
+remote: Total 3562 (delta 2007), reused 1076 (delta 247)
+Receiving objects: 100% (3562/3562), 1.83 MiB | 2.11 MiB/s, done.
+Resolving deltas: 100% (2007/2007), done.
+Checking connectivity... done.
+$ cd allegro/valet_os
 ```
 
-Install valet-openstack on the OpenStack controller node containing heat-engine and nova-scheduler. If these services are distributed across multiple nodes, install valet-openstack on each node.
-
-valet-openstack can be installed in production mode or development mode.
-
-**Production:**
+Install valet-openstack on the OpenStack controller node containing heat-engine and nova-scheduler. If these services are distributed across multiple nodes, install and configure valet-openstack as appropriate on each node.
 
 ```bash
-$ sudo pip install $VALET_PATH/valet_os
-```
-
-**Development:**
-
-```bash
-$ sudo pip install --editable $VALET_PATH/valet_os
+$ sudo pip install $VALET_OS_PATH
 ```
 
 ## OpenStack Configuration
 
-valet-openstack requires edits to the heat and nova configuration files, and a restart of the heat-engine and nova-scheduler services.
+valet-openstack requires edits to the heat and nova configuration files, and a stop/start of the heat-engine and nova-scheduler services.
 
 ### Prerequisites
 
@@ -80,7 +79,7 @@ $ keystone user-create --name $VALET_USERNAME --pass $VALET_PASSWORD
 $ keystone user-role-add --user $VALET_USERNAME --tenant $VALET_TENANT_NAME --role admin
 ```
 
-Create the service entity and API endpoints. While this is not used by Valet 1.0, it is reserved for future use.
+Create the service entity and API endpoints. While this is not used by Valet 1.0, it is being reserved for future use.
 
 ```bash
 $ keystone service-create --type placement --name valet --description "OpenStack Placement"
@@ -95,23 +94,14 @@ The administrator may choose to use differing hostnames/IPs for public vs. admin
 
 The following changes are made in ``/etc/heat/heat.conf``.
 
-Set the ``plugin_dirs`` option in the ``[DEFAULT]`` section so that Heat can locate and use the Valet Stack Lifecycle Plugin. The directory path depends on how valet-openstack was installed.
-
-**Production:**
+Set the ``plugin_dirs`` option in the ``[DEFAULT]`` section so that Heat can locate and use the Valet Stack Lifecycle Plugin.
 
 ```ini
 [DEFAULT]
 plugin_dirs = /usr/local/etc/valet_os/heat
 ```
 
-*Note: In Production mode, if a virtual environment is in use, change the path to be relative to the virtual environment's location, e.g. ``$VENV/etc/valet_os/heat``.*
-
-**Development:**
-
-```ini
-[DEFAULT]
-plugin_dirs = $VALET_PATH/valet_os/etc/valet_os/heat
-```
+*Note: If a virtual environment is in use, change the path to be relative to the virtual environment's location, e.g. ``$VENV/etc/valet_os/heat``.*
 
 If ``plugin_dirs`` is already present, separate entries by commas. The order of entries does not matter. See the OpenStack [heat.conf](http://docs.openstack.org/kilo/config-reference/content/ch_configuring-openstack-orchestration.html) documentation for more information.
 
@@ -129,10 +119,11 @@ Add a ``[valet]`` section. This will be used by the Valet Stack Lifecycle Plugin
 url = http://$VALET_HOST:8090/v1
 ```
 
-Restart heat-engine:
+Restart heat-engine using separate stop and start directives:
 
 ```bash
-$ sudo service heat-engine restart
+$ sudo service heat-engine stop
+$ sudo service heat-engine start
 ```
 
 Examine the heat-engine log (usually in ``/var/log/heat/heat-engine.log``). The ``ATT::Valet`` plugin should be found and registered:
@@ -181,15 +172,16 @@ admin_auth_url = $KEYSTONE_AUTH_API
 
 ``$VALET_FAILURE_MODE`` can be ``yield`` or ``reject``. The default is ``reject``. If Valet exclusivity groups will never be used, it is acceptable to set this to ``yield``, as there will be no chance of encroaching upon them.
 
-Restart nova-scheduler:
+Restart nova-scheduler using separate stop and start directives:
 
 ```bash
-$ sudo service nova-scheduler restart
+$ sudo service nova-scheduler stop
+$ sudo service nova-scheduler start
 ```
 
 ## Uninstallation
 
-Activate a virtual environment (venv) first if necessary. Uninstallation uses the same command regardless of development or production mode.
+Activate a virtual environment (venv) first if necessary, then uninstall with:
 
 ```bash
 $ sudo pip uninstall valet-openstack

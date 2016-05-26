@@ -2,7 +2,7 @@
 
 ## Installation Documentation
 
-* qcow2 Image Installation Documentation: **Link TBD**.
+* qcow2 VM Image (valet-api, Ostro, Music, ostro-listener, HAValet): **Link TBD**.
 * OpenStack Heat/Nova components (valet-openstack): Visit [http://valet.research.att.com/](http://valet.research.att.com/), select "valet-openstack".
 
 ## Downloads
@@ -23,7 +23,7 @@ This section contains up-to-date changes for *AIC Valet Service Template Version
 #### External to AIC Platform - Document References
 
 * RabbitMQ message broker **does not** require independent configuration
-* URL: Can now use [http://valet.research.att.com/](http://valet.research.att.com) (home page).
+* URL: Can now use [http://valet.research.att.com/](http://valet.research.att.com/) (home page).
 
 #### Summary of Activities to be taken up
 
@@ -34,7 +34,7 @@ This section contains up-to-date changes for *AIC Valet Service Template Version
 
 * Valet 1.0 Components for KVM qcow2 image: Allegro is now Valet; Valet talks to Oslo Message Bus.
 * Heat and Nova plugins: Combined in a single package, **valet-openstack**.
-* Figure 3: Remove "/%{tenant_id}s" from valet-api publicurl, adminurl, and internalurl endpoints.
+* Figure 3: Remove ``/%{tenant_id}s`` from valet-api publicurl, adminurl, and internalurl endpoints.
 * AIC OpenStack Messaging: Oslo Messaging Notification publisher is "valet", topic is "valet-api", and event types are "valet.group.create", "valet.group.update", and "valet.group.delete". Data is a Valet Plan as described in the Placement API v1 Documentation under "Show group details" (GET /v1/groups/{group_id}).
 * Placement API v1 Documentation: Visit [http://valet.research.att.com/](http://valet.research.att.com/), select "Placement API".
 
@@ -56,7 +56,7 @@ This section contains up-to-date changes for *AIC Valet Service Template Version
 
 #### Provide Valet 1.0 Component Level Documentation to AIC Scrum teams
 
-* All Valet Components: Visit [http://valet.research.att.com/](http://valet.research.att.com) (home page).
+* All Valet Components: Visit [http://valet.research.att.com/](http://valet.research.att.com/) (home page).
 * Heat Lifecycle and Nova Scheduler Filter plugin: Select "valet-openstack" from home page.
 * RabbitMQ message broker **does not** require independent configuration
 * Valet 1.0 Placement API v1 Documentation: Select "Placement API" from home page.
@@ -81,16 +81,16 @@ This section contains up-to-date changes for *AIC Valet Service Template Version
 
 #### Configure vLCP HAPROXY for Valet 1.0 - PUBLIC_OAM and INTERNAL_MGMT
 
-* Valet Service endpoint VIPs: Remove "/%{tenant_id}s" from valet-api publicurl, adminurl, and internalurl endpoints.
+* Valet Service endpoint VIPs: Remove ``/%{tenant_id}s`` from valet-api publicurl, adminurl, and internalurl endpoints.
 
 #### CSI-Middleware Impact and Creation of Valet service API endpoints
 
-* Valet Service endpoint VIPs: Remove "/%{tenant_id}s" from valet-api publicurl, adminurl, and internalurl endpoints.
+* Valet Service endpoint VIPs: Remove ``/%{tenant_id}s`` from valet-api publicurl, adminurl, and internalurl endpoints.
 
 #### Configure Allegro and Ostro sub-systems on the Valet 1.0 VMs in AIC vLCP
 
 * Note: Allegro is now called Valet.
-* URL: Can now use http://valet.research.att.com/
+* URL: Can now use [http://valet.research.att.com/](http://valet.research.att.com/) (home page).
 * Allegro subsystem is now Valet subsystem. Components: valet-openstack and valet-api.
 * OpenStack Configuration associated configurations in HEAT and NOVA: Documented in **valet-openstack**.
 * Configurations: No rpc_cast associated configurations in AIC OpenStack Messaging system bus.
@@ -108,13 +108,13 @@ This section contains up-to-date changes for *AIC Valet Service Template Version
 
 #### Self Service Portal Impact - Valet 1.0 APIs
 
-* URL: Can now use http://valet.research.att.com/ (pick "Placeent API" in "Additional documents" section)
+* URL: Can now use [http://valet.research.att.com/](http://valet.research.att.com/) (select "Placement API").
 * VM Migration Tip: See Placement API v1 Documentation under "Update a plan" (PUT /v1/plans/{plan_id}) for example request and response.
 * Placement API v1 Documentation: Visit [http://valet.research.att.com/](http://valet.research.att.com/), select "Placement API".
 
 #### SO-Heat and Murano Impact - Valet 1.0 APIs
 
-* URL: Can now use http://valet.research.att.com/ (pick "Placeent API" in "Additional documents" section)
+* URL: Can now use [http://valet.research.att.com/](http://valet.research.att.com/) (select "Placement API").
 * VM Migration Tip: See Placement API v1 Documentation under "Update a plan" (PUT /v1/plans/{plan_id}) for example request and response.
 * Placement API v1 Documentation: Visit [http://valet.research.att.com/](http://valet.research.att.com/), select "Placement API".
 

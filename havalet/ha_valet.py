@@ -282,7 +282,7 @@ class HaValetThread (threading.Thread):
             # Check for active valets
             if standby_list is not None:
                 log(self.log_fd, name + "- main loop: standby_list is not empty " + str(standby_list))
-                for host_in_list in standby_list:
+                for host_in_list in standby_list.spit(','):
                     if host_in_list == this_node:
                         log(self.log_fd, name + "- host_in_list is this_node - skipping")
                         continue
@@ -521,14 +521,15 @@ class HAValet:
                 print proc[NAME] + " section is missing mandatory parameter."
                 continue
 
-        print 'Type "quit" to exit.'
+        #print 'Type "quit" to exit.'
+        print 'on air.'
 
         while not exit_event.isSet():
             time.sleep(HEARTBEAT_SEC)
-            line = raw_input('PROMPT> ')
-            if line == 'quit':
-                exit_event.set()
-                print 'exit event fired'
+            #line = raw_input('PROMPT> ')
+            #if line == 'quit':
+            #    exit_event.set()
+            #    print 'exit event fired'
 
         # Wait for all threads to complete
         for thread in threads:

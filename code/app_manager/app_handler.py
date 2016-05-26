@@ -73,6 +73,8 @@ class AppHandler:
             elif action == "replan" or action == "migrate":
                 re_app = self._regenerate_app_topology(stack_id, app, app_topology, action)
                 if re_app == None:
+                    self.apps[stack_id] = None
+                    self.status = "cannot locate the original plan for stack = " + stack_id
                     return None
 
                 if action == "replan":
@@ -85,6 +87,7 @@ class AppHandler:
                 if app_id == None:
                     self.logger.error(app_topology.status)
                     self.status = app_topology.status
+                    self.apps[stack_id] = None
                     return None
 
                 self.logger.info("replanned  application: " + app_id[1])
@@ -94,6 +97,7 @@ class AppHandler:
                 if app_id == None:
                     self.logger.error(app_topology.status)
                     self.status = app_topology.status
+                    self.apps[stack_id] = None
                     return None
 
                 self.logger.info("got application: " + app_id[1])
@@ -243,11 +247,19 @@ class AppHandler:
                         _app_topology.candidate_list_map[vmk] = _app["locations"]
                     elif vmk in _app["exclusions"]:
                         _app_topology.planned_vm_map[vmk] = vm["host"]
+                        
+                        for evk in _app["exclusions"]:
+                            self.logger.debug("input_debug: excluded vm = " + evk)
+
                 elif _action == "migrate":
                     if vmk == _app["orchestration_id"]:
                         _app_topology.exclusion_list_map[vmk] = _app["excluded_hosts"]
                         if vm["host"] not in _app["excluded_hosts"]:
                             _app_topology.exclusion_list_map[vmk].append(vm["host"])
+                        
+                        for ehk in _app["excluded_hosts"]:
+                            self.logger.debug("input_debug: excluded host = " + ehk)
+
                     else:
                         _app_topology.planned_vm_map[vmk] = vm["host"]
                 _app_topology.old_vm_map[vmk] = (vm["host"], vm["cpus"], vm["mem"], vm["local_volume"])
@@ -255,11 +267,9 @@ class AppHandler:
         if "VGroups" in old_app.keys():
             for gk, affinity in old_app["VGroups"].iteritems():
                 resources[gk] = {}
-                #resources[gk]["type"] = "ATT::CloudQoS::ResourceGroup"
                 resources[gk]["type"] = "ATT::Valet::GroupAssignment"
                 properties = {}
                 properties["group_type"] = "affinity"
-                #properties["group_name"] = affinity["name"]
                 properties["level"] = affinity["level"]
                 properties["resources"] = []
                 for r in affinity["subvgroup_list"]:
@@ -285,7 +295,6 @@ class AppHandler:
         for div_id, resource_list in diversity_groups.iteritems():
             divk_level = div_id.split(":")
             resources[divk_level[0]] = {}
-            #resources[divk_level[0]]["type"] = "ATT::CloudQoS::ResourceGroup"
             resources[divk_level[0]]["type"] = "ATT::Valet::GroupAssignment"
             properties = {}
             properties["group_type"] = "diversity"
@@ -293,10 +302,11 @@ class AppHandler:
             properties["resources"] = resource_list
             resources[divk_level[0]]["properties"] = properties
 
+            self.logger.debug("to-be replanned diversity = " + div_id)
+
         for ex_id, resource_list in exclusivity_groups.iteritems():
             exk_level_name = ex_id.split(":")
             resources[exk_level_name[0]] = {}
-            #resources[exk_level_name[0]]["type"] = "ATT::CloudQoS::ResourceGroup"
             resources[exk_level_name[0]]["type"] = "ATT::Valet::GroupAssignment"
             properties = {}
             properties["group_type"] = "exclusivity"
@@ -304,6 +314,8 @@ class AppHandler:
             properties["level"] = exk_level_name[1]
             properties["resources"] = resource_list
             resources[exk_level_name[0]]["properties"] = properties
+
+            self.logger.debug("to-be replanned exclusivity = " + ex_id)
 
         re_app["resources"] = resources
 

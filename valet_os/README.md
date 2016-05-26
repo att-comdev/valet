@@ -15,7 +15,7 @@ Prior to installation:
 * An OpenStack Kilo cloud
 * Access to a [valet-api](https://codecloud.web.att.com/plugins/servlet/readmeparser/display/ST_CLOUDQOS/allegro/atRef/refs/heads/master/renderFile/valet_api/README.md) endpoint
 
-Throughout this document, the following installation-specific items are required. Have values for these prepared and ready before continuing.
+Throughout this document, the following installation-specific items are required. Have values for these prepared and ready before continuing. Suggestions for values are provided in this document where applicable.
 
 | Name | Description | Example |
 |------|-------------|-------|

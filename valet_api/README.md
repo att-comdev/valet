@@ -16,7 +16,7 @@ Prior to installation:
 * [Music](https://codecloud.web.att.com/plugins/servlet/readmeparser/display/ST_CLOUDQOS/music/atRef/refs/heads/master/renderFile/README.md) 6.0
 * [Ostro](https://codecloud.web.att.com/plugins/servlet/readmeparser/display/ST_CLOUDQOS/ostro/atRef/refs/heads/master/renderFile/README) 2.0
 
-Throughout this document, the following installation-specific items are required. Have values for these prepared and ready before continuing.
+Throughout this document, the following installation-specific items are required. Have values for these prepared and ready before continuing. Suggestions for values are provided in this document where applicable.
 
 | Name | Description | Example |
 |------|-------------|-------|

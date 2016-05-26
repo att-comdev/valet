@@ -16,21 +16,23 @@ Prior to installation:
 * [Music](https://codecloud.web.att.com/plugins/servlet/readmeparser/display/ST_CLOUDQOS/music/atRef/refs/heads/master/renderFile/README.md) 6.0
 * [Ostro](https://codecloud.web.att.com/plugins/servlet/readmeparser/display/ST_CLOUDQOS/ostro/atRef/refs/heads/master/renderFile/README) 2.0
 
-Throughout this document, the following installation-specific terms are used:
+Throughout this document, the following installation-specific items are required. Have values for these prepared and ready before continuing. Suggestions for values are provided in this document where applicable.
 
-* ``$CODECLOUD_USER``: AT&T CodeCloud user id
-* ``$VENV``: Python virtual environment path (if any)
-* ``$VALET_PATH``: Local git repository path
-* ``$VALET_HOST``: valet-api hostname or FQDN
-* ``$VALET_USERNAME``: OpenStack placement service username (e.g., valet)
-* ``$VALET_PASSWORD``: OpenStack placement service password
-* ``$VALET_TENANT_NAME``: OpenStack placement service default tenant (e.g., service)
-* ``$KEYSTONE_AUTH_API``: Keystone Auth API publicurl endpoint
-* ``$VALET_CONFIG_PATH``: Valet configuration directory (e.g., /etc/valet)
-* ``$APACHE2_CONFIG_PATH``: apache2 httpd server configuration path
-* ``$OSLO_MSG_USERNAME``: Oslo Messaging Service username
-* ``$OSLO_MSG_PASSWORD``: Oslo Message Service password
-* ``$OSLO_MSG_HOST``: Oslo Messaging Service host
+| Name | Description | Example |
+|------|-------------|-------|
+| ``$CODECLOUD_USER`` | AT&T CodeCloud user id | ``jd0616`` |
+| ``$VENV`` | Python virtual environment path (if any) | ``/etc/valet/venv`` |
+| ``$VALET_API_PATH`` | Local git repository's ``valet_api`` directory | ``/home/jd0616/git/allegro/valet_api`` |
+| ``$VALET_HOST`` | valet-api hostname | ``localhost`` |
+| ``$VALET_USERNAME`` | OpenStack placement service username | ``valet`` |
+| ``$VALET_PASSWORD`` | OpenStack placement service password | |
+| ``$VALET_TENANT_NAME`` | OpenStack placement service default tenant | ``service`` |
+| ``$KEYSTONE_AUTH_API`` | Keystone Auth API publicurl endpoint | ``http://controller:5000/`` |
+| ``$VALET_CONFIG_PATH`` | Valet configuration directory | ``/var/www/valet`` |
+| ``$APACHE2_CONFIG_PATH`` | apache2 httpd server configuration path | ``/etc/apache2`` |
+| ``$OSLO_MSG_USERNAME`` | Oslo Messaging Service username | ``messaging`` |
+| ``$OSLO_MSG_PASSWORD`` | Oslo Message Service password | |
+| ``$OSLO_MSG_HOST`` | Oslo Messaging Service host | ``controller`` |
 
 Root or sufficient sudo privileges are required for some steps.
 
@@ -44,27 +46,24 @@ valet-api is maintained in AT&T CodeCloud under the CloudQoS project, in a repos
 
 *Note: Apart from the repository name, the word 'Allegro' is no longer used. Use the word 'Valet' in place of 'Allegro' when referring to components.*
 
-Clone the git repository from AT&T CodeCloud, using a ``$CODECLOUD_USER`` account with appropriate credentials:
+Clone the git repository from AT&T CodeCloud, using a ``$CODECLOUD_USER`` account with appropriate credentials. valet-api is located in ``valet_api``.
 
 ```bash
 $ git clone https://$CODECLOUD_USER@codecloud.web.att.com/scm/st_cloudqos/allegro.git
-$ cd allegro
+Cloning into 'allegro'...
+remote: Counting objects: 3562, done.
+remote: Compressing objects: 100% (3179/3179), done.
+remote: Total 3562 (delta 2007), reused 1076 (delta 247)
+Receiving objects: 100% (3562/3562), 1.83 MiB | 2.11 MiB/s, done.
+Resolving deltas: 100% (2007/2007), done.
+Checking connectivity... done.
+$ cd allegro/valet_api
 ```
 
 Install valet-api on a host that can reach all OpenStack Keystone endpoints (public, internal, and admin). This can be a controller node or a separate host. Likewise, valet-api, Ostro, and Music may be installed on the same host or separate hosts.
 
-valet-api can be installed in production mode or development mode.
-
-**Production:**
-
 ```bash
-$ sudo pip install $VALET_PATH/valet_api
-```
-
-**Development:**
-
-```bash
-$ sudo pip install --editable $VALET_PATH/valet_api
+$ sudo pip install $VALET_API_PATH
 ```
 
 If the following error appears when installing valet-api, and SSL access is required (e.g., if Keystone can only be reached via SSL), use a newer Python 2.7 Ubuntu package.
@@ -88,7 +87,7 @@ $ sudo groupmod -g $DESIRED_ID valet
 
 ## Configuration
 
-Copy ``$VALET_PATH/etc/valet_api/config.py`` to a suitable ``$VALET_CONFIG_PATH`` (e.g., ``/var/www/valet/config.py``). As the config file will contain sensitive passwords, ``$VALET_CONFIG_PATH`` must have limited visibility and be accessible only to the user running valet-api.
+Copy ``$VALET_API_PATH/etc/valet_api/config.py`` to a suitable ``$VALET_CONFIG_PATH``. As the config file will contain sensitive passwords, ``$VALET_CONFIG_PATH`` must have limited visibility and be accessible only to the user running valet-api.
 
 Edit the following sections in the ``config.py`` copy. See the [valet-openstack README](https://codecloud.web.att.com/plugins/servlet/readmeparser/display/ST_CLOUDQOS/allegro/atRef/refs/heads/master/renderFile/valet_os/README.md) for additional context around the ``server`` and ``identity`` sections.
 
@@ -96,7 +95,8 @@ Edit the following sections in the ``config.py`` copy. See the [valet-openstack 
 
 ### Server
 
-* Set ``port`` to match the OpenStack Keystone placement service port number (e.g., 8090).
+* Set ``port`` to match the port number used by OpenStack Keystone's placement service (usually ``8090``).
+* ``host`` can remain ``0.0.0.0``.
 
 ```python
 server = {
@@ -107,9 +107,9 @@ server = {
 
 ### Identity
 
-* Set ``username`` and ``password`` to the OpenStack placement service user (e.g., ``valet``).
-* Set ``project_name`` to the OpenStack placement service user's tenant name (e.g., ``service``).
-* Set ``auth_url`` to the Keystone API publicurl endpoint.
+* Set ``username`` and ``password`` to the OpenStack placement service user.
+* Set ``project_name`` to the OpenStack placement service user's tenant name.
+* Set ``auth_url`` to the OpenStack Keystone API publicurl endpoint.
 
 ```python
 identity = {
@@ -122,7 +122,7 @@ identity = {
 }
 ```
 
-After authenticating via Keystone's publicurl endpoint, valet-api uses Keystone's adminurl endpoint for further API calls. Access to the adminurl endpoint is required for:
+Once authenticated via Keystone's *publicurl* endpoint, valet-api uses Keystone's *adminurl* endpoint for further API calls. Access to the adminurl endpoint is required for:
 
 * AuthN of OpenStack users for valet-api access, presently limited to users with an ``admin`` role. Formal RBAC support is expected in a future release through oslo-policy.
 * Obtaining a list of all OpenStack cloud tenants (used by Valet Groups).
@@ -147,7 +147,7 @@ messaging = {
 ### Music
 
 * Set ``host``, ``port``, ``keyspace``, and ``replication_factor`` as needed for access to Music.
-* Alternately, set ``hosts`` (plural) to a python list of hosts if more than one host is used.
+* Alternately, set ``hosts`` (plural form) to a python list of hosts if more than one host is used (e.g., ``'[host1, host2, host3]'``).
 
 For example, if Music is hosted on ``127.0.0.1`` port ``8080`` with a keyspace of ``valet`` and replication factor of ``3``:
 
@@ -190,14 +190,14 @@ Visit ``http://$VALET_HOST:8090/v1/`` to check for a response from valet-api:
         "status": "CURRENT",
         "id": "v1.0",
         "links": [{
-            "href": "http://$VALET_HOST:8090/v1/",
+            "href": "http://127.0.0.1:8090/v1/",
             "rel": "self"
         }]
     }]
 }
 ```
 
-[Postman](http://www.getpostman.com/) users can import the included collection of sample API calls, located in ``$VALET_PATH/valet_api/valet_api/tests/Valet.json.postman_collection``. Change the URL targets to match ``$VALET_HOST``.
+valet-api comes with a [Postman](http://www.getpostman.com/) collection of sample API calls, located in ``$VALET_API_PATH/valet_api/tests``. [Learn more](https://codecloud.web.att.com/plugins/servlet/readmeparser/display/ST_CLOUDQOS/allegro/atRef/refs/heads/master/renderFile/valet_api/valet_api/tests/README.md).
 
 See the ``doc`` directory for placement service [API documentation](https://codecloud.web.att.com/plugins/servlet/readmeparser/display/ST_CLOUDQOS/allegro/atRef/refs/heads/master/renderFile/valet_api/doc/README.md).
 
@@ -211,30 +211,32 @@ This section describes an example WSGI installation using apache2 httpd.
 
 * apache2 httpd
 * libapache2-mod-wsgi (3.4 at a minimum, 3.5 recommended by the author)
-* A ``valet`` service user account/group on the host where valet-api is installed (usually ``valet``).
+* A ``valet`` service user account/group on the host where valet-api is installed.
 
 ### Configuration
 
-Set up directories and ownership. ``$VALET_CONFIG_PATH`` is usually set to ``/var/www/valet``.
+Set up directories and ownership:
 
 ```bash
 $ sudo mkdir $VALET_CONFIG_PATH
 $ sudo mkdir /var/log/apache2/valet
-$ sudo cp -p $VALET_PATH/etc/valet_api/app.wsgi $VALET_PATH/etc/valet_api/config.py $VALET_CONFIG_PATH
+$ sudo cp -p $VALET_API_PATH/etc/valet_api/app.wsgi $VALET_API_PATH/etc/valet_api/config.py $VALET_CONFIG_PATH
 $ sudo chown -R valet:valet /var/log/apache2/valet $VALET_CONFIG_PATH
 ```
 
-Set up valet-api as a site. ``$APACHE2_CONFIG_PATH`` may be ``/opt/apache2`` or ``/etc/apache2`` depending on the installation.
+Set up valet-api as a site:
 
 ```bash
 $ sudo cd $APACHE2_CONFIG_PATH/sites-available
-$ sudo cp -p $VALET_PATH/etc/valet_api/app.apache2 valet.conf
+$ sudo cp -p $VALET_API_PATH/etc/valet_api/app.apache2 valet.conf
 $ sudo chown root:root valet.conf
 ```
 
+*Note: ``$APACHE2_CONFIG_PATH`` may be ``/opt/apache2`` or ``/etc/apache2`` depending on the installation.*
+
 If valet-api was installed in a python virtual environment, append ``python-home=$VENV`` to ``WSGIDaemonProcess`` within ``valet.conf``. Apache will then use the correct python environment and libraries.
 
-Enable valet-api, ensure the configuration syntax is valid, then restart:
+Enable valet-api, ensure the configuration syntax is valid, and restart:
 
 ```bash
 $ cd $APACHE2_CONFIG_PATH/sites-enabled
@@ -246,7 +248,7 @@ $ sudo apachectl graceful
 
 ## Uninstallation
 
-Activate a virtual environment (venv) first if necessary. Uninstallation uses the same command regardless of development or production mode.
+Activate a virtual environment (venv) first if necessary, then uninstall with:
 
 ```bash
 $ sudo pip uninstall valet-api

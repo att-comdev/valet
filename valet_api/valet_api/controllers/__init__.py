@@ -67,7 +67,6 @@ def valid_plan_update_action(value):
     assert value in ['update', 'migrate'], \
         _("must be update or migrate")
 
-
 #
 # Placement Helpers
 #

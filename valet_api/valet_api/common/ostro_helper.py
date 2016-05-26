@@ -12,6 +12,7 @@
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
 # implied.
+#
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
@@ -292,6 +293,19 @@ class Ostro(object):
             "stack_id": self.args['stack_id'],
             "excluded_hosts": self.args['excluded_hosts'],
             "orchestration_id": self.args['orchestration_id'],
+        }
+
+    def query(self, **kwargs):
+        '''Send a query.'''
+        stack_id = str(uuid.uuid4())
+        self.args = kwargs.get('args')
+        self.response = None
+        self.error_uri = None
+        self.request = {
+            "action": "query",
+            "stack_id": stack_id,
+            "type": self.args['type'],
+            "parameters": self.args['parameters'],
         }
 
     def send(self):

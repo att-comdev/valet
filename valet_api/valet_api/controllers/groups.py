@@ -21,7 +21,9 @@
 import logging
 
 from valet_api.controllers import error, valid_group_name, notify
+from valet_api.common.compute import nova_client
 from valet_api.common.i18n import _
+from valet_api.common.ostro_helper import Ostro
 from valet_api.models import Group
 
 from notario import decorators
@@ -46,6 +48,58 @@ MEMBERS_SCHEMA = (
 )
 
 # pylint: disable=R0201
+
+
+def server_list_for_group(group_name):
+    '''Returns a list of VMs associated with a member/group.'''
+    args = {
+        "type": "group_vms",
+        "parameters": {
+            "group_name": group_name,
+        },
+    }
+    ostro_kwargs = {
+        "args": args,
+    }
+    ostro = Ostro()
+    ostro.query(**ostro_kwargs)
+    ostro.send()
+
+    status_type = ostro.response['status']['type']
+    if status_type != 'ok':
+        message = ostro.response['status']['message']
+        error(ostro.error_uri, _('Ostro error: %s') % message)
+
+    resources = ostro.response['resources']
+    return resources or []
+
+def tenant_servers_in_group(tenant_id, group_name):
+    '''
+    Returns a list of servers the current tenant has in group_name
+    '''
+    nova = nova_client()
+    servers = []
+    server_list = server_list_for_group(group_name)
+    for server_id in server_list:
+        server = nova.servers.get(server_id)
+        if server.tenant_id == tenant_id:
+            servers.append(server_id)
+    if len(servers) > 0:
+        return servers
+
+def no_tenant_servers_in_group(tenant_id, group_name):
+    '''
+    Verify no servers from tenant_id are in group_name.
+    Throws a 409 Conflict if any are found.
+    '''
+    # Temporarily disabled - jdandrea 26 May 2016
+    return
+
+    server_list = tenant_servers_in_group(tenant_id, group_name)
+    if server_list:
+        error('/errors/conflict',
+              _('Tenant Member %s has servers in group %s: %s') %
+              (tenant_id, group_name, server_list))
 
 
 class MembersItemController(object):
@@ -90,6 +144,10 @@ class MembersItemController(object):
         '''Delete group member'''
         group = request.context['group']
         member_id = request.context['member_id']
+
+        # Can't delete a member if it has associated VMs.
+        no_tenant_servers_in_group(member_id, group)
+
         group.members.remove(member_id)
         group.update()
         notify(sub_event_type='group.update', data=group)
@@ -143,6 +201,11 @@ class MembersController(object):
     def index_delete(self):
         '''Delete all group members'''
         group = request.context['group']
+
+        # Can't delete a member if it has associated VMs.
+        for member_id in group.members:
+            no_tenant_servers_in_group(member_id, group)
+
         group.members = []
         group.update()
         notify(sub_event_type='group.update', data=group)

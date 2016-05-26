@@ -13,18 +13,20 @@ Prior to installation:
 * Access to an OpenStack Kilo cloud (RabbitMQ in particular)
 * Access to [Music](https://codecloud.web.att.com/plugins/servlet/readmeparser/display/ST_CLOUDQOS/music/atRef/refs/heads/master/renderFile/README.md) 6.0 with tables previously configured by [Ostro](https://codecloud.web.att.com/plugins/servlet/readmeparser/display/ST_CLOUDQOS/ostro/atRef/refs/heads/master/renderFile/README) 2.0
 
-Throughout this document, the following installation-specific terms are used:
+Throughout this document, the following installation-specific items are required. Have values for these prepared and ready before continuing.
 
-* ``$CODECLOUD_USER``: AT&T CodeCloud user id
-* ``$VENV``: Python virtual environment path (if any)
-* ``$VALET_PATH``: Local git repository path
-* ``$CONFIG_FILE``: Event Listener configuration file
-* ``$RABBITMQ_HOST``: RabbitMQ hostname or IP address
-* ``$RABBITMQ_USERNAME``: RabbitMQ username
-* ``$RABBITMQ_PASSWORD_FILE``: Full path to RabbitMQ password file
-* ``$MUSIC_URL``: Music API endpoint and port in URL format
-* ``$MUSIC_KEYSPACE``: Music keyspace (e.g., valet)
-* ``$MUSIC_REPLICATION_FACTOR``: Local git repository path
+| Name | Description | Example |
+|------|-------------|-------|
+| ``$CODECLOUD_USER`` | AT&T CodeCloud user id | ``jd0616`` |
+| ``$VENV`` | Python virtual environment path (if any) | ``/etc/ostro-listener/venv`` |
+| ``$OSTRO_LISTENER_PATH`` | Local git repository's ``ostro_listener`` directory | ``/home/jd0616/git/allegro/ostro_listener`` |
+| ``$CONFIG_FILE`` | Event Listener configuration file | ``/etc/ostro-listener/ostro-listener.conf`` |
+| ``$RABBITMQ_HOST`` | RabbitMQ hostname or IP address | ``localhost`` |
+| ``$RABBITMQ_USERNAME`` | RabbitMQ username | ``guest`` |
+| ``$RABBITMQ_PASSWORD_FILE`` | Full path to RabbitMQ password file | ``/etc/ostro-listener/passwd`` |
+| ``$MUSIC_URL`` | Music API endpoints and port in URL format | ``/etc/ostro-listener/passwd`` |
+| ``$MUSIC_KEYSPACE`` | Music keyspace | ``valet`` |
+| ``$MUSIC_REPLICATION_FACTOR`` | Music replication factor | ``1`` |
 
 Root or sufficient sudo privileges are required for some steps.
 
@@ -42,23 +44,20 @@ Clone the git repository from AT&T CodeCloud, using a ``$CODECLOUD_USER`` accoun
 
 ```bash
 $ git clone https://$CODECLOUD_USER@codecloud.web.att.com/scm/st_cloudqos/allegro.git
-$ cd allegro
+Cloning into 'allegro'...
+remote: Counting objects: 3562, done.
+remote: Compressing objects: 100% (3179/3179), done.
+remote: Total 3562 (delta 2007), reused 1076 (delta 247)
+Receiving objects: 100% (3562/3562), 1.83 MiB | 2.11 MiB/s, done.
+Resolving deltas: 100% (2007/2007), done.
+Checking connectivity... done.
+$ cd allegro/ostro_listener
 ```
 
 Install ostro-listener on any node with line-of-sight to the RabbitMQ endpoint from which messages are to be monitored.
 
-ostro-listener can be installed in production mode or development mode.
-
-**Production:**
-
 ```bash
-$ sudo pip install $VALET_PATH/ostro_listener
-```
-
-**Development:**
-
-```bash
-$ sudo pip install --editable $VALET_PATH/ostro_listener
+$ sudo pip install $OSTRO_LISTENER_PATH
 ```
 
 ## Command Line Usage
@@ -99,7 +98,7 @@ optional arguments:
 
 ## Example Invocation
 
-Split across lines for readability.
+Split across lines for readability:
 
 ```
 # ostro-listener -x nova -t topic -s
@@ -119,7 +118,7 @@ Always use the nova exchange (``-x nova``) and topic exchange type (``-t topic``
 
 ## Password File
 
-A sample password file can be found in ``$VALET_PATH/ostro_listener/etc/ostro_listener/passwd.txt``.
+A sample password file can be found in ``$OSTRO_LISTENER_PATH/etc/ostro_listener/passwd.txt``.
 
 Copy this file to another location before editing.
 
@@ -138,7 +137,7 @@ Hosts/IPs will match based on the value of ``$RABBITMQ_HOST``.
 
 ## Using a Configuration File
 
-A sample configuration file can be found in ``$VALET_PATH/ostro_listener/etc/ostro_listener/ostro-listener.conf.txt``:
+A sample configuration file can be found in ``$OSTRO_LISTENER_PATH/etc/ostro_listener/ostro-listener.conf.txt``:
 
 ```ini
 [DEFAULT]
@@ -173,19 +172,19 @@ Configuration files may be referenced in one of two ways, through the ``--config
 
 ## Running as an Ubunbu Service
 
-A sample Ubuntu init.d script can be found in ``$VALET_PATH/ostro_listener/etc/ostro_listener/ostro-listener.initd.txt``.
+A sample Ubuntu init.d script can be found in ``$OSTRO_LISTENER_PATH/etc/ostro_listener/ostro-listener.initd.txt``.
 
 To use, first copy this script to ``/etc/init.d``:
 
 ```bash
-$ sudo cp $VALET_PATH/ostro_listener/etc/ostro_listener/ostro-listener.initd.txt /etc/init.d/ostro-listener
+$ sudo cp $OSTRO_LISTENER_PATH/etc/ostro_listener/ostro-listener.initd.txt /etc/init.d/ostro-listener
 $ sudo chmod 755 /etc/init.d/ostro-listener
 ```
 
-If ostro-listener was installed in a Python virtual environment, edit ``/etc/init.d/ostro-listener``, uncomment the ``export VENV`` line, and adjust as needed, for example:
+If ostro-listener was installed in a Python virtual environment, edit ``/etc/init.d/ostro-listener``, uncomment the ``export VENV`` line, and adjust as needed. For example, if the virtual environment is installed in ``/etc/ostro-listener/venv``, assign ``VENV`` as follows:
 
 ```bash
-export VENV=/opt/stack/heat.venv
+export VENV=/etc/ostro-listener/venv
 ```
 
 Create ``/var/log`` and ``/var/run`` directories for use by the service:
@@ -222,9 +221,9 @@ The process ID file will be removed from ``/var/run/ostro-listener`` upon stoppi
 
 ## Uninstallation
 
-Activate a virtual environment (venv) first if necessary. Uninstallation uses the same command regardless of development or production mode.
+Activate a virtual environment (venv) first if necessary.
 
-Disable ostro-listener as a service, then uninstall the python package:
+Disable ostro-listener as a service, then uninstall:
 
 ```bash
 $ sudo update-rc.d ostro-listener disable

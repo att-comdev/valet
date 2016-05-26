@@ -24,7 +24,7 @@ Throughout this document, the following installation-specific items are required
 | ``$RABBITMQ_HOST`` | RabbitMQ hostname or IP address | ``localhost`` |
 | ``$RABBITMQ_USERNAME`` | RabbitMQ username | ``guest`` |
 | ``$RABBITMQ_PASSWORD_FILE`` | Full path to RabbitMQ password file | ``/etc/ostro-listener/passwd`` |
-| ``$MUSIC_URL`` | Music API endpoints and port in URL format | ``/etc/ostro-listener/passwd`` |
+| ``$MUSIC_URL`` | Music API endpoints and port in URL format | ``http://127.0.0.1:8080/`` |
 | ``$MUSIC_KEYSPACE`` | Music keyspace | ``valet`` |
 | ``$MUSIC_REPLICATION_FACTOR`` | Music replication factor | ``1`` |
 

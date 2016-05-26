@@ -40,6 +40,7 @@ class Identity(object):
     _args = None
     _client = None
     _interface = None
+    _session = None
 
     @classmethod
     def is_token_admin(cls, token):
@@ -59,6 +60,7 @@ class Identity(object):
         self._interface = interface
         self._args = kwargs
         self._client = None
+        self._session = None
 
     @property
     def _client_expired(self):
@@ -81,10 +83,15 @@ class Identity(object):
         '''Returns an identity client.'''
         if not self._client or self._client_expired:
             auth = v2.Password(**self._args)
-            sess = session.Session(auth=auth)
-            self._client = client.Client(session=sess,
+            self._session = session.Session(auth=auth)
+            self._client = client.Client(session=self._session,
                                          interface=self._interface)
         return self._client
+
+    @property
+    def session(self):
+        '''Read-only access to the session.'''
+        return self._session
 
     def validate_token(self, auth_token):
         '''Returns validated token or None if invalid'''

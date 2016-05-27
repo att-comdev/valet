@@ -55,6 +55,11 @@ class Identity(object):
         '''Returns tenant id from decoded token'''
         return token.tenant.get('id', None)
 
+    @classmethod
+    def user_from_token(cls, token):
+        '''Returns user id from decoded token'''
+        return token.user.get('id', None)
+
     def __init__(self, interface='admin', **kwargs):
         '''Initializer.'''
         self._interface = interface

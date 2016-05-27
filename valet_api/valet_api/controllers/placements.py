@@ -84,25 +84,33 @@ class PlacementsItemController(object):
         Reserve a placement. This and other placements may be replanned.
         Once reserved, the location effectively becomes immutable.
         '''
-        LOG.info(_('Placement reservation request for orchestration id %s'),
-                 self.placement.orchestration_id)
+        res_id = kwargs.get('resource_id')
+        LOG.info(_('Placement reservation request for ' \
+                 'resource id %s, orchestration id %s.'),
+                 (res_id, self.placement.orchestration_id))
+        LOG.info(_('Resource id: %s'), res_id)
         locations = kwargs.get('locations', [])
         locations_str = ', '.join(locations)
         LOG.info(_('Candidate locations: %s'), locations_str)
         if self.placement.location in locations:
             # Ostro's placement is in the list of candidates. Good!
-            reserve_placement(self.placement)
+            # Reserve it. Remember the resource id too.
+            kwargs = {'resource_id': res_id}
+            reserve_placement(self.placement, **kwargs)
             response.status = 201
         else:
             # Ostro's placement is NOT in the list of candidates.
             # Time for Plan B.
-            LOG.info(_('Placement of %(orch_id)s in %(loc)s ' \
+            LOG.info(_('Placement of resource id %(res_id)s, ' \
+                       'orchestration id %(orch_id)s in %(loc)s ' \
                        'not allowed. Replanning.'),
-                     {'orch_id': self.placement.orchestration_id,
+                     {'res_id': res_id,
+                      'orch_id': self.placement.orchestration_id,
                       'loc': self.placement.location})
 
-            # Unreserve the placement in case it was previously reserved.
-            reserve_placement(self.placement, False)
+            # Unreserve the placement. Remember the resource id too.
+            kwargs = {'resource_id': res_id, 'reserve': False}
+            reserve_placement(self.placement, **kwargs)
 
             # Find all the reserved placements for the related plan.
             reserved = Placement.query.filter_by(  # pylint: disable=E1101

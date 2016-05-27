@@ -118,16 +118,17 @@ class ValetAPIWrapper(object):
             _exception(exc, sys.exc_info(), req)
         # Delete does not return a response body.
 
-    def placement(self, uuid, hosts=None, auth_token=None):
+    def placement(self, orch_id, res_id, hosts=None, auth_token=None):
         '''
-        Reserve placement previously made for an Orchestration ID.
+        Reserve previously made placement.
         '''
         try:
-            url = self._api_endpoint() + '/placements/' + uuid
+            url = self._api_endpoint() + '/placements/' + orch_id
             self.headers['X-Auth-Token'] = auth_token
             if hosts:
                 kwargs = {
-                    "locations": hosts
+                    "locations": hosts,
+                    "resource_id": res_id
                 }
                 payload = json.dumps(kwargs)
                 req = requests.post(url, data=payload, headers=self.headers)

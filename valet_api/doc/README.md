@@ -371,6 +371,7 @@ This operation does not accept a request body.
 | location    | plain | xsd:string | The placement location of the resource.           |
 | name        | plain | xsd:string | The name of the resource.                         |
 | orchestration_id | plain | csapi:UUID | The UUID provided by an orchestration engine (e.g., heat-engine) prior to instantiation of the resource.             |
+| resource_id | plain | csapi:UUID | The physical UUID of the resource. The value is unknown until a placement has been reserved for the first time. |
 | plan_id     | plain | csapi:UUID | The UUID of the plan.                             |
 | reserved    | plain | xsd:boolean | Set to true if the placement was successfully reserved. |
 
@@ -383,6 +384,7 @@ This operation does not accept a request body.
       "plan_id": "e01ae778-52c8-4e52-9f32-a486584f0e89",
       "name": "my-instance-1",
       "orchestration_id": "f8cfab7e-83d0-4a7d-8551-905ea8a43a39",
+      "resource_id": "240b2fe5-2e01-4cfb-982c-67e3f1553386",
       "location": "qos104",
       "reserved": true,
       "id": "55f4aee9-b7df-44d0-85d3-3234c08dbfb4"
@@ -391,6 +393,7 @@ This operation does not accept a request body.
       "plan_id": "c8b8e9d9-227f-4652-8a18-523cd37b86c0",
       "name": "ad_hoc_instance",
       "orchestration_id": "23ffc206-cb57-4b99-9393-6e01837855bc",
+      "resource_id": null,
       "location": "qos101",
       "reserved": false,
       "id": "dbbc9ae2-3ba2-4409-8765-03cdbfcd0dcb"
@@ -420,6 +423,7 @@ This operation does not accept a request body.
 | location    | plain | xsd:string | The placement location of the resource.           |
 | name        | plain | xsd:string | The name of the resource.                         |
 | orchestration_id | plain | csapi:UUID | The UUID provided by an orchestration engine (e.g., heat-engine) prior to instantiation of the resource.             |
+| resource_id | plain | csapi:UUID | The physical UUID of the resource. The value is unknown until a placement has been reserved for the first time. |
 | plan_id     | plain | csapi:UUID | The UUID of the plan.                             |
 | reserved    | plain | xsd:boolean | Set to true if the placement was successfully reserved. |
 
@@ -431,6 +435,7 @@ This operation does not accept a request body.
     "plan_id": "a78d1936-0b63-4ce3-9450-832f71ebf160",
     "name": "my_instance",
     "orchestration_id": "b71bedad-dd57-4942-a7bd-ab074b72d652",
+    "resource_id": null,
     "location": "qos105",
     "reserved": false,
     "id": "b7116936-5210-448a-b21f-c35f33e9bcc2"
@@ -450,6 +455,7 @@ This operation does not accept a request body.
 | Parameter   | Style | Type       | Description                                       |
 |-------------|-------|------------|---------------------------------------------------|
 | locations | plain | xsd:list | A list of available locations. If the placement was not planned in one of these locations, the placement for this resource (and any others in the same plan not yet reserved) will be replanned on-the-fly. |
+| resource_id  | plain | csapi:UUID | The physical UUID of the resource.               |
 | placement_id | plain | csapi:UUID | The UUID of the placement or its associated orchestration UUID. |
 
 #### Response parameters
@@ -460,12 +466,14 @@ This operation does not accept a request body.
 | location    | plain | xsd:string | The placement location of the resource.           |
 | name        | plain | xsd:string | The name of the resource.                         |
 | orchestration_id | plain | csapi:UUID | The UUID provided by an orchestration engine (e.g., heat-engine) prior to instantiation of the resource.             |
+| resource_id | plain | csapi:UUID | The physical UUID of the resource.                |
 | plan_id     | plain | csapi:UUID | The UUID of the plan.                             |
 | reserved    | plain | xsd:boolean | Set to true if the placement was successfully reserved. |
 
 ```json
 {
-  "locations": ["qos101", "qos102", "qos104", "qos106", "qos107"]
+  "locations": ["qos101", "qos102", "qos104", "qos106", "qos107"],
+  "resource_id": "240b2fe5-2e01-4cfb-982c-67e3f1553386"
 }
 ```
 
@@ -475,6 +483,7 @@ This operation does not accept a request body.
     "plan_id": "a78d1936-0b63-4ce3-9450-832f71ebf160",
     "name": "my_instance",
     "orchestration_id": "b71bedad-dd57-4942-a7bd-ab074b72d652",
+    "resource_id": "240b2fe5-2e01-4cfb-982c-67e3f1553386",
     "location": "qos101",
     "reserved": true,
     "id": "b7116936-5210-448a-b21f-c35f33e9bcc2"
@@ -658,7 +667,7 @@ This operation does not accept a request body.
 | action      | plain | xsd:string | The plan update action. There is only one valid option at this time.                              |
 |             |       |            | **migrate**: Replan a single resource               |
 | excluded_hosts | plain | xsd:list | A list of hosts that must not be considered when replanning |
-| resources   | plain | xsd:list | When action="migrate" this is an orchestration id list of length one. |
+| resources   | plain | xsd:list | When action="migrate" this is a list of length one. The lone item is either a physical resource id or an orchestration id. |
 
 #### Response parameters
 

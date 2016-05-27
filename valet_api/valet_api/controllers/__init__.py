@@ -84,15 +84,25 @@ def set_placements(plan, resources, placements):
     return plan
 
 
-def reserve_placement(placement, reserve=True):
-    '''Reserve placement (set reserve=False to unreserve)'''
+def reserve_placement(placement, resource_id=None,
+                      reserve=True, update=True):
+    '''
+    Reserve placement. Can optionally set the physical resource id.
+    Set reserve=False to unreserve. Set update=False to not update
+    the data store (if the update will be made later).
+    '''
     if placement:
         LOG.info(_('%(rsrv)s placement of %(orch_id)s in %(loc)s.'),
                  {'rsrv': _("Reserving") if reserve else _("Unreserving"),
                   'orch_id': placement.orchestration_id,
                   'loc': placement.location})
         placement.reserved = reserve
-        placement.update()
+        if resource_id:
+            LOG.info(_('Associating resource id %s with ' \
+                     'orchestration id %.'), resource_id)
+            placement.resource_id = resource_id
+        if update:
+            placement.update()
 
 def update_placements(placements, reserve_id=None, unlock_all=False):
     '''Update placements. Optionally reserve one placement.'''
@@ -110,11 +120,10 @@ def update_placements(placements, reserve_id=None, unlock_all=False):
                           'new_loc': location})
                 placement.location = location
             if unlock_all:
-                reserve_placement(placement, False)
+                reserve_placement(placement, reserve=False, update=False)
             elif reserve_id and placement.orchestration_id == reserve_id:
-                reserve_placement(placement)
-            else:
-                placement.update()
+                reserve_placement(placement, reserve=True, update=False)
+            placement.update()
     return
 
 

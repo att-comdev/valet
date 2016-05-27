@@ -25,12 +25,13 @@ from valet_api.controllers import set_placements
 from valet_api.controllers import update_placements
 #from valet_api.controllers import valid_plan_resources
 from valet_api.controllers import valid_plan_update_action
+#from valet_api.common.compute import nova_client
 from valet_api.common.i18n import _
-from valet_api.models import Plan
+from valet_api.models import Placement, Plan
 from valet_api.common.ostro_helper import Ostro
 
 from notario import decorators
-from notario.validators import chainable, types
+from notario.validators import types
 from pecan import expose, request, response
 from pecan_notario import validate
 
@@ -111,14 +112,27 @@ class PlansItemController(object):
             if not isinstance(resources, list) or len(resources) != 1:
                 error('/errors/invalid',
                       _('resources must be a list of length 1.'))
-            orch_id = resources[0]
 
-            LOG.info(_('Migration request for ' \
-                       'orchestration id %s'), orch_id)
+            # We either got a resource or orchestration id.
+            import pdb; pdb.set_trace()
+            the_id = resources[0]
+            placement = Placement.query.filter_by(  # pylint: disable=E1101
+                resource_id=the_id).first()
+            if not placement:
+                placement = Placement.query.filter_by(  # pylint: disable=E1101
+                    orchestration_id=the_id).first()
+                if not placement:
+                    error('/errors/invalid',
+                          _('Unknown resource or orchestration id: %s') % \
+                          the_id)
+
+            LOG.info(_('Migration request for resource id %s, ' \
+                       'orchestration id %s.'), \
+                       (placement.resource_id, placement.orchestration_id))
             args = {
                 "stack_id": self.plan.stack_id,
                 "excluded_hosts": excluded_hosts,
-                "orchestration_id": orch_id,
+                "orchestration_id": placement.orchestration_id,
             }
             ostro_kwargs = {
                 "args": args,

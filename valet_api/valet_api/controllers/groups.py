@@ -50,12 +50,12 @@ MEMBERS_SCHEMA = (
 # pylint: disable=R0201
 
 
-def server_list_for_group(group_name):
+def server_list_for_group(group):
     '''Returns a list of VMs associated with a member/group.'''
     args = {
         "type": "group_vms",
         "parameters": {
-            "group_name": group_name,
+            "group_name": group.name,
         },
     }
     ostro_kwargs = {
@@ -73,13 +73,13 @@ def server_list_for_group(group_name):
     resources = ostro.response['resources']
     return resources or []
 
-def tenant_servers_in_group(tenant_id, group_name):
+def tenant_servers_in_group(tenant_id, group):
     '''
     Returns a list of servers the current tenant has in group_name
     '''
-    nova = nova_client()
     servers = []
-    server_list = server_list_for_group(group_name)
+    server_list = server_list_for_group(group)
+    nova = nova_client()
     for server_id in server_list:
         server = nova.servers.get(server_id)
         if server.tenant_id == tenant_id:
@@ -87,19 +87,16 @@ def tenant_servers_in_group(tenant_id, group_name):
     if len(servers) > 0:
         return servers
 
-def no_tenant_servers_in_group(tenant_id, group_name):
+def no_tenant_servers_in_group(tenant_id, group):
     '''
-    Verify no servers from tenant_id are in group_name.
+    Verify no servers from tenant_id are in group.
     Throws a 409 Conflict if any are found.
     '''
-    # Temporarily disabled - jdandrea 26 May 2016
-    return
-
-    server_list = tenant_servers_in_group(tenant_id, group_name)
+    server_list = tenant_servers_in_group(tenant_id, group)
     if server_list:
         error('/errors/conflict',
-              _('Tenant Member %s has servers in group %s: %s') %
-              (tenant_id, group_name, server_list))
+              _('Tenant Member %s has servers in group "%s": %s') %
+              (tenant_id, group.name, server_list))
 
 
 class MembersItemController(object):

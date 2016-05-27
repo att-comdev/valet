@@ -85,10 +85,10 @@ class PlacementsItemController(object):
         Once reserved, the location effectively becomes immutable.
         '''
         res_id = kwargs.get('resource_id')
-        LOG.info(_('Placement reservation request for ' \
-                 'resource id %s, orchestration id %s.'),
-                 (res_id, self.placement.orchestration_id))
-        LOG.info(_('Resource id: %s'), res_id)
+        LOG.info(_('Placement reservation request for resource id ' \
+                 '%(res_id)s, orchestration id %(orch_id)s.'),
+                 {'res_id': res_id,
+                  'orch_id': self.placement.orchestration_id})
         locations = kwargs.get('locations', [])
         locations_str = ', '.join(locations)
         LOG.info(_('Candidate locations: %s'), locations_str)

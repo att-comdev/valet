@@ -62,6 +62,9 @@ class V1Controller(SecureController):
                     conf.identity.engine.tenant_from_token(token)
                 if tenant_id:
                     request.context['tenant_id'] = tenant_id
+                    user_id = \
+                        conf.identity.engine.user_from_token(token)
+                    request.context['user_id'] = user_id
                     return True
         error('/errors/unauthorized')
 

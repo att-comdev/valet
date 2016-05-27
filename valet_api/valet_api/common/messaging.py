@@ -29,22 +29,11 @@ cfg.CONF = cfg.ConfigOpts()
 
 def _messaging_notifier_from_config(config):
     '''Initialize the messaging engine based on supplied config.'''
- 
-    # Usage:
-    #
-    # ctxt = {'some': 'context'}
-    # payload = {'the': 'payload'}
-    # event_type = 'an.event.type'
-    #
-    # notifier = conf.messaging.notifier
-    # notifier.info(ctxt, event_type, payload)
-    # notifier.warn(ctxt, event_type, payload)
-    # notifier.error(ctxt, event_type, payload)
-
     transport_url = config.get('transport_url')
     transport = messaging.get_transport(cfg.CONF, transport_url)
     notifier = messaging.Notifier(transport, driver='messaging',
-                                  publisher_id='valet', topic='valet-api')
+                                  publisher_id='valet',
+                                  topic='notifications')
     return notifier
 
 def init_messaging():

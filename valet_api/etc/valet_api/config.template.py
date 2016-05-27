@@ -1,7 +1,7 @@
-from pecan.hooks import TransactionHook, RequestViewerHook
+from pecan.hooks import TransactionHook
 
 from valet_api import models
-from valet_api.common.hooks import NotFoundHook
+from valet_api.common.hooks import NotFoundHook, MessageNotificationHook
 
 
 # Server Specific Configurations
@@ -26,6 +26,7 @@ app = {
             models.clear
         ),
         NotFoundHook(),
+        MessageNotificationHook(),
     ],
 }
 

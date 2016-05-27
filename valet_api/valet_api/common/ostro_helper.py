@@ -18,12 +18,12 @@
 
 '''Ostro helper library'''
 
+import json
 import logging
 import time
 import uuid
 
 from pecan import conf
-import simplejson
 
 from valet_api.common.i18n import _
 from valet_api.models import Group
@@ -46,7 +46,7 @@ EXCLUSIVITY = 'exclusivity'
 
 def _log(text, title="Ostro"):
     '''Log helper'''
-    log_text = "%s:\n%s" % (title, text)
+    log_text = "%s: %s" % (title, text)
     LOG.debug(log_text)
 
 
@@ -152,7 +152,7 @@ class Ostro(object):
         self.error_uri = '/errors/server_error'
         message = "Timed out waiting for a response."
         response = self._build_error(message)
-        return simplejson.dumps(response)
+        return json.dumps(response)
 
     def _verify_groups(self, resources, tenant_id):
         '''
@@ -299,27 +299,26 @@ class Ostro(object):
         '''Send a query.'''
         stack_id = str(uuid.uuid4())
         self.args = kwargs.get('args')
+        self.args['stack_id'] = stack_id
         self.response = None
         self.error_uri = None
         self.request = {
             "action": "query",
-            "stack_id": stack_id,
+            "stack_id": self.args['stack_id'],
             "type": self.args['type'],
             "parameters": self.args['parameters'],
         }
 
     def send(self):
         '''Send the request and obtain a response.'''
-        request_json = simplejson.dumps(
-            [self.request], sort_keys=True, indent=2 * ' '
-        )
+        request_json = json.dumps([self.request])
 
         # TODO: Pass timeout value?
         _log(request_json, 'Ostro Request')
         result = self._send(self.args['stack_id'], request_json)
         _log(result, 'Ostro Response')
 
-        self.response = simplejson.loads(result)
+        self.response = json.loads(result)
 
         status_type = self.response['status']['type']
         if status_type != 'ok':

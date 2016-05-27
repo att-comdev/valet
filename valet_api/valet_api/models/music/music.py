@@ -20,7 +20,6 @@
 
 import json
 import logging
-import simplejson
 import time
 
 from valet_api.common.i18n import _
@@ -86,12 +85,10 @@ class REST(object):
             # Try each url in turn. First one to succeed wins.
             full_url = url + path
             try:
-                data_json = simplejson.dumps(
-                    data, sort_keys=True, indent=2 * ' '
-                ) if data else None
+                data_json = json.dumps(data) if data else None
                 LOG.debug("Music Request: %s %s%s", \
                     method.upper(), full_url, \
-                    '\n'+data_json if data else '')
+                    data_json if data else '')
                 response = method_fn(full_url, data=data_json,
                                      headers=self.__headers(content_type),
                                      timeout=self.timeout)
@@ -101,13 +98,11 @@ class REST(object):
                 response = requests.Response()
                 response.status_code = 408
                 response.url = full_url
-                response.text = err.message
                 LOG.debug("Music: %s", err.message)
             except requests.exceptions.RequestException as err:
                 response = requests.Response()
                 response.status_code = 400
                 response.url = full_url
-                response.text = err.message
                 LOG.debug("Music: %s", err.message)
 
         # If we get here, an exception was raised for every url,

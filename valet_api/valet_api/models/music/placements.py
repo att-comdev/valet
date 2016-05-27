@@ -28,6 +28,7 @@ class Placement(Base):
     id = None  # pylint: disable=C0103
     name = None
     orchestration_id = None
+    resource_id = None
     location = None
     plan_id = None
     plan = None
@@ -39,6 +40,7 @@ class Placement(Base):
             'id': 'text',
             'name': 'text',
             'orchestration_id': 'text',
+            'resource_id': 'text',
             'location': 'text',
             'reserved': 'boolean',
             'plan_id': 'text',
@@ -60,17 +62,19 @@ class Placement(Base):
         return {
             'name': self.name,
             'orchestration_id': self.orchestration_id,
+            'resource_id': self.resource_id,
             'location': self.location,
             'reserved': self.reserved,
             'plan_id': self.plan_id,
         }
 
-    def __init__(self, name, orchestration_id, plan=None,  # pylint: disable=R0913
+    def __init__(self, name, orchestration_id, resource_id=None, plan=None,  # pylint: disable=R0913
                  plan_id=None, location=None, reserved=False, _insert=True):
         '''Initializer'''
         super(Placement, self).__init__()
         self.name = name
         self.orchestration_id = orchestration_id
+        self.resource_id = resource_id
         if plan_id:
             plan = Query("Plan").filter_by(id=plan_id).first()
         self.plan = plan
@@ -82,7 +86,7 @@ class Placement(Base):
 
     def __repr__(self):
         '''Object representation'''
-        return '<Plan %r>' % self.name
+        return '<Placement %r>' % self.name
 
     def __json__(self):
         '''JSON representation'''
@@ -90,6 +94,7 @@ class Placement(Base):
         json_['id'] = self.id
         json_['name'] = self.name
         json_['orchestration_id'] = self.orchestration_id
+        json_['resource_id'] = self.resource_id
         json_['location'] = self.location
         json_['reserved'] = self.reserved
         json_['plan_id'] = self.plan.id

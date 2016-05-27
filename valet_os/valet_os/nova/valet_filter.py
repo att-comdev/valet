@@ -103,36 +103,39 @@ class ValetFilter(filters.BaseHostFilter):
     def filter_all(self, filter_obj_list, filter_properties):
         '''Filter all hosts in one swell foop'''
         hints_key = 'scheduler_hints'
-        uuid_key = 'heat_resource_uuid'
+        orch_id_key = 'heat_resource_uuid'
 
         ad_hoc = False
         yield_all = False
         location = None
-        uuid = None
+        res_id = None
 
         opt = getattr(cfg.CONF, self.opt_group_str)
         failure_mode = opt[self.opt_failure_mode_str]
 
+        # Get the resource_id (physical id)
+        request_spec = filter_properties.get('request_spec')
+        instance_properties = request_spec.get('instance_properties')
+        res_id = instance_properties.get('uuid')
+
         # TODO: If we can't reach Valet at all, we may opt to fail
         # TODO: all hosts depending on a TBD config flag.
-        if not filter_properties.get(hints_key, {}).has_key(uuid_key):
+        if not filter_properties.get(hints_key, {}).has_key(orch_id_key):
             self._authorize()
             LOG.warn(_LW("Valet: Heat Stack Lifecycle Scheduler Hints " \
                      "not found. Performing ad-hoc placement."))
             ad_hoc = True
 
-            # Beacuse this wasn't orchestrated, there's no stack.
-            # We're going to compose a resource as if there as one.
-            # In this particular case we assign the physical
-            # resource id to both the stack id and orchestration id.
-            request_spec = filter_properties.get('request_spec')
-            instance_properties = request_spec.get('instance_properties')
-            uuid = instance_properties.get('uuid')
+            # We'll need the flavor.
             instance_type = filter_properties.get('instance_type')
             flavor = instance_type.get('name')
 
+            # Beacuse this wasn't orchestrated, there's no stack.
+            # We're going to compose a resource as if there as one.
+            # In this particular case we use the physical
+            # resource id as both the orchestration and stack id.
             resources = {
-                uuid: {
+                res_id: {
                     "properties": {
                         "flavor": flavor,
                     },
@@ -143,8 +146,8 @@ class ValetFilter(filters.BaseHostFilter):
 
             timeout = 60
             plan = {
-                'plan_name': uuid,
-                'stack_id': uuid,
+                'plan_name': res_id,
+                'stack_id': res_id,
                 'timeout': '%d sec' % timeout,
                 'resources': resources
             }
@@ -161,13 +164,13 @@ class ValetFilter(filters.BaseHostFilter):
                 plan = response['plan']
                 if plan and plan.get('placements'):
                     placements = plan['placements']
-                    if placements.get(uuid):
-                        placement = placements.get(uuid)
+                    if placements.get(res_id):
+                        placement = placements.get(res_id)
                         location = placement['location']
 
             if not location:
                 LOG.error(_LE("Valet ad-hoc placement unknown " \
-                          "for physical resource: %s.") % uuid)
+                          "for resource id %s.") % res_id)
                 if failure_mode == 'yield':
                     LOG.warn(_LW("Valet will yield to Nova for " \
                              "placement decisions."))
@@ -175,12 +178,12 @@ class ValetFilter(filters.BaseHostFilter):
                 else:
                     yield_all = False
         else:
-            uuid = filter_properties[hints_key][uuid_key]
+            orch_id = filter_properties[hints_key][orch_id_key]
             self._authorize()
             hosts = [obj.host for obj in filter_obj_list]
 
             try:
-                response = self.api.placement(uuid, hosts=hosts,
+                response = self.api.placement(orch_id, res_id, hosts=hosts,
                                               auth_token=self._auth_token)
             except:
                 LOG.error(_LW("Valet did not respond to " \
@@ -195,7 +198,8 @@ class ValetFilter(filters.BaseHostFilter):
             if not location:
                 # TODO: Get context from exception
                 LOG.error(_LE("Valet placement unknown " \
-                          "for planned resource: %s.") % uuid)
+                          "for resource id %s, orchestration id %s.") % \
+                          (res_id, orch_id))
                 if failure_mode == 'yield':
                     LOG.warn(_LW("Valet will yield to Nova for " \
                              "placement decisions."))
@@ -212,11 +216,11 @@ class ValetFilter(filters.BaseHostFilter):
                 if match:
                     if ad_hoc:
                         msg = "Valet ad-hoc placement for " \
-                              "ad-hoc resource %s: %s."
+                              "resource id %s: %s."
                     else:
-                        msg = "Valet placement for " \
-                              "planned resource %s: %s."
-                    LOG.info(_LI(msg) % (uuid, obj.host))
+                        msg = "Valet placement for resource id %s, " \
+                              "orchestration id %s: %s."
+                    LOG.info(_LI(msg) % (res_id, orch_id, obj.host))
             else:
                 match = None
             if yield_all or match:

@@ -185,39 +185,115 @@ class Ostro:
         return True
 
     def place_app(self, _app_data):
-        #self.data_lock.acquire(1) 
         self.data_lock.acquire() 
 
-        self.logger.info("--- start app placement ---")
-
-        result = None
-
         start_time = time.time()
-        placement_map = self._place_app(_app_data)
+
+        query_request_list = []
+        placement_request_list = []
+        for req in _app_data:
+            if "action" in req.keys():
+                if req["action"] == "query":
+                    query_request_list.append(req)
+                else:
+                    placement_request_list.append(req)
+            else:
+                self.logger.error("error in input format")
+                self.data_lock.release()
+                return False
+
+        if len(query_request_list) > 0:
+            self.logger.info("--- start query ---")
+
+            query_results = self._query(query_request_list)
+
+            result = self._get_json_results("query", "ok", "success", query_results)
+            self.logger.debug("successful query")
+
+            if self.db.put_result(result) == False:
+                self.logger.error("error while inserting placement result into MUSIC")
+                self.data_lock.release()
+                return False
+
+            self.logger.info("--- done query ---")
+
+        if len(placement_request_list) > 0:
+            self.logger.info("--- start app placement ---")
+
+            result = None
+
+            placement_map = self._place_app(placement_request_list)
+
+            if placement_map == None:
+                result = self._get_json_results("placement", "error", self.status, placement_map)
+
+                self.logger.debug("error while placing the following app(s)")
+                for appk in result.keys():
+                    self.logger.debug("    app uuid = " + appk)
+            else:
+                result = self._get_json_results("placement", "ok", "success", placement_map)
+
+                self.logger.debug("successful placement decision")
+
+            if self.db.put_result(result) == False:
+                self.logger.error("error while inserting placement result into MUSIC")
+                self.data_lock.release()
+                return False
+
+            self.logger.info("--- done app placement ---")
+
         end_time = time.time()
 
-        if placement_map == None:
-            result = self._get_json_results("error", self.status, placement_map)
-
-            self.logger.debug("error while placing the following app(s)")
-            for appk in result.keys():
-                self.logger.debug("    app uuid = " + appk)
-        else:
-            result = self._get_json_results("ok", "success", placement_map)
-
-            self.logger.debug("successful placement decision")
-
-        if self.db.put_result(result) == False:
-            self.logger.error("error while inserting placement result into MUSIC")
-            self.data_lock.release()
-            return False
-
-        self.logger.info("stat: total running time of place_app = " + str(end_time - start_time) + " sec")
-        self.logger.info("--- done app placement ---")
+        self.logger.info("stat: total running time of request = " + str(end_time - start_time) + " sec")
 
         self.data_lock.release()
 
         return True
+
+    def _query(self, _query_list):
+        query_results = {}
+
+        for q in _query_list:
+            if "type" in q.keys():
+                if q["type"] == "group_vms":
+                    if "parameters" in q.keys():
+                        params = q["parameters"]
+                        if "group_name" in params.keys():
+                            vm_list = self._get_vms_from_logical_group(params["group_name"])
+                            query_results[q["stack_id"]] = vm_list
+                        else:
+                            self.status = "unknown paramenter in query"
+                            self.logger.debug(self.status)
+                            return None
+                    else:
+                        self.status = "no parameters in query"
+                        self.logger.debug(self.status)
+                        return None
+                else:
+                    self.status = "unknown query type"
+                    self.logger.debug(self.status)
+                    return None
+            else: 
+                self.status = "no type in query"
+                self.logger.debug(self.status)
+                return None
+ 
+        return query_results
+
+    def _get_vms_from_logical_group(self, _group_name):
+        vm_list = []
+
+        for lgk, lg in self.resource.logical_groups.iteritems():
+            if lg.group_type == "EX" or lg.group_type == "AFF":
+                lg_id = lgk.split(":")
+                if lg_id[1] == _group_name:
+                    vm_id_list = lg.vm_list
+
+        for vm_id in vm_id_list:
+            if vm_id[2] != "none":
+                vm_list.append(vm_id[2])
+
+        return vm_list
 
     def _place_app(self, _app_data):
         app_topology = self.app_handler.add_app(_app_data)
@@ -456,62 +532,76 @@ class Ostro:
 
         self.resource.update_h_uuid_in_logical_groups(_h_uuid, _uuid, host)
 
-    def _get_json_results(self, _status_type, _status_message, _placement_map):
+    def _get_json_results(self, _request_type, _status_type, _status_message, _map):
         result = {}
 
-        if _status_type != "error":
-            applications = {}
-            for v in _placement_map.keys():
-                if isinstance(v, VM) or isinstance(v, Volume):
-                    resources = None
-                    if v.app_uuid in applications.keys():
-                        resources = applications[v.app_uuid]
-                    else:
-                        resources = {}
-                        applications[v.app_uuid] = resources
+        if _request_type == "query":
+            for qk, qr in _map.iteritems():
+                query_result = {}
+                query_status ={}
 
-                    host = _placement_map[v]
-                    resource_property = {"host":host}
-                    properties = {"properties":resource_property}
-                    resources[v.uuid] = properties
+                query_status['type'] = _status_type
+                query_status['message'] = _status_message
 
-            for appk, app_resources in applications.iteritems():
-                app_result = {}
-                app_status ={}
+                query_result['status'] = query_status
+                query_result['resources'] = qr
 
-                app_status['type'] = _status_type
-                app_status['message'] = _status_message
+                result[qk] = query_result
 
-                app_result['status'] = app_status
-                app_result['resources'] = app_resources
+        else:
+            if _status_type != "error":
+                applications = {}
+                for v in _map.keys():
+                    if isinstance(v, VM) or isinstance(v, Volume):
+                        resources = None
+                        if v.app_uuid in applications.keys():
+                            resources = applications[v.app_uuid]
+                        else:
+                            resources = {}
+                            applications[v.app_uuid] = resources
 
-                result[appk] = app_result
+                        host = _map[v]
+                        resource_property = {"host":host}
+                        properties = {"properties":resource_property}
+                        resources[v.uuid] = properties
 
-            for appk, app in self.app_handler.apps.iteritems():
-                if app.request_type == "ping":
+                for appk, app_resources in applications.iteritems():
                     app_result = {}
                     app_status ={}
 
                     app_status['type'] = _status_type
-                    app_status['message'] = "ping"
+                    app_status['message'] = _status_message
 
                     app_result['status'] = app_status
-                    app_result['resources'] = {"ip":self.config.ip}
+                    app_result['resources'] = app_resources
 
                     result[appk] = app_result
 
-        else:
-            for appk in self.app_handler.apps.keys():
-                app_result = {}
-                app_status ={}
+                for appk, app in self.app_handler.apps.iteritems():
+                    if app.request_type == "ping":
+                        app_result = {}
+                        app_status ={}
 
-                app_status['type'] = _status_type
-                app_status['message'] = _status_message
+                        app_status['type'] = _status_type
+                        app_status['message'] = "ping"
 
-                app_result['status'] = app_status
-                app_result['resources'] = {}
+                        app_result['status'] = app_status
+                        app_result['resources'] = {"ip":self.config.ip}
 
-                result[appk] = app_result
+                        result[appk] = app_result
+
+            else:
+                for appk in self.app_handler.apps.keys():
+                    app_result = {}
+                    app_status ={}
+
+                    app_status['type'] = _status_type
+                    app_status['message'] = _status_message
+
+                    app_result['status'] = app_status
+                    app_result['resources'] = {}
+
+                    result[appk] = app_result
 
         return result
 

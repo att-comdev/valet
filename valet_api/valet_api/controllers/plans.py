@@ -114,7 +114,6 @@ class PlansItemController(object):
                       _('resources must be a list of length 1.'))
 
             # We either got a resource or orchestration id.
-            import pdb; pdb.set_trace()
             the_id = resources[0]
             placement = Placement.query.filter_by(  # pylint: disable=E1101
                 resource_id=the_id).first()
@@ -128,7 +127,7 @@ class PlansItemController(object):
 
             LOG.info(_('Migration request for resource id %s, ' \
                        'orchestration id %s.'), \
-                       (placement.resource_id, placement.orchestration_id))
+                       placement.resource_id, placement.orchestration_id)
             args = {
                 "stack_id": self.plan.stack_id,
                 "excluded_hosts": excluded_hosts,

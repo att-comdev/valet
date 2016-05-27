@@ -98,8 +98,10 @@ def reserve_placement(placement, resource_id=None,
                   'loc': placement.location})
         placement.reserved = reserve
         if resource_id:
-            LOG.info(_('Associating resource id %s with ' \
-                     'orchestration id %.'), resource_id)
+            LOG.info(_('Associating resource id %(res_id)s with ' \
+                     'orchestration id %(orch_id)s.'),
+                     {'res_id': resource_id,
+                      'orch_id': placement.orchestration_id})
             placement.resource_id = resource_id
         if update:
             placement.update()

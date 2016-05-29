@@ -61,7 +61,7 @@ import threading
 
 # Directory locations
 HA_VALET_ROOT = os.getenv('HA_VALET_ROOT', './')              # valet root dir
-LOG_DIR = os.getenv('HA_VALET_LOGD', HA_VALET_ROOT + 'log/')
+LOG_DIR = os.getenv('HA_VALET_LOGD', '/var/log/havalet/')
 ETC_DIR = os.getenv('HA_VALET_ETCD', '.')
 CONF_FILE = ETC_DIR + '/ha_valet.cfg'
 
@@ -280,13 +280,14 @@ class HaValetThread (threading.Thread):
             log(self.log_fd, name + ': any active = ' + str(any_active))
 
             # Check for active valets
-            if standby_list is not None:
+            standby_list_is_empty = not standby_list
+            if not standby_list_is_empty :
                 log(self.log_fd, name + "- main loop: standby_list is not empty " + str(standby_list))
-                for host_in_list in standby_list.spit(','):
+                for host_in_list in standby_list:
                     if host_in_list == this_node:
                         log(self.log_fd, name + "- host_in_list is this_node - skipping")
                         continue
-                    
+
                     log(self.log_fd, name + ': checking status on - ' + host_in_list)
                     host = host_in_list
                     host_active, host_priority = self._is_active(name, eval(test_command))

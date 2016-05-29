@@ -217,10 +217,11 @@ class ValetFilter(filters.BaseHostFilter):
                     if ad_hoc:
                         msg = "Valet ad-hoc placement for " \
                               "resource id %s: %s."
+                        LOG.info(_LI(msg) % (res_id, obj.host))
                     else:
                         msg = "Valet placement for resource id %s, " \
                               "orchestration id %s: %s."
-                    LOG.info(_LI(msg) % (res_id, orch_id, obj.host))
+                        LOG.info(_LI(msg) % (res_id, orch_id, obj.host))
             else:
                 match = None
             if yield_all or match:

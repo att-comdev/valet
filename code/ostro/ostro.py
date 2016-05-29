@@ -538,7 +538,7 @@ class Ostro:
                 query_status['message'] = _status_message
 
                 query_result['status'] = query_status
-                if qr != None
+                if qr != None:
                     query_result['resources'] = qr
 
                 result[qk] = query_result

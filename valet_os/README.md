@@ -42,7 +42,7 @@ valet-openstack is maintained in AT&T CodeCloud under the CloudQoS project, in a
 
 *Note: Apart from the repository name, the word 'Allegro' is no longer used. Use the word 'Valet' in place of 'Allegro' when referring to components.*
 
-Clone the git repository from AT&T CodeCloud, using an account with appropriate credentials. valet-os is located in ``valet_os``.
+Clone the git repository from AT&T CodeCloud, using an account with appropriate credentials.
 
 ```bash
 $ git clone https://$CODECLOUD_USER@codecloud.web.att.com/scm/st_cloudqos/allegro.git
@@ -53,15 +53,17 @@ remote: Total 3562 (delta 2007), reused 1076 (delta 247)
 Receiving objects: 100% (3562/3562), 1.83 MiB | 2.11 MiB/s, done.
 Resolving deltas: 100% (2007/2007), done.
 Checking connectivity... done.
-$ cd allegro/valet_os
 ```
 
 ## Installation
 
 Install valet-openstack on the OpenStack controller node containing heat-engine and nova-scheduler. If these services are distributed across multiple nodes, install and configure valet-openstack as appropriate on each node.
 
+valet-openstack is located in ``valet_os``.
+
 ```bash
-$ sudo pip install $VALET_OS_PATH
+$ cd $VALET_OS_PATH
+$ sudo pip install .
 ```
 
 ## OpenStack Configuration

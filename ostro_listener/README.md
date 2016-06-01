@@ -34,13 +34,13 @@ Root or sufficient sudo privileges are required for some steps.
 
 It is recommended to consider using a python [virtual environment](http://docs.python-guide.org/en/latest/dev/virtualenvs/) (venv). A venv helps avoid instabilities and conflicts within the default python environment.
 
-## Installing ostro-listener
+## Download
 
 ostro-listener is maintained in AT&T CodeCloud under the CloudQoS project, in a repository called 'allegro'.
 
 *Note: Apart from the repository name, the word 'Allegro' is no longer used. Use the word 'Valet' in place of 'Allegro' when referring to components.*
 
-Clone the git repository from AT&T CodeCloud, using a ``$CODECLOUD_USER`` account with appropriate credentials:
+Clone the git repository from AT&T CodeCloud, using an account with appropriate credentials. ostro-listener is located in ``ostro_listener``.
 
 ```bash
 $ git clone https://$CODECLOUD_USER@codecloud.web.att.com/scm/st_cloudqos/allegro.git
@@ -53,6 +53,8 @@ Resolving deltas: 100% (2007/2007), done.
 Checking connectivity... done.
 $ cd allegro/ostro_listener
 ```
+
+## Installation
 
 Install ostro-listener on any node with line-of-sight to the RabbitMQ endpoint from which messages are to be monitored.
 
@@ -114,13 +116,13 @@ Split across lines for readability:
 
 Always use the nova exchange (``-x nova``) and topic exchange type (``-t topic``) when using in conjunction with Ostro and Music.
 
-**Important**: Always use topic exchanges for "listening on the wire" to OpenStack message traffic. Failure to do so could risk other RabbitMQ users (e.g., OpenStack services) missing important messages.
+**IMPORTANT**: Always use topic exchanges for "listening on the wire" to OpenStack message traffic. Failure to do so could risk other RabbitMQ users (e.g., OpenStack services) missing important messages, and then you will be sad.
 
 ## Password File
 
 A sample password file can be found in ``$OSTRO_LISTENER_PATH/etc/ostro_listener/passwd.txt``.
 
-Copy this file to another location before editing.
+Copy this file to another location before editing, for example ``/etc/ostro-listener/passwd``.
 
 The password file must be protected. In particular, it must not be readable by group/other users. It is often set to root ownership.
 
@@ -147,9 +149,9 @@ auto_delete = false
 host = localhost
 port = 5672
 username = guest
-passwdfile = passwd
+passwdfile = /etc/ostro-listener/passwd
 output_format = dict
-store = false
+store = true
 music = http://127.0.0.1:8080/
 keyspace = music
 replication_factor = 1
@@ -174,7 +176,7 @@ Configuration files may be referenced in one of two ways, through the ``--config
 
 A sample Ubuntu init.d script can be found in ``$OSTRO_LISTENER_PATH/etc/ostro_listener/ostro-listener.initd.txt``.
 
-To use, first copy this script to ``/etc/init.d``:
+To use, first copy this script to ``/etc/init.d/ostro-listener``:
 
 ```bash
 $ sudo cp $OSTRO_LISTENER_PATH/etc/ostro_listener/ostro-listener.initd.txt /etc/init.d/ostro-listener

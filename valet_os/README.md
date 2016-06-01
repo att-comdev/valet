@@ -36,13 +36,13 @@ Root or sufficient sudo privileges are required for some steps.
 
 As valet-openstack works in concert with OpenStack services, if heat and nova have been installed in a python [virtual environment](http://docs.python-guide.org/en/latest/dev/virtualenvs/) (venv), valet-openstack must be installed and configured in the same environment. (A venv helps avoid instabilities and conflicts within the default python environment.)
 
-## Installing valet-openstack
+## Download
 
 valet-openstack is maintained in AT&T CodeCloud under the CloudQoS project, in a repository called 'allegro'.
 
 *Note: Apart from the repository name, the word 'Allegro' is no longer used. Use the word 'Valet' in place of 'Allegro' when referring to components.*
 
-Clone the git repository from AT&T CodeCloud, using a ``$CODECLOUD_USER`` account with appropriate credentials:
+Clone the git repository from AT&T CodeCloud, using an account with appropriate credentials. valet-os is located in ``valet_os``.
 
 ```bash
 $ git clone https://$CODECLOUD_USER@codecloud.web.att.com/scm/st_cloudqos/allegro.git
@@ -55,6 +55,8 @@ Resolving deltas: 100% (2007/2007), done.
 Checking connectivity... done.
 $ cd allegro/valet_os
 ```
+
+## Installation
 
 Install valet-openstack on the OpenStack controller node containing heat-engine and nova-scheduler. If these services are distributed across multiple nodes, install and configure valet-openstack as appropriate on each node.
 

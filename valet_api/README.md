@@ -38,15 +38,15 @@ Root or sufficient sudo privileges are required for some steps.
 
 ### A Note About Python Virtual Environments
 
-It is recommended to install and configure valet-api witin a python [virtual environment](http://docs.python-guide.org/en/latest/dev/virtualenvs/) (venv), This helps avoid instabilities and conflicts within the default python environment.
+It is recommended to install and configure valet-api within a python [virtual environment](http://docs.python-guide.org/en/latest/dev/virtualenvs/) (venv), This helps avoid instabilities and conflicts within the default python environment.
 
-## Installation
+## Download
 
 valet-api is maintained in AT&T CodeCloud under the CloudQoS project, in a repository called 'allegro'.
 
 *Note: Apart from the repository name, the word 'Allegro' is no longer used. Use the word 'Valet' in place of 'Allegro' when referring to components.*
 
-Clone the git repository from AT&T CodeCloud, using a ``$CODECLOUD_USER`` account with appropriate credentials. valet-api is located in ``valet_api``.
+Clone the git repository from AT&T CodeCloud, using an account with appropriate credentials. valet-api is located in ``valet_api``.
 
 ```bash
 $ git clone https://$CODECLOUD_USER@codecloud.web.att.com/scm/st_cloudqos/allegro.git
@@ -60,6 +60,8 @@ Checking connectivity... done.
 $ cd allegro/valet_api
 ```
 
+## Installation
+
 Install valet-api on a host that can reach all OpenStack Keystone endpoints (public, internal, and admin). This can be a controller node or a separate host. Likewise, valet-api, Ostro, and Music may be installed on the same host or separate hosts.
 
 ```bash
@@ -68,9 +70,11 @@ $ sudo pip install $VALET_API_PATH
 
 If the following error appears when installing valet-api, and SSL access is required (e.g., if Keystone can only be reached via SSL), use a newer Python 2.7 Ubuntu package.
 
+```bash
 [InsecurePlatformWarning](https://urllib3.readthedocs.org/en/latest/security.html#insecureplatformwarning): A true SSLContext object is not available. This prevents urllib3 from configuring SSL appropriately and may cause certain SSL connections to fail.
+```
 
-## User account
+## User Account
 
 Create an Ubuntu user/group for the valet service user (usually ``valet``):
 

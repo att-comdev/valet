@@ -40,7 +40,7 @@ ostro-listener is maintained in AT&T CodeCloud under the CloudQoS project, in a 
 
 *Note: Apart from the repository name, the word 'Allegro' is no longer used. Use the word 'Valet' in place of 'Allegro' when referring to components.*
 
-Clone the git repository from AT&T CodeCloud, using an account with appropriate credentials. ostro-listener is located in ``ostro_listener``.
+Clone the git repository from AT&T CodeCloud, using an account with appropriate credentials.
 
 ```bash
 $ git clone https://$CODECLOUD_USER@codecloud.web.att.com/scm/st_cloudqos/allegro.git
@@ -51,15 +51,17 @@ remote: Total 3562 (delta 2007), reused 1076 (delta 247)
 Receiving objects: 100% (3562/3562), 1.83 MiB | 2.11 MiB/s, done.
 Resolving deltas: 100% (2007/2007), done.
 Checking connectivity... done.
-$ cd allegro/ostro_listener
 ```
 
 ## Installation
 
 Install ostro-listener on any node with line-of-sight to the RabbitMQ endpoint from which messages are to be monitored.
 
+ostro-listener is located in ``ostro_listener``.
+
 ```bash
-$ sudo pip install $OSTRO_LISTENER_PATH
+$ cd $OSTRO_LISTENER_PATH
+$ sudo pip install .
 ```
 
 ## Command Line Usage

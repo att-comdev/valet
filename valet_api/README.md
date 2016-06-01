@@ -46,7 +46,7 @@ valet-api is maintained in AT&T CodeCloud under the CloudQoS project, in a repos
 
 *Note: Apart from the repository name, the word 'Allegro' is no longer used. Use the word 'Valet' in place of 'Allegro' when referring to components.*
 
-Clone the git repository from AT&T CodeCloud, using an account with appropriate credentials. valet-api is located in ``valet_api``.
+Clone the git repository from AT&T CodeCloud, using an account with appropriate credentials.
 
 ```bash
 $ git clone https://$CODECLOUD_USER@codecloud.web.att.com/scm/st_cloudqos/allegro.git
@@ -57,15 +57,17 @@ remote: Total 3562 (delta 2007), reused 1076 (delta 247)
 Receiving objects: 100% (3562/3562), 1.83 MiB | 2.11 MiB/s, done.
 Resolving deltas: 100% (2007/2007), done.
 Checking connectivity... done.
-$ cd allegro/valet_api
 ```
 
 ## Installation
 
 Install valet-api on a host that can reach all OpenStack Keystone endpoints (public, internal, and admin). This can be a controller node or a separate host. Likewise, valet-api, Ostro, and Music may be installed on the same host or separate hosts.
 
+valet-api is located in ``valet_api``.
+
 ```bash
-$ sudo pip install $VALET_API_PATH
+$ cd $VALET_API_PATH
+$ sudo pip install .
 ```
 
 If the following error appears when installing valet-api, and SSL access is required (e.g., if Keystone can only be reached via SSL), use a newer Python 2.7 Ubuntu package.

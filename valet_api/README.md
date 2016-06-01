@@ -93,7 +93,7 @@ $ sudo groupmod -g $DESIRED_ID valet
 
 ## Configuration
 
-Copy ``$VALET_API_PATH/etc/valet_api/config.py`` to a suitable ``$VALET_CONFIG_PATH``. As the config file will contain sensitive passwords, ``$VALET_CONFIG_PATH`` must have limited visibility and be accessible only to the user running valet-api.
+Copy ``$VALET_API_PATH/etc/valet_api/config.py`` to a suitable configuration path (``$VALET_CONFIG_PATH``) outside of the CodeCloud git repository prior to editing. (Always edit the copy, never the original.) As the config file will contain sensitive passwords, ``$VALET_CONFIG_PATH`` must have limited visibility and be accessible only to the user running valet-api.
 
 Edit the following sections in the ``config.py`` copy. See the [valet-openstack README](https://codecloud.web.att.com/plugins/servlet/readmeparser/display/ST_CLOUDQOS/allegro/atRef/refs/heads/master/renderFile/valet_os/README.md) for additional context around the ``server`` and ``identity`` sections.
 
@@ -130,13 +130,16 @@ identity = {
 
 Once authenticated via Keystone's *publicurl* endpoint, valet-api uses Keystone's *adminurl* endpoint for further API calls. Access to the adminurl endpoint is required for:
 
-* AuthN of OpenStack users for valet-api access, presently limited to users with an ``admin`` role. Formal RBAC support is expected in a future release through oslo-policy.
+* Authentication (AuthN) of OpenStack users for valet-api access.
+* Authorization (AuthZ) of OpenStack users for valet-api access. This is presently limited to users assigned an ``admin`` role.
 * Obtaining a list of all OpenStack cloud tenants (used by Valet Groups).
+
+*Note: Formal Role-Based Access Control (RBAC) support (via oslo-policy) is expected in a future release.*
 
 If the Keystone adminurl endpoint is not reachable, Valet will not be able to obtain a complete tenant list. To mitigate:
 
 * Add an additional identity config setting named ``'interface'``, set to ``'public'``.
-* In the OpenStack cloud, ensure ``$VALET_USERNAME`` is a member of every tenant. Keep current as needed.
+* In the OpenStack cloud, ensure the valet user (``$VALET_USERNAME``) is a member of every tenant. Keep membership current as needed.
 
 ### Messaging
 
@@ -188,18 +191,22 @@ Use the ``pecan serve`` command to run valet-api and verify installation.
 $ pecan serve $VALET_CONFIG_PATH/config.py
 ```
 
-Visit ``http://$VALET_HOST:8090/v1/`` to check for a response from valet-api:
+Browse to ``http://$VALET_HOST:8090/`` (no AuthN/AuthZ required). Check for a response, for example:
 
 ```json
 {
-    "versions": [{
-        "status": "CURRENT",
-        "id": "v1.0",
-        "links": [{
-            "href": "http://127.0.0.1:8090/v1/",
-            "rel": "self"
-        }]
-    }]
+    "versions": [
+        {
+            "status": "CURRENT",
+            "id": "v1.0",
+            "links": [
+                {
+                    "href": "http://127.0.0.1:8090/v1/",
+                    "rel": "self"
+                }
+            ]
+        }
+    ]
 }
 ```
 

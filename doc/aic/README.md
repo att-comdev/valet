@@ -35,8 +35,38 @@ This section contains up-to-date changes for *AIC Valet Service Template Version
 * Valet 1.0 Components for KVM qcow2 image: Allegro is now Valet; Valet talks to Oslo Message Bus.
 * Heat and Nova plugins: Combined in a single package, **valet-openstack**.
 * Figure 3: Remove ``/%{tenant_id}s`` from valet-api publicurl, adminurl, and internalurl endpoints.
-* AIC OpenStack Messaging: Oslo Messaging Notification publisher is "valet", topic is "valet-api", and event types are "valet.group.create", "valet.group.update", and "valet.group.delete". Data is a Valet Plan as described in the Placement API v1 Documentation under "Show group details" (GET /v1/groups/{group_id}).
+* AIC OpenStack Messaging; See subsection below.
 * Placement API v1 Documentation: Visit [http://valet.research.att.com/](http://valet.research.att.com/), select "Placement API".
+
+##### AIC OpenStack Messaging
+
+Valet 1.0 syndicates all API requests/responses as Oslo Messaging Notifications.
+
+The publisher name is “valet”, the topic name is “notifications”, and event types are all of the form “api.VERSION.SUBJECT” (e.g., “api.v1.groups”).
+
+200-series responses are posted as INFO notifications. 400 and 500-series responses are posted as ERROR notifications. The notification payload is JSON and of this form:
+
+```json
+{
+  "context": {
+    "tenant_id": TENANT_ID,
+    "user_id": USER_ID
+  },
+  "request": {
+    "method": REQUEST_METHOD,
+    "path": REQUEST_PATH,
+    "body": REQUEST_BODY
+  },
+  "response": {
+    "status_code": STATUS_CODE,
+    "body": RESPONSE_BODY
+  }
+}
+```
+
+The request method identifies CRUD operations (POST: create, GET: read, etc.).
+
+The Request and Response body is either a string (e.g., if an authentication error occurs, or an empty string if there is no request/response body) or JSON, as described in the Placement API documentation.
 
 ##### Valet 1.0 New Components
 
@@ -103,7 +133,7 @@ This section contains up-to-date changes for *AIC Valet Service Template Version
 #### Integration of Valet 1.0 software system into AIC 3.5
 
 * RabbitMQ message broker **does not** require independent configuration
-* Plugins, Filters, RabbitMQ Exchanges and Queues: Oslo Messaging Notification publisher is "valet", topic is "valet-api", and event types are "valet.group.create", "valet.group.update", and "valet.group.delete". Data is a Valet Plan as described in the Placement API v1 Documentation under "Show group details" (GET /v1/groups/{group_id}).
+* Plugins, Filters, RabbitMQ Exchanges and Queues: See earlier comment regarding AIC OpenStack Messaging.
 * Placement API v1 Documentation: Visit [http://valet.research.att.com/](http://valet.research.att.com/), select "Placement API".
 
 #### Self Service Portal Impact - Valet 1.0 APIs
@@ -128,4 +158,4 @@ This section contains up-to-date changes for *AIC Valet Service Template Version
 
 #### Validate Use Case Examples for Affinity, and Diversity (Anti-Affinity)
 
-* ATT::Valet::GroupAssignment properties: ``name`` is now ``group_name``; ``relationship`` is now ``group_type``.
+* ATT::Valet::GroupAssignment properties: ``relationship`` is now ``group_type``.

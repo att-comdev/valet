@@ -1,4 +1,4 @@
-# AIC Valet 1.0 for AT&T Integrated Cloud (AIC) 3.5
+# Valet 1.0 for AT&T Integrated Cloud (AIC) 3.5
 
 *Update (2 June 2016): Installation and download links will be posted on Sunday, 5 June 2016.*
 

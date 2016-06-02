@@ -174,7 +174,7 @@ Configuration files may be referenced in one of two ways, through the ``--config
 # ostro-listener
 ```
 
-## Running as an Ubunbu Service
+## Running as an Ubuntu Service
 
 A sample Ubuntu init.d script can be found in ``$OSTRO_LISTENER_PATH/etc/ostro_listener/ostro-listener.initd.txt``.
 

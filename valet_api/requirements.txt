@@ -3,7 +3,7 @@
 # process, which may cause wedges in the gate later.
 
 pip
-pecan
+pecan>=1.1.1
 pecan-notario
 simplejson
 pymysql

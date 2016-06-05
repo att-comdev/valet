@@ -16,7 +16,7 @@ Valet consists of the following components:
 * [Ostro](https://codecloud.web.att.com/plugins/servlet/readmeparser/display/ST_CLOUDQOS/ostro/atRef/refs/heads/master/renderFile/README): a placement optimization engine
 * [Music](https://codecloud.web.att.com/plugins/servlet/readmeparser/display/ST_CLOUDQOS/music/atRef/refs/heads/master/renderFile/README.md): a data storage and persistence service
 * [ostro-listener](https://codecloud.web.att.com/plugins/servlet/readmeparser/display/ST_CLOUDQOS/allegro/atRef/refs/heads/master/renderFile/ostro_listener/README.md): a message bus listener used in conjunction with Ostro and Music
-* [havalet](https://codecloud.web.att.com/plugins/servlet/readmeparser/display/ST_CLOUDQOS/allegro/atRef/refs/heads/master/renderFile/havalet/README.rst): a service that assists in providing high availability for Valet
+* [havalet](https://codecloud.web.att.com/plugins/servlet/readmeparser/display/ST_CLOUDQOS/allegro/atRef/refs/heads/master/renderFile/havalet/README.md): a service that assists in providing high availability for Valet
 
 Additional documents:
 

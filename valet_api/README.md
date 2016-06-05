@@ -38,15 +38,15 @@ Root or sufficient sudo privileges are required for some steps.
 
 ### A Note About Python Virtual Environments
 
-It is recommended to install and configure valet-api witin a python [virtual environment](http://docs.python-guide.org/en/latest/dev/virtualenvs/) (venv), This helps avoid instabilities and conflicts within the default python environment.
+It is recommended to install and configure valet-api within a python [virtual environment](http://docs.python-guide.org/en/latest/dev/virtualenvs/) (venv), This helps avoid instabilities and conflicts within the default python environment.
 
-## Installation
+## Download
 
 valet-api is maintained in AT&T CodeCloud under the CloudQoS project, in a repository called 'allegro'.
 
 *Note: Apart from the repository name, the word 'Allegro' is no longer used. Use the word 'Valet' in place of 'Allegro' when referring to components.*
 
-Clone the git repository from AT&T CodeCloud, using a ``$CODECLOUD_USER`` account with appropriate credentials. valet-api is located in ``valet_api``.
+Clone the git repository from AT&T CodeCloud, using an account with appropriate credentials.
 
 ```bash
 $ git clone https://$CODECLOUD_USER@codecloud.web.att.com/scm/st_cloudqos/allegro.git
@@ -57,20 +57,26 @@ remote: Total 3562 (delta 2007), reused 1076 (delta 247)
 Receiving objects: 100% (3562/3562), 1.83 MiB | 2.11 MiB/s, done.
 Resolving deltas: 100% (2007/2007), done.
 Checking connectivity... done.
-$ cd allegro/valet_api
 ```
+
+## Installation
 
 Install valet-api on a host that can reach all OpenStack Keystone endpoints (public, internal, and admin). This can be a controller node or a separate host. Likewise, valet-api, Ostro, and Music may be installed on the same host or separate hosts.
 
+valet-api is located in ``valet_api``.
+
 ```bash
-$ sudo pip install $VALET_API_PATH
+$ cd $VALET_API_PATH
+$ sudo pip install .
 ```
 
 If the following error appears when installing valet-api, and SSL access is required (e.g., if Keystone can only be reached via SSL), use a newer Python 2.7 Ubuntu package.
 
+```bash
 [InsecurePlatformWarning](https://urllib3.readthedocs.org/en/latest/security.html#insecureplatformwarning): A true SSLContext object is not available. This prevents urllib3 from configuring SSL appropriately and may cause certain SSL connections to fail.
+```
 
-## User account
+## User Account
 
 Create an Ubuntu user/group for the valet service user (usually ``valet``):
 
@@ -87,7 +93,7 @@ $ sudo groupmod -g $DESIRED_ID valet
 
 ## Configuration
 
-Copy ``$VALET_API_PATH/etc/valet_api/config.py`` to a suitable ``$VALET_CONFIG_PATH``. As the config file will contain sensitive passwords, ``$VALET_CONFIG_PATH`` must have limited visibility and be accessible only to the user running valet-api.
+Copy ``$VALET_API_PATH/etc/valet_api/config.py`` to a suitable configuration path (``$VALET_CONFIG_PATH``) outside of the CodeCloud git repository prior to editing. (Always edit the copy, never the original.) As the config file will contain sensitive passwords, ``$VALET_CONFIG_PATH`` must have limited visibility and be accessible only to the user running valet-api.
 
 Edit the following sections in the ``config.py`` copy. See the [valet-openstack README](https://codecloud.web.att.com/plugins/servlet/readmeparser/display/ST_CLOUDQOS/allegro/atRef/refs/heads/master/renderFile/valet_os/README.md) for additional context around the ``server`` and ``identity`` sections.
 
@@ -124,13 +130,16 @@ identity = {
 
 Once authenticated via Keystone's *publicurl* endpoint, valet-api uses Keystone's *adminurl* endpoint for further API calls. Access to the adminurl endpoint is required for:
 
-* AuthN of OpenStack users for valet-api access, presently limited to users with an ``admin`` role. Formal RBAC support is expected in a future release through oslo-policy.
+* Authentication (AuthN) of OpenStack users for valet-api access.
+* Authorization (AuthZ) of OpenStack users for valet-api access. This is presently limited to users assigned an ``admin`` role.
 * Obtaining a list of all OpenStack cloud tenants (used by Valet Groups).
+
+*Note: Formal Role-Based Access Control (RBAC) support (via oslo-policy) is expected in a future release.*
 
 If the Keystone adminurl endpoint is not reachable, Valet will not be able to obtain a complete tenant list. To mitigate:
 
 * Add an additional identity config setting named ``'interface'``, set to ``'public'``.
-* In the OpenStack cloud, ensure ``$VALET_USERNAME`` is a member of every tenant. Keep current as needed.
+* In the OpenStack cloud, ensure the valet user (``$VALET_USERNAME``) is a member of every tenant. Keep membership current as needed.
 
 ### Messaging
 
@@ -182,18 +191,22 @@ Use the ``pecan serve`` command to run valet-api and verify installation.
 $ pecan serve $VALET_CONFIG_PATH/config.py
 ```
 
-Visit ``http://$VALET_HOST:8090/v1/`` to check for a response from valet-api:
+Browse to ``http://$VALET_HOST:8090/`` (no AuthN/AuthZ required). Check for a response, for example:
 
 ```json
 {
-    "versions": [{
-        "status": "CURRENT",
-        "id": "v1.0",
-        "links": [{
-            "href": "http://127.0.0.1:8090/v1/",
-            "rel": "self"
-        }]
-    }]
+    "versions": [
+        {
+            "status": "CURRENT",
+            "id": "v1.0",
+            "links": [
+                {
+                    "href": "http://127.0.0.1:8090/v1/",
+                    "rel": "self"
+                }
+            ]
+        }
+    ]
 }
 ```
 

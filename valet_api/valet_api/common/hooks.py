@@ -33,9 +33,10 @@ class MessageNotificationHook(PecanHook):
     def after(self, state):
         notifier = conf.messaging.notifier
         status_code = state.response.status_code
-        if status_code == 200:
+        status = webob.exc.status_map.get(status_code)
+        if isinstance(status, webob.exc.HTTPOk):
             notifier_fn = notifier.info
-        elif status_code == 400 or status_code == 500:
+        elif issubclass(status, webob.exc.HTTPError):
             notifier_fn = notifier.error
         else:
             return

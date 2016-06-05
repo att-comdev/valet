@@ -36,13 +36,13 @@ Root or sufficient sudo privileges are required for some steps.
 
 As valet-openstack works in concert with OpenStack services, if heat and nova have been installed in a python [virtual environment](http://docs.python-guide.org/en/latest/dev/virtualenvs/) (venv), valet-openstack must be installed and configured in the same environment. (A venv helps avoid instabilities and conflicts within the default python environment.)
 
-## Installing valet-openstack
+## Download
 
 valet-openstack is maintained in AT&T CodeCloud under the CloudQoS project, in a repository called 'allegro'.
 
 *Note: Apart from the repository name, the word 'Allegro' is no longer used. Use the word 'Valet' in place of 'Allegro' when referring to components.*
 
-Clone the git repository from AT&T CodeCloud, using a ``$CODECLOUD_USER`` account with appropriate credentials:
+Clone the git repository from AT&T CodeCloud, using an account with appropriate credentials.
 
 ```bash
 $ git clone https://$CODECLOUD_USER@codecloud.web.att.com/scm/st_cloudqos/allegro.git
@@ -53,13 +53,17 @@ remote: Total 3562 (delta 2007), reused 1076 (delta 247)
 Receiving objects: 100% (3562/3562), 1.83 MiB | 2.11 MiB/s, done.
 Resolving deltas: 100% (2007/2007), done.
 Checking connectivity... done.
-$ cd allegro/valet_os
 ```
+
+## Installation
 
 Install valet-openstack on the OpenStack controller node containing heat-engine and nova-scheduler. If these services are distributed across multiple nodes, install and configure valet-openstack as appropriate on each node.
 
+valet-openstack is located in ``valet_os``.
+
 ```bash
-$ sudo pip install $VALET_OS_PATH
+$ cd $VALET_OS_PATH
+$ sudo pip install .
 ```
 
 ## OpenStack Configuration
@@ -70,7 +74,7 @@ valet-openstack requires edits to the heat and nova configuration files, and a s
 
 The following keystone commands must be performed by an OpenStack cloud administrator.
 
-Add a user ``$VALET_USERNAME``, giving it an ``admin`` role in the ``$VALET_TENANT_NAME`` tenant (usually ``service``):
+Add a user (``$VALET_USERNAME``), giving it an ``admin`` role in one tenant (``$VALET_TENANT_NAME``, usually ``service``):
 
 ```bash
 $ keystone user-create --name $VALET_USERNAME --pass $VALET_PASSWORD
@@ -92,7 +96,7 @@ The administrator may choose to use differing hostnames/IPs for public vs. admin
 
 The following changes are made in ``/etc/heat/heat.conf``.
 
-Set the ``plugin_dirs`` option in the ``[DEFAULT]`` section so that Heat can locate and use the Valet Stack Lifecycle Plugin.
+Set ``plugin_dirs`` in the ``[DEFAULT]`` section such that Heat can locate and use the Valet Stack Lifecycle Plugin.
 
 ```ini
 [DEFAULT]
@@ -156,6 +160,8 @@ When referring to additional filter plugins, multiple ``scheduler_available_filt
 
 When setting ``scheduler_default_filters``, ensure that ``ValetFilter`` is placed last so that Valet has the final say in scheduling decisions.
 
+*Note: ``scheduler_available_filters`` denotes filters that are available for use. ``scheduler_default_filters`` denotes filters that are enabled by default.*
+
 Add a ``[valet]`` section. This will be used by the Valet Scheduler Filter:
 
 ```ini
@@ -168,7 +174,7 @@ admin_password = $VALET_PASSWORD
 admin_auth_url = $KEYSTONE_AUTH_API
 ```
 
-``$VALET_FAILURE_MODE`` can be ``yield`` or ``reject``. The default is ``reject``. If Valet exclusivity groups will never be used, it is acceptable to set this to ``yield``, as there will be no chance of encroaching upon them.
+``$VALET_FAILURE_MODE`` refers to the action ``ValetFilter`` takes in the effect of a scheduling failure. It can be set to ``yield`` (defer to the other filter choices) or ``reject`` (block all other filter choices). The default action is ``reject`` so as to protect the integrity of Valet exclusivity groups. If exclusivity groups will never be used, or maintaining exclusivity group integrity is not required/practical, it may be desirable to set this to ``yield``.
 
 Restart nova-scheduler using separate stop and start directives:
 

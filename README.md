@@ -26,7 +26,7 @@ Additional documents:
 
 ## Thank You
 
-Saar Alaluf, Bharath Balasubramanian, Roy Ben Hai, Shimon Benattar, Yael Ben Shalom, Benny Bustan, Rachel Cohen, Joe D'Andrea, Harel Dorfman, Boaz Elitzur, P.K. Esrawan, Inbal Harduf, Matti Hiltunen, Doron Honigsberg, Kaustubh Joshi, Gueyoung Jung, Gerald Karam, David Khanin, Israel Kliger, Erez Korn, Max Osipov, Amnon Sagiv, Gideon Shafran, Galit Shemesh, Anna Yefimov
+Alicia Abella, Saar Alaluf, Bharath Balasubramanian, Roy Ben Hai, Shimon Benattar, Yael Ben Shalom, Benny Bustan, Rachel Cohen, Joe D'Andrea, Harel Dorfman, Boaz Elitzur, P.K. Esrawan, Inbal Harduf, Matti Hiltunen, Doron Honigsberg, Kaustubh Joshi, Gueyoung Jung, Gerald Karam, David Khanin, Israel Kliger, Erez Korn, Max Osipov, Chris Rice, Amnon Sagiv, Gideon Shafran, Galit Shemesh, Anna Yefimov. Apologies if we missed anyone (please email me!).
 
 ## Contact
 

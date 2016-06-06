@@ -12,5 +12,7 @@ Note: The Service Deployment Guide is being actively edited.
 
 ## Downloads
 
+Note: Download hosting locations are being actively sought.
+
 * qcow2 VM Image (valet-api, Ostro, Music, ostro-listener, HAValet): **Link forthcoming**.
 * OpenStack Heat/Nova components (valet-openstack): **Link forthcoming**.

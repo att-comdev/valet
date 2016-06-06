@@ -144,6 +144,12 @@ class ValetFilter(filters.BaseHostFilter):
                 }
             }
 
+            # Only add the AZ if it was expressly defined
+            res_properties = resources[res_id]["properties"]
+            a_zone = instance_properties.get('availability_zone')
+            if a_zone:
+                res_properties["availability_zone"] = a_zone
+
             timeout = 60
             plan = {
                 'plan_name': res_id,

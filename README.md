@@ -24,6 +24,10 @@ Additional documents:
 * [Placement API](https://codecloud.web.att.com/plugins/servlet/readmeparser/display/ST_CLOUDQOS/allegro/atRef/refs/heads/master/renderFile/valet_api/doc/README.md): API requests/responses
 * [Using Postman with valet-api](https://codecloud.web.att.com/plugins/servlet/readmeparser/display/ST_CLOUDQOS/allegro/atRef/refs/heads/master/renderFile/valet_api/valet_api/tests/README.md): Postman support
 
+## Thank You
+
+Saar Alaluf, Bharath Balasubramanian, Roy Ben Hai, Shimon Benattar, Yael Ben Shalom, Benny Bustan, Rachel Cohen, Joe D'Andrea, Harel Dorfman, Boaz Elitzur, P.K. Esrawan, Inbal Harduf, Matti Hiltunen, Doron Honigsberg, Kaustubh Joshi, Gueyoung Jung, Gerald Karam, David Khanin, Israel Kliger, Erez Korn, Max Osipov, Amnon Sagiv, Gideon Shafran, Galit Shemesh, Anna Yefimov
+
 ## Contact
 
 Joe D'Andrea <jdandrea@research.att.com>

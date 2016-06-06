@@ -6,7 +6,7 @@
 
 Note: The Service Deployment Guide is being actively edited.
 
-* [Solution Definition (PDF on tSpace)](https://tspace.web.att.com/files/app/file/c7753b8e-c342-476e-95d3-e0b4a8178dfa)
+* [Solution Definition (PDF on tSpace)](https://tspace.web.att.com/files/app/file/c7753b8e-c342-476e-95d3-e0b4a8178dfa) (login required)
 * [Service Deployment Guide (Microsoft Word)](https://codecloud.web.att.com/projects/ST_CLOUDQOS/repos/allegro/browse/doc/aic/aic_valet_service_deployment_guide.docx) (qcow2 VM Image with valet-api, Ostro, Music, ostro-listener, HAValet)
 * [OpenStack Heat/Nova components (Web page)](https://codecloud.web.att.com/plugins/servlet/readmeparser/display/ST_CLOUDQOS/allegro/atRef/refs/heads/master/renderFile/valet_os/README.md) (tar.gz file with valet-openstack)
 

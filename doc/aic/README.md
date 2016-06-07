@@ -10,5 +10,5 @@
 
 ## Downloads
 
-* [AIC Valet Service](http://www2.research.att.com/projects/valet/aic/v1.0/VALET_PLACEMENT_1.0.qcow2) (qcow2 VM Image with valet-api, Ostro, Music, ostro-listener, HAValet)
-* [OpenStack Heat/Nova components](http://www2.research.att.com/projects/valet/aic/v1.0/VALET_OPENSTACK_1.0.tar.gz) (tar.gz file with valet-openstack)
+* [AIC Valet Service](http://www2.research.att.com/projects/valet/aic/v1.0/VALET_PLACEMENT_1.0.qcow2) (3.68 GB — qcow2 VM Image with valet-api, Ostro, Music, ostro-listener, HAValet)
+* [OpenStack Heat/Nova components](http://www2.research.att.com/projects/valet/aic/v1.0/VALET_OPENSTACK_1.0.tar.gz) (17 KB — tar.gz file with valet-openstack)

@@ -766,17 +766,17 @@ The HTTP COPY method was attempted but is not allowed.
 }
 ```
 
-The exclusivity group named 'foosball' was not found.
+A Valet Group was not found.
 
 ```json
 {
-  "title": "Conflict",
-  "explanation": "Valet error: Exclusivity group 'foosball' not found",
-  "code": 409,
+  "title": "Not Found",
+  "explanation": "Group not found",
+  "code": 404,
   "error": {
-    "message": "There was a conflict when trying to complete your request.",
+    "message": "The resource could not be found.",
     "traceback": null,
-    "type": "HTTPConflict"
+    "type": "HTTPNotFound"
   }
 }
 ```

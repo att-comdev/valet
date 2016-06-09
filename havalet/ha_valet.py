@@ -283,7 +283,7 @@ class HaValetThread (threading.Thread):
             standby_list_is_empty = not standby_list
             if not standby_list_is_empty :
                 log(self.log_fd, name + "- main loop: standby_list is not empty " + str(standby_list))
-                for host_in_list in standby_list:
+                for host_in_list in standby_list.spit(','):
                     if host_in_list == this_node:
                         log(self.log_fd, name + "- host_in_list is this_node - skipping")
                         continue

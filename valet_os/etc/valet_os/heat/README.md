@@ -6,6 +6,8 @@ The following is current as of Valet Release 1.0.
 
 ## ATT::Valet::GroupAssignment
 
+*Formerly ATT::Valet::ResourceGroup*
+
 A Group Assignment describes one or more resources assigned to a particular type of group. Assignments can reference other assignments, so long as there are no circular references.
 
 There are three types of groups: affinity, diversity, and exclusivity. Exclusivity groups have a unique name, assigned through Valet.

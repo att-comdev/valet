@@ -36,9 +36,9 @@ Root or sufficient sudo privileges are required for some steps.
 
 As valet-openstack works in concert with OpenStack services, if heat and nova have been installed in a python [virtual environment](http://docs.python-guide.org/en/latest/dev/virtualenvs/) (venv), valet-openstack must be installed and configured in the same environment. (A venv helps avoid instabilities and conflicts within the default python environment.)
 
-## AT&T Integrated Cloud (AIC) 3.5
+## AT&T Integrated Cloud (AIC)
 
-If using a tar.gz archive made expressly for AIC 3.5, unpack it in a temporary location and change to the archive's root directory:
+If using a tar.gz archive made expressly for AIC, unpack it in a temporary location and change to the archive's root directory, for example:
 
 ```bash
 $ tar -xzf VALET_OPENSTACK_1.0.tar.gz

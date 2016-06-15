@@ -1,6 +1,6 @@
-# Valet 1.0 for AT&T Integrated Cloud (AIC) 3.5
+# Valet 1.0 for AT&T Integrated Cloud (AIC) 3.0.1
 
-*Update (7 June 2016): The Service Deployment Guide is being actively edited at this time.*
+*Update (15 June 2016): The Service Deployment Guide is being actively edited at this time.*
 
 ## Documentation
 

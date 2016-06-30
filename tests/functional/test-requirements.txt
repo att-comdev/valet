@@ -18,5 +18,5 @@ python-keystoneclient
 python-novaclient
 python-heatclient
 
-# Babel
-# os-testr
+#Babel
+#os-testr

@@ -15,7 +15,7 @@ import requests
 
 
 class Loader(object):
-    
+
     def __init__(self, config_file=None):
         '''
         initializing the loader - connecting to heat
@@ -24,15 +24,15 @@ class Loader(object):
 
         heat_url = CONF.heat.HEAT_URL + str(Auth.get_project_id())
         token = Auth.get_auth_token()
-        
+
         heat = Client(CONF.heat.VERSION, endpoint=heat_url, token=token)
         self.stacks = heat.stacks
-        
+
 
     def create_stack(self, stack_name, template_name, template_resources):
         General.log_info("Starting to create stacks")
         groups = template_resources.groups
-        
+
         try:
             for key in groups:
                 if groups[key].group_type == "exclusivity":
@@ -49,31 +49,31 @@ class Loader(object):
     def create_valet_group(self, group_name):
         try:
             group_url = "%s/groups" % CONF.nova.HOST
-    
+
             headers =   {   "X-Auth-Token": Auth.get_auth_token(), 
                             "Content-Type": "application/json"   }
-    
+
             grp_data =  {   "name": group_name,
                             "type": "exclusivity" }
-    
+
             group_details = self.get_existing_groups(group_url, group_name, headers)
 #           group_details[0] - group id
 #           group_details[1] - group members
-            
+
             if group_details == None:
                 General.log_info("Creating group with member")
-                
                 create_response = requests.post(group_url, data=json.dumps(grp_data), headers=headers)
                 General.log_info(create_response.json())
+                group_details = create_response.json()["id"], create_response.json()["members"]
             else:
                 General.log_info("Group exists")
-            
+
             self.add_group_member(group_name, group_details, headers)
         except Exception:
-            General.log_error("Failed to delete stacks")
+            General.log_error("Failed to create valet group")
             General.log_error(traceback.format_exc())
-        
-    
+
+
     def add_group_member(self, group_name, group_details, headers):
         if Auth.get_project_id() not in group_details[1]:
             add_member_url = "%s/groups/%s/members" % (CONF.nova.HOST, group_details[0])
@@ -120,7 +120,7 @@ class Loader(object):
             General.log_info(operation + " Successfully completed")
             return Result()
         elif str(self.stacks.get(stack_name).status) == "FAILED":
-            msg = operation + " Failed"
+            msg = operation + " Failed  -  " + self.stacks.get(stack_name).stack_status_reason
         else:
             msg = operation + " timed out"
         General.log_error(msg)

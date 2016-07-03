@@ -1,7 +1,5 @@
 
-sudo tox -epy27 -- $*
-
-
+sudo tox -epy27 -- '--concurrency=1' $*
 
 
 # EXAMPLE:

@@ -48,7 +48,9 @@
             the monitored process priority.
  """
 
-import logging, logging.handlers
+from oslo_config import cfg
+from oslo_log import log as logging
+import logging.handlers
 import argparse
 import time
 import os
@@ -56,6 +58,7 @@ import socket
 import subprocess
 import threading
 
+CONF = cfg.CONF
 
 # Directory locations
 LOG_DIR = os.getenv('HA_VALET_LOGD', '/var/log/havalet/')
@@ -94,6 +97,8 @@ STAND_BY_LIST = 'stand_by_list'
 def prepare(obj, name):
     obj.log = logging.getLogger(name)
     obj.log.setLevel(logging.DEBUG)
+    #logging.register_options(CONF)
+    #logging.setup(CONF, DOMAIN)
     handler = logging.handlers.RotatingFileHandler(LOG_DIR+name+'.log', maxBytes=max_log_size,
                                                    backupCount=max_num_of_logs)
     fmt = logging.Formatter('%(asctime)s %(levelname)s %(message)s')

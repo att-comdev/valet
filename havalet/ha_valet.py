@@ -51,7 +51,7 @@
 from oslo_config import cfg
 from oslo_log import log as logging
 import logging.handlers
-import argparse
+# import argparse
 import time
 import os
 import socket
@@ -62,7 +62,7 @@ CONF = cfg.CONF
 
 # Directory locations
 LOG_DIR = os.getenv('HA_VALET_LOGD', '/var/log/havalet/')
-ETC_DIR = os.getenv('HA_VALET_ETCD', '/opt/valet/')
+ETC_DIR = os.getenv('HA_VALET_ETCD', '/etc/havalet/')
 DEFAULT_CONF_FILE = ETC_DIR + 'ha_valet.cfg'
 
 # Set the maximum logfile size as Byte for time-series log files
@@ -84,21 +84,35 @@ HEARTBEAT_SEC = 5                    # Heartbeat interval in seconds
 NAME = 'name'
 ORDER = 'order'
 HOST = 'host'
-PORT = 'port'
 USER = 'user'
-PROTOCOL = 'protocol'
 PRIORITY = 'priority'
-START_COMMAND = 'start_command'
-STOP_COMMAND = 'stop_command'
-TEST_COMMAND = 'test_command'
+START_COMMAND = 'start'
+STOP_COMMAND = 'stop'
+TEST_COMMAND = 'test'
 STAND_BY_LIST = 'stand_by_list'
+
+ostro_group = cfg.OptGroup(name='Ostro', title='Valet Engine HA conf')
+
+havalet_opts = [
+    cfg.IntOpt(PRIORITY, default=1, help='master slave distinguish'),
+    cfg.IntOpt(ORDER, help='launching order'),
+    cfg.StrOpt(HOST, help='where the monitored process is running on'),
+    cfg.StrOpt(USER, help='linux user'),
+    cfg.ListOpt(STAND_BY_LIST, help='monitored hosts list'),
+    cfg.StrOpt(START_COMMAND, help='launch command'),
+    cfg.StrOpt(STOP_COMMAND, help='stop command'),
+    cfg.StrOpt(TEST_COMMAND, help='test command')
+]
+
+CONF.register_group(ostro_group)
+CONF.register_opts(havalet_opts, ostro_group)
 
 
 def prepare(obj, name):
     obj.log = logging.getLogger(name)
     obj.log.setLevel(logging.DEBUG)
     #logging.register_options(CONF)
-    #logging.setup(CONF, DOMAIN)
+    #logging.setup(CONF, 'valet')
     handler = logging.handlers.RotatingFileHandler(LOG_DIR+name+'.log', maxBytes=max_log_size,
                                                    backupCount=max_num_of_logs)
     fmt = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
@@ -113,42 +127,39 @@ class HaValetThread (threading.Thread):
         self.exitFlag = exit_event
         self.data = data
         self.log = None
-        self.name = "HA Valet Thread - "+data["name"]
 
     def run(self):
         """Main function"""
-        prepare(self, self.data["name"])
-        self.log.info(self.name + " - starting")
+        prepare(self, self.data[NAME])
+        self.log.info('HA Valet - ' + self.data[NAME] + ' Watcher Thread - starting')
 
         fqdn_list = []
         this_node = socket.getfqdn()
         fqdn_list.append(this_node)
 
         # Read list of standby valet nodes and find us
-        standby_list = []
-        stand_by = self.data.get(STAND_BY_LIST, None)
-        if stand_by is not None:
-            standby_list = stand_by.split(",")
+        #standby_list = []
+        standby_list = self.data.get(STAND_BY_LIST, None)
 
         while not self.exitFlag.isSet() and not len(standby_list) is 0:            # loop until we find us
-            self.log.debug(self.data[NAME] + "- stand by list: " + str(standby_list))
+            self.log.debug("stand by list: " + str(standby_list))
             try:
                 for fqdn in fqdn_list:
-                    self.log.debug(self.data[NAME] + "- fqdn_list: " + str(fqdn_list))
+                    self.log.debug("fqdn_list: " + str(fqdn_list))
                     if fqdn in standby_list:
                         this_node = fqdn
                         break
                 standby_list.remove(this_node)
                 self.data[STAND_BY_LIST] = standby_list
-                self.log.debug(self.data[NAME] + "- modified stand by list: " + str(standby_list))
+                self.log.debug("modified stand by list: " + str(standby_list))
             except ValueError:
-                self.log.error(self.data[NAME] + ": host " + this_node + " is not in standby list: %s - continue"
+                self.log.debug("host " + this_node + " is not in standby list: %s - continue"
                                % str(standby_list))
                 break
 
         # Loop forever sending pings
         self._main_loop(this_node)
-        self.log.info(self.name + " - going down!")
+        self.log.info("HA Valet Watcher Thread - going down!")
 
     def _main_loop(self, this_node):
         """Main heartbeat and liveness check loop
@@ -165,12 +176,9 @@ class HaValetThread (threading.Thread):
 
         """ DO NOT RENAME, DELETE, MOVE the following parameters,
          they may be referenced from within the process commands"""
-        name = self.data.get(NAME, 'n/a')
         host = self.data.get(HOST, 'localhost')
-        port = self.data.get(PORT, None)
         user = self.data.get(USER, None)
-        protocol = self.data.get(PROTOCOL, None)
-        priority = int(self.data.get(PRIORITY, 1))
+        my_priority = int(self.data.get(PRIORITY, 1))
         start_command = eval(self.data.get(START_COMMAND, None))
         stop_command = self.data.get(STOP_COMMAND, None)
         test_command = self.data.get(TEST_COMMAND, None)
@@ -182,55 +190,56 @@ class HaValetThread (threading.Thread):
                 time.sleep(HEARTBEAT_SEC)
             else:
                 # No valet running. Wait for higher priority valet to activate.
-                time.sleep(HEARTBEAT_SEC*priority)
+                time.sleep(HEARTBEAT_SEC*my_priority)
 
-            self.log.info(name + ': checking status here - ' + host)
-            i_am_active, my_priority = self._is_active(name, eval(test_command))
-            self.log.info(name + ': i am active = ' + str(i_am_active) + ', ' + str(my_priority))
+            self.log.info('checking status here - ' + host + ', my priority: ' + str(my_priority))
+            i_am_active, priority = self._is_active(eval(test_command))
+            self.log.info('i am active = ' + str(i_am_active) + ', ' + str(priority))
             any_active = i_am_active
-            self.log.info(name + ': any active = ' + str(any_active))
+            self.log.info('any active = ' + str(any_active))
 
             # Check for active valets
             standby_list_is_empty = not standby_list
             if not standby_list_is_empty :
-                self.log.debug(name + "- main loop: standby_list is not empty " + str(standby_list))
-                for host_in_list in standby_list.spit(','):
+                self.log.debug('main loop: standby_list is not empty ' + str(standby_list))
+                for host_in_list in standby_list:
                     if host_in_list == this_node:
-                        self.log.info(name + "- host_in_list is this_node - skipping")
+                        self.log.info('host_in_list is this_node - skipping')
                         continue
 
-                    self.log.info(name + ': checking status on - ' + host_in_list)
+                    self.log.info('checking status on - ' + host_in_list)
                     host = host_in_list
-                    host_active, host_priority = self._is_active(name, eval(test_command))
+                    host_active, host_priority = self._is_active(eval(test_command))
                     host = self.data.get(HOST, 'localhost')
-                    self.log.info(name + ': ' + host_in_list + ' - host_active-' + str(host_active) + ', ' +
+                    self.log.info(host_in_list + ' - host_active-' + str(host_active) + ', ' +
                         str(host_priority))
                     # Check for split brain: 2 valets active
                     if i_am_active and host_active:
-                        self.log.info(name + ": found two live instances, checking priorities")
-                        should_be_active = self._should_be_active(host_priority, my_priority)
+                        self.log.info('found two live instances, checking priorities')
+                        should_be_active = self._should_be_active(host_priority, priority)
                         if should_be_active:
-                            self.log.info(name + ": deactivate myself, " + host_in_list + " already running")
-                            self._deactivate_process(name, eval(stop_command))     # Deactivate myself
+                            self.log.info('deactivate myself, ' + host_in_list + ' already running')
+                            self._deactivate_process(eval(stop_command))     # Deactivate myself
                             i_am_active = False
                         else:
-                            self.log.info(name + ": deactivate " + host_in_list + ", already running here")
+                            self.log.info('deactivate ' + self.data[NAME] + ' on '+ host_in_list + ', already running here')
                             host = host_in_list
-                            self._deactivate_process(name, eval(stop_command))  # Deactivate other valet
+                            self._deactivate_process(eval(stop_command))  # Deactivate other valet
                             host = self.data.get(HOST, 'localhost')
 
                     # Track that at-least one valet is active
                     any_active = any_active or host_active
 
             # If no active process or I'm primary, then we must try to start one
-            if not any_active or (not i_am_active and priority == PRIMARY_SETUP):
-                self.log.warn(name + "- there is no instance up  - OR  - I'm primary and down")
-                if priority_wait or priority == 0:
+            if not any_active or (not i_am_active and my_priority == PRIMARY_SETUP):
+                self.log.warn('there is no instance up')
+                self.log.info('Im primary instance:  ' + str(my_priority is PRIMARY_SETUP))
+                if priority_wait or my_priority == PRIMARY_SETUP:
                     now = int(time.time())
                     if now - last_start < QUICK_RESTART_SEC:           # quick restart (crash?)
                         quick_start += 1
                         if quick_start > MAX_QUICK_STARTS:
-                            self.log.critical("refusing to restart "+name+": too many restarts in quick succession.")
+                            self.log.critical("refusing to restart: too many restarts in quick succession.")
                             # kill ourselves [if there is a watch dog it will restart us]
                             self.exitFlag.set()
                             return
@@ -244,13 +253,13 @@ class HaValetThread (threading.Thread):
 
                     last_start = now
                     priority_wait = False
-                    if (not i_am_active and priority == PRIMARY_SETUP) or (standby_list is not None):
-                        self.log.info("no running " + name + " found, starting here; last start %s" % diff)
-                        self._activate_process(name, start_command)
+                    if (not i_am_active and my_priority == PRIMARY_SETUP) or (standby_list is not None):
+                        self.log.info('no running instance found, starting here; last start %s' % diff)
+                        self._activate_process(start_command)
                     else:
                         host = standby_list[0]
-                        self.log.info("no running " + name + " found, starting on %s; last start %s" % (host, diff))
-                        self._activate_process(name, start_command)
+                        self.log.info('no running instances found, starting on %s; last start %s' % (host, diff))
+                        self._activate_process(start_command)
                         host = self.data.get(HOST, 'localhost')
                 else:
                     priority_wait = True
@@ -273,49 +282,48 @@ class HaValetThread (threading.Thread):
         self.log.info('my priority is %d, remote priority is %d' % (my_priority, host_priority))
         return host_priority < my_priority
 
-    def _is_active(self, name, call):
+    def _is_active(self, call):
         """Return 'True, Priority' if valet is running on host
            'False, None' Otherwise."""
 
         # must use no-proxy to avoid proxy servers gumming up the works
         for i in xrange(RETRY_COUNT):
             try:
-                self.log.info(name + ' ping (retry %d): %s' % (i, call))
-                #priority = subprocess.call(call, shell=True)
+                self.log.info('ping (retry %d): %s' % (i, call))
                 proc = subprocess.Popen(call, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
                 priority = proc.wait()
                 out, err = proc.communicate()
-                self.log.debug(name + ' out: ' + out + ', err: ' + err)
-                self.log.info(name + ' ping result (should be > 0): %s' % (str(priority)))
+                self.log.debug('out: ' + out + ', err: ' + err)
+                self.log.info('ping result (should be > 0): %s' % (str(priority)))
                 return (priority > 0), priority
             except subprocess.CalledProcessError:
-                self.log.error(name + ' ping error: ' + subprocess.CalledProcessError)
+                self.log.error('ping error: ' + str(subprocess.CalledProcessError))
                 continue
         return False, None
 
-    def _deactivate_process(self, name, deactivate_command):
+    def _deactivate_process(self, deactivate_command):
         """ Deactivate valet on a given host. If host is omitted, local
             valet is stopped. Returns True if successful, False on error."""
 
         try:
             # call = "'" + deactivate_command % (PROTO, host, port) + "'"
-            self.log.info(name + ': deactivate_command: ' + deactivate_command)
+            self.log.info('deactivate_command: ' + deactivate_command)
             subprocess.check_call(deactivate_command, shell=True)
             return True
-        except subprocess.CalledProcessError:
-            self.log.error(name + ': deactivate error: ' + subprocess.CalledProcessError)
+        except subprocess.CalledProcessError as e:
+            self.log.error(str(e))
             return False
 
-    def _activate_process(self, name, activate_command):
+    def _activate_process(self, activate_command):
         """ Activate valet on a given host. If host is omitted, local
             valet is started. Returns True if successful, False on error."""
 
         try:
-            self.log.info(name + ': activate_command: ' + activate_command)
+            self.log.info('activate_command: ' + activate_command)
             subprocess.check_call(activate_command, shell=True)
             return True
-        except subprocess.CalledProcessError:
-            self.log.error(name + ': activate error: ' + subprocess.CalledProcessError)
+        except subprocess.CalledProcessError as e:
+            self.log.error(str(e))
             return False
 
 
@@ -326,7 +334,28 @@ class HAValet:
             os.makedirs(LOG_DIR)
         self.log = None
 
-    def _parse_valet_conf(self, conf_file_name=DEFAULT_CONF_FILE, process=''):
+
+    def _parse_valet_conf(self, process='Ostro'):
+        """ This function reads the valet config file and returns configuration
+        attributes in key/value format
+        :rtype: dict
+        """
+        cdata = {}
+        cdata[process] = {
+            NAME: process,
+            ORDER: CONF.Ostro.order,
+            HOST: CONF.Ostro.host,
+            USER: CONF.Ostro.user,
+            PRIORITY: CONF.Ostro.priority,
+            START_COMMAND: CONF.Ostro.start,
+            STOP_COMMAND: CONF.Ostro.stop,
+            TEST_COMMAND: CONF.Ostro.test,
+            STAND_BY_LIST: CONF.Ostro.stand_by_list
+        }
+        return cdata
+
+    @DeprecationWarning
+    def _parse_valet_conf_v010(self, conf_file_name=DEFAULT_CONF_FILE, process=''):
         """ This function reads the valet config file and returns configuration
         attributes in key/value format
 
@@ -381,9 +410,8 @@ class HAValet:
         :return: are all mandatory parameters are found
         :rtype: bool
         """
+
         if (process_data.get(HOST) is not None and
-            process_data.get(PORT) is not None and
-            process_data.get(PROTOCOL) is not None and
             process_data.get(PRIORITY) is not None and
             process_data.get(ORDER) is not None and
             process_data.get(START_COMMAND) is not None and
@@ -398,22 +426,22 @@ class HAValet:
         prepare(self, 'havalet')
         self.log.info('ha_valet v1.1 starting')
 
-        parser = argparse.ArgumentParser()
-        parser.add_argument('-p', '--process', help='process name to monitor', default='')
-        parser.add_argument('-f', '--file', help='configuraion file', default=DEFAULT_CONF_FILE)
-        args = parser.parse_args()
+        #parser = argparse.ArgumentParser()
+        #parser.add_argument('-p', '--process', help='process name to monitor', default='')
+        #parser.add_argument('-f', '--file', help='configuraion file', default=DEFAULT_CONF_FILE)
+        #args = parser.parse_args()
 
-        conf_data = self._parse_valet_conf(conf_file_name=args.file, process=args.process)
+        conf_data = self._parse_valet_conf()
 
         # if a specific process was asked for..
         # remove all others
-        if args.process is not '':
-            for key in conf_data.keys():
-                if key != args.process:
-                    del conf_data[key]
-
-            if conf_data.get(args.process) is None:
-                print args.process, ' - process not found in conf.'
+        # if args.process is not '':
+        #     for key in conf_data.keys():
+        #         if key != args.process:
+        #             del conf_data[key]
+        #
+        #     if conf_data.get(args.process) is None:
+        #        print args.process, ' - process not found in conf.'
 
         if len(conf_data.keys()) is 0:
             self.log.warn('Processes list is empty - leaving.')
@@ -427,7 +455,7 @@ class HAValet:
 
         for proc in proc_sorted:
             if self._valid_process_conf_data(proc):
-                self.log.info('Launching: ' + proc[NAME]+ ', order: ' + proc[ORDER])
+                self.log.info('Launching: ' + proc[NAME] + ' - parameters: '+str(proc))
                 thread = HaValetThread(proc, exit_event)
                 time.sleep(HEARTBEAT_SEC)
                 thread.start()
@@ -448,4 +476,5 @@ class HAValet:
         self.log.info('ha_valet v1.1 exiting')
 
 if __name__ == '__main__' or __name__ == "main":
+    CONF(default_config_files=[DEFAULT_CONF_FILE])
     HAValet().start()

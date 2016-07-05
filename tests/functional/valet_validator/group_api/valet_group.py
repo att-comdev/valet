@@ -99,7 +99,7 @@ class ValetGroup(object):
         '''
         Checks if group exists in group list, if not returns None
         '''
-        for grp in self.get_list_groups(group_name):
+        for grp in self.get_list_groups():
             if grp["name"] == group_name:
                 return grp["id"], grp["members"]
 

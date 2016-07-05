@@ -6,7 +6,7 @@ Created on Jul 4, 2016
 
 from valet_validator.tests.base import TestCase
 from valet_validator.group_api.valet_group import ValetGroup
-from valet_validator.common import Result, General
+from valet_validator.common import General
 
 class TestGroups(TestCase):
   

@@ -59,8 +59,7 @@ class Analyzer(object):
                     }[group.group_type]
                     
         except Exception as ex:
-            General.log_error("Exception at method check: %s" % ex)
-            General.log_error(traceback.format_exc())
+            General.log_error("Exception at method check: %s" % ex, traceback.format_exc())
             result = False
         
         return Result(result)
@@ -78,8 +77,7 @@ class Analyzer(object):
             return resources_to_compare
 
         except Exception as ex:
-            General.log_error("Exception at method get_resources_to_compare: %" % ex)
-            General.log_error(traceback.format_exc())
+            General.log_error("Exception at method get_resources_to_compare: %" % ex, traceback.format_exc())
 
 
     def are_we_alone(self, hosts_list, ins_for_group):
@@ -91,9 +89,7 @@ class Analyzer(object):
             
             return not instances
         except Exception as ex:
-            General.log_error("Exception at method are_we_alone: %" % ex)
-            General.log_error(traceback.format_exc())
-    
+            General.log_error("Exception at method are_we_alone: %" % ex, traceback.format_exc())    
             
     
     def get_instances_per_host(self, hosts_list):        
@@ -105,8 +101,7 @@ class Analyzer(object):
                 
             return instances
         except Exception as ex:
-            General.log_error("Exception at method get_instances_per_host: %" % ex)
-            General.log_error(traceback.format_exc())
+            General.log_error("Exception at method get_instances_per_host: %" % ex, traceback.format_exc())
         
         
     def are_different(self, hosts_list, level):
@@ -122,8 +117,7 @@ class Analyzer(object):
             return True
                 
         except Exception as ex:
-            General.log_error("Exception at method are_all_hosts_different: %" % ex)
-            General.log_error(traceback.format_exc())
+            General.log_error("Exception at method are_all_hosts_different: %" % ex, traceback.format_exc())
             return False
     
     
@@ -135,8 +129,7 @@ class Analyzer(object):
             return True
         
         except Exception as ex:
-            General.log_error("Exception at method are_all_hosts_different: %" % ex)
-            General.log_error(traceback.format_exc())
+            General.log_error("Exception at method are_all_hosts_different: %" % ex, traceback.format_exc())
             return False
 
         
@@ -153,8 +146,7 @@ class Analyzer(object):
             return ins_for_group
         
         except Exception as ex:
-            General.log_error("Exception at method get_group_instances: %" % ex)
-            General.log_error(traceback.format_exc())
+            General.log_error("Exception at method get_group_instances: %" % ex, traceback.format_exc())
             return None
 
 

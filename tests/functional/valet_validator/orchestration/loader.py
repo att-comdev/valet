@@ -10,9 +10,8 @@ import traceback
 from valet_validator.common import Result, General
 from valet_validator.common.init import CONF
 from valet_validator.common.auth import Auth
-import json
-import requests
-
+from valet_validator.group_api.valet_group import ValetGroup
+import sys
 
 class Loader(object):
 
@@ -42,44 +41,20 @@ class Loader(object):
             return self.wait(stack_name, operation = "create")
 
         except Exception:
-            General.log_error(traceback.format_exc())
-            return Result(False, "Failed to create stack")
+            General.log_error("Failed to create stack", traceback.format_exc())
+            sys.exit(1)
 
 
-    def create_valet_group(self, group_name):
+    def create_valet_group(self, group_name, group_type = "exclusivity"):
         try:
-            group_url = "%s/groups" % CONF.nova.HOST
-
-            headers =   {   "X-Auth-Token": Auth.get_auth_token(), 
-                            "Content-Type": "application/json"   }
-
-            grp_data =  {   "name": group_name,
-                            "type": "exclusivity" }
-
-            group_details = self.get_existing_groups(group_url, group_name, headers)
-#           group_details[0] - group id
-#           group_details[1] - group members
-
-            if group_details == None:
-                General.log_info("Creating group with member")
-                create_response = requests.post(group_url, data=json.dumps(grp_data), headers=headers)
-                General.log_info(create_response.json())
-                group_details = create_response.json()["id"], create_response.json()["members"]
-            else:
-                General.log_info("Group exists")
-
-            self.add_group_member(group_name, group_details, headers)
-        except Exception:
-            General.log_error("Failed to create valet group")
-            General.log_error(traceback.format_exc())
-
-
-    def add_group_member(self, group_name, group_details, headers):
-        if Auth.get_project_id() not in group_details[1]:
-            add_member_url = "%s/groups/%s/members" % (CONF.nova.HOST, group_details[0])
-            member_data = {  "members": [ Auth.get_project_id() ]  }
+            v_group = ValetGroup()
             
-            requests.put(add_member_url, data=json.dumps(member_data), headers=headers)
+            group_details = v_group.get_group_id_and_members(group_name)#(group_name, group_type)
+            v_group.add_group_member(group_details)
+                
+        except Exception:
+            General.log_error("Failed to create valet group", traceback.format_exc())
+            sys.exit(1)
 
 
     def delete_stack(self, stack_name):
@@ -94,18 +69,7 @@ class Loader(object):
                 self.delete_stack(stack.id)
             
         except Exception:
-            General.log_error("Failed to delete stacks")
-            General.log_error(traceback.format_exc())
-
-
-    def get_existing_groups(self, group_url, group_name, headers):
-        list_response = requests.get(group_url, headers=headers)
-        
-        for grp in list_response.json()["groups"]:
-            if grp["name"] == group_name:
-                return grp["id"], grp["members"]
-            
-        return None
+            General.log_error("Failed to delete stacks", traceback.format_exc())
 
 
     def wait(self, stack_name, count = CONF.heat.TIME_CAP, operation = "Operation"):

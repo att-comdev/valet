@@ -22,7 +22,7 @@ class TestExclusivity(TestCase):
 
     def setUp(self):
         '''
-        Adding configuration and logging mechanism
+        Initiating template
         '''
         super(TestExclusivity, self).setUp()
         self.init_template(CONF.test_exclusivity)

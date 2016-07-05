@@ -8,7 +8,6 @@ from oslo_config import cfg
 from oslo_log import log as logging
 from valet_validator.common.init import CONF
 from valet_validator.tests.base import TestCase
-from valet_validator.common import General
 
 
 opt_test_aff = [
@@ -18,7 +17,6 @@ opt_test_aff = [
 
 CONF.register_opts(opt_test_aff, group="test_affinity")
 LOG = logging.getLogger(__name__)
-
 
 class TestAffinity(TestCase):
     

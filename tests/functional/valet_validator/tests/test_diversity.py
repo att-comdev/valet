@@ -1,7 +1,7 @@
 '''
 Created on May 4, 2016
  
-@author: root
+@author: Yael
 '''
  
 from oslo_config import cfg
@@ -23,7 +23,7 @@ class TestDiversity(TestCase):
   
     def setUp(self):
         '''
-        Adding configuration and logging mechanism
+        Initiating template
         '''
         super(TestDiversity, self).setUp()
         self.init_template(CONF.test_diversity)

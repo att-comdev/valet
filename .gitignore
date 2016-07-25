@@ -73,25 +73,6 @@ docs/_build/
 # PyBuilder
 target/
 
-*.log
-[Bb]in
-[Dd]ebug*/
-*.lib
-*.sbr
-obj/
-[Rr]elease*/
-_ReSharper*/
-[Tt]est[Rr]esult*
-*.orig
-.idea/*
-
-
-# Sphinx documentation
-docs/_build/
-
-# PyBuilder
-target/
-
 #ignore thumbnails created by windows
 Thumbs.db
 #Ignore files build by Visual Studio

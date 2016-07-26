@@ -1,0 +1,12 @@
+Source: aic-valet-core
+Section: unknown
+Priority: optional
+Maintainer: valet <valet@intl.att.com>
+Build-Depends: debhelper (>= 8.0.0)
+Standards-Version: 1.0.0
+Homepage: <insert the upstream URL, if relevant>
+
+Package: aic-valet-core
+Architecture: any
+Depends: default-jre, curl, libjna-java, python-dev
+Description: aic-valet-core application for ubuntu 14.04

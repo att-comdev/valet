@@ -162,6 +162,9 @@ class HaValetThread (threading.Thread):
         self._main_loop(this_node)
         self.log.info("HA Valet Watcher Thread - going down!")
 
+    def use(self, param):
+        pass
+
     def _main_loop(self, this_node):
         """ Main heartbeat and liveness check loop
 
@@ -173,12 +176,14 @@ class HaValetThread (threading.Thread):
         quick_start = 0  # number of restarts close together
         last_start = 0
         priority_wait = False
+        
         """
             DO NOT RENAME, DELETE, MOVE the following parameters,
             they may be referenced from within the process commands
         """
         host = self.data.get(HOST, 'localhost')
-#         user = self.data.get(USER, None)
+        user = self.data.get(USER, None)
+        self.use(user)
         my_priority = int(self.data.get(PRIORITY, 1))
         start_command = eval(self.data.get(START_COMMAND, None))
         stop_command = self.data.get(STOP_COMMAND, None)

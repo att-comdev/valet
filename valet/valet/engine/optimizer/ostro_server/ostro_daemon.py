@@ -41,6 +41,7 @@ if __name__ == "__main__":
     config = Config()
     config_status = config.configure()
     if config_status != "success":
+        print(config_status)
         sys.exit(2)
 
     # Create logging directories

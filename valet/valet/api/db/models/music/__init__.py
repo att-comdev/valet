@@ -20,11 +20,11 @@
 
 from abc import ABCMeta, abstractmethod
 import inspect
-from music import Music
 from pecan import conf
 import six
 import uuid
 from valet.api.common.i18n import _
+from valet.api.db.models.music.music import Music
 
 
 def get_class(kls):
@@ -108,7 +108,7 @@ class Base(object):
     __tablename__ = None
 
     @classproperty
-    def query(self, cls):  # pylint: disable=E0213
+    def query(cls):  # pylint: disable=E0213
         '''Return a query object a la sqlalchemy'''
         return Query(cls)
 
@@ -130,12 +130,12 @@ class Base(object):
         conf.music.engine.create_table(**kwargs)
 
     @abstractclassmethod
-    def schema(self, cls):
+    def schema(cls):
         '''Return schema'''
         return cls()
 
     @abstractclassmethod
-    def pk_name(self, cls):
+    def pk_name(cls):
         '''Primary key name'''
         return cls()
 

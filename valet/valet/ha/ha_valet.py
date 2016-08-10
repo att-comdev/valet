@@ -176,7 +176,7 @@ class HaValetThread (threading.Thread):
         quick_start = 0  # number of restarts close together
         last_start = 0
         priority_wait = False
-        
+
         """
             DO NOT RENAME, DELETE, MOVE the following parameters,
             they may be referenced from within the process commands

@@ -12,6 +12,7 @@
 #################################################################################################################
 
 
+import os
 import sys
 
 
@@ -152,7 +153,8 @@ class Config(object):
 
     def _configure_system(self):
         try:
-            f = open("./ostro.cfg", "r")
+            config_path = os.path.dirname(os.path.realpath(__file__))
+            f = open(config_path + "/ostro.cfg", "r")
             line = f.readline()
 
             while line:
@@ -293,7 +295,7 @@ class Config(object):
             return "success"
 
         except IOError as e:
-            return "I/O error({}): {} while parsing system parameters".format(e.errno, e.strerror)
+            return "I/O error({}): {} while parsing system parameters".format(e, e.errno, e.strerror)
         except Exception:
             return "Unexpected error while parsing system parameters: ", sys.exc_info()[0]
 

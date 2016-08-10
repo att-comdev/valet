@@ -24,6 +24,7 @@ Thumbs.db
 *.log
 # C extensions
 *.so
+*.pid
 
 # Distribution / packaging
 .Python

@@ -4,14 +4,15 @@
 #################################################################################################################
 # Author: Gueyoung Jung
 # Contact: gjung@research.att.com
-# Version 2.0.3: Mar. 15, 2016
+# Version 1.0: Aug. 12, 2016
 #
 # Functions
 # - Parse each application
 #
 #################################################################################################################
 
-from valet.engine.optimizer.app_manager.app_topology_base import VGroup, VGroupLink, VM, VMLink, Volume, VolumeLink, LEVELS
+from valet.engine.optimizer.app_manager.app_topology_base import VGroup, VGroupLink, VM, VMLink, LEVELS
+#from valet.engine.optimizer.app_manager.app_topology_base import Volume, VolumeLink
 
 
 '''
@@ -102,7 +103,8 @@ class Parser(object):
                 self.logger.debug("get a vm = " + vm.name)
 
             elif r["type"] == "OS::Cinder::Volume":
-                # NOTE: do nothing at this version
+                self.logger.debug("do nothing for volume at this version")
+
                 '''
                 volume = Volume(self.stack_id, rk)
 
@@ -121,7 +123,6 @@ class Parser(object):
                 volumes[volume.uuid] = volume
                 '''
 
-            # elif r["type"] == "ATT::CloudQoS::ResourceGroup":
             elif r["type"] == "ATT::Valet::GroupAssignment":
                 vgroup = VGroup(self.stack_id, rk)
 
@@ -226,6 +227,9 @@ class Parser(object):
         for rk, r in _elements.iteritems():
 
             if r["type"] == "OS::Cinder::VolumeAttachment":
+                self.logger.debug("do nothing for volume attachment at this version")
+
+                '''
                 vm_uuid = r["properties"]["instance_uuid"]
                 if vm_uuid not in _vms.keys():
                     self.status = "vm {} of volume attachement {} not exist".format(vm_uuid, r["name"])
@@ -251,9 +255,11 @@ class Parser(object):
 
                 vm.volume_list.append(vm2volume_link)
                 volume.vm_list.append(volume2vm_link)
+                '''
 
         return True
 
+    '''
     def _set_volume_attributes(self, _elements, _link_id, _link_name, _link1, _link2):
         for _, r in _elements.iteritems():
             if r["type"] == "ATT::CloudQoS::Pipe":
@@ -264,6 +270,7 @@ class Parser(object):
                         _link1.io_bandwidth = r["properties"]["bandwidth"]["min"]
                         _link2.io_bandwidth = r["properties"]["bandwidth"]["min"]
                     break
+    '''
 
     def _set_total_link_capacities(self, _vms, _volumes):
         for _, vm in _vms.iteritems():
@@ -340,7 +347,6 @@ class Parser(object):
     def _merge_diversity_groups(self, _elements, _vgroups, _vms, _volumes):
         for level in LEVELS:
             for rk, r in _elements.iteritems():
-                # if r["type"] == "ATT::CloudQoS::ResourceGroup" and \
                 if r["type"] == "ATT::Valet::GroupAssignment" and \
                    r["properties"]["group_type"] == "diversity" and \
                    r["properties"]["level"] == level:
@@ -377,7 +383,6 @@ class Parser(object):
     def _merge_exclusivity_groups(self, _elements, _vgroups, _vms, _volumes):
         for level in LEVELS:
             for rk, r in _elements.iteritems():
-                # if r["type"] == "ATT::CloudQoS::ResourceGroup" and \
                 if r["type"] == "ATT::Valet::GroupAssignment" and \
                    r["properties"]["group_type"] == "exclusivity" and \
                    r["properties"]["level"] == level:
@@ -416,7 +421,6 @@ class Parser(object):
 
         for level in LEVELS:
             for rk, r in _elements.iteritems():
-                # if r["type"] == "ATT::CloudQoS::ResourceGroup" and \
                 if r["type"] == "ATT::Valet::GroupAssignment" and \
                    r["properties"]["group_type"] == "affinity" and \
                    r["properties"]["level"] == level:

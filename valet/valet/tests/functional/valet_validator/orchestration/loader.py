@@ -47,7 +47,6 @@ class Loader(object):
             v_group = ValetGroup()
 
             group_details = v_group.get_group_id_and_members(group_name)  # (group_name, group_type)
-            General.log_info(group_details)
             v_group.add_group_member(group_details)
 
         except Exception:

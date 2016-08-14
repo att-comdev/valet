@@ -7,7 +7,7 @@ Created on May 4, 2016
 from oslo_config import cfg
 from oslo_log import log as logging
 from valet.tests.functional.valet_validator.common.init import CONF
-from valet.tests.functional.valet_validator.tests.base import TestCase
+from valet.tests.functional.valet_validator.tests.functional_base import FunctionalTestCase
 
 
 opt_test_div = \
@@ -20,7 +20,7 @@ CONF.register_opts(opt_test_div, group="test_diversity")
 LOG = logging.getLogger(__name__)
 
 
-class TestDiversity(TestCase):
+class TestDiversity(FunctionalTestCase):
 
     def setUp(self):
         ''' Initiating template '''

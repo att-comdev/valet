@@ -61,6 +61,8 @@ htmlcov/
 nosetests.xml
 coverage.xml
 ostro-daemon.pid
+.project
+.pydevproject
 
 # Translations
 *.mo

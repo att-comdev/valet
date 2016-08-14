@@ -5,30 +5,27 @@ Created on May 5, 2016
 '''
 
 import os
-from oslo_config import fixture as fixture_config
 from oslo_log import log as logging
-from oslotest.base import BaseTestCase
-from valet.tests.functional.valet_validator.common import init
+import time
 from valet.tests.functional.valet_validator.common.init import COLORS
 from valet.tests.functional.valet_validator.common.resources import TemplateResources
 from valet.tests.functional.valet_validator.compute.analyzer import Analyzer
 from valet.tests.functional.valet_validator.orchestration.loader import Loader
+from valet.tests.base import Base
+
 
 LOG = logging.getLogger(__name__)
 
 
-class TestCase(BaseTestCase):
+class FunctionalTestCase(Base):
     """Test case base class for all unit tests."""
 
     def __init__(self, *args, **kwds):
-        ''' initializing the TestCase - loading the logger, loader and analyzer '''
-        super(TestCase, self).__init__(*args, **kwds)
-
-        self.CONF = self.useFixture(fixture_config.Config()).conf
-        init.prepare(self.CONF)
+        ''' initializing the FunctionalTestCase - loading the logger, loader and analyzer '''
+        super(FunctionalTestCase, self).__init__(*args, **kwds)
 
     def setUp(self):
-        super(TestCase, self).setUp()
+        super(FunctionalTestCase, self).setUp()
 
         self.load = Loader()
         self.compute = Analyzer()
@@ -48,6 +45,7 @@ class TestCase(BaseTestCase):
         # creates new stack
         my_resources = TemplateResources(template_path)
         self.validate(self.load.create_stack(stack_name, my_resources))
+        time.sleep(self.CONF.heat.DELAY_DURATION)
 
         # validation
         self.validate(self.compute.check(my_resources))
@@ -59,12 +57,3 @@ class TestCase(BaseTestCase):
     def init_template(self, test):
         self.stack_name = test.STACK_NAME
         self.template_path = self.get_template_path(test.TEMPLATE_NAME)
-
-    def validate(self, result):
-        self.assertEqual(True, result.ok, result.message)
-
-    def validate_test(self, result):
-        self.assertTrue(result)
-
-    def get_name(self):
-        pass

@@ -6,10 +6,10 @@ Created on Jul 4, 2016
 
 from valet.tests.functional.valet_validator.common import General
 from valet.tests.functional.valet_validator.group_api.valet_group import ValetGroup
-from valet.tests.functional.valet_validator.tests.base import TestCase
+from valet.tests.functional.valet_validator.tests.functional_base import FunctionalTestCase
 
 
-class TestGroups(TestCase):
+class TestGroups(FunctionalTestCase):
 
     def setUp(self):
         ''' Adding configuration and logging mechanism '''

@@ -60,6 +60,7 @@ htmlcov/
 .cache
 nosetests.xml
 coverage.xml
+ostro-daemon.pid
 
 # Translations
 *.mo

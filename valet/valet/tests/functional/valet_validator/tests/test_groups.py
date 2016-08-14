@@ -61,7 +61,7 @@ class TestGroups(TestCase):
         self.assertEqual(404, member_respone.status_code, "delete_group_member failed with code %s" % member_respone.status_code)
 
         General.log_group("Delete member (tenant ID)")
-        member_respone = self.groups.delete_group_member(grp_id, "cb9c9997fc6e41cc87186de92aa0a099")
+        member_respone = self.groups.delete_group_member(grp_id, "15bcd03324294d43bf1b14b49b8cd118")
         self.assertEqual(204, member_respone.status_code, "delete_group_member failed with code %s" % member_respone.status_code)
 
         General.log_group("Return list of groups")

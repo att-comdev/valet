@@ -12,8 +12,8 @@ from valet.tests.functional.valet_validator.tests.base import TestCase
 
 opt_test_aff = \
     [
-        cfg.StrOpt('STACK_NAME', default="affinity_stack"),
-        cfg.StrOpt('TEMPLATE_NAME', default="affinity1"),
+        cfg.StrOpt('STACK_NAME', default="basic_affinity_stack"),
+        cfg.StrOpt('TEMPLATE_NAME', default="affinity_basic_2_instances"),
     ]
 
 CONF.register_opts(opt_test_aff, group="test_affinity")
@@ -28,8 +28,8 @@ class TestAffinity(TestCase):
         self.init_template(CONF.test_affinity)
 
     def test_affinity(self):
-        self.validate_test(True)
-#        self.run_test(self.stack_name, self.template_path)
+#        self.validate_test(True)
+        self.run_test(self.stack_name, self.template_path)
 
     def get_name(self):
         return __name__

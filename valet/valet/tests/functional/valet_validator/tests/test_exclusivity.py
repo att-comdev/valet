@@ -12,8 +12,8 @@ from valet.tests.functional.valet_validator.tests.base import TestCase
 
 opt_test_ex = \
     [
-        cfg.StrOpt('STACK_NAME', default="exclusivity_stack"),
-        cfg.StrOpt('TEMPLATE_NAME', default="exclusivity-basic"),
+        cfg.StrOpt('STACK_NAME', default="basic_exclusivity_stack"),
+        cfg.StrOpt('TEMPLATE_NAME', default="exclusivity_basic_2_instances"),
     ]
 
 CONF.register_opts(opt_test_ex, group="test_exclusivity")

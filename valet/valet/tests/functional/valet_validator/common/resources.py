@@ -26,7 +26,7 @@ class TemplateResources(object):
                 doc = yaml.load(self.template_data)
 
                 for resource in doc[TEMPLATE_RES]:
-                    resource_type = str(doc[TEMPLATE_RES][resource]["group_type"])
+                    resource_type = str(doc[TEMPLATE_RES][resource]["type"])
                     if resource_type == "OS::Nova::Server":
                         self.instances.append(Instance(doc, resource))
                     elif resource_type == "ATT::Valet::GroupAssignment":

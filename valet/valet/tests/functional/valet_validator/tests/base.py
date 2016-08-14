@@ -47,7 +47,7 @@ class TestCase(BaseTestCase):
 
         # creates new stack
         my_resources = TemplateResources(template_path)
-        self.validate(self.load.create_stack(stack_name, template_path, my_resources))
+        self.validate(self.load.create_stack(stack_name, my_resources))
 
         # validation
         self.validate(self.compute.check(my_resources))

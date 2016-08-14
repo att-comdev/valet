@@ -23,7 +23,7 @@ from datetime import datetime
 import iso8601
 # https://github.com/openstack/python-keystoneclient/blob/
 #         master/keystoneclient/v2_0/client.py
-# import keystoneauth1.exceptions
+import keystoneauth1.exceptions
 from keystoneauth1.identity import v2
 from keystoneauth1 import session
 from keystoneclient.v2_0 import client
@@ -106,12 +106,11 @@ class Identity(object):
         }
         try:
             return self.client.tokens.validate(**kwargs)
-        except Exception:
+        except keystoneauth1.exceptions.http.NotFound:
             # FIXME: Return a 404 or at least an auth required?
             pass
         return None
 
-    def is_tenant_list_valid(self, tenant_list):
         '''Returns true if tenant list contains valid tenant IDs'''
         tenants = self.client.tenants.list()
         if isinstance(tenant_list, list):

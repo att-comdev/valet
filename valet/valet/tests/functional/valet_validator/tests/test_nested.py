@@ -13,7 +13,7 @@ from valet.tests.functional.valet_validator.tests.base import TestCase
 opt_test_aff = \
     [
         cfg.StrOpt('STACK_NAME', default="nest_stack"),
-        cfg.StrOpt('TEMPLATE_NAME', default="diversity between 2 affinity"),
+        cfg.StrOpt('TEMPLATE_NAME', default="diversity_between_2_affinity"),
     ]
 
 CONF.register_opts(opt_test_aff, group="test_nested")

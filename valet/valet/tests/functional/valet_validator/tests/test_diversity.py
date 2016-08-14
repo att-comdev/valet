@@ -12,8 +12,8 @@ from valet.tests.functional.valet_validator.tests.base import TestCase
 
 opt_test_div = \
     [
-        cfg.StrOpt('STACK_NAME', default="diversity_stack"),
-        cfg.StrOpt('TEMPLATE_NAME', default="diversity1"),
+        cfg.StrOpt('STACK_NAME', default="basic_diversity_stack"),
+        cfg.StrOpt('TEMPLATE_NAME', default="diversity_basic_2_instances"),
     ]
 
 CONF.register_opts(opt_test_div, group="test_diversity")

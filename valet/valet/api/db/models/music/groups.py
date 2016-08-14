@@ -67,12 +67,12 @@ class Group(Base):
             'members': simplejson.dumps(self.members),
         }
 
-    def __init__(self, name, description, group_type, members, _insert=True):
+    def __init__(self, name, description, type, members, _insert=True):
         '''Initializer'''
         super(Group, self).__init__()
         self.name = name
         self.description = description or ""
-        self.type = group_type
+        self.type = type
         if _insert:
             self.members = []  # members ignored at init time
             self.insert()

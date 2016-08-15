@@ -4,7 +4,7 @@
 ################################################################################################################
 # Author: Gueyoung Jung
 # Contact: gjung@research.att.com
-# Version 2.0.3: Mar. 15, 2016
+# Version 1.0: Aug. 12, 2016
 #
 # Functions
 # - Constrain the search
@@ -205,7 +205,7 @@ class ConstraintSolver(object):
                     conflict_list.append(r)
 
                     debug_resource_name = r.get_resource_name(_level)
-                    self.logger.debug("violates non exclusivity in resource = " + debug_resource_name)
+                    self.logger.debug("exclusivity defined in resource = " + debug_resource_name)
 
         _candidate_list[:] = [c for c in _candidate_list if c not in conflict_list]
 
@@ -249,7 +249,7 @@ class ConstraintSolver(object):
                     candidate_list.append(r)
             else:
                 debug_resource_name = r.get_resource_name(_level)
-                self.logger.debug("violates the exclusivity group in resource = " + debug_resource_name)
+                self.logger.debug("exclusivity not exist in resource = " + debug_resource_name)
 
         return candidate_list
 
@@ -271,7 +271,7 @@ class ConstraintSolver(object):
                     candidate_list.append(r)
             else:
                 debug_resource_name = r.get_resource_name(_level)
-                self.logger.debug("violates the hibernated group in resource = " + debug_resource_name)
+                self.logger.debug("exclusivity not allowed in resource = " + debug_resource_name)
 
         return candidate_list
 

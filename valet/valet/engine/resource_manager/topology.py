@@ -4,7 +4,7 @@
 #################################################################################################################
 # Author: Gueyoung Jung
 # Contact: gjung@research.att.com
-# Version 2.0.2: Feb. 9, 2016
+# Version 1.0: Aug. 12, 2016
 #
 # Functions
 # - Capture datacenter configuration and layout including networking
@@ -181,10 +181,11 @@ class Topology(object):
                         index_of_node_type = index
                         num_of_fields += 1
 
+                    if c == '.':
+                        break
+
                     if index_of_node_type > 0 and index > index_of_node_type:
                         num_of_fields += 1
-                        # self.logger.debug("too many fields = " + str(num_of_fields))
-                        # validated_name = False
                         break
 
             index += 1
@@ -205,3 +206,12 @@ class Topology(object):
             rack_name = _host_name[:end_of_rack_index]
 
         return (region_name, rack_name, node_type, status)
+
+
+# for unit test
+t = Topology(None, None)
+(region, rack, node_type, status) = t._set_layout_by_name("pdk15r05c001")
+print region
+print rack
+print node_type
+print status

@@ -45,14 +45,14 @@ class FunctionalTestCase(Base):
         # creates new stack
         my_resources = TemplateResources(template_path)
         tries = CONF.valet.TRIES_TO_CREATE
-        
-        res = self.load.create_stack(stack_name, my_resources)       
+
+        res = self.load.create_stack(stack_name, my_resources)
         while "Ostro error" in res.message and tries > 0:
-            LOG.error("Ostro error - try number %d" %(CONF.valet.TRIES_TO_CREATE - tries + 2))
+            LOG.error("Ostro error - try number %d" % (CONF.valet.TRIES_TO_CREATE - tries + 2))
             self.load.delete_all_stacks()
             res = self.load.create_stack(stack_name, my_resources)
             tries -= 1
-           
+
         self.validate(res)
 #         self.validate(self.load.create_stack(stack_name, my_resources))
         time.sleep(self.CONF.heat.DELAY_DURATION)

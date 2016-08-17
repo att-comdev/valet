@@ -795,11 +795,6 @@ class Search(object):
                     self._set_compute_sort_base(_level, candidate_list)
                     candidate_list.sort(key=operator.attrgetter("sort_base"))
             else:
-                self.logger.info(VM)
-                self.logger.info(_n.node)
-                self.logger.info(type(_n))
-                self.logger.info(dir(_n.node))
-
                 if isinstance(_n.node, VGroup) or isinstance(_n.node, VM):
                     self._set_compute_sort_base(_level, candidate_list)
                     candidate_list.sort(key=operator.attrgetter("sort_base"))

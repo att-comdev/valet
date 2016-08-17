@@ -47,7 +47,6 @@ opt_nova = \
     [
         cfg.StrOpt('VERSION', default="2"),
         cfg.StrOpt('ATTR', default="OS-EXT-SRV-ATTR:host"),
-        cfg.StrOpt('HOST', default="http://controller:8090/v1"),
     ]
 
 opt_heat = \
@@ -57,12 +56,22 @@ opt_heat = \
         cfg.StrOpt('VALUE', default="output_value"),
         cfg.StrOpt('VERSION', default="1"),
         cfg.IntOpt('DELAY_DURATION', default=1),
+        cfg.IntOpt('TRIES_TO_CREATE', default=5),
+        cfg.IntOpt('TIME_CAP', default=60),
+    ]
+
+opt_valet = \
+    [
+        cfg.StrOpt('HOST', default="http://controller:8090/v1"),
+        cfg.IntOpt('DELAY_DURATION', default=1),
+        cfg.IntOpt('TRIES_TO_CREATE', default=5),
         cfg.IntOpt('TIME_CAP', default=60),
     ]
 
 CONF.register_opts(opts_auth, group="auth")
 CONF.register_opts(opt_heat, group="heat")
 CONF.register_opts(opt_nova, group="nova")
+CONF.register_opts(opt_valet, group="valet")
 
 _initialized = False
 

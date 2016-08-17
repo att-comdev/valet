@@ -66,7 +66,7 @@ class Loader(object):
         except Exception:
             General.log_error("Failed to delete stacks", traceback.format_exc())
 
-    def wait(self, stack_name, count=CONF.heat.TIME_CAP, operation="Operation"):
+    def wait(self, stack_name, count=CONF.valet.TIME_CAP, operation="Operation"):
         ''' Checking the result of the process (create/delete) and writing the result to log '''
         while str(self.stacks.get(stack_name).status) == "IN_PROGRESS" and count > 0:
             count -= 1
@@ -76,7 +76,7 @@ class Loader(object):
             General.log_info(operation + " Successfully completed")
             return Result()
         elif str(self.stacks.get(stack_name).status) == "FAILED":
-            msg = operation + " Failed  -  " + self.stacks.get(stack_name).stack_status_reason
+            msg = operation + " failed  -  " + self.stacks.get(stack_name).stack_status_reason
         else:
             msg = operation + " timed out"
         General.log_error(msg)

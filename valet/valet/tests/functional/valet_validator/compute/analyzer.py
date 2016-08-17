@@ -132,7 +132,7 @@ class Analyzer(object):
             return None
 
     def get_hostname(self, vm):
-        return str(getattr(vm, CONF.nova.host))
+        return str(getattr(vm, CONF.valet.HOST))
 
     def is_already_exists(self, diction, item):
         if item in diction:

@@ -15,7 +15,7 @@ from valet.tests.functional.valet_validator.common.init import CONF
 class ValetGroup(object):
 
     def __init__(self):
-        self.groups_url = "%s/groups" % CONF.nova.HOST
+        self.groups_url = "%s/groups" % CONF.valet.HOST
 
         self.headers = {"X-Auth-Token": Auth.get_auth_token(),
                         "Content-Type": "application/json"}
@@ -63,14 +63,18 @@ class ValetGroup(object):
         '''
         group_details = self.check_group_exists(group_name)
 
-        if group_details is None:
-            General.log_info("Creating group")
-            create_response = self.create_group(group_name, group_type)
-            return create_response.json()["id"], create_response.json()["members"]
-        else:
-            General.log_info("Group exists")
+        try:
+            if group_details is None:
+                General.log_info("Creating group")
+                create_response = self.create_group(group_name, group_type)
+                return create_response.json()["id"], create_response.json()["members"]
+            else:
+                General.log_info("Group exists")
 
-        return group_details
+            return group_details
+        except Exception:
+            import traceback
+            General.log_error(traceback.format_exc())
 
     def add_group_member(self, group_details):
         ''' Checks if member exists in group, if not - adds it '''

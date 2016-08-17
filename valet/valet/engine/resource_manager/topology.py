@@ -209,9 +209,9 @@ class Topology(object):
 
 
 # for unit test
-t = Topology(None, None)
-(region, rack, node_type, status) = t._set_layout_by_name("pdk15r05c001")
-print region
-print rack
-print node_type
-print status
+# t = Topology(None, None)
+# (region, rack, node_type, status) = t._set_layout_by_name("pdk15r05c001")
+# print region
+# print rack
+# print node_type
+# print status

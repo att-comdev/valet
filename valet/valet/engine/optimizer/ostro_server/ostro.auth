@@ -1,5 +1,5 @@
 # Version 2.0.2: Feb. 9, 2016
 project_name=demo
 admin_tenant_name=demo
-user_name=demo
-password=Aa123456
+user_name=admin
+password=qwer4321

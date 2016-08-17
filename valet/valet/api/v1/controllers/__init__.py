@@ -37,9 +37,10 @@ LOG = logging.getLogger(__name__)
 
 def valid_group_name(value):
     '''Validator for group name type.'''
-    assert set(value) <= set(string.letters + string.digits + "-._~"), \
-        _("must contain only uppercase and lowercase letters, decimal digits, \
-        hyphens, periods, underscores, and tildes [RFC 3986, Section 2.3]")
+    if not value or not (set(value) <= set(string.letters + string.digits + "-._~")):
+        LOG.error("group name is not valid")
+        LOG.error("group name must contain only uppercase and lowercase letters, decimal digits, \
+            hyphens, periods, underscores, and tildes [RFC 3986, Section 2.3]")
 
 
 @instance_of((list, dict))

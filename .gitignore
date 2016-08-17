@@ -63,6 +63,8 @@ coverage.xml
 ostro-daemon.pid
 .project
 .pydevproject
+.testrepository
+.settings
 
 # Translations
 *.mo

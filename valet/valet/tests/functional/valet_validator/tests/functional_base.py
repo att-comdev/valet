@@ -7,11 +7,11 @@ Created on May 5, 2016
 import os
 from oslo_log import log as logging
 import time
-from valet.tests.functional.valet_validator.common.init import COLORS
+from valet.tests.base import Base
+from valet.tests.functional.valet_validator.common.init import COLORS, CONF
 from valet.tests.functional.valet_validator.common.resources import TemplateResources
 from valet.tests.functional.valet_validator.compute.analyzer import Analyzer
 from valet.tests.functional.valet_validator.orchestration.loader import Loader
-from valet.tests.base import Base
 
 
 LOG = logging.getLogger(__name__)
@@ -44,7 +44,17 @@ class FunctionalTestCase(Base):
 
         # creates new stack
         my_resources = TemplateResources(template_path)
-        self.validate(self.load.create_stack(stack_name, my_resources))
+        tries = CONF.valet.TRIES_TO_CREATE
+        
+        res = self.load.create_stack(stack_name, my_resources)       
+        while "Ostro error" in res.message and tries > 0:
+            LOG.error("Ostro error - try number %d" %(CONF.valet.TRIES_TO_CREATE - tries + 2))
+            self.load.delete_all_stacks()
+            res = self.load.create_stack(stack_name, my_resources)
+            tries -= 1
+           
+        self.validate(res)
+#         self.validate(self.load.create_stack(stack_name, my_resources))
         time.sleep(self.CONF.heat.DELAY_DURATION)
 
         # validation

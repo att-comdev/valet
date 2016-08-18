@@ -4,11 +4,11 @@
 
 pip
 pecan>=1.1.1
-pecan-notario
-simplejson
-pymysql
-sqlalchemy
-pika
-python-daemon
+pecan-notario<=0.0.3
+simplejson<=3.3.1
+#pymysql
+#sqlalchemy
+pika<=0.10.0
+python-daemon<=2.1.1
 #oslo.messaging!=1.17.0,!=1.17.1,!=2.6.0,!=2.6.1,!=2.7.0,!=2.8.0,!=2.8.1,!=2.9.0,!=3.1.0,>=1.16.0 # Apache-2.0
 #oslo.messaging==1.8.3

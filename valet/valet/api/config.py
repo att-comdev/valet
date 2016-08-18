@@ -73,22 +73,23 @@ ostro = {
 
 messaging = {
     'config': {
-        'transport_url': 'rabbit://openstack:qwer4321@controller:5672/',
+        'transport_url': 'rabbit://openstack:Aa123456@controller:5672/',
     }
 }
 
 identity = {
     'config': {
-        'username': 'admin',
-        'password': 'qwer4321',
+        'username': 'demo',
+        'password': 'Aa123456',
         'project_name': 'demo',
         'auth_url': 'http://controller:5000/v2.0',
     }
 }
 
 music = {
-    'host': '127.0.0.1',
+    'host': 'valet2',
+    'hosts': 'valet1, valet2',
     'port': '8080',
     'keyspace': 'valet_test',
-    'replication_factor': 1,
+    'replication_factor': 3,
 }

@@ -16,6 +16,7 @@ import copy
 import sys
 
 from resource_base import HostGroup, Switch, Link
+from sre_parse import isdigit
 
 
 class Topology(object):
@@ -145,8 +146,7 @@ class Topology(object):
 
         for c in _host_name:
             if index >= self.config.num_of_region_chars:
-                if c == '0' or c == '1' or c == '2' or c == '3' or c == '4' or c == '5' or \
-                   c == '6' or c == '7' or c == '8' or c == '9':
+                if isdigit(c):
                     pass
                 else:
                     if index == self.config.num_of_region_chars:
@@ -206,12 +206,3 @@ class Topology(object):
             rack_name = _host_name[:end_of_rack_index]
 
         return (region_name, rack_name, node_type, status)
-
-
-# for unit test
-# t = Topology(None, None)
-# (region, rack, node_type, status) = t._set_layout_by_name("pdk15r05c001")
-# print region
-# print rack
-# print node_type
-# print status

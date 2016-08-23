@@ -300,8 +300,8 @@ class HaValetThread (threading.Thread):
                 self.log.info('ping (retry %d): %s' % (i, call))
                 proc = subprocess.Popen(call, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
                 priority = proc.wait()
-                if priority==255: # no route to host
-                    priority=0
+                if priority == 255:  # no route to host
+                    priority = 0
                 out, err = proc.communicate()
                 self.log.debug('out: ' + out + ', err: ' + err)
                 self.log.info('ping result (should be > 0): %s' % (str(priority)))

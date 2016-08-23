@@ -19,7 +19,6 @@
 '''Group Model'''
 
 import simplejson
-
 from . import Base
 
 

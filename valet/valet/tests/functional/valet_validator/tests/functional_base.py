@@ -30,7 +30,7 @@ class FunctionalTestCase(Base):
         self.load = Loader()
         self.compute = Analyzer()
 
-        LOG.info("%s %s Starting... %s" % (COLORS["L_PURPLE"], self.get_name(), COLORS["WHITE"]))
+        LOG.info("%s %s is starting... %s" % (COLORS["L_BLUE"], __file__, COLORS["WHITE"]))
 
     def run_test(self, stack_name, template_path):
         ''' scenario -
@@ -44,21 +44,29 @@ class FunctionalTestCase(Base):
 
         # creates new stack
         my_resources = TemplateResources(template_path)
-        tries = CONF.valet.TRIES_TO_CREATE
 
         res = self.load.create_stack(stack_name, my_resources)
+        if "Ostro error" in res.message:
+            res = self.try_again(res, stack_name, my_resources)
+
+        self.validate(res)
+        LOG.info("%s stack creation is done successfully %s" % (COLORS["L_PURPLE"], COLORS["WHITE"]))
+        time.sleep(self.CONF.valet.DELAY_DURATION)
+
+        # validation
+        self.validate(self.compute.check(my_resources))
+        LOG.info("%s validation is done successfully %s" % (COLORS["L_PURPLE"], COLORS["WHITE"]))
+
+    def try_again(self, res, stack_name, my_resources):
+        tries = CONF.valet.TRIES_TO_CREATE
         while "Ostro error" in res.message and tries > 0:
             LOG.error("Ostro error - try number %d" % (CONF.valet.TRIES_TO_CREATE - tries + 2))
             self.load.delete_all_stacks()
             res = self.load.create_stack(stack_name, my_resources)
             tries -= 1
+            time.sleep(self.CONF.valet.PAUSE)
 
-        self.validate(res)
-#         self.validate(self.load.create_stack(stack_name, my_resources))
-        time.sleep(self.CONF.heat.DELAY_DURATION)
-
-        # validation
-        self.validate(self.compute.check(my_resources))
+        return res
 
     def get_template_path(self, template_name):
         possible_topdir = os.path.normpath(os.path.join(os.path.abspath(__file__), os.pardir, os.pardir))

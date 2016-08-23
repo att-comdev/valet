@@ -65,6 +65,7 @@ opt_valet = \
         cfg.StrOpt('HOST', default="http://controller:8090/v1"),
         cfg.IntOpt('DELAY_DURATION', default=1),
         cfg.IntOpt('TRIES_TO_CREATE', default=5),
+        cfg.IntOpt('PAUSE', default=5),
         cfg.IntOpt('TIME_CAP', default=60),
     ]
 

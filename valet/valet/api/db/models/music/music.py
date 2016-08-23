@@ -72,9 +72,8 @@ class REST(object):
         }
         return headers
 
-    def request(self, method='get', content_type='application/json',
-                path='/', data=None):
-        '''Performs HTTP request.'''
+    def request(self, method='get', content_type='application/json', path='/', data=None):
+        ''' Performs HTTP request '''
         if method not in ('post', 'get', 'put', 'delete'):
             raise KeyError(_("Method must be one of post, get, put, or delete."))
         method_fn = getattr(requests, method)

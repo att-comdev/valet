@@ -115,7 +115,7 @@ class MembersItemController(object):
 
     @expose(generic=True, template='json')
     def index(self):
-        '''Catchall for unallowed methods'''
+        '''Catch all for unallowed methods'''
         message = _('The %s method is not allowed.') % request.method
         kwargs = {'allow': self.allow()}
         error('/errors/not_allowed', message, **kwargs)
@@ -219,7 +219,7 @@ class GroupsItemController(object):
 
     @classmethod
     def allow(cls):
-        '''Allowed methods'''
+        ''' Allowed methods '''
         return 'GET,PUT,DELETE'
 
     @expose(generic=True, template='json')
@@ -276,7 +276,7 @@ class GroupsController(object):
 
     @expose(generic=True, template='json')
     def index(self):
-        '''Catchall for unallowed methods'''
+        '''Catch all for unallowed methods'''
         message = _('The %s method is not allowed.') % request.method
         kwargs = {'allow': self.allow()}
         error('/errors/not_allowed', message, **kwargs)

@@ -18,9 +18,10 @@ import sys
 
 class Config(object):
 
-    def __init__(self):
+    def __init__(self, config_file_name="ostro.cfg"):
 
         # System parameters
+        self.config_file_name = config_file_name
         self.root_loc = None
 
         self.mode = None
@@ -154,7 +155,7 @@ class Config(object):
     def _configure_system(self):
         try:
             config_path = os.path.dirname(os.path.realpath(__file__))
-            f = open(config_path + "/ostro.cfg", "r")
+            f = open(config_path + "/" + self.config_file_name, "r")
             line = f.readline()
 
             while line:
@@ -296,8 +297,8 @@ class Config(object):
 
         except IOError as e:
             return "I/O error({}): {} while parsing system parameters".format(e, e.errno, e.strerror)
-        except Exception:
-            return "Unexpected error while parsing system parameters: ", sys.exc_info()[0]
+        except Exception as e:
+            return "Unexpected error while parsing system parameters: %s" % e
 
     def _set_authentication(self):
         try:
@@ -328,8 +329,8 @@ class Config(object):
             return "success"
         except IOError as e:
             return "I/O error({}): {} while parsing authentication parameters".format(e.errno, e.strerror)
-        except Exception:
-            return "Unexpected error while parsing authentication parameters: ", sys.exc_info()[0]
+        except Exception as e:
+            return "Unexpected error while parsing authentication parameters: %s" % e
 
     def _set_simulation(self):
         try:

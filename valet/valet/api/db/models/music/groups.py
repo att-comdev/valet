@@ -18,8 +18,8 @@
 
 '''Group Model'''
 
-import simplejson
 from . import Base
+import simplejson
 
 
 class Group(Base):

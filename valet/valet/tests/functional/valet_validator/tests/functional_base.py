@@ -30,7 +30,7 @@ class FunctionalTestCase(Base):
         self.load = Loader()
         self.compute = Analyzer()
 
-        LOG.info("%s %s is starting... %s" % (COLORS["L_BLUE"], __file__, COLORS["WHITE"]))
+        LOG.info("%s %s is starting... %s" % (COLORS["L_BLUE"], self.get_name(), COLORS["WHITE"]))
 
     def run_test(self, stack_name, template_path):
         ''' scenario -

@@ -80,9 +80,13 @@ def tenant_servers_in_group(tenant_id, group):
     server_list = server_list_for_group(group)
     nova = nova_client()
     for server_id in server_list:
-        server = nova.servers.get(server_id)
-        if server.tenant_id == tenant_id:
-            servers.append(server_id)
+        try:
+            server = nova.servers.get(server_id)
+            if server.tenant_id == tenant_id:
+                servers.append(server_id)
+        except Exception as ex:  # TODO(JD): update DB
+            LOG.error("Instance %s could not be found" % server_id)
+            LOG.error(ex)
     if len(servers) > 0:
         return servers
 
@@ -304,15 +308,16 @@ class GroupsController(object):
         group_type = kwargs.get('type', None)
         members = []  # Use /v1/groups/members endpoint to add members
 
-        group = Group(group_name, description, group_type, members)
-        if group:
-            response.status = 201
+        try:
+            group = Group(group_name, description, group_type, members)
+            if group:
+                response.status = 201
 
-            # Flush so that the DB is current.
-            group.flush()
-            return group
-        else:
-            error('/errors/server_error', _('Unable to create Group.'))
+                # Flush so that the DB is current.
+                group.flush()
+                return group
+        except Exception as e:
+            error('/errors/server_error', _('Unable to create Group. %s') % e)
 
     @expose()
     def _lookup(self, group_id, *remainder):

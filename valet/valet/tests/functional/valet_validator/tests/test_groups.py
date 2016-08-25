@@ -25,6 +25,7 @@ class TestGroups(FunctionalTestCase):
         self.load.delete_all_stacks()
 
         General.log_group("Delete all members and groups")
+
         respose_code = self.groups.delete_all_groups()
         self.assertEqual(204, respose_code, "delete_all_groups failed with code %s" % respose_code)
 

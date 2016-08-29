@@ -57,7 +57,7 @@ class MessageNotificationHook(PecanHook):
         try:
             request_body = json.loads(state.request.body)
         except ValueError:
-            request_body = state.request.body
+            request_body = None
         try:
             response_body = json.loads(state.response.body)
         except ValueError:

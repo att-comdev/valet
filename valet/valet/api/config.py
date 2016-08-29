@@ -73,15 +73,15 @@ ostro = {
 
 messaging = {
     'config': {
-        'transport_url': 'rabbit://openstack:qwer4321@controller:5672/',
+        'transport_url': 'rabbit://username:password@controller:5672/',
     }
 }
 
 identity = {
     'config': {
-        'username': 'admin',
-        'password': 'qwer4321',
-        'project_name': 'demo',
+        'username': 'project_username',
+        'password': 'project_password',
+        'project_name': 'project_name',
         'auth_url': 'http://controller:5000/v2.0',
     }
 }

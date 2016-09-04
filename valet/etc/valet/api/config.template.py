@@ -1,7 +1,7 @@
 from pecan.hooks import TransactionHook
 
-from valet_api import models
-from valet_api.common.hooks import NotFoundHook, MessageNotificationHook
+from valet.api.db import models
+from valet.api.common.hooks import NotFoundHook, MessageNotificationHook
 
 
 # Server Specific Configurations
@@ -12,8 +12,8 @@ server = {
 
 # Pecan Application Configurations
 app = {
-    'root': 'valet_api.controllers.root.RootController',
-    'modules': ['valet_api'],
+    'root': 'valet.api.v1.controllers.root.RootController',
+    'modules': ['valet.api'],
     'default_renderer': 'json',
     'force_canonical': False,
     'debug': False,
@@ -31,12 +31,12 @@ app = {
 }
 
 logging = {
-    'root': {'level': 'INFO', 'handlers': ['console']},
+    'root': {'level': 'DEBUG', 'handlers': ['console']},
     'loggers': {
-        'valet_api': {
+        'api': {
             'level': 'DEBUG', 'handlers': ['console'], 'propagate': False
         },
-        'valet_api.models': {
+        'api.models': {
             'level': 'INFO', 'handlers': ['console'], 'propagate': False
         },
         'pecan': {
@@ -73,15 +73,15 @@ ostro = {
 
 messaging = {
     'config': {
-        'transport_url': 'rabbit://username:password@127.0.0.1:5672/',
+        'transport_url': 'rabbit://username:password@controller:5672/',
     }
 }
 
 identity = {
     'config': {
-        'username': 'valet',
-        'password': 'password',
-        'project_name': 'service',
+        'username': 'project_username',
+        'password': 'project_password',
+        'project_name': 'project_name',
         'auth_url': 'http://controller:5000/v2.0',
     }
 }

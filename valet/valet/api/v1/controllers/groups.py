@@ -108,8 +108,7 @@ class MembersItemController(object):
         '''Initialize group member'''
         group = request.context['group']
         if member_id not in group.members:
-            error('/errors/not_found',
-                  _('Member not found in group'))
+            error('/errors/not_found', _('Member not found in group'))
         request.context['member_id'] = member_id
 
     @classmethod
@@ -177,8 +176,7 @@ class MembersController(object):
         new_members = kwargs.get('members', None)
 
         if not conf.identity.engine.is_tenant_list_valid(new_members):
-            error('/errors/conflict',
-                  _('Member list contains invalid tenant IDs'))
+            error('/errors/conflict', _('Member list contains invalid tenant IDs'))
 
         group = request.context['group']
         group.members = list(set(group.members + new_members))
@@ -215,8 +213,7 @@ class GroupsItemController(object):
 
     def __init__(self, group_id):
         '''Initialize group'''
-        group = Group.query.filter_by(  # pylint: disable=E1101
-            id=group_id).first()
+        group = Group.query.filter_by(id=group_id).first()  # pylint: disable=E1101
         if not group:
             error('/errors/not_found', _('Group not found'))
         request.context['group'] = group

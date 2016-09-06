@@ -15,7 +15,7 @@ class TestGroups(Base):
 
     def setUp(self):
         super(TestGroups, self).setUp()
-        self.tenant_id = Auth.get_project_id()
+        self.tenant_id = "some tenant id"
 
         # Testing class GroupsController
         self.groups_controller = GroupsController()

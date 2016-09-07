@@ -1,8 +1,8 @@
 #!/usr/bin/python
 import argparse
-import cli_config as config
 import json
 import requests
+import valet.api.config as config
 
 
 class ResponseError(Exception):
@@ -13,57 +13,64 @@ class ConnectionError(Exception):
     pass
 
 
+def pretty_print_json(json_thing, sort=True, indents=4):
+    if type(json_thing) is str:
+        print(json.dumps(json.loads(json_thing), sort_keys=sort, indent=indents))
+    else:
+        print(json.dumps(json_thing, sort_keys=sort, indent=indents))
+    return None
+
+
 def add_to_parser(service_sub):
     parser = service_sub.add_parser('group', help='Group Management',
                                     formatter_class=lambda prog: argparse.HelpFormatter(prog, max_help_position=30,
                                                                                         width=120))
-    parser.add_argument('--version', action='version', version='%(prog)s 1.0')
-    parser.add_argument('--host', type=str, help='hostname or ip of valet server')
-    parser.add_argument('--port', type=str, help='port number of valet server')
-    parser.add_argument('--timeout', type=int, help='request timeout in seconds (default: 10)')
-    parser.add_argument('-v', '--verbose', help='show details', action="store_true")
-    subparsers = parser.add_subparsers(dest='subcmd', metavar='<subcommand> [-h] <args>')
+    parser.add_argument('--version', action='version', version='%(prog)s 1.1')
+    parser.add_argument('--timeout', type=int, help='Set request timeout in seconds (default: 10)')
+    parser.add_argument('--host', type=str, help='Hostname or ip of valet server')
+    parser.add_argument('--port', type=str, help='Port number of valet server')
+    parser.add_argument('--os-tenant-name', type=str, help='Tenant name')
+    parser.add_argument('--os-user-name', dest='os_username', type=str, help='Username')
+    parser.add_argument('--os-password', type=str, help="User's password")
+    parser.add_argument('--verbose', '-v', help='Show details', action="store_true")
+    subparsers = parser.add_subparsers(dest='subcmd', metavar='<subcommand>')
 
     # create group
-    parser_create_group = subparsers.add_parser('create_group',
-                                                help='--name <group name> --type <group type>'
-                                                '[--description <group description>]')
-    parser_create_group.add_argument('--name', type=str, help='group name')
-    parser_create_group.add_argument('--type', type=str, help='group type (exclusivity)')
-    parser_create_group.add_argument('--description', type=str, help='group description')
-
-    # update group
-    parser_update_group = subparsers.add_parser('update_group', help='<group id> --description <group description>')
-    parser_update_group.add_argument('groupid', type=str, help='<group id>')
-    parser_update_group.add_argument('--description', type=str, help='group description')
-
-    parser_update_group_members = subparsers.add_parser('update_group_members', help='<group id> --members <member id>')
-    parser_update_group_members.add_argument('groupid', type=str, help='<group id>')
-    parser_update_group_members.add_argument('--members', type=str, help='member id')
-
-    # list group
-    subparsers.add_parser('list_groups')
-
-    # show group details
-    parser_show_group_details = subparsers.add_parser('show_group_details', help='<group id> ')
-    parser_show_group_details.add_argument('groupid', type=str, help='<group id>')
+    parser_create_group = subparsers.add_parser('create', help='Create new group.')
+    parser_create_group.add_argument('name', type=str, help='<GROUP_NAME>')
+    parser_create_group.add_argument('type', type=str, help='<GROUP_TYPE> (exclusivity)')
+    parser_create_group.add_argument('--description', type=str, help='<GROUP_DESCRIPTION>')
 
     # delete group
-    parser_delete_group = subparsers.add_parser('delete_group', help='<group id>')
-    parser_delete_group.add_argument('groupid', type=str, help='<group id>')
+    parser_delete_group = subparsers.add_parser('delete', help='Delete specified group.')
+    parser_delete_group.add_argument('groupid', type=str, help='<GROUP_ID>')
 
     # delete group member
-    parser_delete_group_member = subparsers.add_parser('delete_group_member', help='<group id> <member id>')
-    parser_delete_group_member.add_argument('groupid', type=str, help='<group id>')
-    parser_delete_group_member.add_argument('memberid', type=str, help='<member id>')
+    parser_delete_group_member = subparsers.add_parser('delete-member', help='Delete members from specified group.')
+    parser_delete_group_member.add_argument('groupid', type=str, help='<GROUP_ID>')
+    parser_delete_group_member.add_argument('memberid', type=str, help='<MEMBER_ID>')
 
     # delete all group members
-    parser_delete_all_group_members = subparsers.add_parser('delete_all_group_members', help='<group id>')
-    parser_delete_all_group_members.add_argument('groupid', type=str, help='<group id>')
+    parser_delete_all_group_members = subparsers.add_parser('delete-all-members', help='Delete all members from '
+                                                                                       'specified group.')
+    parser_delete_all_group_members.add_argument('groupid', type=str, help='<GROUP_ID>')
 
-    parser.add_argument('--name', type=str, help='group name')
-    parser.add_argument('--description', type=str, help='group description')
-    parser.add_argument('--type', type=str, help='group type (exclusivity)')
+    # list group
+    subparsers.add_parser('list', help='List all groups.')
+
+    # show group details
+    parser_show_group_details = subparsers.add_parser('show', help='Show details about the given group.')
+    parser_show_group_details.add_argument('groupid', type=str, help='<GROUP_ID>')
+
+    # update group
+    parser_update_group = subparsers.add_parser('update', help='Update group description.')
+    parser_update_group.add_argument('groupid', type=str, help='<GROUP_ID>')
+    parser_update_group.add_argument('--description', type=str, help='<GROUP_DESCRIPTION>')
+
+    parser_update_group_members = subparsers.add_parser('update-member', help='Update group members.')
+    parser_update_group_members.add_argument('groupid', type=str, help='<GROUP_ID>')
+    parser_update_group_members.add_argument('members', type=str, help='<MEMBER_ID>')
+
     return parser
 
 
@@ -72,57 +79,40 @@ def preparm(p):
 
 
 def cmd_details(args):
-    if args.subcmd == 'create_group':
+    if args.subcmd == 'create':
         return requests.post, ''
-    elif args.subcmd == 'update_group':
+    elif args.subcmd == 'update':
         return requests.put, '/%s' % args.groupid
-    elif args.subcmd == 'update_group_members':
+    elif args.subcmd == 'update-member':
         return requests.put, '/%s/members' % args.groupid
-    elif args.subcmd == 'delete_group':
+    elif args.subcmd == 'delete':
         return requests.delete, '/%s' % (args.groupid)
-    elif args.subcmd == 'delete_all_group_members':
+    elif args.subcmd == 'delete-all-members':
         return requests.delete, '/%s/members' % (args.groupid)
-    elif args.subcmd == 'delete_group_member':
+    elif args.subcmd == 'delete-member':
         return requests.delete, '/%s/members/%s' % (args.groupid, args.memberid)
-    elif args.subcmd == 'show_group_details':
+    elif args.subcmd == 'show':
         return requests.get, '/%s' % (args.groupid)
-    elif args.subcmd == 'list_groups':
+    elif args.subcmd == 'list':
         return requests.get, ''
 
 
-def get_token_from_keystone_v3():
-    headers = {
-        'Content-Type': 'application/json',
-    }
-    url = 'http://%s/v3/auth/tokens' % config.keystone_ip_and_port
-    data = '''
-{
-    "auth": {
-        "identity": {
-            "methods": ["password"],
-            "password": {
-                "user": {
-                    "name": "%s",
-                    "domain": { "id": "default" },
-                    "password": "%s"
-                }
-            }
-        }
-    }
-}''' % (config.auth_name, config.password)
-    try:
-        resp = requests.post(url, data=data, headers=headers)
-    except Exception as e:
-        print(e)
-        exit(1)
-    return resp.headers['X-Subject-Token']
-
-
 def get_token(timeout, args):
+    # tenant_name = args.os_tenant_name if args.os_tenant_name else os.environ.get('OS_TENANT_NAME')
+    tenant_name = args.os_tenant_name if args.os_tenant_name else config.identity.get('config').get('project_name')
+    auth_name = args.os_username if args.os_username else config.identity.get('config').get('username')
+    password = args.os_password if args.os_password else config.identity.get('config').get('password')
+
+    # tenant_name = 'demo'
+    # auth_name = 'demo'
+    # password = 'Aa123456'
+
     headers = {
         'Content-Type': 'application/json',
     }
-    url = '%s/v2.0/tokens' % config.keystone_ip_and_port
+    url = '%s/tokens' % config.identity.get('config').get('auth_url')
+    # url = 'http://192.168.10.11:5000/v2.0/tokens'
+
     data = '''
 {
 "auth": {
@@ -132,7 +122,7 @@ def get_token(timeout, args):
         "password": "%s"
         }
     }
-}''' % (config.tenant_name, config.auth_name, config.password)
+}''' % (tenant_name, auth_name, password)
     if args.verbose:
         print("Getting token:\ntimeout: %d\ndata: %s\nheaders: %s\nurl: %s\n" % (timeout, data, headers, url))
     try:
@@ -151,8 +141,10 @@ def get_token(timeout, args):
 
 
 def run(args):
-    host = args.host if args.host else config.valet_host
-    port = args.port if args.port else config.valet_port
+    host = args.host if args.host else config.server.get('host')
+    port = args.port if args.port else config.server.get('port')
+    # host = '192.168.10.31'
+    # port = '8090'
     timeout = args.timeout if args.timeout else 10
     rest_cmd, cmd_url = cmd_details(args)
     url = 'http://%s:%s/v1/groups' % (host, port) + cmd_url
@@ -194,11 +186,11 @@ def run(args):
         print('API error: %s %s (Reason: %d)\n%s' % (rest_cmd.func_name.upper(), url, resp.status_code, content))
         exit(1)
 
-    # if resp.status_code == 204:  # no content
-    #    exit(0)
-
-    rj = resp.json()
-    if rj == 'Not found':
-        print('No output was found')
-    else:
-        print(rj)
+    try:
+        rj = resp.json()
+        if rj == 'Not found':
+            print('No output was found')
+        else:
+            pretty_print_json(rj)
+    except Exception:
+        pass

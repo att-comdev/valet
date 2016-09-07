@@ -1,7 +1,7 @@
 #!/usr/bin/python
 import argparse
-import groupcli
 import sys
+import valet.cli.groupcli as groupcli
 # import logging
 
 

@@ -26,7 +26,10 @@ class ValetClient(rest_client.RestClient):
 
     """Tempest REST client for Valet.
 
-    Implements create, delete, update, list and show groups for Valet.
+    Implements
+    1. create, delete, update, list and show groups
+    2. add, verify, delete and delete all members
+    3. create, update and delete plan
     """
 
     def _resp_helper(self, resp, body=None):
@@ -67,4 +70,57 @@ class ValetClient(rest_client.RestClient):
     def show_group(self, group_id):
         resp, body = self.get('/groups/%s' % group_id)
         self.expected_success(200, resp.status)
+        return self._resp_helper(resp, body)
+
+    def add_members(self, group_id, members):
+        params = {
+            "members": members
+        }
+        data = json.dumps(params)
+        resp, body = self.put('/groups/%s/members' % (str(group_id)), data)
+        self.expected_success(201, resp.status)
+        return self._resp_helper(resp, body)
+
+    def verify_membership(self, group_id, member_id):
+        resp, body = self.get('/groups/%s/members/%s' % (str(group_id),
+                                                         str(member_id)))
+        self.expected_success(204, resp.status)
+        return self._resp_helper(resp, body)
+
+    def delete_member(self, group_id, member_id):
+        resp, body = self.delete('/groups/%s/members/%s' % (str(group_id),
+                                                            str(member_id)))
+        self.expected_success(204, resp.status)
+        return self._resp_helper(resp, body)
+
+    def delete_all_members(self, group_id):
+        resp, body = self.delete('/groups/%s/members' % (str(group_id)))
+        self.expected_success(204, resp.status)
+        return self._resp_helper(resp, body)
+
+    def create_plan(self, plan_name, resources, stack_id):
+        params = {
+            "plan_name": plan_name,
+            "stack_id": stack_id,
+            "resources": resources
+        }
+        data = json.dumps(params)
+        resp, body = self.post('/plans', data)
+        self.expected_success(201, resp.status)
+        return self._resp_helper(resp, body)
+
+    def update_plan(self, plan_id, action, excluded_hosts, resources):
+        params = {
+            "action": action,
+            "excluded_hosts": excluded_hosts,
+            "resources": resources
+        }
+        data = json.dumps(params)
+        resp, body = self.put('/plans/%s' % (str(plan_id)), data)
+        self.expected_success(201, resp.status)
+        return self._resp_helper(resp, body)
+
+    def delete_plan(self, plan_id):
+        resp, body = self.delete('/plans/%s' % (str(plan_id)))
+        self.expected_success(204, resp.status)
         return self._resp_helper(resp, body)

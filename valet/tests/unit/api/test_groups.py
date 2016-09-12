@@ -7,7 +7,6 @@ from valet.api.db.models.music import Query
 import valet.api.v1.controllers.groups as groups
 from valet.api.v1.controllers.groups import GroupsController, MembersController
 from valet.tests.base import Base
-from valet.tests.functional.valet_validator.common.auth import Auth
 
 
 class TestGroups(Base):
@@ -15,7 +14,7 @@ class TestGroups(Base):
 
     def setUp(self):
         super(TestGroups, self).setUp()
-        self.tenant_id = Auth.get_project_id()
+        self.tenant_id = "testprojectid"
 
         # Testing class GroupsController
         self.groups_controller = GroupsController()

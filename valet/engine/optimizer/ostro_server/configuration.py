@@ -167,7 +167,7 @@ class Config(object):
                 k = rk.strip()
 
                 if k == "root_loc":
-                    self.root_loc = v.strip()
+                    self.root_loc = os.path.dirname(os.path.realpath(config_path + "/" + v.strip()))
                 elif k == "mode":
                     self.mode = v.strip()
                 elif k == "priority":

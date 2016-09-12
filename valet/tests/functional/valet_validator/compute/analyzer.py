@@ -23,10 +23,10 @@ class Analyzer(object):
         serv = self.nova.servers.find(name=instance_name)
         return self.get_hostname(serv)
 
-    def get_all_hosts(self, instances_list, attr):
+    def get_all_hosts(self, instances_list):
         ''' Returning all hosts of all instances '''
         General.log_debug("Getting hosts names")
-        return [self.get_host_name(instance.name, attr) for instance in instances_list]
+        return [self.get_host_name(instance.name) for instance in instances_list]
 
     def check(self, resources):
         ''' Checking if all instances are on the Appropriate hosts and racks '''
@@ -39,7 +39,8 @@ class Analyzer(object):
 
                 resources_to_compare = self.get_resources_to_compare(resources, group.group_resources) or group.group_resources
                 instances_for_group = self.get_group_instances(resources, resources_to_compare)
-                hosts_list = self.get_all_hosts(instances_for_group, CONF.nova.ATTR)
+                hosts_list = self.get_all_hosts(instances_for_group)
+
                 # switch case
                 result = result and \
                     {
@@ -66,7 +67,7 @@ class Analyzer(object):
             return resources_to_compare
 
         except Exception as ex:
-            General.log_error("Exception at method get_resources_to_compare: %" % ex, traceback.format_exc())
+            General.log_error("Exception at method get_resources_to_compare: %s" % ex, traceback.format_exc())
 
     def are_we_alone(self, hosts_list, ins_for_group):
         try:
@@ -77,7 +78,7 @@ class Analyzer(object):
 
             return not instances
         except Exception as ex:
-            General.log_error("Exception at method are_we_alone: %" % ex, traceback.format_exc())
+            General.log_error("Exception at method are_we_alone: %s" % ex, traceback.format_exc())
 
     def get_instances_per_host(self, hosts_list):
         instances = []
@@ -88,7 +89,7 @@ class Analyzer(object):
 
             return instances
         except Exception as ex:
-            General.log_error("Exception at method get_instances_per_host: %" % ex, traceback.format_exc())
+            General.log_error("Exception at method get_instances_per_host: %s" % ex, traceback.format_exc())
 
     def are_different(self, hosts_list, level):
         ''' Checking if all hosts (and racks) are different for all instances '''
@@ -101,7 +102,7 @@ class Analyzer(object):
             return True
 
         except Exception as ex:
-            General.log_error("Exception at method are_all_hosts_different: %" % ex, traceback.format_exc())
+            General.log_error("Exception at method are_all_hosts_different: %s" % ex, traceback.format_exc())
             return False
 
     def are_the_same(self, hosts_list, level):
@@ -112,7 +113,7 @@ class Analyzer(object):
             return True
 
         except Exception as ex:
-            General.log_error("Exception at method are_all_hosts_different: %" % ex, traceback.format_exc())
+            General.log_error("Exception at method are_all_hosts_different: %s" % ex, traceback.format_exc())
             return False
 
     def get_group_instances(self, resources, group_ins):
@@ -123,16 +124,17 @@ class Analyzer(object):
         ins_for_group = []
         try:
             for instance in resources.instances:
-                if instance.name in group_ins:
+                if instance.resource_name in group_ins:
                     ins_for_group.append(instance)
             return ins_for_group
 
         except Exception as ex:
-            General.log_error("Exception at method get_group_instances: %" % ex, traceback.format_exc())
+            General.log_error(ex)
+            General.log_error("Exception at method get_group_instances: %s" % ex, traceback.format_exc())
             return None
 
     def get_hostname(self, vm):
-        return str(getattr(vm, CONF.valet.HOST))
+        return str(getattr(vm, CONF.nova.ATTR))
 
     def is_already_exists(self, diction, item):
         if item in diction:

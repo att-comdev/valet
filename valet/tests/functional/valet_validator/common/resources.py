@@ -39,6 +39,7 @@ class TemplateResources(object):
 
 class Instance(object):
     def __init__(self, doc, instance_name):
+        self.resource_name = instance_name
         self.name = None
         self.image = None
         self.flavor = None

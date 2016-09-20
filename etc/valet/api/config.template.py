@@ -83,6 +83,7 @@ identity = {
         'password': 'project_password',
         'project_name': 'project_name',
         'auth_url': 'http://controller:5000/v2.0',
+        'interface': 'admin',
     }
 }
 

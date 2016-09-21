@@ -68,11 +68,11 @@ class V1Controller(SecureController):
         error('/errors/unauthorized')
 
     @classmethod
-    def _action_is_migrate(request):
-        return "plan" in request.path and "action" in request.json and request.json["action"] == "migrate"
+    def _action_is_migrate(cls, request):
+        return "plan" in request.path and hasattr(request, "json") and "action" in request.json and request.json["action"] == "migrate"
 
     @classmethod
-    def _permission_grunted(request, token):
+    def _permission_grunted(cls, request, token):
         return not ("group" in request.path or
                     V1Controller._action_is_migrate(request)) or\
             (conf.identity.engine.is_token_admin(token))

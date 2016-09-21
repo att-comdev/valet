@@ -77,6 +77,7 @@ messaging = {
     }
 }
 
+
 identity = {
     'config': {
         'username': 'project_username',

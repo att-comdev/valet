@@ -261,8 +261,7 @@ class GroupsItemController(object):
         '''Delete a group'''
         group = request.context['group']
         if isinstance(group.members, list) and len(group.members) > 0:
-            error('/errors/conflict',
-                  _('Unable to delete a Group with members.'))
+            error('/errors/conflict', _('Unable to delete a Group with members.'))
         group.delete()
         response.status = 204
 

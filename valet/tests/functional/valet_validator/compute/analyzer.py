@@ -106,6 +106,7 @@ class Analyzer(object):
             return False
 
     def are_the_same(self, hosts_list, level):
+        General.log_debug("Hosts are:")
         try:
             for h in hosts_list:
                 if self.compare_host(self.get_host_or_rack(level, h), self.get_host_or_rack(level, hosts_list[0])) is False:
@@ -144,9 +145,11 @@ class Analyzer(object):
         return False
 
     def compare_rack(self, current_host, first_host):
+        General.log_debug(current_host)
         return self.get_rack(current_host) == self.get_rack(first_host)
 
     def compare_host(self, current_host, first_host):
+        General.log_debug(current_host)
         return current_host == first_host
 
     def get_rack(self, host):

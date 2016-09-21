@@ -117,8 +117,7 @@ class PlacementsItemController(object):
             exclusions = [x.orchestration_id for x in reserved]
             if exclusions:
                 exclusions_str = ', '.join(exclusions)
-                LOG.info(_('Excluded orchestration IDs: %s'),
-                         exclusions_str)
+                LOG.info(_('Excluded orchestration IDs: %s'), exclusions_str)
             else:
                 LOG.info(_('No excluded orchestration IDs.'))
 
@@ -126,17 +125,15 @@ class PlacementsItemController(object):
             # We may get one or more updated placements in return.
             # One of those will be the original placement
             # we are trying to reserve.
-            plan = Plan.query.filter_by(  # pylint: disable=E1101
-                id=self.placement.plan_id).first()
+            plan = Plan.query.filter_by(id=self.placement.plan_id).first()  # pylint: disable=E1101
+
             args = {
                 "stack_id": plan.stack_id,
                 "locations": locations,
                 "orchestration_id": orchestration_id,
                 "exclusions": exclusions,
             }
-            ostro_kwargs = {
-                "args": args,
-            }
+            ostro_kwargs = {"args": args, }
             ostro = Ostro()
             ostro.replan(**ostro_kwargs)
             ostro.send()

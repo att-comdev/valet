@@ -51,18 +51,31 @@ class V1Controller(SecureController):
     def check_permissions(cls):
         '''SecureController permission check callback'''
         auth_token = request.headers.get('X-Auth-Token')
+
         if auth_token:
             # The token must have an admin role
             # and be associated with a tenant.
             token = conf.identity.engine.validate_token(auth_token)
-            if token and conf.identity.engine.is_token_admin(token):
+            if token and V1Controller._permission_grunted(request, token):
                 tenant_id = conf.identity.engine.tenant_from_token(token)
                 if tenant_id:
                     request.context['tenant_id'] = tenant_id
                     user_id = conf.identity.engine.user_from_token(token)
                     request.context['user_id'] = user_id
+
                     return True
+
         error('/errors/unauthorized')
+
+    @classmethod
+    def _action_is_migrate(request):
+        return "plan" in request.path and "action" in request.json and request.json["action"] == "migrate"
+
+    @classmethod
+    def _permission_grunted(request, token):
+        return not ("group" in request.path or
+                    V1Controller._action_is_migrate(request)) or\
+            (conf.identity.engine.is_token_admin(token))
 
     @classmethod
     def allow(cls):

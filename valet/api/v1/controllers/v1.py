@@ -56,7 +56,8 @@ class V1Controller(SecureController):
             # The token must have an admin role
             # and be associated with a tenant.
             token = conf.identity.engine.validate_token(auth_token)
-            if token and V1Controller._permission_grunted(request, token):
+            LOG.debug("Checking permissions")
+            if token and V1Controller._permission_granted(request, token):
                 tenant_id = conf.identity.engine.tenant_from_token(token)
                 if tenant_id:
                     request.context['tenant_id'] = tenant_id
@@ -72,7 +73,7 @@ class V1Controller(SecureController):
         return "plan" in request.path and hasattr(request, "json") and "action" in request.json and request.json["action"] == "migrate"
 
     @classmethod
-    def _permission_grunted(cls, request, token):
+    def _permission_granted(cls, request, token):
         return not ("group" in request.path or
                     V1Controller._action_is_migrate(request)) or\
             (conf.identity.engine.is_token_admin(token))

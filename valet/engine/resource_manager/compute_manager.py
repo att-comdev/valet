@@ -1,25 +1,16 @@
 #!/bin/python
 
+# Modified: Sep. 4, 2016
 
-#################################################################################################################
-# Author: Gueyoung Jung
-# Contact: gjung@research.att.com
-# Version 2.0.2: Feb. 9, 2016
-#
-# Functions
-# - Update Host status, local resources, and metadata
-# - Update Flavor list
-#
-#################################################################################################################
 
+import threading
+import time
 
 from authentication import Authentication
 from compute import Compute
+from compute_simulator import SimCompute
 from copy import deepcopy
 from resource_base import Host
-from simulation.compute_simulator import SimCompute
-import threading
-import time
 
 
 class ComputeManager(threading.Thread):
@@ -91,7 +82,6 @@ class ComputeManager(threading.Thread):
     def _run(self):
         self.logger.info("--- start compute_nodes status update ---")
 
-        # self.data_lock.acquire(1)
         self.data_lock.acquire()
         try:
             triggered_host_updates = self.set_hosts()
@@ -132,7 +122,8 @@ class ComputeManager(threading.Thread):
         logical_groups = {}
 
         compute = None
-        if self.config.mode.startswith("sim") is True:
+        if self.config.mode.startswith("sim") is True or \
+           self.config.mode.startswith("test") is True:
             compute = SimCompute(self.config)
         else:
             if self._set_admin_token() is False or self._set_project_token() is False:
@@ -166,7 +157,7 @@ class ComputeManager(threading.Thread):
 
         for rlk in self.resource.logical_groups.keys():
             rl = self.resource.logical_groups[rlk]
-            if rl.group_type != "EX" and rl.group_type != "AFF":
+            if rl.group_type != "EX" and rl.group_type != "AFF" and rl.group_type != "DIV":
                 if rlk not in _logical_groups.keys():
                     self.resource.logical_groups[rlk].status = "disabled"
 
@@ -176,40 +167,23 @@ class ComputeManager(threading.Thread):
         for lk in _logical_groups.keys():
             lg = _logical_groups[lk]
             rlg = self.resource.logical_groups[lk]
-            if lg.group_type != "EX" and lg.group_type != "AFF":
+            if lg.group_type != "EX" and lg.group_type != "AFF" and lg.group_type != "DIV":
                 if self._check_logical_group_metadata_update(lg, rlg) is True:
 
                     rlg.last_update = time.time()
                     self.logger.warn("logical group (" + lk + ") updated")
 
     def _check_logical_group_metadata_update(self, _lg, _rlg):
-        #         metadata_updated = False
-
         if _lg.status != _rlg.status:
             _rlg.status = _lg.status
-#             metadata_updated = True
 
         for mdk in _lg.metadata.keys():
             if mdk not in _rlg.metadata.keys():
                 _rlg.metadata[mdk] = _lg.metadata[mdk]
-#                 metadata_updated = True
 
         for rmdk in _rlg.metadata.keys():
             if rmdk not in _lg.metadata.keys():
                 del _rlg.metadata[rmdk]
-#                 metadata_updated = True
-
-        '''
-        for vm_id in _lg.vm_list:
-            if _rlg.exist_vm(vm_id) is False:
-                _rlg.vm_list.append(vm_id)
-                metadata_updated = True
-
-        for rvm_id in _rlg.vm_list:
-            if _lg.exist_vm(rvm_id) is False:
-                _rlg.vm_list.remove(rvm_id)
-                metadata_updated = True
-        '''
 
         for hk in _lg.vms_per_host.keys():
             if hk not in _rlg.vms_per_host.keys():
@@ -245,7 +219,7 @@ class ComputeManager(threading.Thread):
         for hk, h in self.resource.hosts.iteritems():
             if h.clean_memberships() is True:
                 h.last_update = time.time()
-                self.logger.warn("host (" + h.name + ") updated (delete EX/AFF membership)")
+                self.logger.warn("host (" + h.name + ") updated (delete EX/AFF/DIV membership)")
 
         for hk, host in self.resource.hosts.iteritems():
             if host.last_update > self.resource.current_timestamp:
@@ -335,7 +309,7 @@ class ComputeManager(threading.Thread):
 
         for mk in _rhost.memberships.keys():
             m = _rhost.memberships[mk]
-            if m.group_type != "EX" and m.group_type != "AFF":
+            if m.group_type != "EX" and m.group_type != "AFF" and m.group_type != "DIV":
                 if mk not in _host.memberships.keys():
                     del _rhost.memberships[mk]
                     topology_updated = True
@@ -346,7 +320,7 @@ class ComputeManager(threading.Thread):
     def _check_host_vms(self, _host, _rhost):
         topology_updated = False
 
-        # Clean up VMs
+        ''' clean up VMs '''
         for rvm_id in _rhost.vm_list:
             if rvm_id[2] == "none":
                 _rhost.vm_list.remove(rvm_id)
@@ -359,9 +333,6 @@ class ComputeManager(threading.Thread):
         for vm_id in _host.vm_list:
             if _rhost.exist_vm_by_uuid(vm_id[2]) is False:
                 _rhost.vm_list.append(vm_id)
-
-                # NOTE: do we need this?
-                # self.resource.add_vm_to_logical_groups(_rhost, vm_id)
 
                 topology_updated = True
                 self.logger.warn("host (" + _rhost.name + ") updated (new vm placed)")
@@ -381,7 +352,8 @@ class ComputeManager(threading.Thread):
         flavors = {}
 
         compute = None
-        if self.config.mode.startswith("sim") is True:
+        if self.config.mode.startswith("sim") is True or \
+           self.config.mode.startswith("test") is True:
             compute = SimCompute(self.config)
         else:
             if self._set_admin_token() is False or self._set_project_token() is False:

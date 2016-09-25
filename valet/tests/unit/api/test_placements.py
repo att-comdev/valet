@@ -12,7 +12,7 @@ from valet.api.db.models.music import Query, Results
 from valet.api.db.models import Placement, Plan
 
 
-def mock_error(url, msg=None, **kwargs):
+def mock_error(_, msg=None, **kwargs):
     TestPlacements.response = msg
 
 

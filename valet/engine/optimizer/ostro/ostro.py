@@ -1,45 +1,49 @@
 #!/bin/python
 
-
-#################################################################################################################
-# Author: Gueyoung Jung
-# Contact: gjung@research.att.com
-# Version 2.0.2: Feb. 9, 2016
-#
-# Functions
-# - Deal with placement requests
-# - Run all resource managers (Topology, Compute, Stroage, Network)
-#
-#################################################################################################################
+# Modified: Sep. 20, 2016
 
 
 import threading
 import time
 
+from optimizer import Optimizer
 from valet.engine.optimizer.app_manager.app_handler import AppHandler
+from valet.engine.optimizer.app_manager.app_topology import AppTopology
 from valet.engine.optimizer.app_manager.app_topology_base import VM, Volume
 from valet.engine.optimizer.db_connect.music_handler import MusicHandler
-from valet.engine.optimizer.ostro.optimizer import Optimizer
 
 from valet.engine.resource_manager.compute_manager import ComputeManager
 from valet.engine.resource_manager.resource import Resource
 from valet.engine.resource_manager.topology_manager import TopologyManager
+
+''' for unit test '''
+'''
+import sys
+import json
+sys.path.insert(0, '../app_manager')
+from app_handler import AppHandler
+from app_topology import AppTopology
+from app_topology_base import VM, Volume
+sys.path.insert(0, '../db_connect')
+from music_handler import MusicHandler
+sys.path.insert(0, '../../resource_manager')
+from compute_manager import ComputeManager
+from resource import Resource
+from topology_manager import TopologyManager
+'''
 
 
 class Ostro(object):
 
     def __init__(self, _config, _logger):
         self.config = _config
-
         self.logger = _logger
 
-        self.db = None
-        if self.config.db_keyspace != "none":
-            self.db = MusicHandler(self.config, self.logger)
-            if self.db.init_db() is False:
-                self.logger.error("error while initializing MUSIC database")
-            else:
-                self.logger.debug("done init music")
+        self.db = MusicHandler(self.config, self.logger)
+        if self.db.init_db() is False:
+            self.logger.error("error while initializing MUSIC database")
+        else:
+            self.logger.debug("done init music")
 
         self.resource = Resource(self.db, self.config, self.logger)
 
@@ -57,8 +61,6 @@ class Ostro(object):
 
         self.end_of_process = False
 
-        # self.logger.debug("done init datacenter, resource, app_handler, optimizer, resource managers")
-
     def run_ostro(self):
         self.logger.info("start Ostro ......")
 
@@ -68,36 +70,35 @@ class Ostro(object):
         self.thread_list.append(self.topology)
         self.thread_list.append(self.compute)
 
-        # For monitoring test
-        duration = 30.0
-        expired = time.time() + duration
+        ''' for monitoring test '''
+        # duration = 30.0
+        # expired = time.time() + duration
+
         while self.end_of_process is False:
             time.sleep(1)
 
-            if self.config.db_keyspace != "none":
+            if self.config.mode != "test":
                 event_list = self.db.get_events()
                 if event_list is None:
-                    self.logger.error("error while getting events from MUSIC")
                     break
 
                 if len(event_list) > 0:
-                    # self.logger.debug("got " + str(len(event_list)) + " events")
                     if self.handle_events(event_list) is False:
                         break
 
-                request_list = self.db.get_requests()
-                if request_list is None:
-                    self.logger.error("error while getting requests from MUSIC")
+            request_list = self.db.get_requests()
+            if request_list is None:
+                break
+
+            if len(request_list) > 0:
+                if self.place_app(request_list) is False:
                     break
 
-                if len(request_list) > 0:
-                    if self.place_app(request_list) is False:
-                        break
-
-            current = time.time()
-            if current > expired:
-                self.logger.debug("test: ostro running ......")
-                expired = current + duration
+            ''' for monitoring test '''
+            # current = time.time()
+            # if current > expired:
+            #     self.logger.debug("test: ostro running ......")
+            #     expired = current + duration
 
         self.topology.end_of_process = True
         self.compute.end_of_process = True
@@ -120,9 +121,7 @@ class Ostro(object):
         self.logger.info("--- start bootstrap ---")
 
         resource_status = self.db.get_resource_status(self.resource.datacenter.name)
-
         if resource_status is None:
-            self.logger.error("error while getting resource status from MUSIC")
             return False
 
         if len(resource_status) > 0:
@@ -197,13 +196,16 @@ class Ostro(object):
             result = self._get_json_results("query", "ok", self.status, query_results)
 
             if self.db.put_result(result) is False:
-                self.logger.error("error while inserting placement result into MUSIC")
                 self.data_lock.release()
                 return False
 
             self.logger.info("--- done query ---")
 
+        ''' for mvalet '''
+        # placement_request_list = self._check_availability(placement_request_list)
+
         if len(placement_request_list) > 0:
+
             self.logger.info("--- start app placement ---")
 
             result = None
@@ -212,31 +214,83 @@ class Ostro(object):
 
             if placement_map is None:
                 result = self._get_json_results("placement", "error", self.status, placement_map)
-
-                '''
-                self.logger.debug("error while placing the following app(s)")
-                for appk in result.keys():
-                    self.logger.debug("    app uuid = " + appk)
-                '''
             else:
                 result = self._get_json_results("placement", "ok", "success", placement_map)
 
-                # self.logger.debug("successful placement decision")
-
             if self.db.put_result(result) is False:
-                self.logger.error("error while inserting placement result into MUSIC")
                 self.data_lock.release()
                 return False
 
+            ''' for mvalet '''
+            '''
+            if self.config.mode.startswith("sim"):
+                logging = open(self.config.eval_log_loc + "eval.log", 'a')
+                ts = time.time()
+                if placement_map is None:
+                    for appk in result.keys():
+                        logging.write(str(ts) + "," + appk + ",fail")
+                        logging.write("\n")
+                else:
+                    for appk in result.keys():
+                        logging.write(str(ts) + "," + appk + ",success")
+                        logging.write("\n")
+                self.logger.debug("log: eval record")
+                logging.close()
+            '''
+
             self.logger.info("--- done app placement ---")
+
+            ''' for unit test '''
+            '''
+            test_resource_status = self.db.get_resource_status("sim")
+            test_logical_groups = test_resource_status["logical_groups"]
+            self.logger.debug("group assignments: " + json.dumps(test_logical_groups))
+            '''
 
         end_time = time.time()
 
-        self.logger.info("stat: total running time of request = " + str(end_time - start_time) + " sec")
+        self.logger.info("stat: total decision delay of request = " + str(end_time - start_time) + " sec")
 
         self.data_lock.release()
 
         return True
+
+    ''' for mvalet '''
+    def _check_availability(self, _request_list):
+        doable_request_list = []
+
+        if len(_request_list) == 0:
+            return doable_request_list
+
+        for req in _request_list:
+            # compare requested resources to available abstracted resources
+            app_topology = AppTopology(self.resource, self.logger)
+            app_id = app_topology.set_app_topology(req)
+            if app_id is None:
+                self.logger.error(app_topology.status)
+                continue
+
+            total_vCPUs = 0
+            total_mem = 0
+            total_volume = 0
+            for vk, v in app_topology.vms.iteritems():
+                total_vCPUs += v.vCPUs
+                total_mem += v.mem
+                total_volume += v.local_volume_size
+
+            if self.resource.CPU_avail >= total_vCPUs and \
+               self.resource.mem_avail >= total_mem and \
+               self.resource.local_disk_avail >= total_volume:
+                # set worker_id in db (via music_handler) either atomically or eventually
+                if self.db.update_worker_id(app_id[0],
+                                            self.config.datacenter_name,
+                                            req,
+                                            self.config.db_mode) is False:
+                    continue
+
+                doable_request_list.append(req)
+
+        return doable_request_list
 
     def _query(self, _query_list):
         query_results = {}
@@ -273,7 +327,7 @@ class Ostro(object):
 
         vm_id_list = []
         for lgk, lg in self.resource.logical_groups.iteritems():
-            if lg.group_type == "EX" or lg.group_type == "AFF":
+            if lg.group_type == "EX" or lg.group_type == "AFF" or lg.group_type == "DIV":
                 lg_id = lgk.split(":")
                 if lg_id[1] == _group_name:
                     vm_id_list = lg.vm_list
@@ -286,24 +340,41 @@ class Ostro(object):
         return vm_list
 
     def _place_app(self, _app_data):
+        ''' set application topology '''
         app_topology = self.app_handler.add_app(_app_data)
         if app_topology is None:
             self.status = self.app_handler.status
             self.logger.debug("error while register requested apps: " + self.status)
             return None
 
+        ''' check and set vm flavor information '''
+        for _, vm in app_topology.vms.iteritems():
+            if self._set_vm_flavor_information(vm) is False:
+                self.status = "fail to set flavor information"
+                self.logger.error(self.status)
+                return None
+        for _, vg in app_topology.vgroups.iteritems():
+            if self._set_vm_flavor_information(vg) is False:
+                self.status = "fail to set flavor information in a group"
+                self.logger.error(self.status)
+                return None
+
+        ''' set weights for optimization '''
+        app_topology.set_weight()
+        app_topology.set_optimization_priority()
+
+        ''' perform search for optimal placement of app topology  '''
         placement_map = self.optimizer.place(app_topology)
         if placement_map is None:
             self.status = self.optimizer.status
             self.logger.debug("error while optimizing app placement: " + self.status)
             return None
 
+        ''' update resource and app information '''
         if len(placement_map) > 0:
             if self.resource.update_topology() is False:
                 pass
-
             self.app_handler.add_placement(placement_map, self.resource.current_timestamp)
-
             if len(app_topology.exclusion_list_map) > 0 and len(app_topology.planned_vm_map) > 0:
                 for vk in app_topology.planned_vm_map.keys():
                     if vk in placement_map.keys():
@@ -311,10 +382,43 @@ class Ostro(object):
 
         return placement_map
 
+    def _set_vm_flavor_information(self, _v):
+        if isinstance(_v, VM):
+            if self._set_vm_flavor_properties(_v) is False:
+                return False
+        else:  # affinity group
+            for _, sg in _v.subvgroups.iteritems():
+                if self._set_vm_flavor_information(sg) is False:
+                    return False
+
+    def _set_vm_flavor_properties(self, _vm):
+        flavor = self.resource.get_flavor(_vm.flavor)
+
+        if flavor is None:
+            self.logger.warn("does not exist flavor (" + _vm.flavor + ") and try to refetch")
+            ''' reset flavor resource and try again '''
+            if self._set_flavors() is False:
+                return False
+            if self.resource.update_topology() is False:
+                pass
+            flavor = self.resource.get_flavor(_vm.flavor)
+            if flavor is None:
+                return False
+
+        _vm.vCPUs = flavor.vCPUs
+        _vm.mem = flavor.mem_cap
+        _vm.local_volume_size = flavor.disk_cap
+
+        if len(flavor.extra_specs) > 0:
+            extra_specs = {}
+            for mk, mv in flavor.extra_specs.iteritems():
+                extra_specs[mk] = mv
+            _vm.extra_specs_list.append(extra_specs)
+
+        return True
+
     def handle_events(self, _event_list):
         self.data_lock.acquire()
-
-        # self.logger.info("--- start event handling ---")
 
         resource_updated = False
 
@@ -327,7 +431,6 @@ class Ostro(object):
             if e.method == "build_and_run_instance":         # VM is created (from stack)
                 self.logger.debug("--- got build_and_run event")
                 if self.db.put_uuid(e) is False:
-                    self.logger.error("error while inserting uuid into MUSIC")
                     self.data_lock.release()
                     return False
 
@@ -335,7 +438,6 @@ class Ostro(object):
                 if e.object_name == 'Instance':              # VM became active or deleted
                     orch_id = self.db.get_uuid(e.uuid)
                     if orch_id is None:
-                        self.logger.error("error while getting orchestration ids from MUSIC")
                         self.data_lock.release()
                         return False
 
@@ -424,20 +526,15 @@ class Ostro(object):
                 pass
 
         for e in _event_list:
-            # self.logger.debug("delete event = " + e.event_id)
             if self.db.delete_event(e.event_id) is False:
-                self.logger.error("critical error while deleting event")
                 self.data_lock.release()
                 return False
             if e.method == "object_action":
                 if e.object_name == 'Instance':
                     if e.vm_state == "deleted":
-                        # self.logger.debug("delete uuid")
                         if self.db.delete_uuid(e.uuid) is False:
                             self.data_lock.release()
                             return False
-
-        # self.logger.info("--- done event handling ---")
 
         self.data_lock.release()
 

@@ -1,14 +1,16 @@
 #!/bin/python
 
+# Modified: Sep. 4, 2016
 
-#################################################################################################################
-# Author: Gueyoung Jung
-# Contact: gjung@research.att.com
-# Version 2.0.2: Feb. 9, 2016
-#
-#################################################################################################################
 
 from valet.engine.optimizer.app_manager.app_topology_base import LEVELS
+
+''' for unit test '''
+'''
+import sys
+sys.path.insert(0, '../optimizer/app_manager')
+from app_topology_base import LEVELS
+'''
 
 
 class Datacenter(object):
@@ -93,7 +95,7 @@ class Datacenter(object):
                 'last_link_update': self.last_link_update}
 
 
-# Data container for rack or cluster
+# data container for rack or cluster
 class HostGroup(object):
 
     def __init__(self, _id):
@@ -140,7 +142,7 @@ class HostGroup(object):
     def init_memberships(self):
         for lgk in self.memberships.keys():
             lg = self.memberships[lgk]
-            if lg.group_type == "EX" or lg.group_type == "AFF":
+            if lg.group_type == "EX" or lg.group_type == "AFF" or lg.group_type == "DIV":
                 level = lg.name.split(":")[0]
                 if LEVELS.index(level) < LEVELS.index(self.host_type):
                     del self.memberships[lgk]
@@ -153,7 +155,7 @@ class HostGroup(object):
     def remove_membership(self, _lg):
         cleaned = False
 
-        if _lg.group_type == "EX" or _lg.group_type == "AFF":
+        if _lg.group_type == "EX" or _lg.group_type == "AFF" or _lg.group_type == "DIV":
             if self.name not in _lg.vms_per_host.keys():
                 del self.memberships[_lg.name]
                 cleaned = True
@@ -247,7 +249,6 @@ class Host(object):
 
         for lgk in self.memberships.keys():
             lg = self.memberships[lgk]
-            # if lg.group_type == "EX" or lg.group_type == "AFF":  # NOTE: needed?
             if self.name not in lg.vms_per_host.keys():
                 del self.memberships[lgk]
                 cleaned = True
@@ -257,7 +258,7 @@ class Host(object):
     def remove_membership(self, _lg):
         cleaned = False
 
-        if _lg.group_type == "EX" or _lg.group_type == "AFF":
+        if _lg.group_type == "EX" or _lg.group_type == "AFF" or _lg.group_type == "DIV":
             if self.name not in _lg.vms_per_host.keys():
                 del self.memberships[_lg.name]
                 cleaned = True
@@ -420,7 +421,7 @@ class LogicalGroup(object):
 
     def __init__(self, _name):
         self.name = _name
-        self.group_type = "AGGR"         # AGGR, AZ, INTG, EX, or AFF
+        self.group_type = "AGGR"         # AGGR, AZ, INTG, EX, DIV, or AFF
 
         self.status = "enabled"
 
@@ -511,7 +512,7 @@ class LogicalGroup(object):
         if self.exist_vm_by_h_uuid(_vm_id[0]) is False:
             self.vm_list.append(_vm_id)
 
-            if self.group_type == "EX" or self.group_type == "AFF":
+            if self.group_type == "EX" or self.group_type == "AFF" or self.group_type == "DIV":
                 if _host_id not in self.vms_per_host.keys():
                     self.vms_per_host[_host_id] = []
             self.vms_per_host[_host_id].append(_vm_id)
@@ -536,7 +537,7 @@ class LogicalGroup(object):
                     success = True
                     break
 
-        if self.group_type == "EX" or self.group_type == "AFF":
+        if self.group_type == "EX" or self.group_type == "AFF" or self.group_type == "DIV":
             if (_host_id in self.vms_per_host.keys()) and len(self.vms_per_host[_host_id]) == 0:
                 del self.vms_per_host[_host_id]
 
@@ -558,7 +559,7 @@ class LogicalGroup(object):
                     success = True
                     break
 
-        if self.group_type == "EX" or self.group_type == "AFF":
+        if self.group_type == "EX" or self.group_type == "AFF" or self.group_type == "DIV":
             if (_host_id in self.vms_per_host.keys()) and len(self.vms_per_host[_host_id]) == 0:
                 del self.vms_per_host[_host_id]
 
@@ -578,7 +579,7 @@ class LogicalGroup(object):
                     self.vms_per_host[_host_id].remove(vm_id)
                     success = True
 
-        if self.group_type == "EX" or self.group_type == "AFF":
+        if self.group_type == "EX" or self.group_type == "AFF" or self.group_type == "DIV":
             if (_host_id in self.vms_per_host.keys()) and len(self.vms_per_host[_host_id]) == 0:
                 del self.vms_per_host[_host_id]
 
@@ -639,7 +640,6 @@ class Link(object):
                 'avail_bandwidth': self.avail_nw_bandwidth}
 
 
-# TODO(GY): storage backend, pool, or physical storage?
 class StorageHost(object):
 
     def __init__(self, _name):

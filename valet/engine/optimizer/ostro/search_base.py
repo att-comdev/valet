@@ -1,15 +1,16 @@
 #!/bin/python
 
-
-#################################################################################################################
-# Author: Gueyoung Jung
-# Contact: gjung@research.att.com
-# Version 2.0.3: Mar. 15, 2016
-#
-#################################################################################################################
+# Modified: Sep. 4, 2016
 
 
 from valet.engine.optimizer.app_manager.app_topology_base import VGroup, VM, Volume, LEVELS
+
+''' for unit test '''
+'''
+import sys
+sys.path.insert(0, '../app_manager')
+from app_topology_base import VGroup, VM, Volume, LEVELS
+'''
 
 
 class Resource(object):
@@ -214,7 +215,6 @@ class LogicalGroupResource(object):
         self.num_of_placed_vms_per_host = {}   # key = host (i.e., id of host or rack), value = num_of_placed_vms
 
 
-# where Volume will be placed
 class StorageResource(object):
 
     def __init__(self):
@@ -277,7 +277,7 @@ class Node(object):
 
         for dk in self.node.diversity_groups.keys():
             if dk in _diversity_groups.keys():
-                level = self.node.diversity_groups[dk]
+                level = self.node.diversity_groups[dk].split(":")[0]
                 if common_level != "ANY":
                     if LEVELS.index(level) > LEVELS.index(common_level):
                         common_level = level
@@ -286,37 +286,14 @@ class Node(object):
 
         return common_level
 
-    '''
-    def get_exclusivity_id(self):
-        exc_id = None
-
-        if isinstance(self.node, VGroup) and self.node.vgroup_type == "EX":
-            exc_id = self.node.level + ":" + self.node.name
-
-        return exc_id
-    '''
-
     def get_affinity_id(self):
         aff_id = None
 
-        if isinstance(self.node, VGroup) and self.node.vgroup_type == "AFF" and self.node.name != "any":
+        if isinstance(self.node, VGroup) and self.node.vgroup_type == "AFF" and \
+           self.node.name != "any":
             aff_id = self.node.level + ":" + self.node.name
 
         return aff_id
-
-    '''
-    def get_parent_exclusivity_id(self):
-        exc_id = None
-
-        if self.node.survgroup != None:
-            n = Node()
-            n.node = self.node.survgroup
-            exc_id = n.get_exclusivity_id()
-            if exc_id == None:
-                exc_id = n.get_parent_exclusivity_id()
-
-        return exc_id
-    '''
 
 
 def compute_reservation(_level, _placement_level, _bandwidth):

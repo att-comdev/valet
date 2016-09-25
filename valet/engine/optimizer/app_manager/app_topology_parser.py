@@ -1,53 +1,35 @@
 #!/bin/python
 
+# Modified: Sep. 20, 2016
 
-#################################################################################################################
-# Author: Gueyoung Jung
-# Contact: gjung@research.att.com
-# Version 1.0: Aug. 12, 2016
-#
-# Functions
-# - Parse each application
-#
-#################################################################################################################
 
-from valet.engine.optimizer.app_manager.app_topology_base import VGroup, VGroupLink, VM, VMLink, LEVELS
-# from valet.engine.optimizer.app_manager.app_topology_base import Volume, VolumeLink
+from app_topology_base import VGroup, VGroupLink, VM, VMLink, LEVELS
 
 
 '''
-NOTE: Restrictions of nested groups
-    EX in EX
-    EX in DIV
-    DIV in EX
-    DIV in DIV
-
-    VM/group cannot exist in multiple EX groups
-    Nested group's level cannot be higher than nesting group
+- Restrictions of nested groups: EX in EX, EX in DIV, DIV in EX, DIV in DIV
+- VM/group cannot exist in multiple EX groups
+- Nested group's level cannot be higher than nesting group
+- No supporting the following Heat components
+    OS::Nova::ServerGroup
+    OS::Heat::AutoScalingGroup
+    OS::Heat::Stack
+    OS::Heat::ResourceGroup
+    OS::Heat::ResourceGroup
 '''
 
 
 class Parser(object):
 
-    def __init__(self, _resource, _logger):
-        self.resource = _resource
-
+    def __init__(self, _high_level_allowed, _logger):
         self.logger = _logger
 
-        self.high_level_allowed = True
-        if "none" in self.resource.datacenter.region_code_list:
-            self.high_level_allowed = False
+        self.high_level_allowed = _high_level_allowed
 
         self.format_version = None
         self.stack_id = None          # used as application id
         self.application_name = None
         self.action = None            # [create|update|ping]
-
-        self.total_nw_bandwidth = 0
-        self.total_CPU = 0
-        self.total_mem = 0
-        self.total_local_vol = 0
-        self.total_vols = {}
 
         self.status = "success"
 
@@ -77,6 +59,8 @@ class Parser(object):
     def _set_topology(self, _elements):
         vgroups = {}
         vms = {}
+
+        ''' empty at this version '''
         volumes = {}
 
         for rk, r in _elements.iteritems():
@@ -89,9 +73,7 @@ class Parser(object):
                 else:
                     vm.name = vm.uuid
 
-                if vm.set_vm_properties(r["properties"]["flavor"], self.resource) is False:
-                    self.status = "not recognize flavor = " + r["properties"]["flavor"]
-                    return ({}, {}, {})
+                vm.flavor = r["properties"]["flavor"]
 
                 if "availability_zone" in r["properties"].keys():
                     az = r["properties"]["availability_zone"]
@@ -105,69 +87,47 @@ class Parser(object):
             elif r["type"] == "OS::Cinder::Volume":
                 self.logger.debug("do nothing for volume at this version")
 
-                '''
-                volume = Volume(self.stack_id, rk)
-
-                if "name" in r.keys():
-                    volume.name = r["name"]
-                else:
-                    volume.name = volume.uuid
-
-                if "tier" in r['properties']['metadata']:
-                    volume.volume_class = r['properties']['metadata']['tier']
-                else:
-                    volume.volume_class = "any"
-
-                volume.volume_size = r["properties"]["size"]
-
-                volumes[volume.uuid] = volume
-                '''
-
             elif r["type"] == "ATT::Valet::GroupAssignment":
                 vgroup = VGroup(self.stack_id, rk)
 
                 vgroup.vgroup_type = None
-                if r["properties"]["group_type"] == "affinity":
-                    vgroup.vgroup_type = "AFF"
-                elif r["properties"]["group_type"] == "diversity":
-                    vgroup.vgroup_type = "DIV"
-                elif r["properties"]["group_type"] == "exclusivity":
-                    vgroup.vgroup_type = "EX"
+                if "group_type" in r["properties"].keys():
+                    if r["properties"]["group_type"] == "affinity":
+                        vgroup.vgroup_type = "AFF"
+                    elif r["properties"]["group_type"] == "diversity":
+                        vgroup.vgroup_type = "DIV"
+                    elif r["properties"]["group_type"] == "exclusivity":
+                        vgroup.vgroup_type = "EX"
+                    else:
+                        self.status = "unknown group = " + r["properties"]["group_type"]
+                        return ({}, {}, {})
                 else:
-                    self.status = "unknown group = " + r["properties"]["group_type"]
+                    self.status = "no group type"
                     return ({}, {}, {})
 
                 if "group_name" in r["properties"].keys():
                     vgroup.name = r["properties"]["group_name"]
                 else:
                     if vgroup.vgroup_type == "EX":
-                        self.status = "no exclusivity identifier"
+                        self.status = "no exclusivity group identifier"
                         return ({}, {}, {})
                     else:
                         vgroup.name = "any"
 
-                vgroup.level = r["properties"]["level"]
-
-                if vgroup.level != "host":
-                    if self.high_level_allowed is False:
-                        self.status = "only host level of affinity group allowed in this site " + \
-                                      "due to the mis-match of host naming convention"
-                        return ({}, {}, {})
+                if "level" in r["properties"].keys():
+                    vgroup.level = r["properties"]["level"]
+                    if vgroup.level != "host":
+                        if self.high_level_allowed is False:
+                            self.status = "only host level of affinity group allowed " + \
+                                          "due to the mis-match of host naming convention"
+                            return ({}, {}, {})
+                else:
+                    self.status = "no grouping level"
+                    return ({}, {}, {})
 
                 vgroups[vgroup.uuid] = vgroup
 
                 self.logger.debug("get a group = " + vgroup.name)
-
-            '''
-            elif r["type"] == "OS::Nova::ServerGroup" or \
-                 r["type"] == "OS::Heat::AutoScalingGroup" or \
-                 r["type"] == "OS::Heat::Stack" or \
-                 r["type"] == "OS::Heat::ResourceGroup":
-                 r["type"] == "OS::Heat::ResourceGroup":
-
-                self.status = "Not supported resource type (" + r["type"]+ ") in this version"
-                return ({}, {}, {})
-            '''
 
         self._set_vm_links(_elements, vms)
 
@@ -175,8 +135,6 @@ class Parser(object):
             return ({}, {}, {})
 
         self._set_total_link_capacities(vms, volumes)
-
-        self._set_weight(vms, volumes)
 
         self.logger.debug("all vms parsed")
 
@@ -189,22 +147,17 @@ class Parser(object):
         if self._merge_affinity_groups(_elements, vgroups, vms, volumes) is False:
             return ({}, {}, {})
 
-        # Delete all remaining EX and DIV vgroups
+        ''' delete all EX and DIV vgroups after merging '''
         for vgk in vgroups.keys():
             vg = vgroups[vgk]
             if vg.vgroup_type == "DIV" or vg.vgroup_type == "EX":
                 del vgroups[vgk]
 
-        self.logger.debug("all groups resolved")
-
         for vgk in vgroups.keys():
             vgroup = vgroups[vgk]
             self._set_vgroup_links(vgroup, vgroups, vms, volumes)
 
-            if isinstance(vgroup, VGroup):
-                self._set_vgroup_weight(vgroup)
-
-        self.logger.debug("all groups parsed")
+        self.logger.debug("all groups resolved")
 
         return (vgroups, vms, volumes)
 
@@ -225,52 +178,10 @@ class Parser(object):
 
     def _set_volume_links(self, _elements, _vms, _volumes):
         for rk, r in _elements.iteritems():
-
             if r["type"] == "OS::Cinder::VolumeAttachment":
                 self.logger.debug("do nothing for volume attachment at this version")
 
-                '''
-                vm_uuid = r["properties"]["instance_uuid"]
-                if vm_uuid not in _vms.keys():
-                    self.status = "vm {} of volume attachement {} not exist".format(vm_uuid, r["name"])
-                    return False
-                vm = _vms[vm_uuid]
-
-                vol_uuid = r["properties"]["volume_id"]
-                if vol_uuid not in _volumes.keys():
-                    self.status = "volume {} of volume attachement {} not exist".format(vol_uuid, r["name"])
-                    return False
-                volume = _volumes[vol_uuid]
-
-                vm2volume_link = VolumeLink(volume)
-                volume2vm_link = VolumeLink(vm)
-
-                name = None
-                if "name" in r.keys():
-                    name = r["name"]
-                else:
-                    name = rk
-
-                self._set_volume_attributes(_elements, rk, name, vm2volume_link, volume2vm_link)
-
-                vm.volume_list.append(vm2volume_link)
-                volume.vm_list.append(volume2vm_link)
-                '''
-
         return True
-
-    '''
-    def _set_volume_attributes(self, _elements, _link_id, _link_name, _link1, _link2):
-        for _, r in _elements.iteritems():
-            if r["type"] == "ATT::CloudQoS::Pipe":
-                resources = r["properties"]["resources"]
-                if _link_id in resources:
-                    property_elements = r["properties"]
-                    if "bandwidth" in property_elements.keys():
-                        _link1.io_bandwidth = r["properties"]["bandwidth"]["min"]
-                        _link2.io_bandwidth = r["properties"]["bandwidth"]["min"]
-                    break
-    '''
 
     def _set_total_link_capacities(self, _vms, _volumes):
         for _, vm in _vms.iteritems():
@@ -282,67 +193,6 @@ class Parser(object):
         for _, volume in _volumes.iteritems():
             for vl in volume.vm_list:
                 volume.io_bandwidth += vl.io_bandwidth
-
-    def _set_weight(self, _vms, _volumes):
-        for _, vm in _vms.iteritems():
-
-            if self.resource.CPU_avail > 0:
-                vm.vCPU_weight = float(vm.vCPUs) / float(self.resource.CPU_avail)
-            else:
-                vm.vCPU_weight = 1.0
-            self.total_CPU += vm.vCPUs
-
-            if self.resource.mem_avail > 0:
-                vm.mem_weight = float(vm.mem) / float(self.resource.mem_avail)
-            else:
-                vm.mem_weight = 1.0
-            self.total_mem += vm.mem
-
-            if self.resource.local_disk_avail > 0:
-                vm.local_volume_weight = float(vm.local_volume_size) / float(self.resource.local_disk_avail)
-            else:
-                if vm.local_volume_size > 0:
-                    vm.local_volume_weight = 1.0
-                else:
-                    vm.local_volume_weight = 0.0
-            self.total_local_vol += vm.local_volume_size
-
-            bandwidth = vm.nw_bandwidth + vm.io_bandwidth
-
-            if self.resource.nw_bandwidth_avail > 0:
-                vm.bandwidth_weight = float(bandwidth) / float(self.resource.nw_bandwidth_avail)
-            else:
-                if bandwidth > 0:
-                    vm.bandwidth_weight = 1.0
-                else:
-                    vm.bandwidth_weight = 0.0
-
-            self.total_nw_bandwidth += bandwidth
-
-        for _, volume in _volumes.iteritems():
-
-            if self.resource.disk_avail > 0:
-                volume.volume_weight = float(volume.volume_size) / float(self.resource.disk_avail)
-            else:
-                if volume.volume_size > 0:
-                    volume.volume_weight = 1.0
-                else:
-                    volume.volume_weight = 0.0
-
-            if volume.volume_class in self.total_vols.keys():
-                self.total_vols[volume.volume_class] += volume.volume_size
-            else:
-                self.total_vols[volume.volume_class] = volume.volume_size
-
-            if self.resource.nw_bandwidth_avail > 0:
-                volume.bandwidth_weight = float(volume.io_bandwidth) / float(self.resource.nw_bandwidth_avail)
-            else:
-                if volume.io_bandwidth > 0:
-                    volume.bandwidth_weight = 1.0
-                else:
-                    volume.bandwidth_weight = 0.0
-
-            self.total_nw_bandwidth += volume.io_bandwidth
 
     def _merge_diversity_groups(self, _elements, _vgroups, _vms, _volumes):
         for level in LEVELS:
@@ -356,10 +206,10 @@ class Parser(object):
                     for vk in r["properties"]["resources"]:
                         if vk in _vms.keys():
                             vgroup.subvgroups[vk] = _vms[vk]
-                            _vms[vk].diversity_groups[rk] = vgroup.level
+                            _vms[vk].diversity_groups[rk] = vgroup.level + ":" + vgroup.name
                         elif vk in _volumes.keys():
                             vgroup.subvgroups[vk] = _volumes[vk]
-                            _volumes[vk].diversity_groups[rk] = vgroup.level
+                            _volumes[vk].diversity_groups[rk] = vgroup.level + ":" + vgroup.name
                         elif vk in _vgroups.keys():
                             vg = _vgroups[vk]
 
@@ -368,12 +218,11 @@ class Parser(object):
                                 return False
 
                             if vg.vgroup_type == "DIV" or vg.vgroup_type == "EX":
-                                self.status = "group type (" + vg.vgroup_type + ") not allowd to be " + \
-                                              "nested in diversity group at this version"
+                                self.status = "group type (" + vg.vgroup_type + ") not allowd to be nested in diversity group at this version"
                                 return False
 
                             vgroup.subvgroups[vk] = vg
-                            vg.diversity_groups[rk] = vgroup.level
+                            vg.diversity_groups[rk] = vgroup.level + ":" + vgroup.name
                         else:
                             self.status = "invalid resource = " + vk
                             return False
@@ -404,8 +253,7 @@ class Parser(object):
                                 return False
 
                             if vg.vgroup_type == "DIV" or vg.vgroup_type == "EX":
-                                self.status = "group type (" + vg.vgroup_type + ") not allowd to be " + \
-                                              "nested in exclusivity group at this version"
+                                self.status = "group type (" + vg.vgroup_type + ") not allowd to be nested in exclusivity group at this version"
                                 return False
 
                             vgroup.subvgroups[vk] = vg
@@ -444,7 +292,6 @@ class Parser(object):
                             self._add_implicit_diversity_groups(vgroup, _vms[vk].diversity_groups)
                             self._add_implicit_exclusivity_groups(vgroup, _vms[vk].exclusivity_groups)
                             self._add_memberships(vgroup, _vms[vk])
-                            self._add_resource_requirements(vgroup, _vms[vk])
 
                             del _vms[vk]
 
@@ -457,7 +304,6 @@ class Parser(object):
                             self._add_implicit_diversity_groups(vgroup, _volumes[vk].diversity_groups)
                             self._add_implicit_exclusivity_groups(vgroup, _volumes[vk].exclusivity_groups)
                             self._add_memberships(vgroup, _volumes[vk])
-                            self._add_resource_requirements(vgroup, _volumes[vk])
 
                             del _volumes[vk]
 
@@ -475,7 +321,9 @@ class Parser(object):
                                 del _vgroups[vk]
                             else:
                                 if self._exist_in_subgroups(vk, vgroup) is None:
-                                    if self._get_subgroups(vg, _elements, _vgroups, _vms, _volumes, affinity_map) is False:
+                                    if self._get_subgroups(vg, _elements,
+                                                           _vgroups, _vms, _volumes,
+                                                           affinity_map) is False:
                                         return False
 
                                     vgroup.subvgroups[vk] = vg
@@ -486,7 +334,6 @@ class Parser(object):
                                     self._add_implicit_diversity_groups(vgroup, vg.diversity_groups)
                                     self._add_implicit_exclusivity_groups(vgroup, vg.exclusivity_groups)
                                     self._add_memberships(vgroup, vg)
-                                    self._add_resource_requirements(vgroup, vg)
 
                                     del _vgroups[vk]
 
@@ -512,7 +359,6 @@ class Parser(object):
                 self._add_implicit_diversity_groups(_vgroup, _vms[vk].diversity_groups)
                 self._add_implicit_exclusivity_groups(_vgroup, _vms[vk].exclusivity_groups)
                 self._add_memberships(_vgroup, _vms[vk])
-                self._add_resource_requirements(_vgroup, _vms[vk])
 
                 del _vms[vk]
 
@@ -525,7 +371,6 @@ class Parser(object):
                 self._add_implicit_diversity_groups(_vgroup, _volumes[vk].diversity_groups)
                 self._add_implicit_exclusivity_groups(_vgroup, _volumes[vk].exclusivity_groups)
                 self._add_memberships(_vgroup, _volumes[vk])
-                self._add_resource_requirements(_vgroup, _volumes[vk])
 
                 del _volumes[vk]
 
@@ -537,7 +382,9 @@ class Parser(object):
                     return False
 
                 if vg.vgroup_type == "DIV" or vg.vgroup_type == "EX":
-                    if self._merge_subgroups(_vgroup, vg.subvgroups, _vms, _volumes, _vgroups, _elements, _affinity_map) is False:
+                    if self._merge_subgroups(_vgroup, vg.subvgroups,
+                                             _vms, _volumes, _vgroups,
+                                             _elements, _affinity_map) is False:
                         return False
                     del _vgroups[vk]
                 else:
@@ -553,7 +400,6 @@ class Parser(object):
                         self._add_implicit_diversity_groups(_vgroup, vg.diversity_groups)
                         self._add_implicit_exclusivity_groups(_vgroup, vg.exclusivity_groups)
                         self._add_memberships(_vgroup, vg)
-                        self._add_resource_requirements(_vgroup, vg)
 
                         del _vgroups[vk]
 
@@ -581,7 +427,6 @@ class Parser(object):
                 self._add_implicit_diversity_groups(_vgroup, _vms[vk].diversity_groups)
                 self._add_implicit_exclusivity_groups(_vgroup, _vms[vk].exclusivity_groups)
                 self._add_memberships(_vgroup, _vms[vk])
-                self._add_resource_requirements(_vgroup, _vms[vk])
 
                 del _vms[vk]
 
@@ -594,7 +439,6 @@ class Parser(object):
                 self._add_implicit_diversity_groups(_vgroup, _volumes[vk].diversity_groups)
                 self._add_implicit_exclusivity_groups(_vgroup, _volumes[vk].exclusivity_groups)
                 self._add_memberships(_vgroup, _volumes[vk])
-                self._add_resource_requirements(_vgroup, _volumes[vk])
 
                 del _volumes[vk]
 
@@ -606,7 +450,9 @@ class Parser(object):
                     return False
 
                 if vg.vgroup_type == "DIV" or vg.vgroup_type == "EX":
-                    if self._merge_subgroups(_vgroup, vg.subvgroups, _vms, _volumes, _vgroups, _elements, _affinity_map) is False:
+                    if self._merge_subgroups(_vgroup, vg.subvgroups,
+                                             _vms, _volumes, _vgroups,
+                                             _elements, _affinity_map) is False:
                         return False
                     del _vgroups[vk]
                 else:
@@ -622,7 +468,6 @@ class Parser(object):
                         self._add_implicit_diversity_groups(_vgroup, vg.diversity_groups)
                         self._add_implicit_exclusivity_groups(_vgroup, vg.exclusivity_groups)
                         self._add_memberships(_vgroup, vg)
-                        self._add_resource_requirements(_vgroup, vg)
 
                         del _vgroups[vk]
             else:
@@ -647,26 +492,6 @@ class Parser(object):
             if LEVELS.index(l) >= LEVELS.index(_vgroup.level):
                 _vgroup.exclusivity_groups[ex] = level
 
-    def _add_resource_requirements(self, _vgroup, _v):
-        if isinstance(_v, VM):
-            _vgroup.vCPUs += _v.vCPUs
-            _vgroup.mem += _v.mem
-            _vgroup.local_volume_size += _v.local_volume_size
-        # elif isinstance(_v, Volume):
-        #     if _v.volume_class in _vgroup.volume_sizes.keys():
-        #         _vgroup.volume_sizes[_v.volume_class] += _v.volume_size
-        #     else:
-        #         _vgroup.volume_sizes[_v.volume_class] = _v.volume_size
-        elif isinstance(_v, VGroup):
-            _vgroup.vCPUs += _v.vCPUs
-            _vgroup.mem += _v.mem
-            _vgroup.local_volume_size += _v.local_volume_size
-            for vc in _v.volume_sizes.keys():
-                if vc in _vgroup.volume_sizes.keys():
-                    _vgroup.volume_sizes[vc] += _v.volume_sizes[vc]
-                else:
-                    _vgroup.volume_sizes[vc] = _v.volume_sizes[vc]
-
     def _add_memberships(self, _vgroup, _v):
         if isinstance(_v, VM) or isinstance(_v, VGroup):
             for extra_specs in _v.extra_specs_list:
@@ -686,7 +511,7 @@ class Parser(object):
                 _vgroup.host_aggregates[hgk] = hg
             '''
 
-    # Take vk's most top parent as a s_vg's child vgroup
+    ''' take vk's most top parent as a s_vg's child vgroup '''
     def _set_implicit_grouping(self, _vk, _s_vg, _affinity_map, _vgroups):
         t_vg = _affinity_map[_vk]  # where _vk currently belongs to
 
@@ -696,6 +521,7 @@ class Parser(object):
         else:
             if LEVELS.index(t_vg.level) > LEVELS.index(_s_vg.level):
                 t_vg.level = _s_vg.level
+
                 '''
                 self.status = "Grouping scope: sub-group's level is larger"
                 return False
@@ -710,7 +536,6 @@ class Parser(object):
                 self._add_implicit_diversity_groups(_s_vg, t_vg.diversity_groups)
                 self._add_implicit_exclusivity_groups(_s_vg, t_vg.exclusivity_groups)
                 self._add_memberships(_s_vg, t_vg)
-                self._add_resource_requirements(_s_vg, t_vg)
 
                 del _vgroups[t_vg.uuid]
 
@@ -811,56 +636,3 @@ class Parser(object):
                 vgroup_link = vgl
                 break
         return vgroup_link
-
-    def _set_vgroup_weight(self, _vgroup):
-        # success = True
-
-        if self.resource.CPU_avail > 0:
-            _vgroup.vCPU_weight = float(_vgroup.vCPUs) / float(self.resource.CPU_avail)
-        else:
-            if _vgroup.vCPUs > 0:
-                _vgroup.vCPU_weight = 1.0
-            else:
-                _vgroup.vCPU_weight = 0.0
-
-        if self.resource.mem_avail > 0:
-            _vgroup.mem_weight = float(_vgroup.mem) / float(self.resource.mem_avail)
-        else:
-            if _vgroup.mem > 0:
-                _vgroup.mem_weight = 1.0
-            else:
-                _vgroup.mem_weight = 0.0
-
-        if self.resource.local_disk_avail > 0:
-            _vgroup.local_volume_weight = float(_vgroup.local_volume_size) / float(self.resource.local_disk_avail)
-        else:
-            if _vgroup.local_volume_size > 0:
-                _vgroup.local_volume_weight = 1.0
-            else:
-                _vgroup.local_volume_weight = 0.0
-
-        vol_list = []
-        for vol_class in _vgroup.volume_sizes.keys():
-            vol_list.append(_vgroup.volume_sizes[vol_class])
-
-        if self.resource.disk_avail > 0:
-            _vgroup.volume_weight = float(sum(vol_list)) / float(self.resource.disk_avail)
-        else:
-            if sum(vol_list) > 0:
-                _vgroup.volume_weight = 1.0
-            else:
-                _vgroup.volume_weight = 0.0
-
-        bandwidth = _vgroup.nw_bandwidth + _vgroup.io_bandwidth
-
-        if self.resource.nw_bandwidth_avail > 0:
-            _vgroup.bandwidth_weight = float(bandwidth) / float(self.resource.nw_bandwidth_avail)
-        else:
-            if bandwidth > 0:
-                _vgroup.bandwidth_weight = 1.0
-            else:
-                _vgroup.bandwidth_weight = 0.0
-
-        for _, svg in _vgroup.subvgroups.iteritems():
-            if isinstance(svg, VGroup):
-                self._set_vgroup_weight(svg)

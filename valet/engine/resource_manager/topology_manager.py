@@ -1,23 +1,12 @@
 #!/bin/python
 
+# Modified: Sep. 4, 2016
 
-#################################################################################################################
-# Author: Gueyoung Jung
-# Contact: gjung@research.att.com
-# Version 2.0.2: Feb. 9, 2016
-#
-# Functions
-# - Update datacenter configuration
-# - Update links of each Switch resource
-#     - For the total bandwidth capacity of each link & new or failure of the link
-#
-#################################################################################################################
-
-
-from resource_base import Datacenter, HostGroup, Host, Switch, Link
 
 import threading
 import time
+
+from resource_base import Datacenter, HostGroup, Host, Switch, Link
 from topology import Topology
 
 
@@ -86,7 +75,6 @@ class TopologyManager(threading.Thread):
 
         self.logger.info("--- start topology status update ---")
 
-        # self.data_lock.acquire(1)
         self.data_lock.acquire()
         try:
             if self.set_topology() is True:
@@ -105,26 +93,18 @@ class TopologyManager(threading.Thread):
         switches = {}
 
         topology = None
-        if self.config.mode.startswith("sim") is True:
-            datacenter = Datacenter(self.config.mode)
-            # topology = SimTopology(self.config)
-            topology = Topology(self.config, self.logger)
-
-            # status = topology.set_topology(datacenter, host_groups, hosts, switches)
-            status = topology.set_topology(datacenter, host_groups, hosts, self.resource.hosts, switches)
-            if status != "success":
-                self.logger.error(status)
-                return False
-
+        if self.config.mode.startswith("sim") is True or \
+           self.config.mode.startswith("test") is True:
+            datacenter = Datacenter("sim")
         else:
             datacenter = Datacenter(self.config.datacenter_name)
-            topology = Topology(self.config, self.logger)
 
-            # NOTE: currently, using naming convention to set up layout & ignore networking layout
-            status = topology.set_topology(datacenter, host_groups, hosts, self.resource.hosts, switches)
-            if status != "success":
-                self.logger.error(status)
-                return False
+        topology = Topology(self.config, self.logger)
+
+        status = topology.set_topology(datacenter, host_groups, hosts, self.resource.hosts, switches)
+        if status != "success":
+            self.logger.error(status)
+            return False
 
         self._check_update(datacenter, host_groups, hosts, switches)
 

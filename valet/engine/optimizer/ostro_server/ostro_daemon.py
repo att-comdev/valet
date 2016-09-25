@@ -1,15 +1,6 @@
 #!/bin/python
 
-
-#################################################################################################################
-# Author: Gueyoung Jung
-# Contact: gjung@research.att.com
-# Version 2.0.2: Feb. 9, 2016
-#
-# Functions
-# - Create deamon process that starts RPC server and Ostro
-#
-#################################################################################################################
+# Modified: Sep. 16, 2016
 
 
 from configuration import Config
@@ -18,15 +9,21 @@ from logging.handlers import RotatingFileHandler
 import os
 import sys
 
+from daemon import Daemon   # implemented for Python v2.7
 from valet.engine.optimizer.ostro.ostro import Ostro
-from valet.engine.optimizer.ostro_server.daemon import Daemon   # Implemented for Python v2.x
+
+''' for unit test '''
+'''
+sys.path.insert(0, '../ostro')
+from ostro import Ostro
+'''
 
 
 class OstroDaemon(Daemon):
 
     def run(self):
 
-        self.logger.info("start logging.")
+        self.logger.info("##### Valet Engine is launched #####")
 
         ostro = Ostro(config, logger)
 
@@ -37,14 +34,14 @@ class OstroDaemon(Daemon):
 
 
 if __name__ == "__main__":
-    # Configuration
+    ''' configuration '''
     config = Config()
     config_status = config.configure()
     if config_status != "success":
         print(config_status)
         sys.exit(2)
 
-    # Create logging directories
+    ''' create logging directories '''
     try:
         if not os.path.exists(config.logging_loc):
             os.makedirs(config.logging_loc)
@@ -66,7 +63,15 @@ if __name__ == "__main__":
         print("Error while app log dir")
         sys.exit(2)
 
-    # Logger
+    if config.mode.startswith("sim"):
+        try:
+            if not os.path.exists(config.eval_log_loc):
+                os.makedirs(config.eval_log_loc)
+        except OSError:
+            print("Error while evaluation log dir")
+            sys.exit(2)
+
+    ''' logger '''
     log_formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
     log_handler = RotatingFileHandler(config.logging_loc + config.logger_name + ".log",
                                       mode='a',
@@ -82,7 +87,7 @@ if __name__ == "__main__":
         logger.setLevel(logging.INFO)
     logger.addHandler(log_handler)
 
-    # Start daemon process
+    ''' launch daemon process '''
     daemon = OstroDaemon(config.priority, config.process, logger)
 
     exit_code = 0

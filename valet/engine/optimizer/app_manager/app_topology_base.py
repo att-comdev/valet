@@ -1,20 +1,11 @@
 #!/bin/python
 
-
-###############################################################################
-# Author: Gueyoung Jung
-# Contact: gjung@research.att.com
-# Version 2.0.3: Mar. 15, 2016
-#
-###############################################################################
+# Modified: Sep. 20, 2016
 
 
-# Physical hierarchical layers
-# 'cluster' can be used as zone or power domain
 LEVELS = ["host", "rack", "cluster"]
 
 
-# Affinity group
 class VGroup(object):
 
     def __init__(self, _app_uuid, _uuid):
@@ -68,12 +59,6 @@ class VGroup(object):
         link_list = []
         for l in self.vgroup_list:
             link_list.append(l.get_json_info())
-
-        '''
-        host_aggregates = []
-        for hak in self.host_aggregates.keys():
-            host_aggregates.append(hak)
-        '''
 
         return {'name': self.name,
                 'status': self.status,
@@ -136,33 +121,6 @@ class VM(object):
 
         self.host = None              # where this vm is placed
 
-    def set_vm_properties(self, _flavor_name, _resource):
-        flavor = _resource.get_flavor(_flavor_name)
-
-        if flavor is None:
-            return False
-        else:
-            self.flavor = _flavor_name
-            self.vCPUs = flavor.vCPUs
-            self.mem = flavor.mem_cap
-            self.local_volume_size = flavor.disk_cap
-
-        if len(flavor.extra_specs) > 0:
-            extra_specs = {}
-            for mk, mv in flavor.extra_specs.iteritems():
-                extra_specs[mk] = mv
-            self.extra_specs_list.append(extra_specs)
-
-            '''
-            logical_group_list = _resource.get_matched_logical_groups(flavor)
-
-            for lg in logical_group_list:
-                if lg.group_type == "AGGR":
-                    self.host_aggregates[lg.name] = flavor.extra_specs
-            '''
-
-        return True
-
     def get_json_info(self):
         survgroup_id = None
         if self.survgroup is None:
@@ -183,12 +141,6 @@ class VM(object):
             availability_zone = "none"
         else:
             availability_zone = self.availability_zone
-
-        '''
-        host_aggregates = []
-        for hak in self.host_aggregates.keys():
-            host_aggregates.append(hak)
-        '''
 
         return {'name': self.name,
                 'status': self.status,
@@ -230,9 +182,6 @@ class Volume(object):
 
         self.diversity_groups = {}
         self.exclusivity_groups = {}
-
-        # self.availability_zone = None
-        # self.host_aggregates = {}
 
         self.volume_size = 0          # GB
         self.io_bandwidth = 0

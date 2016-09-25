@@ -1,22 +1,19 @@
 #!/bin/python
 
-
-#################################################################################################################
-# Author: Gueyoung Jung
-# Contact: gjung@research.att.com
-# Version 2.0.3: Mar. 15, 2016
-#
-# Functions
-# - Perform constrained optimization solving using search algorithm
-#
-#################################################################################################################
+# Modified: Sep. 16, 2016
 
 
 import time
-from valet.engine.optimizer.app_manager.app_topology_base import VGroup, VM, Volume
-from valet.engine.optimizer.ostro.search import Search
 
-# sys.path.insert(0, '../app_manager')
+from search import Search
+from valet.engine.optimizer.app_manager.app_topology_base import VGroup, VM, Volume
+
+''' for unit test '''
+'''
+import sys
+sys.path.insert(0, '../app_manager')
+from app_topology_base import VGroup, VM, Volume
+'''
 
 
 class Optimizer(object):
@@ -34,17 +31,10 @@ class Optimizer(object):
         success = False
 
         uuid_map = None
-        '''
-        avail_hosts = {}
-        avail_logical_groups = {}
-        avail_storage_hosts = {}
-        avail_switches = {}
-        '''
 
         start_ts = time.time()
 
-        # Replan request
-        if len(_app_topology.candidate_list_map) > 0:
+        if len(_app_topology.candidate_list_map) > 0:  # replan
             if len(_app_topology.old_vm_map) > 0:
                 self._delete_old_vms(_app_topology.old_vm_map)
                 self.logger.debug("remove & deduct VMs' old placements for replan")
@@ -54,16 +44,8 @@ class Optimizer(object):
                     pass
 
             success = self.search.re_place_nodes(_app_topology, self.resource)
-        # Migration-tip
-        elif len(_app_topology.exclusion_list_map) > 0:
-            '''
-            self.search.copy_resource_status(self.resource)
-            avail_hosts = copy.deepcopy(self.search.avail_hosts)
-            avail_logical_groups = copy.deepcopy(self.search.avail_logical_groups)
-            avail_storage_hosts = copy.deepcopy(self.search.avail_storage_hosts)
-            avail_switches = copy.deepcopy(self.search.avail_switches)
-            '''
 
+        elif len(_app_topology.exclusion_list_map) > 0:  # migration-tip
             vm_id = _app_topology.exclusion_list_map.keys()[0]
             candidate_host_list = []
             for hk in self.resource.hosts.keys():
@@ -80,8 +62,8 @@ class Optimizer(object):
                     pass
 
             success = self.search.re_place_nodes(_app_topology, self.resource)
-        # Create request
-        else:
+
+        else:   # create
             success = self.search.place_nodes(_app_topology, self.resource)
 
         end_ts = time.time()
@@ -106,14 +88,8 @@ class Optimizer(object):
                     elif v.level == "cluster":
                         placement_map[v] = self.search.node_placements[v].cluster_name
 
-                self.logger.debug("    vm (" + v.name + ") placed in " + placement_map[v])
+                self.logger.debug("    " + v.name + " placed in " + placement_map[v])
 
-            '''
-            if tip is True:
-                node_placements
-                uuid  using old_vm_map
-                avail_hosts
-            '''
             self._update_resource_status(uuid_map)
 
             return placement_map
@@ -148,7 +124,9 @@ class Optimizer(object):
                         uuid = _uuid_map[v.uuid]
 
                 self.logger.debug("resource update with vm uuid = " + uuid)
-                self.resource.add_vm_to_host(np.host_name, (v.uuid, v.name, uuid), v.vCPUs, v.mem, v.local_volume_size)
+                self.resource.add_vm_to_host(np.host_name,
+                                             (v.uuid, v.name, uuid),
+                                             v.vCPUs, v.mem, v.local_volume_size)
 
                 for vl in v.vm_list:
                     tnp = self.search.node_placements[vl.node]
@@ -180,21 +158,21 @@ class Optimizer(object):
 
     def _update_logical_grouping(self, _v, _avail_host, _uuid):
         for lgk, lg in _avail_host.host_memberships.iteritems():
-            if lg.group_type == "EX" or lg.group_type == "AFF":
+            if lg.group_type == "EX" or lg.group_type == "AFF" or lg.group_type == "DIV":
                 lg_name = lgk.split(":")
                 if lg_name[0] == "host" and lg_name[1] != "any":
                     self.resource.add_logical_group(_avail_host.host_name, lgk, lg.group_type)
 
         if _avail_host.rack_name != "any":
             for lgk, lg in _avail_host.rack_memberships.iteritems():
-                if lg.group_type == "EX" or lg.group_type == "AFF":
+                if lg.group_type == "EX" or lg.group_type == "AFF" or lg.group_type == "DIV":
                     lg_name = lgk.split(":")
                     if lg_name[0] == "rack" and lg_name[1] != "any":
                         self.resource.add_logical_group(_avail_host.rack_name, lgk, lg.group_type)
 
         if _avail_host.cluster_name != "any":
             for lgk, lg in _avail_host.cluster_memberships.iteritems():
-                if lg.group_type == "EX" or lg.group_type == "AFF":
+                if lg.group_type == "EX" or lg.group_type == "AFF" or lg.group_type == "DIV":
                     lg_name = lgk.split(":")
                     if lg_name[0] == "cluster" and lg_name[1] != "any":
                         self.resource.add_logical_group(_avail_host.cluster_name, lgk, lg.group_type)
@@ -219,18 +197,14 @@ class Optimizer(object):
                 if az not in _vm_logical_groups:
                     _vm_logical_groups.append(az)
 
-        '''
-        if isinstance(_v, VGroup):
-            for az in _v.availability_zone_list:
-                if az not in _vm_logical_groups:
-                    _vm_logical_groups.append(az)
-        '''
-
         for _, level in _v.exclusivity_groups.iteritems():
             if level not in _vm_logical_groups:
                 _vm_logical_groups.append(level)
 
-        # diversity_groups
+        if len(_v.diversity_groups) > 0:
+            for _, level in _v.diversity_groups.iteritems():
+                if level not in _vm_logical_groups:
+                    _vm_logical_groups.append(level)
 
         if isinstance(_v, VGroup):
             name = _v.level + ":" + _v.name

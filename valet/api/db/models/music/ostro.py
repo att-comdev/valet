@@ -71,6 +71,7 @@ class PlacementRequest(Base):
         json_ = {}
         json_['stack_id'] = self.stack_id
         json_['request'] = self.request
+        return json_
 
 
 class PlacementResult(Base):
@@ -176,3 +177,4 @@ class Event(Base):
         json_ = {}
         json_['event_id'] = self.event_id
         json_['event'] = self.event
+        return json_

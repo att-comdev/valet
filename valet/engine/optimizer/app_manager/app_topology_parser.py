@@ -483,7 +483,8 @@ class Parser(object):
 
     def _add_implicit_diversity_groups(self, _vgroup, _diversity_groups):
         for dz, level in _diversity_groups.iteritems():
-            if LEVELS.index(level) >= LEVELS.index(_vgroup.level):
+            l = level.split(":", 1)[0]
+            if LEVELS.index(l) >= LEVELS.index(_vgroup.level):
                 _vgroup.diversity_groups[dz] = level
 
     def _add_implicit_exclusivity_groups(self, _vgroup, _exclusivity_groups):

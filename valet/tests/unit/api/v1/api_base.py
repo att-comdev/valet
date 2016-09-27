@@ -11,11 +11,12 @@ from valet.tests.base import Base
 
 class ApiBase(Base):
 
-    def __init__(self, *args, **kwds):
-        super(ApiBase, self).__init__(*args, **kwds)
+    def setUp(self):
+        super(ApiBase, self).setUp()
         pecan.conf.identity = mock.MagicMock()
-        ApiBase.response = None
+        pecan.conf.music = mock.MagicMock()
+        self.response = None
 
     @classmethod
     def mock_error(cls, url, msg=None, **kwargs):
-        ApiBase.response = msg
+        cls.response = msg

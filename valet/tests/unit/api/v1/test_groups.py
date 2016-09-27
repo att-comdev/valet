@@ -6,23 +6,17 @@ from valet.api.db.models.music.groups import Group
 from valet.api.db.models.music import Query, Results
 import valet.api.v1.controllers.groups as groups
 from valet.api.v1.controllers.groups import GroupsController, MembersController, GroupsItemController, MembersItemController
-from valet.tests.base import Base
+from valet.tests.unit.api.v1.api_base import ApiBase
 
 
-def mock_error(url, msg=None, **kwargs):
-    TestGroups.response = msg
-
-
-class TestGroups(Base):
+class TestGroups(ApiBase):
     ''' Unit tests for valet.api.v1.controllers.groups '''
 
     def setUp(self):
         super(TestGroups, self).setUp()
         self.tenant_id = "testprojectid"
 
-        TestGroups.response = None
         core.state = mock.MagicMock()
-        pecan.conf.music = mock.MagicMock()
 
         # Testing class GroupsController
         self.groups_controller = GroupsController()
@@ -46,12 +40,12 @@ class TestGroups(Base):
         self.validate_test("test_name" == groups.request.context['group'].name)
         return contrler
 
-    @mock.patch.object(groups, 'error', mock_error)
+    @mock.patch.object(groups, 'error', ApiBase.mock_error)
     def test_init_GroupsItemController_unhappy(self):
         GroupsItemController("group_id")
         self.validate_test("Group not found" in TestGroups.response)
 
-    @mock.patch.object(groups, 'error', mock_error)
+    @mock.patch.object(groups, 'error', ApiBase.mock_error)
     @mock.patch.object(groups, 'request')
     def init_MembersItemController(self, mock_request):
         grp = Group("test_member_item_name", "test_description", "test_type", None)
@@ -74,7 +68,7 @@ class TestGroups(Base):
 
         self.validate_test(self.members_item_controller.allow() == "GET,DELETE")
 
-    @mock.patch.object(groups, 'error', mock_error)
+    @mock.patch.object(groups, 'error', ApiBase.mock_error)
     @mock.patch.object(groups, 'request')
     def test_index(self, mock_request):
         mock_request.method = "HEAD"
@@ -95,7 +89,6 @@ class TestGroups(Base):
 
     @mock.patch.object(groups, 'request')
     def index_put(self, mock_request):
-        pecan.conf.identity = mock.MagicMock()
         pecan.conf.identity.engine.is_tenant_list_valid.return_value = True
 
         mock_request.context = {'group': Group("test_name", "test_description", "test_type", None)}
@@ -106,10 +99,9 @@ class TestGroups(Base):
 
         return r
 
-    @mock.patch.object(groups, 'error', mock_error)
+    @mock.patch.object(groups, 'error', ApiBase.mock_error)
     @mock.patch.object(groups, 'request')
     def test_index_put_unhappy(self, mock_request):
-        pecan.conf.identity = mock.MagicMock()
         pecan.conf.identity.engine.is_tenant_list_valid.return_value = False
 
         mock_request.context = {'group': Group("test_name", "test_description", "test_type", None)}
@@ -143,7 +135,7 @@ class TestGroups(Base):
         self.validate_test(groups.response.status == 204)
         self.validate_test(grp.members == [])
 
-    @mock.patch.object(groups, 'error', mock_error)
+    @mock.patch.object(groups, 'error', ApiBase.mock_error)
     @mock.patch.object(groups, 'tenant_servers_in_group')
     @mock.patch.object(groups, 'request')
     def test_index_delete_member_item_controller_unhappy(self, mock_request, mock_func):
@@ -157,7 +149,7 @@ class TestGroups(Base):
 
         self.validate_test("Member not found in group" in TestGroups.response)
 
-    @mock.patch.object(groups, 'error', mock_error)
+    @mock.patch.object(groups, 'error', ApiBase.mock_error)
     @mock.patch.object(groups, 'tenant_servers_in_group')
     @mock.patch.object(groups, 'request')
     def test_index_delete_unhappy(self, mock_request, mock_func):
@@ -190,7 +182,7 @@ class TestGroups(Base):
 
         self.validate_test(groups.response.status == 204)
 
-    @mock.patch.object(groups, 'error', mock_error)
+    @mock.patch.object(groups, 'error', ApiBase.mock_error)
     @mock.patch.object(groups, 'request')
     def test_index_delete_groups_item_controller_unhappy(self, mock_request):
         grp = Group("test_name", "test_description", "test_type", None)
@@ -225,7 +217,7 @@ class TestGroups(Base):
         self.validate_test(groups.response.status == 201)
         self.validate_test(group.name == "testgroup")
 
-    @mock.patch.object(groups, 'error', mock_error)
+    @mock.patch.object(groups, 'error', ApiBase.mock_error)
     def test_index_post_unhappy(self):
         pecan.conf.music = None
         self.groups_controller.index_post(name="testgroup", description="test description", type="testtype")

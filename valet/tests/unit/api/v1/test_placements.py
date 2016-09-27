@@ -7,16 +7,12 @@ Created on Sep 19, 2016
 import mock
 import valet.api.v1.controllers.placements as placements
 from valet.api.v1.controllers.placements import PlacementsController, PlacementsItemController
-from valet.tests.base import Base
 from valet.api.db.models.music import Query, Results
 from valet.api.db.models import Placement, Plan
+from valet.tests.unit.api.v1.api_base import ApiBase
 
 
-def mock_error(_, msg=None, **kwargs):
-    TestPlacements.response = msg
-
-
-class TestPlacements(Base):
+class TestPlacements(ApiBase):
     '''Unit tests for valet.api.v1.controllers.placements '''
 
     def setUp(self):
@@ -24,9 +20,8 @@ class TestPlacements(Base):
 
         self.placements_controller = PlacementsController()
         self.placements_item_controller = self.init_PlacementsItemController()
-        TestPlacements.response = None
 
-    @mock.patch.object(placements, 'error', mock_error)
+    @mock.patch.object(placements, 'error', ApiBase.mock_error)
     @mock.patch.object(Query, 'filter_by')
     @mock.patch.object(placements, 'request')
     def init_PlacementsItemController(self, mock_request, mock_filter):
@@ -36,7 +31,7 @@ class TestPlacements(Base):
             PlacementsItemController("uuid4")
         except Exception as e:
             self.validate_test("'str' object has no attribute 'id'" in e)
-        self.validate_test("Placement not found" in TestPlacements.response)
+        self.validate_test("Placement not found" in ApiBase.response)
 
         mock_filter.return_value = Results([
             Placement("test_name", "test_orchestration_id", plan=Plan("plan_name", "stack_id", _insert=False), location="test_location", _insert=False)])
@@ -48,18 +43,19 @@ class TestPlacements(Base):
 
         self.validate_test(self.placements_item_controller.allow() == 'GET,POST,DELETE')
 
-    @mock.patch.object(placements, 'error', mock_error)
+    @mock.patch.object(placements, 'error', ApiBase.mock_error)
     @mock.patch.object(placements, 'request')
     def test_index(self, mock_request):
         mock_request.method = "POST"
         self.placements_controller.index()
-        self.validate_test("The POST method is not allowed" in TestPlacements.response)
+        self.validate_test("The POST method is not allowed" in ApiBase.response)
 
         mock_request.method = "PUT"
         self.placements_item_controller.index()
-        self.validate_test("The PUT method is not allowed" in TestPlacements.response)
+        self.validate_test("The PUT method is not allowed" in ApiBase.response)
 
-    def test_index_options(self):
+    @mock.patch.object(placements, 'response')
+    def test_index_options(self, _):
         self.placements_controller.index_options()
         self.validate_test(placements.response.status == 204)
 
@@ -83,10 +79,11 @@ class TestPlacements(Base):
         self.validate_test("plan_name" in response['placement'].plan.name)
         self.validate_test("stack_id" in response['placement'].plan.stack_id)
 
-    @mock.patch.object(placements, 'error', mock_error)
+    @mock.patch.object(placements, 'error', ApiBase.mock_error)
     @mock.patch.object(Query, 'filter_by', mock.MagicMock)
     @mock.patch.object(placements, 'update_placements')
-    def test_index_post(self, mock_plcment):
+    @mock.patch.object(placements, 'response')
+    def test_index_post(self, _, mock_plcment):
         kwargs = {'resource_id': "resource_id", 'locations': ["test_location"]}
         self.placements_item_controller.index_post(**kwargs)
         self.validate_test(placements.response.status == 201)
@@ -94,7 +91,7 @@ class TestPlacements(Base):
         with mock.patch('valet.api.v1.controllers.placements.Ostro') as mock_ostro:
             kwargs = {'resource_id': "resource_id", 'locations': [""]}
             self.placements_item_controller.index_post(**kwargs)
-            self.validate_test("Ostro error:" in TestPlacements.response)
+            self.validate_test("Ostro error:" in ApiBase.response)
 
             mock_plcment.return_value = None
 
@@ -105,6 +102,7 @@ class TestPlacements(Base):
             self.placements_item_controller.index_post(**kwargs)
             self.validate_test(placements.response.status == 201)
 
-    def test_index_delete(self):
+    @mock.patch.object(placements, 'response')
+    def test_index_delete(self, _):
         self.placements_item_controller.index_delete()
         self.validate_test(placements.response.status == 204)

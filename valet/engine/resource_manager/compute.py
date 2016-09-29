@@ -273,7 +273,7 @@ class Compute(object):
     def _set_flavors(self, _flavors):
         buf = StringIO.StringIO()
         c = pycurl.Curl()
-        c.setopt(pycurl.URL, self.config.nova_url + self.config.nova_version + str(self.project_token) + self.config.nova_flavors_api)
+        c.setopt(pycurl.URL, self.config.nova_url + self.config.nova_version + str(self.project_token) + self.config.nova_flavors_api + '?is_public=None')
         c.setopt(pycurl.HTTPHEADER, ["X-Auth-Token: " + str(self.admin_token)])
         c.setopt(pycurl.POST, 0)
         c.setopt(pycurl.WRITEFUNCTION, buf.write)

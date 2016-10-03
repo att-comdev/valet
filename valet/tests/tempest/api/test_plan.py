@@ -59,7 +59,7 @@ class ValetPlanTest(base.BaseValetTest):
         _resource_name_id = self._get_resource_name_id()
         _resource_property = self._get_resource_property()
         _resource_data['properties'] = _resource_property
-        _resource_data['type'] = "OS:Nova:Server"
+        _resource_data['type'] = "OS::Nova::Server"
         _resource_data['name'] = _resource_name_id['name']
         resources = {
             _resource_name_id['id']: _resource_data
@@ -79,11 +79,13 @@ class ValetPlanTest(base.BaseValetTest):
         stack_id = resp['plan']['stack_id']
         plan_id = resp['plan']['id']
         plan_name = resp['plan']['name']
-        resource_id = resp['plan']['placements']
+        for key, value in resp['plan']['placements'].iteritems():
+            stack_and_plan['resource_id'] = key
+        location = resp['plan']['placements'][stack_and_plan['resource_id']]['location']
         stack_and_plan['stack_id'] = stack_id
         stack_and_plan['plan_id'] = plan_id
         stack_and_plan['name'] = plan_name
-        stack_and_plan['resource_id'] = resource_id
+        stack_and_plan['location'] = location
         return stack_and_plan
 
     @test.idempotent_id('f25ea766-c91e-40ca-b96c-dff42129803d')
@@ -101,18 +103,16 @@ class ValetPlanTest(base.BaseValetTest):
         stack_id = stack_and_plan['stack_id']
         plan_id = stack_and_plan['plan_id']
         plan_name = stack_and_plan['name']
-        resource_id = stack_and_plan['resoucre_id']
+        resource_id = stack_and_plan['resource_id']
         resources = []
         resources.append(resource_id)
         excluded_hosts = []
-        for count in range(0, 4):
-            _hosts = self._create_excluded_hosts()
-            excluded_hosts.append(_hosts)
+        excluded_hosts.append(stack_and_plan['location'])
         action = "migrate"
-        resp = self.client.update_plan(plan_id,
+        body = self.client.update_plan(plan_id,
                                        action,
                                        excluded_hosts,
                                        resources)
-        self.assertIn('id', resp)
+        self.assertIn('id', body['plan'])
         self.assertEqual(stack_id, plan_name)
         self.addCleanup(self._delete_plan, plan_id)

@@ -1,4 +1,5 @@
 #!/bin/python
+
 # Modified: Sep. 16, 2016
 
 import os
@@ -47,9 +48,6 @@ class Config(object):
         self.replication_factor = 0
         self.db_hosts = []
 
-        ''' for test mvalet '''
-        self.db_mode = None
-
         self.ip = None
 
         self.priority = 0
@@ -64,7 +62,6 @@ class Config(object):
 
         self.resource_log_loc = None
         self.app_log_loc = None
-        self.eval_log_loc = None
         self.max_main_log_size = 0
         self.max_log_size = 0
         self.max_num_of_logs = 0
@@ -129,7 +126,6 @@ class Config(object):
         self.logging_loc = self.root_loc + self.logging_loc
         self.resource_log_loc = self.root_loc + self.resource_log_loc
         self.app_log_loc = self.root_loc + self.app_log_loc
-        self.eval_log_loc = self.root_loc + self.eval_log_loc
 
         self.keystone_url = self.api_proc + self.control_loc + self.keystone_url
         self.nova_url = self.api_proc + self.control_loc + self.nova_url
@@ -176,8 +172,6 @@ class Config(object):
                     self.resource_log_loc = v.strip()
                 elif k == "app_log_loc":
                     self.app_log_loc = v.strip()
-                elif k == "eval_log_loc":
-                    self.eval_log_loc = v.strip()
                 elif k == "max_main_log_size":
                     self.max_main_log_size = int(v.strip())
                 elif k == "max_log_size":
@@ -262,8 +256,6 @@ class Config(object):
                     hl = v.strip().split(",")
                     for h in hl:
                         self.db_hosts.append(h)
-                elif k == "db_mode":  # for test mvalet
-                    self.db_mode = v.strip()
                 elif k == "ip":
                     self.ip = v.strip()
                 elif k == "control_loc":
@@ -326,7 +318,7 @@ class Config(object):
 
             return "success"
         except IOError as e:
-            return "I/O error({}): {} while parsing authentication parameters".format(e.errno, e.strerror)
+            return "I/O error({}): {} while parsing authentication parameters: {}".format(e.errno, e.strerror, self.auth_loc)
         except Exception as e:
             return "Unexpected error while parsing authentication parameters: %s" % e
 

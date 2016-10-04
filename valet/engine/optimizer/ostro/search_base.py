@@ -1,16 +1,9 @@
 #!/bin/python
 
-# Modified: Sep. 4, 2016
+# Modified: Sep. 22, 2016
 
 
 from valet.engine.optimizer.app_manager.app_topology_base import VGroup, VM, Volume, LEVELS
-
-''' for unit test '''
-'''
-import sys
-sys.path.insert(0, '../app_manager')
-from app_topology_base import VGroup, VM, Volume, LEVELS
-'''
 
 
 class Resource(object):

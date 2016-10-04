@@ -1,15 +1,6 @@
 #!/bin/python
 
-
-#################################################################################################################
-# Author: Gueyoung Jung
-# Contact: gjung@research.att.com
-# Version 1.0: Aug. 12, 2016
-#
-# Functions
-# - Capture datacenter configuration and layout including networking
-#
-#################################################################################################################
+# Modified: Aug. 12, 2016
 
 
 import copy

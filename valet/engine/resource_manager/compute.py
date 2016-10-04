@@ -1,20 +1,11 @@
 #!/bin/python
 
-
-#################################################################################################################
-# Author: Gueyoung Jung
-# Contact: gjung@research.att.com
-# Version 2.0.2: Feb. 9, 2016
-#
-# Functions
-# - Capture Host status and metadata from Nova
-#
-#################################################################################################################
-
+# Modified: Sep. 27, 2016
 
 import json
 import pycurl
 import StringIO
+
 from valet.engine.resource_manager.resource_base import Host, LogicalGroup, Flavor
 
 

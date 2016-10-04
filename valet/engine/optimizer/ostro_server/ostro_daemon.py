@@ -1,6 +1,6 @@
 #!/bin/python
 
-# Modified: Sep. 16, 2016
+# Modified: Sep. 22, 2016
 
 
 from configuration import Config
@@ -11,12 +11,6 @@ import sys
 
 from daemon import Daemon   # implemented for Python v2.7
 from valet.engine.optimizer.ostro.ostro import Ostro
-
-''' for unit test '''
-'''
-sys.path.insert(0, '../ostro')
-from ostro import Ostro
-'''
 
 
 class OstroDaemon(Daemon):
@@ -62,14 +56,6 @@ if __name__ == "__main__":
     except OSError:
         print("Error while app log dir")
         sys.exit(2)
-
-    if config.mode.startswith("sim"):
-        try:
-            if not os.path.exists(config.eval_log_loc):
-                os.makedirs(config.eval_log_loc)
-        except OSError:
-            print("Error while evaluation log dir")
-            sys.exit(2)
 
     ''' logger '''
     log_formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")

@@ -1,13 +1,6 @@
 #!/bin/python
 
-
-################################################################################################################
-# Author: Gueyoung Jung
-# Contact: gjung@research.att.com
-# Version 2.0.2: Feb. 9, 2016
-#
-################################################################################################################
-
+# Modified: Feb. 9, 2016
 
 from os import listdir, stat
 from os.path import isfile, join

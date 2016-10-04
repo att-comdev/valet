@@ -1,7 +1,6 @@
 #!/bin/python
 
-# Modified: Sep. 20, 2016
-
+# Modified: Sep. 27, 2016
 
 from app_topology_base import VGroup, VGroupLink, VM, VMLink, LEVELS
 
@@ -58,6 +57,7 @@ class Parser(object):
 
     def _set_topology(self, _elements):
         vgroups = {}
+        vgroup_captured = False
         vms = {}
 
         ''' empty at this version '''
@@ -82,10 +82,10 @@ class Parser(object):
 
                 vms[vm.uuid] = vm
 
-                self.logger.debug("get a vm = " + vm.name)
+                self.logger.debug("Parser: get a vm = " + vm.name)
 
             elif r["type"] == "OS::Cinder::Volume":
-                self.logger.debug("do nothing for volume at this version")
+                self.logger.warn("Parser: do nothing for volume at this version")
 
             elif r["type"] == "ATT::Valet::GroupAssignment":
                 vgroup = VGroup(self.stack_id, rk)
@@ -127,7 +127,8 @@ class Parser(object):
 
                 vgroups[vgroup.uuid] = vgroup
 
-                self.logger.debug("get a group = " + vgroup.name)
+                self.logger.debug("Parser: get a group = " + vgroup.name)
+                vgroup_captured = True
 
         self._set_vm_links(_elements, vms)
 
@@ -136,7 +137,7 @@ class Parser(object):
 
         self._set_total_link_capacities(vms, volumes)
 
-        self.logger.debug("all vms parsed")
+        self.logger.debug("Parser: all vms parsed")
 
         if self._merge_diversity_groups(_elements, vgroups, vms, volumes) is False:
             return ({}, {}, {})
@@ -157,7 +158,8 @@ class Parser(object):
             vgroup = vgroups[vgk]
             self._set_vgroup_links(vgroup, vgroups, vms, volumes)
 
-        self.logger.debug("all groups resolved")
+        if vgroup_captured is True:
+            self.logger.debug("Parser: all groups resolved")
 
         return (vgroups, vms, volumes)
 
@@ -179,7 +181,7 @@ class Parser(object):
     def _set_volume_links(self, _elements, _vms, _volumes):
         for rk, r in _elements.iteritems():
             if r["type"] == "OS::Cinder::VolumeAttachment":
-                self.logger.debug("do nothing for volume attachment at this version")
+                self.logger.warn("Parser: do nothing for volume attachment at this version")
 
         return True
 
@@ -279,7 +281,7 @@ class Parser(object):
                     else:
                         continue
 
-                    self.logger.debug("merge for affinity = " + vgroup.name)
+                    self.logger.debug("Parser: merge for affinity = " + vgroup.name)
 
                     for vk in r["properties"]["resources"]:
 

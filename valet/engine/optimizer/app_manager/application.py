@@ -1,18 +1,6 @@
 #!/bin/python
 
-
-#################################################################################################################
-# Author: Gueyoung Jung, Mengsong Zou
-# Contact: gjung@research.att.com
-# Version 2.0.2: Feb. 9, 2016
-#
-#################################################################################################################
-
-
-# import sys
-# import json
-
-# from valet.engine.optimizer.app_manager.app_topology_base import VM, Volume
+# Modified: Feb. 9, 2016
 
 
 class App(object):

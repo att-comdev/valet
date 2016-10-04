@@ -1,16 +1,9 @@
 #!/bin/python
 
-# Modified: Sep. 4, 2016
+# Modified: Sep. 27, 2016
 
 
 from valet.engine.optimizer.app_manager.app_topology_base import LEVELS
-
-''' for unit test '''
-'''
-import sys
-sys.path.insert(0, '../optimizer/app_manager')
-from app_topology_base import LEVELS
-'''
 
 
 class Datacenter(object):
@@ -86,11 +79,11 @@ class Datacenter(object):
                 'local_disk': self.local_disk_cap,
                 'original_local_disk': self.original_local_disk_cap,
                 'avail_local_disk': self.avail_local_disk_cap,
-                'switch_list': switch_list,
-                'storage_list': storage_list,
+                # 'switch_list': switch_list,
+                # 'storage_list': storage_list,
                 'children': child_list,
                 'vm_list': self.vm_list,
-                'volume_list': self.volume_list,
+                # 'volume_list': self.volume_list,
                 'last_update': self.last_update,
                 'last_link_update': self.last_link_update}
 
@@ -197,12 +190,12 @@ class HostGroup(object):
                 'local_disk': self.local_disk_cap,
                 'original_local_disk': self.original_local_disk_cap,
                 'avail_local_disk': self.avail_local_disk_cap,
-                'switch_list': switch_list,
-                'storage_list': storage_list,
+                # 'switch_list': switch_list,
+                # 'storage_list': storage_list,
                 'parent': self.parent_resource.name,
                 'children': child_list,
                 'vm_list': self.vm_list,
-                'volume_list': self.volume_list,
+                # 'volume_list': self.volume_list,
                 'last_update': self.last_update,
                 'last_link_update': self.last_link_update}
 
@@ -408,11 +401,11 @@ class Host(object):
                 'free_mem_mb': self.free_mem_mb,
                 'free_disk_gb': self.free_disk_gb,
                 'disk_available_least': self.disk_available_least,
-                'switch_list': switch_list,
-                'storage_list': storage_list,
+                # 'switch_list': switch_list,
+                # 'storage_list': storage_list,
                 'parent': self.host_group.name,
                 'vm_list': self.vm_list,
-                'volume_list': self.volume_list,
+                # 'volume_list': self.volume_list,
                 'last_update': self.last_update,
                 'last_link_update': self.last_link_update}
 
@@ -590,7 +583,7 @@ class LogicalGroup(object):
                 'group_type': self.group_type,
                 'metadata': self.metadata,
                 'vm_list': self.vm_list,
-                'volume_list': self.volume_list,
+                # 'volume_list': self.volume_list,
                 'vms_per_host': self.vms_per_host,
                 'last_update': self.last_update}
 

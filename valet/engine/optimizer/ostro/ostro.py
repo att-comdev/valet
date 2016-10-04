@@ -1,36 +1,17 @@
 #!/bin/python
 
-# Modified: Sep. 20, 2016
-
+# Modified: Oct. 1, 2016
 
 import threading
 import time
 
 from optimizer import Optimizer
 from valet.engine.optimizer.app_manager.app_handler import AppHandler
-from valet.engine.optimizer.app_manager.app_topology import AppTopology
 from valet.engine.optimizer.app_manager.app_topology_base import VM, Volume
 from valet.engine.optimizer.db_connect.music_handler import MusicHandler
-
 from valet.engine.resource_manager.compute_manager import ComputeManager
 from valet.engine.resource_manager.resource import Resource
 from valet.engine.resource_manager.topology_manager import TopologyManager
-
-''' for unit test '''
-'''
-import sys
-import json
-sys.path.insert(0, '../app_manager')
-from app_handler import AppHandler
-from app_topology import AppTopology
-from app_topology_base import VM, Volume
-sys.path.insert(0, '../db_connect')
-from music_handler import MusicHandler
-sys.path.insert(0, '../../resource_manager')
-from compute_manager import ComputeManager
-from resource import Resource
-from topology_manager import TopologyManager
-'''
 
 
 class Ostro(object):
@@ -41,14 +22,12 @@ class Ostro(object):
 
         self.db = MusicHandler(self.config, self.logger)
         if self.db.init_db() is False:
-            self.logger.error("error while initializing MUSIC database")
+            self.logger.error("Ostro.__init__: error while initializing MUSIC database")
         else:
-            self.logger.debug("done init music")
+            self.logger.debug("Ostro.__init__: done init music")
 
         self.resource = Resource(self.db, self.config, self.logger)
-
         self.app_handler = AppHandler(self.resource, self.db, self.config, self.logger)
-
         self.optimizer = Optimizer(self.resource, self.logger)
 
         self.data_lock = threading.Lock()
@@ -58,11 +37,10 @@ class Ostro(object):
         self.compute = ComputeManager(2, "Compute", self.resource, self.data_lock, self.config, self.logger)
 
         self.status = "success"
-
         self.end_of_process = False
 
     def run_ostro(self):
-        self.logger.info("start Ostro ......")
+        self.logger.info("Ostro.run_ostro: start Ostro ......")
 
         self.topology.start()
         self.compute.start()
@@ -77,19 +55,16 @@ class Ostro(object):
         while self.end_of_process is False:
             time.sleep(1)
 
-            if self.config.mode != "test":
-                event_list = self.db.get_events()
-                if event_list is None:
+            event_list = self.db.get_events()
+            if event_list is None:
+                break
+            if len(event_list) > 0:
+                if self.handle_events(event_list) is False:
                     break
-
-                if len(event_list) > 0:
-                    if self.handle_events(event_list) is False:
-                        break
 
             request_list = self.db.get_requests()
             if request_list is None:
                 break
-
             if len(request_list) > 0:
                 if self.place_app(request_list) is False:
                     break
@@ -106,7 +81,7 @@ class Ostro(object):
         for t in self.thread_list:
             t.join()
 
-        self.logger.info("exit Ostro")
+        self.logger.info("Ostro.run_ostro: exit Ostro")
 
     def stop_ostro(self):
         self.end_of_process = True
@@ -118,33 +93,28 @@ class Ostro(object):
                     self.thread_list.remove(t)
 
     def bootstrap(self):
-        self.logger.info("--- start bootstrap ---")
+        self.logger.info("Ostro.bootstrap: start bootstrap")
 
         resource_status = self.db.get_resource_status(self.resource.datacenter.name)
         if resource_status is None:
             return False
 
         if len(resource_status) > 0:
-            self.logger.info("bootstrap from db")
+            self.logger.info("Ostro.bootstrap: bootstrap from db")
             if self.resource.bootstrap_from_db(resource_status) is False:
                 return False
 
-        else:
-            self.logger.info("bootstrap from OpenStack")
+        if self._set_hosts() is False:
+            return False
+        if self._set_flavors() is False:
+            return False
+        if self._set_topology() is False:
+            return False
 
-            if self._set_hosts() is False:
-                return False
+        if self.resource.update_topology() is False:
+            pass
 
-            if self._set_flavors() is False:
-                return False
-
-            if self._set_topology() is False:
-                return False
-
-            if self.resource.update_topology() is False:
-                pass
-
-        self.logger.info("--- done bootstrap ---")
+        self.logger.info("Ostro.bootstrap: done bootstrap")
 
         return True
 
@@ -153,7 +123,7 @@ class Ostro(object):
             self.status = "datacenter configuration error"
             return False
 
-        self.logger.debug("done topology bootstrap")
+        self.logger.debug("Ostro._set_topology: done topology bootstrap")
 
         return True
 
@@ -162,7 +132,7 @@ class Ostro(object):
             self.status = "OpenStack (Nova) internal error"
             return False
 
-        self.logger.debug("done hosts & groups bootstrap")
+        self.logger.debug("Ostro._set_hosts: done hosts & groups bootstrap")
 
         return True
 
@@ -171,7 +141,7 @@ class Ostro(object):
             self.status = "OpenStack (Nova) internal error"
             return False
 
-        self.logger.debug("done flavors bootstrap")
+        self.logger.debug("Ostro._set_flavors: done flavors bootstrap")
 
         return True
 
@@ -189,7 +159,7 @@ class Ostro(object):
                 placement_request_list.append(req)
 
         if len(query_request_list) > 0:
-            self.logger.info("--- start query ---")
+            self.logger.info("Ostro.place_app: start query")
 
             query_results = self._query(query_request_list)
 
@@ -199,14 +169,11 @@ class Ostro(object):
                 self.data_lock.release()
                 return False
 
-            self.logger.info("--- done query ---")
-
-        ''' for mvalet '''
-        # placement_request_list = self._check_availability(placement_request_list)
+            self.logger.info("Ostro.place_app: done query")
 
         if len(placement_request_list) > 0:
 
-            self.logger.info("--- start app placement ---")
+            self.logger.info("Ostro.place_app: start app placement")
 
             result = None
 
@@ -221,76 +188,14 @@ class Ostro(object):
                 self.data_lock.release()
                 return False
 
-            ''' for mvalet '''
-            '''
-            if self.config.mode.startswith("sim"):
-                logging = open(self.config.eval_log_loc + "eval.log", 'a')
-                ts = time.time()
-                if placement_map is None:
-                    for appk in result.keys():
-                        logging.write(str(ts) + "," + appk + ",fail")
-                        logging.write("\n")
-                else:
-                    for appk in result.keys():
-                        logging.write(str(ts) + "," + appk + ",success")
-                        logging.write("\n")
-                self.logger.debug("log: eval record")
-                logging.close()
-            '''
-
-            self.logger.info("--- done app placement ---")
-
-            ''' for unit test '''
-            '''
-            test_resource_status = self.db.get_resource_status("sim")
-            test_logical_groups = test_resource_status["logical_groups"]
-            self.logger.debug("group assignments: " + json.dumps(test_logical_groups))
-            '''
+            self.logger.info("Ostro.place_app: done app placement")
 
         end_time = time.time()
 
-        self.logger.info("stat: total decision delay of request = " + str(end_time - start_time) + " sec")
+        self.logger.info("Ostro.place_app: total decision delay of request = " + str(end_time - start_time) + " sec")
 
         self.data_lock.release()
-
         return True
-
-    ''' for mvalet '''
-    def _check_availability(self, _request_list):
-        doable_request_list = []
-
-        if len(_request_list) == 0:
-            return doable_request_list
-
-        for req in _request_list:
-            # compare requested resources to available abstracted resources
-            app_topology = AppTopology(self.resource, self.logger)
-            app_id = app_topology.set_app_topology(req)
-            if app_id is None:
-                self.logger.error(app_topology.status)
-                continue
-
-            total_vCPUs = 0
-            total_mem = 0
-            total_volume = 0
-            for vk, v in app_topology.vms.iteritems():
-                total_vCPUs += v.vCPUs
-                total_mem += v.mem
-                total_volume += v.local_volume_size
-
-            if self.resource.CPU_avail >= total_vCPUs and \
-               self.resource.mem_avail >= total_mem and \
-               self.resource.local_disk_avail >= total_volume:
-                # set worker_id in db (via music_handler) either atomically or eventually
-                if self.db.update_worker_id(app_id[0],
-                                            self.config.datacenter_name,
-                                            req,
-                                            self.config.db_mode) is False:
-                    continue
-
-                doable_request_list.append(req)
-
-        return doable_request_list
 
     def _query(self, _query_list):
         query_results = {}
@@ -305,19 +210,21 @@ class Ostro(object):
                             query_results[q["stack_id"]] = vm_list
                         else:
                             self.status = "unknown paramenter in query"
-                            self.logger.debug(self.status)
+                            self.logger.warn("Ostro._query: " + self.status)
                             query_results[q["stack_id"]] = None
                     else:
                         self.status = "no parameters in query"
-                        self.logger.debug(self.status)
+                        self.logger.warn("Ostro._query: " + self.status)
                         query_results[q["stack_id"]] = None
+                elif q["type"] == "all_groups":
+                    query_results[q["stack_id"]] = self._get_logical_groups()
                 else:
                     self.status = "unknown query type"
-                    self.logger.debug(self.status)
+                    self.logger.warn("Ostro._query: " + self.status)
                     query_results[q["stack_id"]] = None
             else:
                 self.status = "no type in query"
-                self.logger.debug(self.status)
+                self.logger.warn("Ostro._query: " + self.status)
                 query_results[q["stack_id"]] = None
 
         return query_results
@@ -334,29 +241,37 @@ class Ostro(object):
                     break
 
         for vm_id in vm_id_list:
-            if vm_id[2] != "none":
+            if vm_id[2] != "none":   # if physical_uuid != 'none'
                 vm_list.append(vm_id[2])
 
         return vm_list
+
+    def _get_logical_groups(self):
+        logical_groups = {}
+
+        for lgk, lg in self.resource.logical_groups.iteritems():
+            logical_groups[lgk] = lg.get_json_info()
+
+        return logical_groups
 
     def _place_app(self, _app_data):
         ''' set application topology '''
         app_topology = self.app_handler.add_app(_app_data)
         if app_topology is None:
             self.status = self.app_handler.status
-            self.logger.debug("error while register requested apps: " + self.status)
+            self.logger.debug("Ostro._place_app: error while register requested apps: " + self.status)
             return None
 
         ''' check and set vm flavor information '''
         for _, vm in app_topology.vms.iteritems():
             if self._set_vm_flavor_information(vm) is False:
                 self.status = "fail to set flavor information"
-                self.logger.error(self.status)
+                self.logger.error("Ostro._place_app: " + self.status)
                 return None
         for _, vg in app_topology.vgroups.iteritems():
             if self._set_vm_flavor_information(vg) is False:
                 self.status = "fail to set flavor information in a group"
-                self.logger.error(self.status)
+                self.logger.error("Ostro._place_app: " + self.status)
                 return None
 
         ''' set weights for optimization '''
@@ -367,7 +282,7 @@ class Ostro(object):
         placement_map = self.optimizer.place(app_topology)
         if placement_map is None:
             self.status = self.optimizer.status
-            self.logger.debug("error while optimizing app placement: " + self.status)
+            self.logger.debug("Ostro._place_app: error while optimizing app placement: " + self.status)
             return None
 
         ''' update resource and app information '''
@@ -395,7 +310,8 @@ class Ostro(object):
         flavor = self.resource.get_flavor(_vm.flavor)
 
         if flavor is None:
-            self.logger.warn("does not exist flavor (" + _vm.flavor + ") and try to refetch")
+            self.logger.warn("Ostro._set_vm_flavor_properties: does not exist flavor (" + _vm.flavor + ") and try to refetch")
+
             ''' reset flavor resource and try again '''
             if self._set_flavors() is False:
                 return False
@@ -425,11 +341,11 @@ class Ostro(object):
         for e in _event_list:
             if e.host is not None and e.host != "none":
                 if self._check_host(e.host) is False:
-                    self.logger.warn("--- host (" + e.host + ") related to this event not exists")
+                    self.logger.warn("Ostro.handle_events: host (" + e.host + ") related to this event not exists")
                     continue
 
             if e.method == "build_and_run_instance":         # VM is created (from stack)
-                self.logger.debug("--- got build_and_run event")
+                self.logger.debug("Ostro.handle_events: got build_and_run event")
                 if self.db.put_uuid(e) is False:
                     self.data_lock.release()
                     return False
@@ -442,10 +358,10 @@ class Ostro(object):
                         return False
 
                     if e.vm_state == "active":
-                        self.logger.debug("--- got instance_active event")
+                        self.logger.debug("Ostro.handle_events: got instance_active event")
                         vm_info = self.app_handler.get_vm_info(orch_id[1], orch_id[0], e.host)
                         if vm_info is None:
-                            self.logger.error("error while getting app info from MUSIC")
+                            self.logger.error("Ostro.handle_events: error while getting app info from MUSIC")
                             self.data_lock.release()
                             return False
 
@@ -454,14 +370,14 @@ class Ostro(object):
                             h_uuid is None or "none" because vm is not created by stack
                             or, stack not found because vm is created by the other stack
                             '''
-                            self.logger.warn("no vm_info found in app placement record")
+                            self.logger.warn("Ostro.handle_events: no vm_info found in app placement record")
                             self._add_vm_to_host(e.uuid, orch_id[0], e.host, e.vcpus, e.mem, e.local_disk)
                         else:
                             if "planned_host" in vm_info.keys() and vm_info["planned_host"] != e.host:
                                 '''
                                 vm is activated in the different host
                                 '''
-                                self.logger.warn("vm activated in the different host")
+                                self.logger.warn("Ostro.handle_events: vm activated in the different host")
                                 self._add_vm_to_host(e.uuid, orch_id[0], e.host, e.vcpus, e.mem, e.local_disk)
 
                                 self._remove_vm_from_host(e.uuid, orch_id[0],
@@ -477,35 +393,35 @@ class Ostro(object):
                                 possibly the vm deleted in the host while batch cleanup
                                 '''
                                 if self._check_h_uuid(orch_id[0], e.host) is False:
-                                    self.logger.debug("planned vm was deleted")
+                                    self.logger.debug("Ostro.handle_events: planned vm was deleted")
                                     if self._check_uuid(e.uuid, e.host) is True:
                                         self._update_h_uuid_in_host(orch_id[0], e.uuid, e.host)
                                         self._update_h_uuid_in_logical_groups(orch_id[0], e.uuid, e.host)
                                 else:
-                                    self.logger.debug("vm activated as planned")
+                                    self.logger.debug("Ostro.handle_events: vm activated as planned")
                                     self._update_uuid_in_host(orch_id[0], e.uuid, e.host)
                                     self._update_uuid_in_logical_groups(orch_id[0], e.uuid, e.host)
 
                         resource_updated = True
 
                     elif e.vm_state == "deleted":
-                        self.logger.debug("--- got instance_delete event")
+                        self.logger.debug("Ostro.handle_events: got instance_delete event")
 
                         self._remove_vm_from_host(e.uuid, orch_id[0], e.host, e.vcpus, e.mem, e.local_disk)
                         self._remove_vm_from_logical_groups(e.uuid, orch_id[0], e.host)
 
                         if self.app_handler.update_vm_info(orch_id[1], orch_id[0]) is False:
-                            self.logger.error("error while updating app in MUSIC")
+                            self.logger.error("Ostro.handle_events: error while updating app in MUSIC")
                             self.data_lock.release()
                             return False
 
                         resource_updated = True
 
                     else:
-                        self.logger.warn("unknown vm_state = " + e.vm_state)
+                        self.logger.warn("Ostro.handle_events: unknown vm_state = " + e.vm_state)
 
                 elif e.object_name == 'ComputeNode':     # Host resource is updated
-                    self.logger.debug("--- got compute event")
+                    self.logger.debug("Ostro.handle_events: got compute event")
                     # NOTE: what if host is disabled?
                     if self.resource.update_host_resources(e.host, e.status,
                                                            e.vcpus, e.vcpus_used,
@@ -517,9 +433,9 @@ class Ostro(object):
                         resource_updated = True
 
                 else:
-                    self.logger.warn("unknown object_name = " + e.object_name)
+                    self.logger.warn("Ostro.handle_events: unknown object_name = " + e.object_name)
             else:
-                self.logger.warn("unknown event method = " + e.method)
+                self.logger.warn("Ostro.handle_events: unknown event method = " + e.method)
 
         if resource_updated is True:
             if self.resource.update_topology() is False:
@@ -597,7 +513,7 @@ class Ostro(object):
         if host.update_uuid(_h_uuid, _uuid) is True:
             self.resource.update_host_time(_host_name)
         else:
-            self.logger.warn("fail to update uuid in host = " + host.name)
+            self.logger.warn("Ostro._update_uuid_in_host: fail to update uuid in host = " + host.name)
 
     def _update_h_uuid_in_host(self, _h_uuid, _uuid, _host_name):
         host = self.resource.hosts[_host_name]
@@ -624,9 +540,10 @@ class Ostro(object):
                 query_status = {}
                 if qr is None:
                     query_status['type'] = "error"
+                    query_status['message'] = _status_message
                 else:
                     query_status['type'] = "ok"
-                query_status['message'] = _status_message
+                    query_status['message'] = "success"
 
                 query_result['status'] = query_status
                 if qr is not None:

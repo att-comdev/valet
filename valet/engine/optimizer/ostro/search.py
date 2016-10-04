@@ -1,7 +1,6 @@
 #!/bin/python
 
-# Modified: Sep. 4, 2016
-
+# Modified: Sep. 27, 2016
 
 import copy
 import operator
@@ -9,18 +8,8 @@ import operator
 from constraint_solver import ConstraintSolver
 from search_base import compute_reservation
 from search_base import Node, Resource, LogicalGroupResource, SwitchResource, StorageResource
-
 from valet.engine.optimizer.app_manager.app_topology_base import VGroup, VM, Volume, LEVELS
 from valet.engine.resource_manager.resource_base import Datacenter
-
-''' for unit test '''
-'''
-import sys
-sys.path.insert(0, '../app_manager')
-from app_topology_base import VGroup, VM, Volume, LEVELS
-sys.path.insert(0, '../../resource_manager')
-from resource_base import Datacenter
-'''
 
 
 class Search(object):
@@ -98,7 +87,7 @@ class Search(object):
 
         self.constraint_solver = ConstraintSolver(self.logger)
 
-        self.logger.info("start search")
+        self.logger.info("Search: start search")
 
         self._create_avail_logical_groups()
         self._create_avail_storage_hosts()
@@ -125,27 +114,31 @@ class Search(object):
 
         self.constraint_solver = ConstraintSolver(self.logger)
 
-        self.logger.info("start search for replan")
+        self.logger.info("Search: start search for replan")
 
         self._create_avail_logical_groups()
         self._create_avail_storage_hosts()
         self._create_avail_switches()
         self._create_avail_hosts()
 
+        if len(self.app_topology.old_vm_map) > 0:
+            self._adjust_resources()
+            self.logger.debug("Search: adjust resources by deducting prior placements")
+
         self._compute_resource_weights()
 
-        self.logger.debug("first, place already-planned nodes")
+        self.logger.debug("Search: first, place already-planned nodes")
 
         ''' reconsider all vms to be migrated together '''
         if len(_app_topology.exclusion_list_map) > 0:
-            self._get_planned_list()
+            self._set_no_migrated_list()
 
         if self._place_planned_nodes() is False:
             self.status = "cannot replan VMs that was planned"
-            self.logger.error(self.status)
+            self.logger.error("Search: " + self.status)
             return False
 
-        self.logger.debug("second, re-place not-planned nodes")
+        self.logger.debug("Search: second, re-place not-planned nodes")
 
         init_level = LEVELS[len(LEVELS) - 1]
         (open_node_list, level) = self._open_list(self.app_topology.vms,
@@ -153,7 +146,7 @@ class Search(object):
                                                   self.app_topology.vgroups,
                                                   init_level)
         if open_node_list is None:
-            self.logger.error("fail to replan")
+            self.logger.error("Search: fail to replan")
             return False
 
         for v, ah in self.planned_placements.iteritems():
@@ -161,7 +154,7 @@ class Search(object):
 
         return self._run_greedy(open_node_list, level, self.avail_hosts)
 
-    def _get_planned_list(self):
+    def _set_no_migrated_list(self):
         migrated_vm_id = self.app_topology.candidate_list_map.keys()[0]
 
         if migrated_vm_id not in self.app_topology.vms.keys():
@@ -173,7 +166,7 @@ class Search(object):
                     if vk in self.app_topology.planned_vm_map.keys():
                         del self.app_topology.planned_vm_map[vk]
             else:
-                self.logger.error("migrated vm is missing while replan")
+                self.logger.error("Search: migrated " + migrated_vm_id + " is missing while replan")
 
     def _get_child_vms(self, _g, _vm_list, _e_vmk):
         for sgk, sg in _g.subvgroups.iteritems():
@@ -182,45 +175,6 @@ class Search(object):
                     _vm_list.append(sgk)
             else:
                 self._get_child_vms(sg, _vm_list, _e_vmk)
-
-    def _conflict_with_planned(self, _vms, _volumes, _vgroups):
-        if len(self.app_topology.candidate_list_map) == 0:
-            return False
-
-        vm_h_uuid = self.app_topology.candidate_list_map.keys()[0]
-        h_name_list = self.app_topology.candidate_list_map[vm_h_uuid]
-
-        if vm_h_uuid in _vms.keys():
-            _vms[vm_h_uuid].host = h_name_list
-            return False
-
-        # volumes skip
-
-        vgroup = self._get_vgroup_of_vm(vm_h_uuid, _vgroups)
-        if vgroup is not None:
-            host_list = []
-            for hk in h_name_list:
-                host_name = self._get_host_of_vgroup(hk, vgroup.level)
-                if host_name is not None:
-                    if host_name not in host_list:
-                        host_list.append(host_name)
-                else:
-                    self.logger.warn("cannot find candidate host while replanning")
-                    return True
-
-            if vgroup.host is not None and len(vgroup.host) > 0:  # i.e., planned one
-                if vgroup.host[0] not in host_list:
-                    self.logger.warn("conflicted to planned")
-                    return True
-                # else:
-                #     return False
-            else:
-                vgroup.host = host_list
-                # return False
-        # else:
-        #     self.logger.error("vm is missing while replan")
-        #     return True
-        return False
 
     def _place_planned_nodes(self):
         init_level = LEVELS[len(LEVELS) - 1]
@@ -235,7 +189,6 @@ class Search(object):
 
     def _open_planned_list(self, _vms, _volumes, _vgroups, _current_level):
         planned_node_list = []
-        # level = "host"
         next_level = None
 
         for vmk, hk in self.app_topology.planned_vm_map.iteritems():
@@ -243,7 +196,8 @@ class Search(object):
                 vm = _vms[vmk]
                 if vm.host is None:
                     vm.host = []
-                vm.host.append(hk)
+                if hk not in vm.host:
+                    vm.host.append(hk)
                 n = Node()
                 n.node = vm
                 n.sort_base = self._set_virtual_capacity_based_sort(vm)
@@ -258,18 +212,23 @@ class Search(object):
                         vgroup.host = []
                     host_name = self._get_host_of_vgroup(hk, vgroup.level)
                     if host_name is None:
-                        self.logger.error("host does not exist while replan with vgroup")
+                        self.logger.error("Search: host does not exist while replan with vgroup")
                     else:
-                        if len(vgroup.host) == 0:
+                        # if len(vgroup.host) == 0:
+                        if host_name not in vgroup.host:
                             vgroup.host.append(host_name)
-                            # if LEVELS.index(vgroup.level) > LEVELS.index(level):
-                            #     level = vgroup.level
+                        node = None
+                        for n in planned_node_list:
+                            if n.node.uuid == vgroup.uuid:
+                                node = n
+                                break
+                        if node is None:
                             n = Node()
                             n.node = vgroup
                             n.sort_base = self._set_virtual_capacity_based_sort(vgroup)
                             planned_node_list.append(n)
-                else:
-                    self.logger.error("vm is missing while replan")
+                # else:
+                #     self.logger.warn("Search: " + vmk + " is missing while replan")
 
         current_level_index = LEVELS.index(_current_level)
         next_level_index = current_level_index - 1
@@ -333,25 +292,25 @@ class Search(object):
             avail_resources = _avail_hosts
 
         _node_list.sort(key=operator.attrgetter("sort_base"), reverse=True)
-        self.logger.debug("level = " + _level)
+        self.logger.debug("Search: level = " + _level)
         for on in _node_list:
             self.logger.debug("    node = {}, value = {}".format(on.node.name, on.sort_base))
 
         while len(_node_list) > 0:
             n = _node_list.pop(0)
-            self.logger.debug("level = " + _level + ", placing node = " + n.node.name)
+            self.logger.debug("Search: level = " + _level + ", placing node = " + n.node.name)
 
             best_resource = self._get_best_resource_for_planned(n, _level, avail_resources)
             if best_resource is not None:
                 debug_best_resource = best_resource.get_resource_name(_level)
                 # elif isinstance(n.node, Volume):
                 # debug_best_resource = best_resource.host_name + "@" + best_resource.storage.storage_name
-                self.logger.debug("best resource = " + debug_best_resource + " for node = " + n.node.name)
+                self.logger.debug("Search: best resource = " + debug_best_resource + " for node = " + n.node.name)
 
                 self._deduct_reservation(_level, best_resource, n)
                 self._close_planned_placement(_level, best_resource, n.node)
             else:
-                self.logger.error("fail to place already-planned VMs")
+                self.logger.error("Search: fail to place already-planned VMs")
                 return False
 
         return True
@@ -388,7 +347,7 @@ class Search(object):
 
             host_name = self._get_host_of_level(_n, _level)
             if host_name is None:
-                self.logger.warn("cannot find host while replanning")
+                self.logger.warn("Search: cannot find host while replanning")
                 return None
 
             avail_hosts = {}
@@ -444,7 +403,7 @@ class Search(object):
         for hk, host in self.resource.hosts.iteritems():
 
             if host.check_availability() is False:
-                self.logger.debug("host (" + host.name + ") not available at this time")
+                self.logger.debug("Search: host (" + host.name + ") not available at this time")
                 continue
 
             r = Resource()
@@ -541,7 +500,7 @@ class Search(object):
         for lgk, lg in self.resource.logical_groups.iteritems():
 
             if lg.status != "enabled":
-                self.logger.debug("group (" + lg.name + ") enalbed")
+                self.logger.debug("Search: group (" + lg.name + ") disabled")
                 continue
 
             lgr = LogicalGroupResource()
@@ -574,6 +533,96 @@ class Search(object):
                             del lgr.num_of_placed_vms_per_host[hk]
 
             self.avail_logical_groups[lgk] = lgr
+
+    def _adjust_resources(self):
+        for h_uuid, info in self.app_topology.old_vm_map.iteritems():   # info = (host, cpu, mem, disk)
+            if info[0] not in self.avail_hosts.keys():
+                continue
+
+            r = self.avail_hosts[info[0]]
+
+            r.host_num_of_placed_vms -= 1
+            r.host_avail_vCPUs += info[1]
+            r.host_avail_mem += info[2]
+            r.host_avail_local_disk += info[3]
+
+            if r.host_num_of_placed_vms == 0:
+                self.num_of_hosts -= 1
+
+            for _, rr in self.avail_hosts.iteritems():
+                if rr.rack_name != "any" and rr.rack_name == r.rack_name:
+                    rr.rack_num_of_placed_vms -= 1
+                    rr.rack_avail_vCPUs += info[1]
+                    rr.rack_avail_mem += info[2]
+                    rr.rack_avail_local_disk += info[3]
+
+            for _, cr in self.avail_hosts.iteritems():
+                if cr.cluster_name != "any" and cr.cluster_name == r.cluster_name:
+                    cr.cluster_num_of_placed_vms -= 1
+                    cr.cluster_avail_vCPUs += info[1]
+                    cr.cluster_avail_mem += info[2]
+                    cr.cluster_avail_local_disk += info[3]
+
+            for lgk in r.host_memberships.keys():
+                if lgk not in self.avail_logical_groups.keys():
+                    continue
+                if lgk not in self.resource.logical_groups.keys():
+                    continue
+                lg = self.resource.logical_groups[lgk]
+                if lg.exist_vm_by_h_uuid(h_uuid) is True:
+                    lgr = r.host_memberships[lgk]
+                    lgr.num_of_placed_vms -= 1
+                    if r.host_name in lgr.num_of_placed_vms_per_host.keys():
+                        lgr.num_of_placed_vms_per_host[r.host_name] -= 1
+                        if lgr.group_type == "EX" or lgr.group_type == "AFF" or lgr.group_type == "DIV":
+                            if lgr.num_of_placed_vms_per_host[r.host_name] == 0:
+                                del lgr.num_of_placed_vms_per_host[r.host_name]
+                                del r.host_memberships[lgk]
+                    if lgr.group_type == "EX" or lgr.group_type == "AFF" or lgr.group_type == "DIV":
+                        if lgr.num_of_placed_vms == 0:
+                            del self.avail_logical_groups[lgk]
+
+            for lgk in r.rack_memberships.keys():
+                if lgk not in self.avail_logical_groups.keys():
+                    continue
+                if lgk not in self.resource.logical_groups.keys():
+                    continue
+                lg = self.resource.logical_groups[lgk]
+                if lg.group_type == "EX" or lg.group_type == "AFF" or lg.group_type == "DIV":
+                    if lgk.split(":")[0] == "rack":
+                        if lg.exist_vm_by_h_uuid(h_uuid) is True:
+                            lgr = r.rack_memberships[lgk]
+                            lgr.num_of_placed_vms -= 1
+                            if r.rack_name in lgr.num_of_placed_vms_per_host.keys():
+                                lgr.num_of_placed_vms_per_host[r.rack_name] -= 1
+                                if lgr.num_of_placed_vms_per_host[r.rack_name] == 0:
+                                    del lgr.num_of_placed_vms_per_host[r.rack_name]
+                                    for _, rr in self.avail_hosts.iteritems():
+                                        if rr.rack_name != "any" and rr.rack_name == r.rack_name:
+                                            del rr.rack_memberships[lgk]
+                            if lgr.num_of_placed_vms == 0:
+                                del self.avail_logical_groups[lgk]
+
+            for lgk in r.cluster_memberships.keys():
+                if lgk not in self.avail_logical_groups.keys():
+                    continue
+                if lgk not in self.resource.logical_groups.keys():
+                    continue
+                lg = self.resource.logical_groups[lgk]
+                if lg.group_type == "EX" or lg.group_type == "AFF" or lg.group_type == "DIV":
+                    if lgk.split(":")[0] == "cluster":
+                        if lg.exist_vm_by_h_uuid(h_uuid) is True:
+                            lgr = r.cluster_memberships[lgk]
+                            lgr.num_of_placed_vms -= 1
+                            if r.cluster_name in lgr.num_of_placed_vms_per_host.keys():
+                                lgr.num_of_placed_vms_per_host[r.cluster_name] -= 1
+                                if lgr.num_of_placed_vms_per_host[r.cluster_name] == 0:
+                                    del lgr.num_of_placed_vms_per_host[r.cluster_name]
+                                    for _, cr in self.avail_hosts.iteritems():
+                                        if cr.cluster_name != "any" and cr.cluster_name == r.cluster_name:
+                                            del cr.cluster_memberships[lgk]
+                            if lgr.num_of_placed_vms == 0:
+                                del self.avail_logical_groups[lgk]
 
     def _create_avail_storage_hosts(self):
         for _, sh in self.resource.storage_hosts.iteritems():
@@ -622,7 +671,7 @@ class Search(object):
             elif t == "vol":
                 self.disk_weight = float(w / denominator)
 
-        self.logger.debug("placement priority weights")
+        self.logger.debug("Search: placement priority weights")
         for (r, w) in self.app_topology.optimization_priority:
             if r == "bw":
                 self.logger.debug("    nw weight = " + str(self.nw_bandwidth_weight))
@@ -637,12 +686,7 @@ class Search(object):
 
     def _open_list(self, _vms, _volumes, _vgroups, _current_level):
         open_node_list = []
-        # level = "host"
         next_level = None
-
-        if self._conflict_with_planned(_vms, _volumes, _vgroups) is True:
-            self.status = "conflicted while replan"
-            return (None, _current_level)
 
         for _, vm in _vms.iteritems():
             n = Node()
@@ -653,8 +697,6 @@ class Search(object):
         # volume handling
 
         for _, g in _vgroups.iteritems():
-            # if LEVELS.index(g.level) > LEVELS.index(level):
-            #     level = g.level
             n = Node()
             n.node = g
             n.sort_base = self._set_virtual_capacity_based_sort(g)
@@ -673,11 +715,19 @@ class Search(object):
         sort_base = -1
 
         if isinstance(_v, Volume):
-            sort_base = self.disk_weight * _v.volume_weight + self.nw_bandwidth_weight * _v.bandwidth_weight
+            sort_base = self.disk_weight * _v.volume_weight
+            sort_base += self.nw_bandwidth_weight * _v.bandwidth_weight
         elif isinstance(_v, VM):
-            sort_base = self.nw_bandwidth_weight * _v.bandwidth_weight + self.CPU_weight * _v.vCPU_weight + self.mem_weight * _v.mem_weight + self.local_disk_weight * _v.local_volume_weight
+            sort_base = self.nw_bandwidth_weight * _v.bandwidth_weight
+            sort_base += self.CPU_weight * _v.vCPU_weight
+            sort_base += self.mem_weight * _v.mem_weight
+            sort_base += self.local_disk_weight * _v.local_volume_weight
         elif isinstance(_v, VGroup):
-            sort_base = self.nw_bandwidth_weight * _v.bandwidth_weight + self.CPU_weight * _v.vCPU_weight + self.mem_weight * _v.mem_weight + self.local_disk_weight * _v.local_volume_weight + self.disk_weight * _v.volume_weight
+            sort_base = self.nw_bandwidth_weight * _v.bandwidth_weight
+            sort_base += self.CPU_weight * _v.vCPU_weight
+            sort_base += self.mem_weight * _v.mem_weight
+            sort_base += self.local_disk_weight * _v.local_volume_weight
+            sort_base += self.disk_weight * _v.volume_weight
 
         return sort_base
 
@@ -698,13 +748,13 @@ class Search(object):
 
         _open_node_list.sort(key=operator.attrgetter("sort_base"), reverse=True)
 
-        self.logger.debug("the order of open node list in level = " + _level)
+        self.logger.debug("Search: the order of open node list in level = " + _level)
         for on in _open_node_list:
             self.logger.debug("    node = {}, value = {}".format(on.node.name, on.sort_base))
 
         while len(_open_node_list) > 0:
             n = _open_node_list.pop(0)
-            self.logger.debug("level = " + _level + ", node = " + n.node.name)
+            self.logger.debug("Search: level = " + _level + ", node = " + n.node.name)
 
             best_resource = self._get_best_resource(n, _level, avail_resources)
             if best_resource is None:
@@ -714,7 +764,7 @@ class Search(object):
             debug_best_resource = best_resource.get_resource_name(_level)
             # if isinstance(n.node, Volume):
             #     debug_best_resource = debug_best_resource + "@" + best_resource.storage.storage_name
-            self.logger.debug("best resource = " + debug_best_resource + " for node = " + n.node.name)
+            self.logger.debug("Search: best resource = " + debug_best_resource + " for node = " + n.node.name)
 
             if n.node not in self.planned_placements.keys():
                 ''' for VM or Volume under host level only '''
@@ -722,7 +772,7 @@ class Search(object):
                 ''' close all types of nodes under any level, but VM or Volume with above host level '''
                 self._close_node_placement(_level, best_resource, n.node)
             else:
-                self.logger.debug("node (" + n.node.name + ") is already deducted")
+                self.logger.debug("Search: node (" + n.node.name + ") is already deducted")
 
         return success
 
@@ -730,7 +780,7 @@ class Search(object):
         ''' already planned vgroup '''
         planned_host = None
         if _n.node in self.planned_placements.keys():
-            self.logger.debug("already determined node = " + _n.node.name)
+            self.logger.debug("Search: already determined node = " + _n.node.name)
             copied_host = self.planned_placements[_n.node]
             if _level == "host":
                 planned_host = _avail_resources[copied_host.host_name]
@@ -738,6 +788,22 @@ class Search(object):
                 planned_host = _avail_resources[copied_host.rack_name]
             elif _level == "cluster":
                 planned_host = _avail_resources[copied_host.cluster_name]
+
+        else:
+            if len(self.app_topology.candidate_list_map) > 0:
+                conflicted_vm_uuid = self.app_topology.candidate_list_map.keys()[0]
+                candidate_name_list = self.app_topology.candidate_list_map[conflicted_vm_uuid]
+                if (isinstance(_n.node, VM) and conflicted_vm_uuid == _n.node.uuid) or \
+                   (isinstance(_n.node, VGroup) and self._check_vm_grouping(_n.node, conflicted_vm_uuid) is True):
+                    host_list = []
+                    for hk in candidate_name_list:
+                        host_name = self._get_host_of_vgroup(hk, _level)
+                        if host_name is not None:
+                            if host_name not in host_list:
+                                host_list.append(host_name)
+                        else:
+                            self.logger.warn("Search: cannot find candidate host while replanning")
+                    _n.node.host = host_list
 
         candidate_list = []
         if planned_host is not None:
@@ -751,7 +817,7 @@ class Search(object):
             self.status = self.constraint_solver.status
             return None
 
-        self.logger.debug("candidate list")
+        self.logger.debug("Search: candidate list")
         for c in candidate_list:
             self.logger.debug("    candidate = " + c.get_resource_name(_level))
 
@@ -771,7 +837,7 @@ class Search(object):
 
             if len(candidate_list) == 0:
                 self.status = "no available network bandwidth left, for node = " + _n.node.name
-                self.logger.error(self.status)
+                self.logger.error("Search: " + self.status)
                 return None
 
             candidate_list.sort(key=operator.attrgetter("sort_base"))
@@ -806,7 +872,7 @@ class Search(object):
 
             if len(top_candidate_list) == 0:
                 self.status = "no available network bandwidth left"
-                self.logger.error(self.status)
+                self.logger.error("Search: " + self.status)
                 return None
 
         best_resource = None
@@ -821,7 +887,7 @@ class Search(object):
                 while len(top_candidate_list) > 0:
                     cr = top_candidate_list.pop(0)
 
-                    self.logger.debug("try candidate = " + cr.get_resource_name(_level))
+                    self.logger.debug("Search: try candidate = " + cr.get_resource_name(_level))
 
                     vms = {}
                     volumes = {}
@@ -866,7 +932,7 @@ class Search(object):
                         break
                     else:
                         debug_candidate_name = cr.get_resource_name(_level)
-                        self.logger.debug("rollback of candidate resource = " + debug_candidate_name)
+                        self.logger.debug("Search: rollback of candidate resource = " + debug_candidate_name)
 
                         if planned_host is None:
                             ''' recursively rollback deductions of all child VMs and Volumes of _n '''
@@ -882,7 +948,7 @@ class Search(object):
                 else:
                     if len(candidate_list) == 0:
                         self.status = "no available hosts"
-                        self.logger.warn(self.status)
+                        self.logger.warn("Search: " + self.status)
                         break
                     else:
                         if target == "bw":
@@ -891,7 +957,7 @@ class Search(object):
                             top_candidate_list = self._sort_lowest_bandwidth_usage(_n, _level, candidate_list)
                             if len(top_candidate_list) == 0:
                                 self.status = "no available network bandwidth left"
-                                self.logger.warn(self.status)
+                                self.logger.warn("Search: " + self.status)
                                 break
 
         return best_resource
@@ -1396,7 +1462,7 @@ class Search(object):
             lgr.group_type = "EX"
             self.avail_logical_groups[lgr.name] = lgr
 
-            self.logger.debug("add new exclusivity (" + _exclusivity_id + ")")
+            self.logger.debug("Search: add new exclusivity (" + _exclusivity_id + ")")
         else:
             lgr = self.avail_logical_groups[_exclusivity_id]
 
@@ -1441,7 +1507,7 @@ class Search(object):
             lgr.group_type = "AFF"
             self.avail_logical_groups[lgr.name] = lgr
 
-            self.logger.debug("add new affinity (" + _affinity_id + ")")
+            self.logger.debug("Search: add new affinity (" + _affinity_id + ")")
         else:
             lgr = self.avail_logical_groups[_affinity_id]
 
@@ -1486,7 +1552,7 @@ class Search(object):
             lgr.group_type = "DIV"
             self.avail_logical_groups[lgr.name] = lgr
 
-            self.logger.debug("add new diversity (" + _diversity_id + ")")
+            self.logger.debug("Search: add new diversity (" + _diversity_id + ")")
         else:
             lgr = self.avail_logical_groups[_diversity_id]
 
@@ -1635,7 +1701,7 @@ class Search(object):
                 self._rollback_reservation(v)
 
         if _v in self.node_placements.keys():
-            self.logger.debug("node (" + _v.name + ") rollbacked")
+            self.logger.debug("Search: node (" + _v.name + ") rollbacked")
 
             chosen_host = self.avail_hosts[self.node_placements[_v].host_name]
             level = self.node_placements[_v].level
@@ -1896,7 +1962,7 @@ class Search(object):
     def _rollback_node_placement(self, _v):
         if _v in self.node_placements.keys():
             del self.node_placements[_v]
-            self.logger.debug("node (" + _v.name + ") removed from placement")
+            self.logger.debug("Search: node (" + _v.name + ") removed from placement")
 
         if isinstance(_v, VGroup):
             for _, sg in _v.subvgroups.iteritems():

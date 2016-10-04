@@ -1,6 +1,6 @@
 #!/bin/python
 
-# Modified: Sep. 4, 2016
+# Modified: Sep. 27, 2016
 
 
 from openstack_filters import AggregateInstanceExtraSpecsFilter
@@ -10,13 +10,6 @@ from openstack_filters import DiskFilter
 from openstack_filters import RamFilter
 
 from valet.engine.optimizer.app_manager.app_topology_base import VGroup, VM, LEVELS
-
-''' for unit test '''
-'''
-import sys
-sys.path.insert(0, '../app_manager')
-from app_topology_base import VGroup, VM, LEVELS
-'''
 
 
 class ConstraintSolver(object):
@@ -37,15 +30,20 @@ class ConstraintSolver(object):
 
         ''' when replanning '''
         if _n.node.host is not None and len(_n.node.host) > 0:
-            self.logger.debug("reconsider with given candidates")
+            self.logger.debug("ConstraintSolver: reconsider with given candidates")
             for hk in _n.node.host:
                 for ark, ar in _avail_resources.iteritems():
                     if hk == ark:
                         candidate_list.append(ar)
-
         else:
             for _, r in _avail_resources.iteritems():
                 candidate_list.append(r)
+        if len(candidate_list) == 0:
+            self.status = "no candidate for node = " + _n.node.name
+            self.logger.warn("ConstraintSolver: " + self.status)
+            return candidate_list
+        else:
+            self.logger.debug("ConstraintSolver: num of candidates = " + str(len(candidate_list)))
 
         ''' availability zone constraint '''
         if isinstance(_n.node, VGroup) or isinstance(_n.node, VM):
@@ -54,10 +52,10 @@ class ConstraintSolver(object):
                 self._constrain_availability_zone(_level, _n, candidate_list)
                 if len(candidate_list) == 0:
                     self.status = "violate availability zone constraint for node = " + _n.node.name
-                    self.logger.error(self.status)
+                    self.logger.error("ConstraintSolver: " + self.status)
                     return candidate_list
                 else:
-                    self.logger.debug("done availability_zone constraint")
+                    self.logger.debug("ConstraintSolver: done availability_zone constraint")
 
         ''' host aggregate constraint '''
         if isinstance(_n.node, VGroup) or isinstance(_n.node, VM):
@@ -65,49 +63,49 @@ class ConstraintSolver(object):
                 self._constrain_host_aggregates(_level, _n, candidate_list)
                 if len(candidate_list) == 0:
                     self.status = "violate host aggregate constraint for node = " + _n.node.name
-                    self.logger.error(self.status)
+                    self.logger.error("ConstraintSolver: " + self.status)
                     return candidate_list
                 else:
-                    self.logger.debug("done host_aggregate constraint")
+                    self.logger.debug("ConstraintSolver: done host_aggregate constraint")
 
         ''' cpu capacity constraint '''
         if isinstance(_n.node, VGroup) or isinstance(_n.node, VM):
             self._constrain_cpu_capacity(_level, _n, candidate_list)
             if len(candidate_list) == 0:
                 self.status = "violate cpu capacity constraint for node = " + _n.node.name
-                self.logger.error(self.status)
+                self.logger.error("ConstraintSolver: " + self.status)
                 return candidate_list
             else:
-                self.logger.debug("done cpu capacity constraint")
+                self.logger.debug("ConstraintSolver: done cpu capacity constraint")
 
         ''' memory capacity constraint '''
         if isinstance(_n.node, VGroup) or isinstance(_n.node, VM):
             self._constrain_mem_capacity(_level, _n, candidate_list)
             if len(candidate_list) == 0:
                 self.status = "violate memory capacity constraint for node = " + _n.node.name
-                self.logger.error(self.status)
+                self.logger.error("ConstraintSolver: " + self.status)
                 return candidate_list
             else:
-                self.logger.debug("done memory capacity constraint")
+                self.logger.debug("ConstraintSolver: done memory capacity constraint")
 
         ''' local disk capacity constraint '''
         if isinstance(_n.node, VGroup) or isinstance(_n.node, VM):
             self._constrain_local_disk_capacity(_level, _n, candidate_list)
             if len(candidate_list) == 0:
                 self.status = "violate local disk capacity constraint for node = " + _n.node.name
-                self.logger.error(self.status)
+                self.logger.error("ConstraintSolver: " + self.status)
                 return candidate_list
             else:
-                self.logger.debug("done local disk capacity constraint")
+                self.logger.debug("ConstraintSolver: done local disk capacity constraint")
 
         ''' network bandwidth constraint '''
         self._constrain_nw_bandwidth_capacity(_level, _n, _node_placements, candidate_list)
         if len(candidate_list) == 0:
             self.status = "violate nw bandwidth capacity constraint for node = " + _n.node.name
-            self.logger.error(self.status)
+            self.logger.error("ConstraintSolver: " + self.status)
             return candidate_list
         else:
-            self.logger.debug("done bandwidth capacity constraint")
+            self.logger.debug("ConstraintSolver: done bandwidth capacity constraint")
 
         ''' diversity constraint '''
         if len(_n.node.diversity_groups) > 0:
@@ -119,22 +117,22 @@ class ConstraintSolver(object):
                             break
             if len(candidate_list) == 0:
                 self.status = "violate diversity constraint for node = " + _n.node.name
-                self.logger.error(self.status)
+                self.logger.error("ConstraintSolver: " + self.status)
                 return candidate_list
             else:
                 self._constrain_diversity(_level, _n, _node_placements, candidate_list)
                 if len(candidate_list) == 0:
                     self.status = "violate diversity constraint for node = " + _n.node.name
-                    self.logger.error(self.status)
+                    self.logger.error("ConstraintSolver: " + self.status)
                     return candidate_list
                 else:
-                    self.logger.debug("done diversity_group constraint")
+                    self.logger.debug("ConstraintSolver: done diversity_group constraint")
 
         ''' exclusivity constraint '''
         exclusivities = self.get_exclusivities(_n.node.exclusivity_groups, _level)
         if len(exclusivities) > 1:
             self.status = "violate exclusivity constraint (more than one exclusivity) for node = " + _n.node.name
-            self.logger.error(self.status)
+            self.logger.error("ConstraintSolver: " + self.status)
             return []
         else:
             if len(exclusivities) == 1:
@@ -143,18 +141,18 @@ class ConstraintSolver(object):
                     self._constrain_exclusivity(_level, exclusivity_id, candidate_list)
                     if len(candidate_list) == 0:
                         self.status = "violate exclusivity constraint for node = " + _n.node.name
-                        self.logger.error(self.status)
+                        self.logger.error("ConstraintSolver: " + self.status)
                         return candidate_list
                     else:
-                        self.logger.debug("done exclusivity_group constraint")
+                        self.logger.debug("ConstraintSolver: done exclusivity_group constraint")
             else:
                 self._constrain_non_exclusivity(_level, candidate_list)
                 if len(candidate_list) == 0:
                     self.status = "violate non-exclusivity constraint for node = " + _n.node.name
-                    self.logger.error(self.status)
+                    self.logger.error("ConstraintSolver: " + self.status)
                     return candidate_list
                 else:
-                    self.logger.debug("done non-exclusivity_group constraint")
+                    self.logger.debug("ConstraintSolver: done non-exclusivity_group constraint")
 
         ''' affinity constraint '''
         affinity_id = _n.get_affinity_id()  # level:name, except name == "any"
@@ -164,10 +162,10 @@ class ConstraintSolver(object):
                     self._constrain_affinity(_level, affinity_id, candidate_list)
                     if len(candidate_list) == 0:
                         self.status = "violate affinity constraint for node = " + _n.node.name
-                        self.logger.error(self.status)
+                        self.logger.error("ConstraintSolver: " + self.status)
                         return candidate_list
                     else:
-                        self.logger.debug("done affinity_group constraint")
+                        self.logger.debug("ConstraintSolver: done affinity_group constraint")
 
         return candidate_list
 
@@ -184,7 +182,7 @@ class ConstraintSolver(object):
                     conflict_list.append(r)
 
                     debug_resource_name = r.get_resource_name(_level)
-                    self.logger.debug("not exist affinity in resource = " + debug_resource_name)
+                    self.logger.debug("ConstraintSolver: not exist affinity in resource = " + debug_resource_name)
 
         _candidate_list[:] = [c for c in _candidate_list if c not in conflict_list]
 
@@ -197,7 +195,7 @@ class ConstraintSolver(object):
                     conflict_list.append(r)
 
                     debug_resource_name = r.get_resource_name(_level)
-                    self.logger.debug("conflict exisitng diversity in resource = " + debug_resource_name)
+                    self.logger.debug("ConstraintSolver: conflict diversity in resource = " + debug_resource_name)
 
         _candidate_list[:] = [c for c in _candidate_list if c not in conflict_list]
 
@@ -221,7 +219,7 @@ class ConstraintSolver(object):
                     conflict_list.append(r)
 
                     resource_name = r.get_resource_name(_level)
-                    self.logger.debug("conflict the diversity with placed nodes in resource = " + resource_name)
+                    self.logger.debug("ConstraintSolver: conflict the diversity in resource = " + resource_name)
 
         _candidate_list[:] = [c for c in _candidate_list if c not in conflict_list]
 
@@ -258,7 +256,7 @@ class ConstraintSolver(object):
                     conflict_list.append(r)
 
                     debug_resource_name = r.get_resource_name(_level)
-                    self.logger.debug("exclusivity defined in resource = " + debug_resource_name)
+                    self.logger.debug("ConstraintSolver: exclusivity defined in resource = " + debug_resource_name)
 
         _candidate_list[:] = [c for c in _candidate_list if c not in conflict_list]
 
@@ -299,7 +297,7 @@ class ConstraintSolver(object):
                     candidate_list.append(r)
             else:
                 debug_resource_name = r.get_resource_name(_level)
-                self.logger.debug("exclusivity not exist in resource = " + debug_resource_name)
+                self.logger.debug("ConstraintSolver: exclusivity not exist in resource = " + debug_resource_name)
 
         return candidate_list
 
@@ -312,7 +310,7 @@ class ConstraintSolver(object):
                     candidate_list.append(r)
             else:
                 debug_resource_name = r.get_resource_name(_level)
-                self.logger.debug("exclusivity not allowed in resource = " + debug_resource_name)
+                self.logger.debug("ConstraintSolver: exclusivity not allowed in resource = " + debug_resource_name)
 
         return candidate_list
 
@@ -334,7 +332,7 @@ class ConstraintSolver(object):
                     conflict_list.append(r)
 
                     debug_resource_name = r.get_resource_name(_level)
-                    self.logger.debug("not meet the host aggregate in resource = " + debug_resource_name)
+                    self.logger.debug("ConstraintSolver: not meet aggregate in resource = " + debug_resource_name)
 
         _candidate_list[:] = [c for c in _candidate_list if c not in conflict_list]
 
@@ -350,7 +348,7 @@ class ConstraintSolver(object):
                     conflict_list.append(r)
 
                     debug_resource_name = r.get_resource_name(_level)
-                    self.logger.debug("not meet the availability zone in resource = " + debug_resource_name)
+                    self.logger.debug("ConstraintSolver: not meet az in resource = " + debug_resource_name)
 
         _candidate_list[:] = [c for c in _candidate_list if c not in conflict_list]
 
@@ -365,7 +363,7 @@ class ConstraintSolver(object):
                 conflict_list.append(ch)
 
                 debug_resource_name = ch.get_resource_name(_level)
-                self.logger.debug("lack of cpu in " + debug_resource_name)
+                self.logger.debug("ConstraintSolver: lack of cpu in " + debug_resource_name)
 
         _candidate_list[:] = [c for c in _candidate_list if c not in conflict_list]
 
@@ -380,7 +378,7 @@ class ConstraintSolver(object):
                 conflict_list.append(ch)
 
                 debug_resource_name = ch.get_resource_name(_level)
-                self.logger.debug("lack of mem in " + debug_resource_name)
+                self.logger.debug("ConstraintSolver: lack of mem in " + debug_resource_name)
 
         _candidate_list[:] = [c for c in _candidate_list if c not in conflict_list]
 
@@ -395,7 +393,7 @@ class ConstraintSolver(object):
                 conflict_list.append(ch)
 
                 debug_resource_name = ch.get_resource_name(_level)
-                self.logger.debug("lack of local disk in " + debug_resource_name)
+                self.logger.debug("ConstraintSolver: lack of local disk in " + debug_resource_name)
 
         _candidate_list[:] = [c for c in _candidate_list if c not in conflict_list]
 
@@ -427,7 +425,7 @@ class ConstraintSolver(object):
                         if vc == "any" or s.storage_class == vc:
                             avail_disks.append(s.storage_avail_disk)
 
-                self.logger.debug("storage resource constrained in resource = " + debug_resource_name)
+                self.logger.debug("ConstraintSolver: storage constrained in resource = " + debug_resource_name)
 
         _candidate_list[:] = [c for c in _candidate_list if c not in conflict_list]
 
@@ -464,7 +462,7 @@ class ConstraintSolver(object):
                     conflict_list.append(cr)
 
                     debug_resource_name = cr.get_resource_name(_level)
-                    self.logger.debug("network bandwidth constrained in resource = " + debug_resource_name)
+                    self.logger.debug("ConstraintSolver: bw constrained in resource = " + debug_resource_name)
 
         _candidate_list[:] = [c for c in _candidate_list if c not in conflict_list]
 

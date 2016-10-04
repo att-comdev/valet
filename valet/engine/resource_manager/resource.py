@@ -1,7 +1,6 @@
 #!/bin/python
 
-# Modified: Sep. 16, 2016
-
+# Modified: Sep. 27, 2016
 
 import json
 import sys
@@ -9,15 +8,7 @@ import time
 
 from resource_base import Datacenter, HostGroup, Host, LogicalGroup, Flavor, Switch, Link
 from valet.engine.optimizer.app_manager.app_topology_base import LEVELS
-from valet.engine.optimizer.util.util import get_last_logfile
-
-''' for test '''
-'''
-sys.path.insert(0, '../optimizer/app_manager')
-from app_topology_base import LEVELS
-sys.path.insert(0, '../optimizer/util')
-from util import get_last_logfile
-'''
+from valet.engine.optimizer.util import util as util
 
 
 class Resource(object):
@@ -49,8 +40,6 @@ class Resource(object):
         self.disk_avail = 0
         self.nw_bandwidth_avail = 0
 
-        ''' resource status abstraction '''
-
     def bootstrap_from_db(self, _resource_status):
         logical_groups = _resource_status["logical_groups"]
         for lgk, lg in logical_groups.iteritems():
@@ -65,9 +54,9 @@ class Resource(object):
             self.logical_groups[lgk] = logical_group
 
         if len(self.logical_groups) > 0:
-            self.logger.debug("logical_groups loaded")
+            self.logger.debug("Resource.bootstrap_from_db: logical_groups loaded")
         else:
-            self.logger.warn("no logical_groups")
+            self.logger.warn("Resource.bootstrap_from_db: no logical_groups")
 
         flavors = _resource_status["flavors"]
         for fk, f in flavors.iteritems():
@@ -82,9 +71,9 @@ class Resource(object):
             self.flavors[fk] = flavor
 
         if len(self.flavors) > 0:
-            self.logger.debug("flavors loaded")
+            self.logger.debug("Resource.bootstrap_from_db: flavors loaded")
         else:
-            self.logger.error("fail loading flavors")
+            self.logger.error("Resource.bootstrap_from_db: fail loading flavors")
             return False
 
         switches = _resource_status["switches"]
@@ -96,9 +85,9 @@ class Resource(object):
             self.switches[sk] = switch
 
         if len(self.switches) > 0:
-            self.logger.debug("switches loaded")
+            self.logger.debug("Resource.bootstrap_from_db: switches loaded")
         else:
-            self.logger.error("fail loading switches")
+            self.logger.error("Resource.bootstrap_from_db: fail loading switches")
             return False
 
         for sk, s in switches.iteritems():
@@ -128,9 +117,9 @@ class Resource(object):
 
             switch.peer_links = peer_links
 
-        self.logger.debug("switch links loaded")
+        self.logger.debug("Resource.bootstrap_from_db: switch links loaded")
 
-        # TODO(GY): storage_hosts
+        # storage_hosts
 
         hosts = _resource_status["hosts"]
         for hk, h in hosts.iteritems():
@@ -160,14 +149,14 @@ class Resource(object):
             for sk in h["switch_list"]:
                 host.switches[sk] = self.switches[sk]
 
-            # TODO(GY): host.storages
+            # host.storages
 
             self.hosts[hk] = host
 
         if len(self.hosts) > 0:
-            self.logger.debug("hosts loaded")
+            self.logger.debug("Resource.bootstrap_from_db: hosts loaded")
         else:
-            self.logger.error("fail loading hosts")
+            self.logger.error("Resource.bootstrap_from_db: fail loading hosts")
             return False
 
         host_groups = _resource_status["host_groups"]
@@ -193,14 +182,14 @@ class Resource(object):
             for sk in hg["switch_list"]:
                 host_group.switches[sk] = self.switches[sk]
 
-            # TODO(GY): host.storages
+            # host.storages
 
             self.host_groups[hgk] = host_group
 
         if len(self.host_groups) > 0:
-            self.logger.debug("host_groups loaded")
+            self.logger.debug("Resource.bootstrap_from_db: host_groups loaded")
         else:
-            self.logger.error("fail loading host_groups")
+            self.logger.error("Resource.bootstrap_from_db: fail loading host_groups")
             return False
 
         dc = _resource_status["datacenter"]
@@ -225,7 +214,7 @@ class Resource(object):
         for sk in dc["switch_list"]:
             self.datacenter.root_switches[sk] = self.switches[sk]
 
-        # TODO(GY): host.storages
+        # host.storages
 
         for ck in dc["children"]:
             if ck in self.host_groups.keys():
@@ -234,9 +223,9 @@ class Resource(object):
                 self.datacenter.resources[ck] = self.hosts[ck]
 
         if len(self.datacenter.resources) > 0:
-            self.logger.debug("datacenter loaded")
+            self.logger.debug("Resource.bootstrap_from_db: datacenter loaded")
         else:
-            self.logger.error("fail loading datacenter")
+            self.logger.error("Resource.bootstrap_from_db: fail loading datacenter")
             return False
 
         hgs = _resource_status["host_groups"]
@@ -255,7 +244,7 @@ class Resource(object):
                 elif ck in self.host_groups.keys():
                     host_group.child_resources[ck] = self.host_groups[ck]
 
-        self.logger.debug("host_groups'layout loaded")
+        self.logger.debug("Resource.bootstrap_from_db: host_groups'layout loaded")
 
         hs = _resource_status["hosts"]
         for hk, h in hs.iteritems():
@@ -267,22 +256,25 @@ class Resource(object):
             elif pk in self.host_groups.keys():
                 host.host_group = self.host_groups[pk]
 
-        self.logger.debug("hosts'layout loaded")
+        self.logger.debug("Resource.bootstrap_from_db: hosts'layout loaded")
 
         self._update_compute_avail()
         self._update_storage_avail()
         self._update_nw_bandwidth_avail()
 
-        self.logger.debug("resource availability updated")
+        self.logger.debug("Resource.bootstrap_from_db: resource availability updated")
 
         return True
 
-    def update_topology(self):
+    def update_topology(self, store=True):
         self._update_topology()
 
         self._update_compute_avail()
         self._update_storage_avail()
         self._update_nw_bandwidth_avail()
+
+        if store is False:
+            return True
 
         ct = self._store_topology_updates()
         if ct is None:
@@ -483,11 +475,11 @@ class Resource(object):
             if self.datacenter.last_link_update > self.current_timestamp:
                 last_update_time = self.datacenter.last_link_update
 
-        (resource_logfile, last_index, mode) = get_last_logfile(self.config.resource_log_loc,
-                                                                self.config.max_log_size,
-                                                                self.config.max_num_of_logs,
-                                                                self.datacenter.name,
-                                                                self.last_log_index)
+        (resource_logfile, last_index, mode) = util.get_last_logfile(self.config.resource_log_loc,
+                                                                     self.config.max_log_size,
+                                                                     self.config.max_num_of_logs,
+                                                                     self.datacenter.name,
+                                                                     self.last_log_index)
         self.last_log_index = last_index
 
         logging = open(self.config.resource_log_loc + resource_logfile, mode)
@@ -517,7 +509,7 @@ class Resource(object):
 
         logging.close()
 
-        self.logger.info("log: resource status timestamp in " + resource_logfile)
+        self.logger.info("Resource._store_topology_updates: log resource status in " + resource_logfile)
 
         if self.db is not None:
             if self.db.update_resource_status(self.datacenter.name, json_logging) is False:
@@ -647,19 +639,19 @@ class Resource(object):
 
         if host.status != _st:
             host.status = _st
-            self.logger.debug("host status changed")
+            self.logger.debug("Resource.update_host_resources: host status changed")
             updated = True
 
         if host.original_vCPUs != _vcpus or \
            host.vCPUs_used != _vcpus_used:
-            self.logger.debug("host cpu changed")
+            self.logger.debug("Resource.update_host_resources: host cpu changed")
             host.original_vCPUs = _vcpus
             host.vCPUs_used = _vcpus_used
             updated = True
 
         if host.free_mem_mb != _fmem or \
            host.original_mem_cap != _mem:
-            self.logger.debug("host mem changed")
+            self.logger.debug("Resource.update_host_resources: host mem changed")
             host.free_mem_mb = _fmem
             host.original_mem_cap = _mem
             updated = True
@@ -667,7 +659,7 @@ class Resource(object):
         if host.free_disk_gb != _fldisk or \
            host.original_local_disk_cap != _ldisk or \
            host.disk_available_least != _avail_least:
-            self.logger.debug("host disk changed")
+            self.logger.debug("Resource.update_host_resources: host disk changed")
             host.free_disk_gb = _fldisk
             host.original_local_disk_cap = _ldisk
             host.disk_available_least = _avail_least
@@ -886,8 +878,8 @@ class Resource(object):
 
         host.compute_avail_mem(ram_allocation_ratio, static_ram_standby_ratio)
 
-        self.logger.debug("host (" + hk + ")'s total_mem = " + str(host.mem_cap) +
-                          ", avail_mem = " + str(host.avail_mem_cap))
+        self.logger.debug("Resource.compute_avail_resources: host (" + hk + ")'s total_mem = " +
+                          str(host.mem_cap) + ", avail_mem = " + str(host.avail_mem_cap))
 
         cpu_allocation_ratio = 1.0
         if len(cpu_allocation_ratio_list) > 0:
@@ -902,8 +894,8 @@ class Resource(object):
 
         host.compute_avail_vCPUs(cpu_allocation_ratio, static_cpu_standby_ratio)
 
-        self.logger.debug("host (" + hk + ")'s total_vCPUs = " + str(host.vCPUs) +
-                          ", avail_vCPUs = " + str(host.avail_vCPUs))
+        self.logger.debug("Resource.compute_avail_resources: host (" + hk + ")'s total_vCPUs = " +
+                          str(host.vCPUs) + ", avail_vCPUs = " + str(host.avail_vCPUs))
 
         disk_allocation_ratio = 1.0
         if len(disk_allocation_ratio_list) > 0:
@@ -918,8 +910,8 @@ class Resource(object):
 
         host.compute_avail_disk(disk_allocation_ratio, static_disk_standby_ratio)
 
-        self.logger.debug("host (" + hk + ")'s total_local_disk = " + str(host.local_disk_cap) +
-                          ", avail_local_disk = " + str(host.avail_local_disk_cap))
+        self.logger.debug("Resource.compute_avail_resources: host (" + hk + ")'s total_local_disk = " +
+                          str(host.local_disk_cap) + ", avail_local_disk = " + str(host.avail_local_disk_cap))
 
     def get_flavor(self, _name):
         flavor = None

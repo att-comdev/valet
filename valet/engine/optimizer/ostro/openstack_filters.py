@@ -1,21 +1,10 @@
 #!/bin/python
 
-
-#################################################################################################################
-# Author: Gueyoung Jung
-# Contact: gjung@research.att.com
-# Version 2.0.3: Mar. 15, 2016
-#
-# Functions
-#
-#################################################################################################################
-
-
-import six
+# Modified: Mar. 15, 2016
 
 import openstack_utils
+import six
 
-# sys.path.insert(0, '../app_manager')
 from valet.engine.optimizer.app_manager.app_topology_base import VM
 
 _SCOPE = 'aggregate_instance_extra_specs'

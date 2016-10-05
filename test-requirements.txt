@@ -24,4 +24,4 @@ python-keystoneclient<=3.4.0
 python-novaclient<=4.0.0
 python-heatclient<=1.2.0
 
-
+oslo.messaging==1.8.3

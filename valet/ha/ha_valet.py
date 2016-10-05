@@ -93,6 +93,7 @@ TEST_COMMAND = 'test'
 STAND_BY_LIST = 'stand_by_list'
 
 ostro_group = cfg.OptGroup(name='Ostro', title='Valet Engine HA conf')
+listener_group = cfg.OptGroup(name='EventsListener', title='Valet Events Listener HA conf')
 
 havalet_opts = [
     cfg.IntOpt(PRIORITY, default=1, help='master slave distinguish'),
@@ -107,6 +108,9 @@ havalet_opts = [
 
 CONF.register_group(ostro_group)
 CONF.register_opts(havalet_opts, ostro_group)
+
+CONF.register_group(listener_group)
+CONF.register_opts(havalet_opts, listener_group)
 
 
 def prepare(obj, name):
@@ -348,15 +352,16 @@ class HAValet(object):
             os.makedirs(LOG_DIR)
         self.log = None
 
-    def _parse_valet_conf(self, process='Ostro'):
+    def _parse_valet_conf(self, processes):
         """ This function reads the valet config file and returns configuration
 
         attributes in key/value format
         :rtype: dict
         """
         cdata = {}
-        cdata[process] = {
-            NAME: process,
+
+        cdata['Ostro'] = {
+            NAME: 'Ostro',
             ORDER: CONF.Ostro.order,
             HOST: CONF.Ostro.host,
             USER: CONF.Ostro.user,
@@ -366,6 +371,19 @@ class HAValet(object):
             TEST_COMMAND: CONF.Ostro.test,
             STAND_BY_LIST: CONF.Ostro.stand_by_list
         }
+
+        cdata['EventsListener'] = {
+            NAME: 'EventsListener',
+            ORDER: CONF.EventsListener.order,
+            HOST: CONF.EventsListener.host,
+            USER: CONF.EventsListener.user,
+            PRIORITY: CONF.EventsListener.priority,
+            START_COMMAND: CONF.EventsListener.start,
+            STOP_COMMAND: CONF.EventsListener.stop,
+            TEST_COMMAND: CONF.EventsListener.test,
+            STAND_BY_LIST: CONF.EventsListener.stand_by_list
+        }
+
         return cdata
 
     @DeprecationWarning
@@ -445,7 +463,7 @@ class HAValet(object):
         # parser.add_argument('-f', '--file', help='configuraion file', default=DEFAULT_CONF_FILE)
         # args = parser.parse_args()
 
-        conf_data = self._parse_valet_conf()
+        conf_data = self._parse_valet_conf(['EventsListener', 'Ostro'])
 
         # if a specific process was asked for..
         # remove all others

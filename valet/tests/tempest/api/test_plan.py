@@ -17,8 +17,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from tempest.lib.common.utils import data_utils
 from tempest import test
+from tempest_lib.common.utils import data_utils
 from valet.tests.tempest.api import base
 
 
@@ -28,9 +28,6 @@ class ValetPlanTest(base.BaseValetTest):
     def setup_clients(cls):
         super(ValetPlanTest, cls).setup_clients()
         cls.client = cls.valet_client
-        cls.TenantsClient = cls.os.tenants_public_client
-        cls.UsersClient = cls.os.users_v3_client
-        cls.RolesClient = cls.os.roles_v3_client
 
     def _get_plan_name_stack_id(self):
         return data_utils.rand_uuid()

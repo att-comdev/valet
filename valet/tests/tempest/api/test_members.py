@@ -17,9 +17,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from tempest.lib.common.utils import data_utils
-from tempest.lib.services.identity.v2 import tenants_client
 from tempest import test
+from tempest_lib.common.utils import data_utils
 from valet.tests.tempest.api import base
 
 
@@ -29,9 +28,7 @@ class ValetGroupsMembersTest(base.BaseValetTest):
     def setup_clients(cls):
         super(ValetGroupsMembersTest, cls).setup_clients()
         cls.client = cls.valet_client
-        cls.TenantsClient = cls.os.tenants_public_client
-        cls.UsersClient = cls.os.users_v3_client
-        cls.RolesClient = cls.os.roles_v3_client
+        cls.TenantsClient = cls.os.identity_client
 
     def _create_group(self):
         group_name = data_utils.rand_name('membergroup')
@@ -47,44 +44,12 @@ class ValetGroupsMembersTest(base.BaseValetTest):
         self.client.delete_group(group_id)
 
     def _create_tenant(self):
-        self.TenantsClient.endpoint_type = 'adminURL'
-        _tenant = tenants_client.TenantsClient(
-            self.TenantsClient.auth_provider,
-            self.TenantsClient.service,
-            self.TenantsClient.region,
-            self.TenantsClient.endpoint_type)
         tenant_name = data_utils.rand_name(name='tenant')
         tenant_desc = data_utils.rand_name(name='desc')
-        body = _tenant.create_tenant(name=tenant_name, description=tenant_desc)
+        body = self.TenantsClient.create_tenant(name=tenant_name, description=tenant_desc)
         tenant_id = body['tenant']['id']
-        self.addCleanup(_tenant.delete_tenant, tenant_id)
+        self.addCleanup(self.TenantsClient.delete_tenant, tenant_id)
         return tenant_id
-
-    def _create_member(self, tenant_id):
-        username = data_utils.rand_name(name='member')
-        email = username + '@test.valet'
-        password = data_utils.rand_password()
-        body = self.UsersClient.create_user(user_name=username,
-                                            password=password,
-                                            project_id=tenant_id,
-                                            email=email)
-        member_id = body['user']['id']
-        self.addCleanup(self.UsersClient.delete_user, member_id)
-        return member_id
-
-    def _get_admin_member_roles_id(self):
-        admin_member_roles_id = {}
-        # Retrieve the admin role ID
-        body = self.RolesClient.list_roles()
-        for roles in body['roles']:
-            if roles['name'] == 'admin':
-                admin_member_roles_id['admin'] = roles['id']
-        # Retrieve the admin user ID
-        body = self.UsersClient.list_users()
-        for users in body['users']:
-            if users['name'] == 'admin':
-                admin_member_roles_id['admin_id'] = users['id']
-        return admin_member_roles_id
 
     @test.idempotent_id('5aeec320-65d5-11e6-8b77-86f30ca893d3')
     def test_add_single_member_to_a_group(self):
@@ -92,16 +57,6 @@ class ValetGroupsMembersTest(base.BaseValetTest):
         tenants = []
         tenant_id = self._create_tenant()
         tenants.append(tenant_id)
-        # Create a member
-        member_id = self._create_member(tenant_id)
-        # Get the Instance Specific admin role id
-        admin_member_roles = self._get_admin_member_roles_id()
-        # Assign the user with role admin to the newly
-        # created tenant
-        self.RolesClient.assign_user_role_on_project(
-            tenant_id,
-            member_id,
-            admin_member_roles['admin'])
         # Create a group
         group_id = self._create_group()
         # Add the newly created tenant to the group
@@ -117,21 +72,11 @@ class ValetGroupsMembersTest(base.BaseValetTest):
 
     @test.idempotent_id('5aeec6f4-65d5-11e6-8b77-86f30ca893d3')
     def test_add_multiple_members_to_a_group(self):
-        # Get the Instance Specific admin role id
-        admin_member_roles = self._get_admin_member_roles_id()
         # Create multiple tenants
         tenants = []
         for count in range(0, 4):
             tenant_id = self._create_tenant()
             tenants.append(tenant_id)
-            # Create a member
-            member_id = self._create_member(tenant_id)
-            # Assign the user with role admin to the newly
-            # created tenant
-            self.RolesClient.assign_user_role_on_project(
-                tenant_id,
-                member_id,
-                admin_member_roles['admin'])
         # Create a group
         group_id = self._create_group()
         # Add the newly created tenant to the group
@@ -152,16 +97,6 @@ class ValetGroupsMembersTest(base.BaseValetTest):
         tenants = []
         tenant_id = self._create_tenant()
         tenants.append(tenant_id)
-        # Create a member
-        member_id = self._create_member(tenant_id)
-        # Get the Instance Specific admin role id
-        admin_member_roles = self._get_admin_member_roles_id()
-        # Assign the user with role admin to the newly
-        # created tenant
-        self.RolesClient.assign_user_role_on_project(
-            tenant_id,
-            member_id,
-            admin_member_roles['admin'])
         # Create a group
         group_id = self._create_group()
         # Add the newly created tenant to the group
@@ -173,21 +108,11 @@ class ValetGroupsMembersTest(base.BaseValetTest):
 
     @test.idempotent_id('5aeec99c-65d5-11e6-8b77-86f30ca893d3')
     def test_delete_member_from_group(self):
-        # Get the Instance Specific admin role id
-        admin_member_roles = self._get_admin_member_roles_id()
         # Create multiple tenants
         tenants = []
         for count in range(0, 4):
             tenant_id = self._create_tenant()
             tenants.append(tenant_id)
-            # Create a member
-            member_id = self._create_member(tenant_id)
-            # Assign the user with role admin to the newly
-            # created tenant
-            self.RolesClient.assign_user_role_on_project(
-                tenant_id,
-                member_id,
-                admin_member_roles['admin'])
         # Create a group
         group_id = self._create_group()
         # Add the newly created tenant to the group
@@ -199,21 +124,11 @@ class ValetGroupsMembersTest(base.BaseValetTest):
 
     @test.idempotent_id('5aeecb68-65d5-11e6-8b77-86f30ca893d3')
     def test_delete_all_members_from_group(self):
-        # Get the Instance Specific admin role id
-        admin_member_roles = self._get_admin_member_roles_id()
         # Create multiple tenants
         tenants = []
         for count in range(0, 4):
             tenant_id = self._create_tenant()
             tenants.append(tenant_id)
-            # Create a member
-            member_id = self._create_member(tenant_id)
-            # Assign the user with role admin to the newly
-            # created tenant
-            self.RolesClient.assign_user_role_on_project(
-                tenant_id,
-                member_id,
-                admin_member_roles['admin'])
         # Create a group
         group_id = self._create_group()
         # Add the newly created tenant to the group

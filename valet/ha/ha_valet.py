@@ -93,6 +93,7 @@ TEST_COMMAND = 'test'
 STAND_BY_LIST = 'stand_by_list'
 
 ostro_group = cfg.OptGroup(name='Ostro', title='Valet Engine HA conf')
+api_group = cfg.OptGroup(name='ValetApi', title='Valet Api HA conf')
 listener_group = cfg.OptGroup(name='EventsListener', title='Valet Events Listener HA conf')
 
 havalet_opts = [
@@ -106,6 +107,9 @@ havalet_opts = [
     cfg.StrOpt(TEST_COMMAND, help='test command')
 ]
 
+CONF.register_group(api_group)
+CONF.register_opts(havalet_opts, api_group)
+
 CONF.register_group(ostro_group)
 CONF.register_opts(havalet_opts, ostro_group)
 
@@ -113,7 +117,47 @@ CONF.register_group(listener_group)
 CONF.register_opts(havalet_opts, listener_group)
 
 
-def prepare(obj, name):
+def read_conf(processes):
+    """returns dictionary of configured processes"""
+    return dict([
+        ('Ostro', {
+            NAME: 'Ostro',
+            ORDER: CONF.Ostro.order,
+            HOST: CONF.Ostro.host,
+            USER: CONF.Ostro.user,
+            PRIORITY: CONF.Ostro.priority,
+            START_COMMAND: CONF.Ostro.start,
+            STOP_COMMAND: CONF.Ostro.stop,
+            TEST_COMMAND: CONF.Ostro.test,
+            STAND_BY_LIST: CONF.Ostro.stand_by_list
+        }),
+
+        ('EventsListener', {
+            NAME: 'EventsListener',
+            ORDER: CONF.EventsListener.order,
+            HOST: CONF.EventsListener.host,
+            USER: CONF.EventsListener.user,
+            PRIORITY: CONF.EventsListener.priority,
+            START_COMMAND: CONF.EventsListener.start,
+            STOP_COMMAND: CONF.EventsListener.stop,
+            TEST_COMMAND: CONF.EventsListener.test,
+            STAND_BY_LIST: CONF.EventsListener.stand_by_list
+        }),
+
+        ('ValetApi', {
+            NAME: 'ValetApi',
+            ORDER: CONF.ValetApi.order,
+            HOST: CONF.ValetApi.host,
+            USER: CONF.ValetApi.user,
+            PRIORITY: CONF.ValetApi.priority,
+            START_COMMAND: CONF.ValetApi.start,
+            STOP_COMMAND: CONF.ValetApi.stop,
+            TEST_COMMAND: CONF.ValetApi.test,
+            STAND_BY_LIST: CONF.ValetApi.stand_by_list
+        })])
+
+
+def prepare_log(obj, name):
     obj.log = logging.getLogger(name)
     obj.log.setLevel(logging.DEBUG)
     # logging.register_options(CONF)
@@ -135,7 +179,7 @@ class HaValetThread (threading.Thread):
 
     def run(self):
         """Main function"""
-        prepare(self, self.data[NAME])
+        prepare_log(self, self.data[NAME])
         self.log.info('HA Valet - ' + self.data[NAME] + ' Watcher Thread - starting')
 
         fqdn_list = []
@@ -204,7 +248,7 @@ class HaValetThread (threading.Thread):
 
             self.log.info('checking status here - ' + host + ', my priority: ' + str(my_priority))
             i_am_active, priority = self._is_active(eval(test_command))
-            self.log.info('i am active = ' + str(i_am_active) + ', ' + str(priority))
+            self.log.info(host + ': host_active = ' + str(i_am_active) + ', ' + str(priority))
             any_active = i_am_active
             self.log.info('any active = ' + str(any_active))
 
@@ -221,7 +265,7 @@ class HaValetThread (threading.Thread):
                     host = host_in_list
                     host_active, host_priority = self._is_active(eval(test_command))
                     host = self.data.get(HOST, 'localhost')
-                    self.log.info(host_in_list + ' - host_active-' + str(host_active) + ', ' + str(host_priority))
+                    self.log.info(host_in_list + ' - host_active = ' + str(host_active) + ', ' + str(host_priority))
                     # Check for split brain: 2 valets active
                     if i_am_active and host_active:
                         self.log.info('found two live instances, checking priorities')
@@ -231,7 +275,8 @@ class HaValetThread (threading.Thread):
                             self._deactivate_process(eval(stop_command))     # Deactivate myself
                             i_am_active = False
                         else:
-                            self.log.info('deactivate ' + self.data[NAME] + ' on ' + host_in_list + ', already running here')
+                            self.log.info('deactivate ' + self.data[NAME] + ' on ' + host_in_list +
+                                          ', already running here')
                             host = host_in_list
                             self._deactivate_process(eval(stop_command))  # Deactivate other valet
                             host = self.data.get(HOST, 'localhost')
@@ -273,7 +318,7 @@ class HaValetThread (threading.Thread):
                 else:
                     priority_wait = True
             else:
-                self.log.info("up and running")
+                self.log.info("status: up and running")
         # end loop
 
     def _should_be_active(self, host_priority, my_priority):
@@ -352,40 +397,6 @@ class HAValet(object):
             os.makedirs(LOG_DIR)
         self.log = None
 
-    def _parse_valet_conf(self, processes):
-        """ This function reads the valet config file and returns configuration
-
-        attributes in key/value format
-        :rtype: dict
-        """
-        cdata = {}
-
-        cdata['Ostro'] = {
-            NAME: 'Ostro',
-            ORDER: CONF.Ostro.order,
-            HOST: CONF.Ostro.host,
-            USER: CONF.Ostro.user,
-            PRIORITY: CONF.Ostro.priority,
-            START_COMMAND: CONF.Ostro.start,
-            STOP_COMMAND: CONF.Ostro.stop,
-            TEST_COMMAND: CONF.Ostro.test,
-            STAND_BY_LIST: CONF.Ostro.stand_by_list
-        }
-
-        cdata['EventsListener'] = {
-            NAME: 'EventsListener',
-            ORDER: CONF.EventsListener.order,
-            HOST: CONF.EventsListener.host,
-            USER: CONF.EventsListener.user,
-            PRIORITY: CONF.EventsListener.priority,
-            START_COMMAND: CONF.EventsListener.start,
-            STOP_COMMAND: CONF.EventsListener.stop,
-            TEST_COMMAND: CONF.EventsListener.test,
-            STAND_BY_LIST: CONF.EventsListener.stand_by_list
-        }
-
-        return cdata
-
     @DeprecationWarning
     def _parse_valet_conf_v010(self, conf_file_name=DEFAULT_CONF_FILE, process=''):
         """ This function reads the valet config file and returns configuration
@@ -455,7 +466,7 @@ class HAValet(object):
 
     def start(self):
         """Start valet HA - Main function"""
-        prepare(self, 'havalet')
+        prepare_log(self, 'havalet')
         self.log.info('ha_valet v1.1 starting')
 
         # parser = argparse.ArgumentParser()
@@ -463,7 +474,7 @@ class HAValet(object):
         # parser.add_argument('-f', '--file', help='configuraion file', default=DEFAULT_CONF_FILE)
         # args = parser.parse_args()
 
-        conf_data = self._parse_valet_conf(['EventsListener', 'Ostro'])
+        conf_data = read_conf(['ValetApi', 'EventsListener', 'Ostro'])
 
         # if a specific process was asked for..
         # remove all others

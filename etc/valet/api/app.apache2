@@ -4,6 +4,7 @@
 # Optional: Append python-path=PATH_TO_VENV_PACKAGES to WSGIDaemonProcess
 
 Listen 8090
+ServerName valet
 
 <VirtualHost *:8090>
     ServerName valet

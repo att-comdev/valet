@@ -3,14 +3,14 @@
 # Modified: Sep. 22, 2016
 
 
-from configuration import Config
 import logging
 from logging.handlers import RotatingFileHandler
 import os
 import sys
 
-from daemon import Daemon   # implemented for Python v2.7
 from valet.engine.optimizer.ostro.ostro import Ostro
+from valet.engine.optimizer.ostro_server.configuration import Config
+from valet.engine.optimizer.ostro_server.daemon import Daemon   # implemented for Python v2.7
 
 
 class OstroDaemon(Daemon):

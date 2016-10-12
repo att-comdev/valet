@@ -5,10 +5,10 @@
 import threading
 import time
 
-from optimizer import Optimizer
 from valet.engine.optimizer.app_manager.app_handler import AppHandler
 from valet.engine.optimizer.app_manager.app_topology_base import VM, Volume
 from valet.engine.optimizer.db_connect.music_handler import MusicHandler
+from valet.engine.optimizer.ostro.optimizer import Optimizer
 from valet.engine.resource_manager.compute_manager import ComputeManager
 from valet.engine.resource_manager.resource import Resource
 from valet.engine.resource_manager.topology_manager import TopologyManager

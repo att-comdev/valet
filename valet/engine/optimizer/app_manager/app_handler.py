@@ -5,10 +5,9 @@
 
 import json
 
-from app_topology import AppTopology
-from app_topology_base import VM
-from application import App
-
+from valet.engine.optimizer.app_manager.app_topology import AppTopology
+from valet.engine.optimizer.app_manager.app_topology_base import VM
+from valet.engine.optimizer.app_manager.application import App
 from valet.engine.optimizer.util import util as util
 
 

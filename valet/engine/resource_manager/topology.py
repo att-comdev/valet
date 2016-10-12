@@ -6,8 +6,8 @@
 import copy
 import sys
 
-from resource_base import HostGroup, Switch, Link
 from sre_parse import isdigit
+from valet.engine.resource_manager.resource_base import HostGroup, Switch, Link
 
 
 class Topology(object):

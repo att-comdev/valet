@@ -3,7 +3,7 @@
 # Modified: Sep. 4, 2016
 
 
-from resource_base import Host, LogicalGroup, Flavor
+from valet.engine.resource_manager.resource_base import Host, LogicalGroup, Flavor
 
 
 class SimCompute(object):

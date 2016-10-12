@@ -2,7 +2,7 @@
 
 # Modified: Sep. 27, 2016
 
-from app_topology_base import VGroup, VGroupLink, VM, VMLink, LEVELS
+from valet.engine.optimizer.app_manager.app_topology_base import VGroup, VGroupLink, VM, VMLink, LEVELS
 
 
 '''

@@ -4,8 +4,8 @@
 
 import time
 
-from search import Search
 from valet.engine.optimizer.app_manager.app_topology_base import VGroup, VM, Volume
+from valet.engine.optimizer.ostro.search import Search
 
 
 class Optimizer(object):

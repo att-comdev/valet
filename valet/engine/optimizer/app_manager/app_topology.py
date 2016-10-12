@@ -3,8 +3,8 @@
 # Modified: Sep. 22, 2016
 
 
-from app_topology_base import VM, VGroup
-from app_topology_parser import Parser
+from valet.engine.optimizer.app_manager.app_topology_base import VM, VGroup
+from valet.engine.optimizer.app_manager.app_topology_parser import Parser
 
 
 class AppTopology(object):

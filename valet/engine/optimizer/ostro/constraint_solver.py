@@ -3,13 +3,12 @@
 # Modified: Sep. 27, 2016
 
 
-from openstack_filters import AggregateInstanceExtraSpecsFilter
-from openstack_filters import AvailabilityZoneFilter
-from openstack_filters import CoreFilter
-from openstack_filters import DiskFilter
-from openstack_filters import RamFilter
-
 from valet.engine.optimizer.app_manager.app_topology_base import VGroup, VM, LEVELS
+from valet.engine.optimizer.ostro.openstack_filters import AggregateInstanceExtraSpecsFilter
+from valet.engine.optimizer.ostro.openstack_filters import AvailabilityZoneFilter
+from valet.engine.optimizer.ostro.openstack_filters import CoreFilter
+from valet.engine.optimizer.ostro.openstack_filters import DiskFilter
+from valet.engine.optimizer.ostro.openstack_filters import RamFilter
 
 
 class ConstraintSolver(object):

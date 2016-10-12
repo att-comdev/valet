@@ -6,11 +6,11 @@
 import threading
 import time
 
-from authentication import Authentication
-from compute import Compute
-from compute_simulator import SimCompute
 from copy import deepcopy
-from resource_base import Host
+from valet.engine.resource_manager.authentication import Authentication
+from valet.engine.resource_manager.compute import Compute
+from valet.engine.resource_manager.compute_simulator import SimCompute
+from valet.engine.resource_manager.resource_base import Host
 
 
 class ComputeManager(threading.Thread):

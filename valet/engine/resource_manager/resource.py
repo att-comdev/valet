@@ -6,9 +6,10 @@ import json
 import sys
 import time
 
-from resource_base import Datacenter, HostGroup, Host, LogicalGroup, Flavor, Switch, Link
 from valet.engine.optimizer.app_manager.app_topology_base import LEVELS
 from valet.engine.optimizer.util import util as util
+from valet.engine.resource_manager.resource_base import Datacenter, HostGroup, Host, LogicalGroup
+from valet.engine.resource_manager.resource_base import Flavor, Switch, Link
 
 
 class Resource(object):
@@ -48,7 +49,7 @@ class Resource(object):
             logical_group.status = lg["status"]
             logical_group.metadata = lg["metadata"]
             logical_group.vm_list = lg["vm_list"]
-            logical_group.volume_list = lg["volume_list"]
+            logical_group.volume_list = lg.get("volume_list", [])
             logical_group.vms_per_host = lg["vms_per_host"]
 
             self.logical_groups[lgk] = logical_group
@@ -141,12 +142,12 @@ class Resource(object):
             host.free_disk_gb = h["free_disk_gb"]
             host.disk_available_least = h["disk_available_least"]
             host.vm_list = h["vm_list"]
-            host.volume_list = h["volume_list"]
+            host.volume_list = h.get("volume_list", [])
 
             for lgk in h["membership_list"]:
                 host.memberships[lgk] = self.logical_groups[lgk]
 
-            for sk in h["switch_list"]:
+            for sk in h.get("switch_list", []):
                 host.switches[sk] = self.switches[sk]
 
             # host.storages
@@ -174,12 +175,12 @@ class Resource(object):
             host_group.original_local_disk_cap = hg["original_local_disk"]
             host_group.avail_local_disk_cap = hg["avail_local_disk"]
             host_group.vm_list = hg["vm_list"]
-            host_group.volume_list = hg["volume_list"]
+            host_group.volume_list = hg.get("volume_list", [])
 
             for lgk in hg["membership_list"]:
                 host_group.memberships[lgk] = self.logical_groups[lgk]
 
-            for sk in hg["switch_list"]:
+            for sk in hg.get("switch_list", []):
                 host_group.switches[sk] = self.switches[sk]
 
             # host.storages
@@ -206,12 +207,12 @@ class Resource(object):
         self.datacenter.original_local_disk_cap = dc["original_local_disk"]
         self.datacenter.avail_local_disk_cap = dc["avail_local_disk"]
         self.datacenter.vm_list = dc["vm_list"]
-        self.datacenter.volume_list = dc["volume_list"]
+        self.datacenter.volume_list = dc.get("volume_list", [])
 
         for lgk in dc["membership_list"]:
             self.datacenter.memberships[lgk] = self.logical_groups[lgk]
 
-        for sk in dc["switch_list"]:
+        for sk in dc.get("switch_list", []):
             self.datacenter.root_switches[sk] = self.switches[sk]
 
         # host.storages
@@ -391,7 +392,7 @@ class Resource(object):
             for _, h in self.hosts.iteritems():
                 if h.status == "enabled" and h.state == "up" and \
                    ("nova" in h.tag) and ("infra" in h.tag):
-                    avail_nw_bandwidth_list = []
+                    avail_nw_bandwidth_list = [sys.maxint]
                     for sk, s in h.switches.iteritems():
                         if s.status == "enabled":
                             for ulk, ul in s.up_links.iteritems():
@@ -400,7 +401,7 @@ class Resource(object):
         elif level == "spine":
             for _, hg in self.host_groups.iteritems():
                 if hg.host_type == "rack" and hg.status == "enabled":
-                    avail_nw_bandwidth_list = []
+                    avail_nw_bandwidth_list = [sys.maxint]
                     for _, s in hg.switches.iteritems():
                         if s.status == "enabled":
                             for _, ul in s.up_links.iteritems():

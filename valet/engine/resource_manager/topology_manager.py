@@ -6,8 +6,8 @@
 import threading
 import time
 
-from resource_base import Datacenter, HostGroup, Host, Switch, Link
-from topology import Topology
+from valet.engine.resource_manager.resource_base import Datacenter, HostGroup, Host, Switch, Link
+from valet.engine.resource_manager.topology import Topology
 
 
 class TopologyManager(threading.Thread):

@@ -5,10 +5,11 @@
 import copy
 import operator
 
-from constraint_solver import ConstraintSolver
-from search_base import compute_reservation
-from search_base import Node, Resource, LogicalGroupResource, SwitchResource, StorageResource
 from valet.engine.optimizer.app_manager.app_topology_base import VGroup, VM, Volume, LEVELS
+from valet.engine.optimizer.ostro.constraint_solver import ConstraintSolver
+from valet.engine.optimizer.ostro.search_base import compute_reservation
+from valet.engine.optimizer.ostro.search_base import Node, Resource, LogicalGroupResource
+from valet.engine.optimizer.ostro.search_base import SwitchResource, StorageResource
 from valet.engine.resource_manager.resource_base import Datacenter
 
 

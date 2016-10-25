@@ -18,14 +18,15 @@
 
 '''Application'''
 
-from pecan import make_app
+from pecan import make_app, deploy
 
 from valet.api.common import identity, messaging
 from valet.api.db import models
+from config import register_conf, set_valet_conf
 
 
 def setup_app(config):
-    '''App Setup'''
+    """ App Setup """
     identity.init_identity()
     messaging.init_messaging()
     models.init_model()
@@ -34,3 +35,10 @@ def setup_app(config):
     return make_app(
         app_conf.pop('root'),
         logging=getattr(config, 'logging', {}), **app_conf)
+
+
+# entry point for apache2
+def load_app(config_file):
+    register_conf()
+    set_valet_conf('/etc/valet/valet.conf')
+    return deploy(config_file)

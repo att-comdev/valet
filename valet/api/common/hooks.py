@@ -19,18 +19,21 @@
 '''Hooks'''
 
 import json
-
+import logging
 from valet.api.common.i18n import _
-from valet.api.v1.controllers import errors
+from valet.api.v1.controllers import error
 
 from pecan import conf
 from pecan.hooks import PecanHook
 import webob
 
+LOG = logging.getLogger(__name__)
+
 
 class MessageNotificationHook(PecanHook):
     '''Send API request/responses out as Oslo msg notifications.'''
     def after(self, state):
+        LOG.info('sending notification')
         notifier = conf.messaging.notifier
         status_code = state.response.status_code
         status = webob.exc.status_map.get(status_code)
@@ -82,6 +85,7 @@ class MessageNotificationHook(PecanHook):
             }
         }
         notifier_fn(ctxt, event_type, payload)
+        LOG.info('valet notification - sent')
 
 
 class NotFoundHook(PecanHook):
@@ -91,4 +95,4 @@ class NotFoundHook(PecanHook):
         if isinstance(exc, webob.exc.WSGIHTTPException):
             if exc.code == 404:
                 message = _('The resource could not be found.')
-                errors('/errors/not_found', message)
+                error('/errors/not_found', message)

@@ -5,8 +5,7 @@
 import json
 import pycurl
 import StringIO
-
-from valet.engine.resource_manager.resource_base import Host, LogicalGroup, Flavor
+from resource_base import Host, LogicalGroup, Flavor
 
 
 class Compute(object):
@@ -16,21 +15,26 @@ class Compute(object):
         self.admin_token = _admin_token
         self.project_token = _project_token
 
-    def set_hosts(self, _hosts, _logical_groups):
+    def set_hosts(self, _hosts, _logical_groups, _logger):
+
         status = self._set_availability_zones(_hosts, _logical_groups)
         if status != "success":
+            _logger.error('_set_availability_zones failed')
             return status
 
         status = self._set_aggregates(_hosts, _logical_groups)
         if status != "success":
+            _logger.error('_set_aggregates failed')
             return status
 
         status = self._set_placed_vms(_hosts, _logical_groups)
         if status != "success":
+            _logger.error('_set_placed_vms failed')
             return status
 
         status = self._set_resources(_hosts)
         if status != "success":
+            _logger.error('_set_resources failed')
             return status
 
         return "success"
@@ -38,7 +42,7 @@ class Compute(object):
     def _set_availability_zones(self, _hosts, _logical_groups):
         buf = StringIO.StringIO()
         c = pycurl.Curl()
-        c.setopt(pycurl.URL, self.config.nova_url + self.config.nova_version + str(self.project_token) + self.config.nova_host_zones_api)
+        c.setopt(pycurl.URL, self.config.nova_url + str(self.project_token) + self.config.nova_host_zones_api)
         c.setopt(pycurl.HTTPHEADER, ["X-Auth-Token: " + str(self.admin_token)])
         c.setopt(pycurl.HTTPGET, 1)
         c.setopt(pycurl.WRITEFUNCTION, buf.write)
@@ -81,7 +85,7 @@ class Compute(object):
     def _set_aggregates(self, _hosts, _logical_groups):
         buf = StringIO.StringIO()
         c = pycurl.Curl()
-        c.setopt(pycurl.URL, self.config.nova_url + self.config.nova_version + str(self.project_token) + self.config.nova_host_aggregates_api)
+        c.setopt(pycurl.URL, self.config.nova_url + str(self.project_token) + self.config.nova_host_aggregates_api)
         c.setopt(pycurl.HTTPHEADER, ["X-Auth-Token: " + str(self.admin_token)])
         c.setopt(pycurl.HTTPGET, 1)
         c.setopt(pycurl.WRITEFUNCTION, buf.write)
@@ -156,7 +160,7 @@ class Compute(object):
     def _get_vms_of_host(self, _hk, _vm_list):
         buf = StringIO.StringIO()
         c = pycurl.Curl()
-        c.setopt(pycurl.URL, self.config.nova_url + self.config.nova_version + str(self.project_token) + "/os-hypervisors/" + _hk + "/servers")
+        c.setopt(pycurl.URL, self.config.nova_url + str(self.project_token) + "/os-hypervisors/" + _hk + "/servers")
         c.setopt(pycurl.HTTPHEADER, ["X-Auth-Token: " + str(self.admin_token)])
         c.setopt(pycurl.HTTPGET, 1)
         c.setopt(pycurl.WRITEFUNCTION, buf.write)
@@ -183,7 +187,7 @@ class Compute(object):
     def _get_vm_detail(self, _vm_uuid, _vm_detail):
         buf = StringIO.StringIO()
         c = pycurl.Curl()
-        c.setopt(pycurl.URL, self.config.nova_url + self.config.nova_version + str(self.project_token) + "/servers/" + _vm_uuid)
+        c.setopt(pycurl.URL, self.config.nova_url + str(self.project_token) + "/servers/" + _vm_uuid)
         c.setopt(pycurl.HTTPHEADER, ["X-Auth-Token: " + str(self.admin_token)])
         c.setopt(pycurl.HTTPGET, 1)
         c.setopt(pycurl.WRITEFUNCTION, buf.write)
@@ -211,7 +215,7 @@ class Compute(object):
     def _set_resources(self, _hosts):
         buf = StringIO.StringIO()
         c = pycurl.Curl()
-        c.setopt(pycurl.URL, self.config.nova_url + self.config.nova_version + str(self.project_token) + self.config.nova_host_resources_api)
+        c.setopt(pycurl.URL, self.config.nova_url + str(self.project_token) + self.config.nova_host_resources_api)
         c.setopt(pycurl.HTTPHEADER, ["X-Auth-Token: " + str(self.admin_token)])
         c.setopt(pycurl.POST, 0)
         c.setopt(pycurl.WRITEFUNCTION, buf.write)
@@ -264,7 +268,7 @@ class Compute(object):
     def _set_flavors(self, _flavors):
         buf = StringIO.StringIO()
         c = pycurl.Curl()
-        c.setopt(pycurl.URL, self.config.nova_url + self.config.nova_version + str(self.project_token) + self.config.nova_flavors_api + '?is_public=None')
+        c.setopt(pycurl.URL, self.config.nova_url + str(self.project_token) + self.config.nova_flavors_api)
         c.setopt(pycurl.HTTPHEADER, ["X-Auth-Token: " + str(self.admin_token)])
         c.setopt(pycurl.POST, 0)
         c.setopt(pycurl.WRITEFUNCTION, buf.write)
@@ -310,7 +314,7 @@ class Compute(object):
     def _set_extra_specs(self, _flavor):
         buf = StringIO.StringIO()
         c = pycurl.Curl()
-        c.setopt(pycurl.URL, self.config.nova_url + self.config.nova_version + str(self.project_token) + "/flavors/" + _flavor.flavor_id + "/os-extra_specs")
+        c.setopt(pycurl.URL, self.config.nova_url + str(self.project_token) + "/flavors/" + _flavor.flavor_id + "/os-extra_specs")
         c.setopt(pycurl.HTTPHEADER, ["X-Auth-Token: " + str(self.admin_token)])
         c.setopt(pycurl.POST, 0)
         c.setopt(pycurl.WRITEFUNCTION, buf.write)

@@ -1,94 +1,71 @@
-from pecan.hooks import TransactionHook
+from oslo_config import cfg
 
-from valet.api.db import models
-from valet.api.common.hooks import NotFoundHook, MessageNotificationHook
+CONF = cfg.CONF
+
+server_group = cfg.OptGroup(name='server', title='Valet API Server conf')
+server_opts = [
+    cfg.StrOpt('host', default='0.0.0.0'),
+    cfg.StrOpt('port', default='8090'),
+]
 
 
-# Server Specific Configurations
-server = {
-    'port': '8090',
-    'host': '0.0.0.0'
-}
+messaging_group = cfg.OptGroup(name='messaging', title='Valet Messaging conf')
+messaging_opts = [
+    cfg.StrOpt('username'),
+    cfg.StrOpt('password'),
+    cfg.StrOpt('host'),
+    cfg.StrOpt('port', default='5672'),
+]
 
-# Pecan Application Configurations
-app = {
-    'root': 'valet.api.v1.controllers.root.RootController',
-    'modules': ['valet.api'],
-    'default_renderer': 'json',
-    'force_canonical': False,
-    'debug': False,
-    'hooks': [
-        TransactionHook(
-            models.start,
-            models.start_read_only,
-            models.commit,
-            models.rollback,
-            models.clear
-        ),
-        NotFoundHook(),
-        MessageNotificationHook(),
-    ],
-}
 
-logging = {
-    'root': {'level': 'DEBUG', 'handlers': ['console']},
-    'loggers': {
-        'api': {
-            'level': 'DEBUG', 'handlers': ['console'], 'propagate': False
-        },
-        'api.models': {
-            'level': 'INFO', 'handlers': ['console'], 'propagate': False
-        },
-        'pecan': {
-            'level': 'DEBUG', 'handlers': ['console'], 'propagate': False
-        },
-        'py.warnings': {'handlers': ['console']},
-        '__force_dict__': True
-    },
-    'handlers': {
-        'console': {
-            'level': 'DEBUG',
-            'class': 'logging.StreamHandler',
-            'formatter': 'color'
-        }
-    },
-    'formatters': {
-        'simple': {
-            'format': ('%(asctime)s %(levelname)-5.5s [%(name)s]'
-                       '[%(threadName)s] %(message)s')
-        },
-        'color': {
-            '()': 'pecan.log.ColorFormatter',
-            'format': ('%(asctime)s [%(padded_color_levelname)s] [%(name)s]'
-                       '[%(threadName)s] %(message)s'),
-            '__force_dict__': True
-        }
-    }
-}
+ostro_group = cfg.OptGroup(name='ostro', title='Valet Engine conf')
+ostro_opts = [
+    cfg.IntOpt('tries', default=10),
+    cfg.IntOpt('interval', default=1)
+]
 
-ostro = {
-    'tries': 10,
-    'interval': 1,
-}
 
-messaging = {
-    'config': {
-        'transport_url': 'rabbit://username:password@controller:5672/',
-    }
-}
+identity_group = cfg.OptGroup(name='identity', title='Valet identity conf')
+identity_opts = [
+    cfg.StrOpt('interface'),
+    cfg.StrOpt('username'),
+    cfg.StrOpt('password'),
+    cfg.StrOpt('project_name'),
+    cfg.StrOpt('auth_url', default='http://controller:5000/v2.0')
+]
 
-identity = {
-    'config': {
-        'username': 'project_username',
-        'password': 'project_password',
-        'project_name': 'project_name',
-        'auth_url': 'http://controller:5000/v2.0',
-    }
-}
 
-music = {
-    'host': '127.0.0.1',
-    'port': '8080',
-    'keyspace': 'valet_test',
-    'replication_factor': 1,
-}
+music_group = cfg.OptGroup(name='music', title='Valet Persistence conf')
+music_opts = [
+    cfg.StrOpt('host', default='0.0.0.0'),
+    cfg.IntOpt('port', default=8080),
+    cfg.StrOpt('keyspace', default='valet'),
+    cfg.IntOpt('replication_factor', default=3),
+    cfg.StrOpt('request_table', default='placement_requests'),
+    cfg.StrOpt('response_table', default='placement_results'),
+    cfg.StrOpt('event_table', default='oslo_messages'),
+    cfg.StrOpt('resource_table', default='resource_status'),
+    cfg.StrOpt('app_table', default='app'),
+    cfg.StrOpt('resource_index_table', default='resource_log_index'),
+    cfg.StrOpt('app_index_table', default='app_log_index'),
+    cfg.StrOpt('uuid_table', default='uuid_map'),
+    cfg.StrOpt('db_host', default='localhost')
+    # cfg.ListOpt('db_hosts', default='valet1,valet2,valet3')
+]
+
+
+def set_valet_conf(file_name):
+    CONF(default_config_files=[file_name])
+
+
+def register_conf():
+    CONF.register_group(server_group)
+    CONF.register_opts(server_opts, server_group)
+    CONF.register_group(music_group)
+    CONF.register_opts(music_opts, music_group)
+    CONF.register_group(identity_group)
+    CONF.register_opts(identity_opts, identity_group)
+    CONF.register_group(ostro_group)
+    CONF.register_opts(ostro_opts, ostro_group)
+    CONF.register_group(messaging_group)
+    CONF.register_opts(messaging_opts, messaging_group)

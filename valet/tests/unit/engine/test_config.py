@@ -28,6 +28,7 @@ class TestConfig(Base):
     def test_unhappy_config(self):
         self.config = Config("../../../tests/unit/engine/invalid.cfg")
         config_status = self.config.configure()
+        print(config_status)
         self.validate_test("Unexpected error while parsing system parameters" in config_status)
 
 #     def test_empty_config(self):

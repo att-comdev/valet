@@ -1,4 +1,4 @@
 # /var/www/valet/app.wsgi
-from pecan.deploy import deploy
+from valet.api.app import load_app
 
-application = deploy('/var/www/valet/config.py')
+application = load_app(config_file='/var/www/valet/config.py')

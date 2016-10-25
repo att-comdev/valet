@@ -7,13 +7,13 @@ Listen 8090
 ServerName valet
 
 <VirtualHost *:8090>
-    ServerName valet
 
-    WSGIDaemonProcess valet user=valet group=valet threads=5 
+    ServerName valet
+    WSGIDaemonProcess valet user=m04060 group=m04060 threads=5
     WSGIScriptAlias / /var/www/valet/app.wsgi
 
-    SetEnv APACHE_RUN_USER valet
-    SetEnv APACHE_RUN_GROUP valet
+    SetEnv APACHE_RUN_USER m04060
+    SetEnv APACHE_RUN_GROUP m04060
     WSGIProcessGroup valet
 
     <Directory /var/www/valet/>

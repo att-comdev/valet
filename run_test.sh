@@ -1,12 +1,8 @@
 
-sudo tox -epy27 -- -nvalet.tests.functional.valet_validator.tests.$*
+sudo tox -epy27 -- '--concurrency=1' $*
 
 # EXAMPLE:
+# ./run_test '(TestAffinity)'
+
 # run specific tests:
-# ./run_test test_affinity
-
-
-# sudo tox -epy27 -- -nvalet.tests.functional.valet_validator.tests.test_affinity
-# sudo tox -epy27 -- -nvalet.tests.functional.valet_validator.tests.test_exclusivity
-# sudo tox -epy27 -- -nvalet.tests.functional.valet_validator.tests.test_affinity
-# sudo tox -epy27 -- -nvalet.tests.functional.valet_validator.tests.test_diversity
+# sudo tox -epy27 --  '(TestAffinity|TestDiversity)'

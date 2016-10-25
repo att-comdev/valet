@@ -14,14 +14,14 @@ class Authentication(object):
         self.status = "success"
 
     def get_tenant_token(self, _config):
-        in_data = json.dumps({"auth": {"tenantName": _config.admin_tenant_name,
+        in_data = json.dumps({"auth": {"tenantName": _config.project_name,
                                        "passwordCredentials": {"username": _config.user_name,
                                                                "password": _config.pw}}})
         buf = StringIO.StringIO()
         c = pycurl.Curl()
-        keystone_url = _config.keystone_url + _config.keystone_tenant_token_api
+        keystone_url = _config.keystone_tenant_url
         c.setopt(pycurl.URL, keystone_url)
-        c.setopt(pycurl.HTTPHEADER, ["Content-Type: application/json", "Accept: application/jso"])
+        c.setopt(pycurl.HTTPHEADER, ["Content-Type: application/json", "Accept: application/json"])
         c.setopt(pycurl.POST, 1)
         c.setopt(pycurl.POSTFIELDS, in_data)
         c.setopt(pycurl.WRITEFUNCTION, buf.write)
@@ -43,7 +43,7 @@ class Authentication(object):
     def get_project_token(self, _config, _admin_token):
         buf = StringIO.StringIO()
         c = pycurl.Curl()
-        keystone_url = _config.keystone_url + _config.keystone_project_token_api
+        keystone_url = _config.keystone_project_url
         c.setopt(pycurl.URL, keystone_url)
         c.setopt(pycurl.HTTPHEADER, ["User-Agent: python-keystoneclient", "X-Auth-Token: " + str(_admin_token)])
         c.setopt(pycurl.HTTPGET, 1)

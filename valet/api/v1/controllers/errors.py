@@ -83,6 +83,11 @@ class ErrorsController(object):
         # Don't give any clues to help AuthN along.
         response.status = 401
         response.content_type = 'text/plain'
+        LOG.error('AMNON -  unauthorized')
+        import traceback
+        traceback.print_stack()
+        LOG.error(self.__class__)
+        LOG.error(kw)
         response.body = _('Authentication required')
         LOG.error(response.body)
         return response

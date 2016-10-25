@@ -128,10 +128,9 @@ class ComputeManager(threading.Thread):
         else:
             if self._set_admin_token() is False or self._set_project_token() is False:
                 return False
-
             compute = Compute(self.config, self.admin_token, self.project_token)
 
-        status = compute.set_hosts(hosts, logical_groups)
+        status = compute.set_hosts(hosts, logical_groups, self.logger)
         if status != "success":
             self.logger.error("ComputeManager: " + status)
             return False

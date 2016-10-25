@@ -27,14 +27,22 @@ class Ostro(object):
             self.logger.debug("Ostro.__init__: done init music")
 
         self.resource = Resource(self.db, self.config, self.logger)
+        self.logger.debug("done init resource")
+
         self.app_handler = AppHandler(self.resource, self.db, self.config, self.logger)
+        self.logger.debug("done init apphandler")
+
         self.optimizer = Optimizer(self.resource, self.logger)
+        self.logger.debug("done init optimizer")
 
         self.data_lock = threading.Lock()
         self.thread_list = []
 
         self.topology = TopologyManager(1, "Topology", self.resource, self.data_lock, self.config, self.logger)
+        self.logger.debug("done init topology")
+
         self.compute = ComputeManager(2, "Compute", self.resource, self.data_lock, self.config, self.logger)
+        self.logger.debug("done init compute")
 
         self.status = "success"
         self.end_of_process = False
@@ -103,13 +111,20 @@ class Ostro(object):
             self.logger.info("Ostro.bootstrap: bootstrap from db")
             if self.resource.bootstrap_from_db(resource_status) is False:
                 return False
+        else:
+            self.logger.info("bootstrap from OpenStack")
 
-        if self._set_hosts() is False:
-            return False
-        if self._set_flavors() is False:
-            return False
-        if self._set_topology() is False:
-            return False
+            if self._set_hosts() is False:
+                self.logger.error('_set_hosts is false')
+                return False
+
+            if self._set_flavors() is False:
+                self.logger.info("_set_flavors is false")
+                return False
+
+            if self._set_topology() is False:
+                self.logger.error("_set_topology is false")
+                return False
 
         if self.resource.update_topology() is False:
             pass
@@ -123,7 +138,7 @@ class Ostro(object):
             self.status = "datacenter configuration error"
             return False
 
-        self.logger.debug("Ostro._set_topology: done topology bootstrap")
+        self.logger.debug("done topology bootstrap")
 
         return True
 
@@ -131,17 +146,16 @@ class Ostro(object):
         if self.compute.set_hosts() is False:
             self.status = "OpenStack (Nova) internal error"
             return False
-
-        self.logger.debug("Ostro._set_hosts: done hosts & groups bootstrap")
-
+        self.logger.debug("done hosts & groups bootstrap")
         return True
 
     def _set_flavors(self):
+        self.logger.debug("start flavors bootstrap")
         if self.compute.set_flavors() is False:
             self.status = "OpenStack (Nova) internal error"
             return False
 
-        self.logger.debug("Ostro._set_flavors: done flavors bootstrap")
+        self.logger.debug("done flavors bootstrap")
 
         return True
 

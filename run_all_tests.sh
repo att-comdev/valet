@@ -1,1 +1,1 @@
-sudo tox -epy27 -- --isolated
+sudo tox

@@ -56,11 +56,14 @@ class V1Controller(SecureController):
         if auth_token:
             # The token must have an admin role
             # and be associated with a tenant.
+            LOG.critical("AMNON - conf.identity" + str(conf.identity))
+            LOG.critical("AMNON - conf.identity.engine" + str(conf.identity.engine))
             token = conf.identity.engine.validate_token(auth_token)
             LOG.debug("Checking permissions")
             msg = "Unauthorized - Permission was not granted"
             if token and V1Controller._permission_granted(request, token):
                 tenant_id = conf.identity.engine.tenant_from_token(token)
+                LOG.critical("AMNON - tenant_id" + str(tenant_id))
                 if tenant_id:
                     request.context['tenant_id'] = tenant_id
                     user_id = conf.identity.engine.user_from_token(token)

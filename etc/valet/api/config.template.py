@@ -1,13 +1,15 @@
+from oslo_config import cfg
 from pecan.hooks import TransactionHook
-
 from valet.api.db import models
 from valet.api.common.hooks import NotFoundHook, MessageNotificationHook
 
 
+CONF = cfg.CONF
+
 # Server Specific Configurations
 server = {
-    'port': '8090',
-    'host': '0.0.0.0'
+    'port': CONF.server.port,
+    'host': CONF.server.host
 }
 
 # Pecan Application Configurations
@@ -31,12 +33,15 @@ app = {
 }
 
 logging = {
-    'root': {'level': 'DEBUG', 'handlers': ['console']},
+    'root': {'level': 'INFO', 'handlers': ['console']},
     'loggers': {
         'api': {
             'level': 'DEBUG', 'handlers': ['console'], 'propagate': False
         },
         'api.models': {
+            'level': 'INFO', 'handlers': ['console'], 'propagate': False
+        },
+        'api.common': {
             'level': 'INFO', 'handlers': ['console'], 'propagate': False
         },
         'pecan': {
@@ -67,30 +72,30 @@ logging = {
 }
 
 ostro = {
-    'tries': 10,
-    'interval': 1,
+    'tries': CONF.ostro.tries,
+    'interval': CONF.ostro.interval,
 }
+
 
 messaging = {
     'config': {
-        'transport_url': 'rabbit://username:password@controller:5672/',
+        'transport_url': 'rabbit://' + CONF.messaging.username + ':' + CONF.messaging.password +
+        '@' + CONF.messaging.host + ':' + CONF.messaging.port + '/'
     }
 }
 
-
 identity = {
     'config': {
-        'username': 'project_username',
-        'password': 'project_password',
-        'project_name': 'project_name',
-        'auth_url': 'http://controller:5000/v2.0',
-        'interface': 'admin',
+        'username': CONF.identity.username,
+        'password': CONF.identity.password,
+        'project_name': CONF.identity.project_name,
+        'auth_url': CONF.identity.auth_url,
     }
 }
 
 music = {
-    'host': '127.0.0.1',
-    'port': '8080',
-    'keyspace': 'valet',
-    'replication_factor': 3,
+    'host': CONF.music.host,
+    'port': CONF.music.port,
+    'keyspace': CONF.music.keyspace,
+    'replication_factor': CONF.music.replication_factor,
 }

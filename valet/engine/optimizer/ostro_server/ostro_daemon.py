@@ -8,6 +8,7 @@ from logging.handlers import RotatingFileHandler
 import os
 import sys
 
+from valet.engine.config import register_conf
 from valet.engine.optimizer.ostro.ostro import Ostro
 from valet.engine.optimizer.ostro_server.configuration import Config
 from valet.engine.optimizer.ostro_server.daemon import Daemon   # implemented for Python v2.7
@@ -22,6 +23,7 @@ class OstroDaemon(Daemon):
         ostro = Ostro(config, logger)
 
         if ostro.bootstrap() is False:
+            self.logger.error("ostro bootstrap failed")
             sys.exit(2)
 
         ostro.run_ostro()
@@ -29,8 +31,11 @@ class OstroDaemon(Daemon):
 
 if __name__ == "__main__":
     ''' configuration '''
+    # Configuration
+    register_conf()
     config = Config()
     config_status = config.configure()
+
     if config_status != "success":
         print(config_status)
         sys.exit(2)
@@ -59,7 +64,7 @@ if __name__ == "__main__":
 
     ''' logger '''
     log_formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
-    log_handler = RotatingFileHandler(config.logging_loc + config.logger_name + ".log",
+    log_handler = RotatingFileHandler(config.logging_loc + config.logger_name,
                                       mode='a',
                                       maxBytes=config.max_main_log_size,
                                       backupCount=2,
@@ -73,24 +78,22 @@ if __name__ == "__main__":
         logger.setLevel(logging.INFO)
     logger.addHandler(log_handler)
 
-    ''' launch daemon process '''
+    # Start daemon process
     daemon = OstroDaemon(config.priority, config.process, logger)
 
     exit_code = 0
 
-    if len(sys.argv) == 2:
-        if sys.argv[1] == 'start':
-            daemon.start()
-        elif sys.argv[1] == 'stop':
-            daemon.stop()
-        elif sys.argv[1] == 'restart':
-            daemon.restart()
-        elif sys.argv[1] == 'status':
-            exit_code = int(daemon.status())
-        else:
-            print("Unknown command")
-            exit_code = 2
+    if config.command == 'start':
+        daemon.start()
+    elif config.command == 'stop':
+        daemon.stop()
+    elif config.command == 'restart':
+        daemon.restart()
+    elif config.command == 'status':
+        exit_code = int(daemon.status())
     else:
+        print("Unknown command: %s" % config.command)
         print("Usage: %s start|stop|restart" % sys.argv[0])
         exit_code = 2
+
     sys.exit(exit_code)

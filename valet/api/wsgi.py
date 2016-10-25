@@ -24,7 +24,7 @@ from pecan.deploy import deploy
 
 
 def config_file(file_name=None):
-    '''Returns absolute location of the config file'''
+    """Returns absolute location of the config file"""
     file_name = file_name or 'config.py'
     _file = os.path.abspath(__file__)
 
@@ -35,7 +35,7 @@ def config_file(file_name=None):
 
 
 def application(environ, start_response):
-    '''Returns a WSGI app object'''
+    """Returns a WSGI app object"""
     wsgi_app = deploy(config_file('prod.py'))
     return wsgi_app(environ, start_response)
 
@@ -47,7 +47,9 @@ if __name__ == '__main__':
     # TODO(JD): At some point, it would be nice to use pecan_mount
     # import pecan_mount
     # HTTPD = make_server('', 8090, pecan_mount.tree)
-    HTTPD = make_server('', 8090, deploy(config_file('config.py')))
+    from valet.api.config import _register_conf
+    _register_conf()
+    HTTPD = make_server('', 8090, deploy(config_file('/var/www/valet/config.py')))
     print(_("Serving HTTP on port 8090..."))
 
     # Respond to requests until process is killed

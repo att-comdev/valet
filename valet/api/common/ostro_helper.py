@@ -96,8 +96,8 @@ class Ostro(object):
 
     def __init__(self):
         '''Initializer'''
-        self.tries = conf.ostro.get('tries', 10)
-        self.interval = conf.ostro.get('interval', 1)
+        self.tries = conf.music.get('tries', 10)
+        self.interval = conf.music.get('interval', 1)
 
     def _map_names_to_uuids(self, mapping, data):
         '''Map resource names to their UUID equivalents.'''

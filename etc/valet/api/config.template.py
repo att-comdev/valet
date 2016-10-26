@@ -72,8 +72,8 @@ logging = {
 }
 
 ostro = {
-    'tries': CONF.ostro.tries,
-    'interval': CONF.ostro.interval,
+    'tries': CONF.music.tries,
+    'interval': CONF.music.interval,
 }
 
 

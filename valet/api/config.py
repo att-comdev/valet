@@ -18,13 +18,6 @@ messaging_opts = [
 ]
 
 
-ostro_group = cfg.OptGroup(name='ostro', title='Valet Engine conf')
-ostro_opts = [
-    cfg.IntOpt('tries', default=10),
-    cfg.IntOpt('interval', default=1)
-]
-
-
 identity_group = cfg.OptGroup(name='identity', title='Valet identity conf')
 identity_opts = [
     cfg.StrOpt('interface'),
@@ -41,6 +34,8 @@ music_opts = [
     cfg.IntOpt('port', default=8080),
     cfg.StrOpt('keyspace', default='valet'),
     cfg.IntOpt('replication_factor', default=3),
+    cfg.IntOpt('tries', default=10),
+    cfg.IntOpt('interval', default=1),
     cfg.StrOpt('request_table', default='placement_requests'),
     cfg.StrOpt('response_table', default='placement_results'),
     cfg.StrOpt('event_table', default='oslo_messages'),
@@ -65,7 +60,5 @@ def register_conf():
     CONF.register_opts(music_opts, music_group)
     CONF.register_group(identity_group)
     CONF.register_opts(identity_opts, identity_group)
-    CONF.register_group(ostro_group)
-    CONF.register_opts(ostro_opts, ostro_group)
     CONF.register_group(messaging_group)
     CONF.register_opts(messaging_opts, messaging_group)

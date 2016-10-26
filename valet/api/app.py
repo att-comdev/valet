@@ -18,11 +18,11 @@
 
 '''Application'''
 
-from pecan import make_app, deploy
-
+from config import register_conf, set_valet_conf
+from pecan.deploy import deploy
+from pecan import make_app
 from valet.api.common import identity, messaging
 from valet.api.db import models
-from config import register_conf, set_valet_conf
 
 
 def setup_app(config):

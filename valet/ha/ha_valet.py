@@ -63,7 +63,7 @@ CONF = cfg.CONF
 
 # Directory locations
 LOG_DIR = os.getenv('HA_VALET_LOGD', '/var/log/havalet/')
-ETC_DIR = os.getenv('HA_VALET_ETCD', '/etc/havalet/')
+ETC_DIR = os.getenv('HA_VALET_ETCD', '/etc/valet/ha/')
 DEFAULT_CONF_FILE = ETC_DIR + 'ha_valet.cfg'
 
 # Set the maximum logfile size as Byte for time-series log files

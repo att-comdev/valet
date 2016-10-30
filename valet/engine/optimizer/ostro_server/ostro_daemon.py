@@ -29,6 +29,16 @@ class OstroDaemon(Daemon):
         ostro.run_ostro()
 
 
+def verify_dirs(list_of_dirs):
+    for dir in list_of_dirs:
+        try:
+            if not os.path.exists(dir):
+                os.makedirs(dir)
+        except OSError:
+            print("Error while verifying: " + dir)
+            sys.exit(2)
+
+
 if __name__ == "__main__":
     ''' configuration '''
     # Configuration
@@ -40,27 +50,9 @@ if __name__ == "__main__":
         print(config_status)
         sys.exit(2)
 
-    ''' create logging directories '''
-    try:
-        if not os.path.exists(config.logging_loc):
-            os.makedirs(config.logging_loc)
-    except OSError:
-        print("Error while Ostro log dir")
-        sys.exit(2)
-
-    try:
-        if not os.path.exists(config.resource_log_loc):
-            os.makedirs(config.resource_log_loc)
-    except OSError:
-        print("Error while resource log dir")
-        sys.exit(2)
-
-    try:
-        if not os.path.exists(config.app_log_loc):
-            os.makedirs(config.app_log_loc)
-    except OSError:
-        print("Error while app log dir")
-        sys.exit(2)
+    ''' verify directories '''
+    dirs_list = [config.logging_loc, config.resource_log_loc, config.app_log_loc, os.path.dirname(config.process)]
+    verify_dirs(dirs_list)
 
     ''' logger '''
     log_formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")

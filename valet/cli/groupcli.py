@@ -1,8 +1,11 @@
 #!/usr/bin/python
 import argparse
 import json
+from oslo_config import cfg
 import requests
-import valet.api.config as config
+from valet.api.conf import register_conf, set_domain
+
+CONF = cfg.CONF
 
 
 class ResponseError(Exception):
@@ -101,13 +104,13 @@ def cmd_details(args):
 
 def get_token(timeout, args):
     # tenant_name = args.os_tenant_name if args.os_tenant_name else os.environ.get('OS_TENANT_NAME')
-    tenant_name = args.os_tenant_name if args.os_tenant_name else config.identity.get('config').get('project_name')
-    auth_name = args.os_username if args.os_username else config.identity.get('config').get('username')
-    password = args.os_password if args.os_password else config.identity.get('config').get('password')
+    tenant_name = args.os_tenant_name if args.os_tenant_name else CONF.identity.project_name
+    auth_name = args.os_username if args.os_username else CONF.identity.username
+    password = args.os_password if args.os_password else CONF.identity.password
     headers = {
         'Content-Type': 'application/json',
     }
-    url = '%s/tokens' % config.identity.get('config').get('auth_url')
+    url = '%s/tokens' % CONF.identity.uth_url
     data = '''
     {
     "auth": {
@@ -147,8 +150,10 @@ def populate_args_request_body(args):
 
 
 def run(args):
-    args.host = args.host or config.server.get('host')
-    args.port = args.port or config.server.get('port')
+    register_conf()
+    set_domain(project='valet')
+    args.host = args.host or CONF.server.host
+    args.port = args.port or CONF.server.port
     args.timeout = args.timeout or 10
     rest_cmd, cmd_url = cmd_details(args)
     args.url = 'http://%s:%s/v1/groups' % (args.host, args.port) + cmd_url

@@ -21,8 +21,8 @@
 from pecan.deploy import deploy
 from pecan import make_app
 from valet.api.common import identity, messaging
+from valet.api.conf import register_conf, set_domain
 from valet.api.db import models
-from config import register_conf, set_valet_conf
 
 
 def setup_app(config):
@@ -40,5 +40,5 @@ def setup_app(config):
 # entry point for apache2
 def load_app(config_file):
     register_conf()
-    set_valet_conf('/etc/valet/valet.conf')
+    set_domain(project='valet')
     return deploy(config_file)

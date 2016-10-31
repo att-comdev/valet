@@ -8,7 +8,7 @@ from logging.handlers import RotatingFileHandler
 import os
 import sys
 
-from valet.engine.config import register_conf
+from valet.engine.conf import register_conf
 from valet.engine.optimizer.ostro.ostro import Ostro
 from valet.engine.optimizer.ostro_server.configuration import Config
 from valet.engine.optimizer.ostro_server.daemon import Daemon   # implemented for Python v2.7

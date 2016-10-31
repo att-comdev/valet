@@ -1,5 +1,5 @@
 from oslo_config import cfg
-from valet.api import config as api
+from valet.api import conf as api
 
 CONF = cfg.CONF
 

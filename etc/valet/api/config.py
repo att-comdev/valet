@@ -90,6 +90,7 @@ identity = {
         'password': CONF.identity.password,
         'project_name': CONF.identity.project_name,
         'auth_url': CONF.identity.auth_url,
+        'interface': CONF.identity.interface,
     }
 }
 

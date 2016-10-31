@@ -1,5 +1,9 @@
 from oslo_config import cfg
 
+
+DOMAIN = 'valet'
+
+
 CONF = cfg.CONF
 
 server_group = cfg.OptGroup(name='server', title='Valet API Server conf')
@@ -20,11 +24,11 @@ messaging_opts = [
 
 identity_group = cfg.OptGroup(name='identity', title='Valet identity conf')
 identity_opts = [
-    cfg.StrOpt('interface'),
     cfg.StrOpt('username'),
     cfg.StrOpt('password'),
     cfg.StrOpt('project_name'),
-    cfg.StrOpt('auth_url', default='http://controller:5000/v2.0')
+    cfg.StrOpt('auth_url', default='http://controller:5000/v2.0'),
+    cfg.StrOpt('interface', default='admin'),
 ]
 
 
@@ -44,13 +48,13 @@ music_opts = [
     cfg.StrOpt('resource_index_table', default='resource_log_index'),
     cfg.StrOpt('app_index_table', default='app_log_index'),
     cfg.StrOpt('uuid_table', default='uuid_map'),
-    cfg.StrOpt('db_host', default='localhost')
+    cfg.StrOpt('db_host', default='localhost'),
     # cfg.ListOpt('db_hosts', default='valet1,valet2,valet3')
 ]
 
 
-def set_valet_conf(file_name):
-    CONF(default_config_files=[file_name])
+def set_domain(project=DOMAIN):
+    CONF([], project)
 
 
 def register_conf():

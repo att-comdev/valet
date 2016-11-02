@@ -34,10 +34,12 @@
 # Uncomment to set a python virtual environment, if any
 #export VENV=/path/to/venv
 
+. /lib/lsb/init-functions
+
 export NAME=ostro-listener
 
 export PIDFILE_TIMEOUT=5
-export PIDFILE_PATH="/var/run/$NAME/${NAME}.pid"
+export PIDFILE_PATH="/var/run/valet/${NAME}.pid"
 export LOGFILE_PATH="/var/log/$NAME"
 export CONFIG_PATH="/etc/$NAME"
 
@@ -49,9 +51,19 @@ fi
 export LOGFILE="$LOGFILE_PATH/$NAME.log"
 export OSTRO_LISTENER_CONFIG="$CONFIG_PATH/$NAME.conf"
 
+check_pid_dir() {
+    # Create the empty dir if necessary
+    if [ ! -d /var/run/valet ]; then
+        mkdir /var/run/valet
+        chmod -R 0755 /var/run/valet
+    fi
+}
+
+
 case "$1" in
   start)
     echo "Starting $NAME"
+    check_pid_dir
     # Start the daemon 
     ostro-listenerdaemon start
     ;;
@@ -61,12 +73,16 @@ case "$1" in
     ostro-listenerdaemon stop
     ;;
   restart)
+    check_pid_dir
     echo "Restarting $NAME"
     ostro-listenerdaemon restart
     ;;
+  status)
+    status_of_proc -p $PIDFILE_PATH /usr/local/bin/ostro-listenerdaemon && exit 0 || exit $?
+    ;;
   *)
     # Refuse to do other stuff
-    echo "Usage: /etc/init.d/$NAME {start|stop|restart}"
+    echo "Usage: /etc/init.d/$NAME {start|stop|restart|status}"
     exit 1
     ;;
 esac

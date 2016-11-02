@@ -173,7 +173,7 @@ class HaValetThread (threading.Thread):
 
     def __init__(self, data, exit_event):
         threading.Thread.__init__(self)
-        self.exitFlag = exit_event
+        # self.exitFlag = exit_event
         self.data = data
         self.log = None
 
@@ -190,7 +190,7 @@ class HaValetThread (threading.Thread):
         # standby_list = []
         standby_list = self.data.get(STAND_BY_LIST, None)
 
-        while not self.exitFlag.isSet() and not len(standby_list) is 0:            # loop until we find us
+        while not len(standby_list) is 0:            # loop until we find us
             self.log.debug("stand by list: " + str(standby_list))
             try:
                 for fqdn in fqdn_list:
@@ -238,7 +238,7 @@ class HaValetThread (threading.Thread):
         test_command = self.data.get(TEST_COMMAND, None)
         standby_list = self.data.get(STAND_BY_LIST)
 
-        while not self.exitFlag.isSet():
+        while True:
             if not priority_wait:
                 # Normal heartbeat
                 time.sleep(HEARTBEAT_SEC)
@@ -293,10 +293,8 @@ class HaValetThread (threading.Thread):
                     if now - last_start < QUICK_RESTART_SEC:           # quick restart (crash?)
                         quick_start += 1
                         if quick_start > MAX_QUICK_STARTS:
-                            self.log.critical("refusing to restart: too many restarts in quick succession.")
-                            # kill ourselves [if there is a watch dog it will restart us]
-                            self.exitFlag.set()
-                            return
+                            self.log.critical("too many restarts in quick succession.")
+                            continue
                     else:
                         quick_start = 0               # reset if it's been a while since last restart
 

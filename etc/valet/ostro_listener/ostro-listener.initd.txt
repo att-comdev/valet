@@ -55,7 +55,7 @@ check_pid_dir() {
     # Create the empty dir if necessary
     if [ ! -d /var/run/valet ]; then
         mkdir /var/run/valet
-        chmod -R 0755 /var/run/valet
+        chown m04060: /var/run/valet
     fi
 }
 

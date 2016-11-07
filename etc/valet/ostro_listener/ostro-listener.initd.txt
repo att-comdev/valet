@@ -36,26 +36,24 @@
 
 . /lib/lsb/init-functions
 
-export NAME=ostro-listener
+PID_DIR_PATH="/var/run/valet"
+NAME="ostro-listener"
 
 export PIDFILE_TIMEOUT=5
-export PIDFILE_PATH="/var/run/valet/${NAME}.pid"
-export LOGFILE_PATH="/var/log/$NAME"
-export CONFIG_PATH="/etc/$NAME"
+export PIDFILE_PATH="$PID_DIR_PATH/$NAME.pid"
+export LOGFILE="/var/log/valet/$NAME.log"
+export OSTRO_LISTENER_CONFIG="/etc/$NAME/$NAME.conf"
 
 if [ "$VENV" ]
 then
   source $VENV/bin/activate
 fi
 
-export LOGFILE="$LOGFILE_PATH/$NAME.log"
-export OSTRO_LISTENER_CONFIG="$CONFIG_PATH/$NAME.conf"
-
 check_pid_dir() {
     # Create the empty dir if necessary
-    if [ ! -d /var/run/valet ]; then
-        mkdir /var/run/valet
-        chown m04060: /var/run/valet
+    if [ ! -d $PID_DIR_PATH ]; then
+        mkdir $PID_DIR_PATH
+        chown m04060: $PID_DIR_PATH
     fi
 }
 

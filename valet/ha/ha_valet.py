@@ -294,7 +294,6 @@ class HaValetThread (threading.Thread):
                         quick_start += 1
                         if quick_start > MAX_QUICK_STARTS:
                             self.log.critical("too many restarts in quick succession.")
-                            continue
                     else:
                         quick_start = 0               # reset if it's been a while since last restart
 

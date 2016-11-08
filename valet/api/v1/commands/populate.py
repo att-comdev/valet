@@ -22,6 +22,7 @@ from pecan.commands.base import BaseCommand
 # from pecan import conf
 
 from valet.api.common.i18n import _
+from valet.api.conf import register_conf, set_domain
 from valet.api.db import models
 from valet.api.db.models import Event
 from valet.api.db.models import Group
@@ -42,6 +43,8 @@ class PopulateCommand(BaseCommand):
     def run(self, args):
         super(PopulateCommand, self).run(args)
         out(_("Loading environment"))
+        register_conf()
+        set_domain()
         self.load_app()
         out(_("Building schema"))
         try:

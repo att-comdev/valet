@@ -106,7 +106,7 @@ class Music(object):
     replication_factor = None  # Number of Music nodes to replicate across
 
     def __init__(self, host=None, hosts=['localhost'],
-                 port='8080', lock_timeout=10, replication_factor=1):
+                 port='8080', lock_timeout=10, replication_factor=3):
         '''Initializer. Accepts a lock_timeout for atomic operations.'''
 
         # If one host is provided, that overrides the list

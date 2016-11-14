@@ -164,8 +164,8 @@ def _parse_arguments():
         'output_format': 'dict',
         'store': False,
         'music': 'http://127.0.0.1:8080/',
-        'keyspace': 'music',
-        'replication_factor': 1}
+        'keyspace': 'valet',
+        'replication_factor': 3}
 
     # Command line-supplied config overrides the environment
     conf_file = None

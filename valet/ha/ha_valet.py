@@ -269,7 +269,7 @@ class HaValetThread (threading.Thread):
                     # Check for split brain: 2 valets active
                     if i_am_active and host_active:
                         self.log.info('found two live instances, checking priorities')
-                        should_be_active = self._should_be_active(host_priority, priority)
+                        should_be_active = self._should_be_active(host_priority, my_priority)
                         if should_be_active:
                             self.log.info('deactivate myself, ' + host_in_list + ' already running')
                             self._deactivate_process(eval(stop_command))     # Deactivate myself

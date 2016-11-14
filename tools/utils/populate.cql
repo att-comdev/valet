@@ -1,4 +1,4 @@
-CREATE KEYSPACE IF NOT EXISTS valet_test WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor': '1' } AND durable_writes = true;
+CREATE KEYSPACE IF NOT EXISTS valet_test WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor': '3' } AND durable_writes = true;
 
 CREATE TABLE IF NOT EXISTS valet_test.placements(id text PRIMARY KEY, name text, orchestration_id text, resource_id text, location text, reserved boolean, plan_id text);
 

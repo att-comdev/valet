@@ -143,8 +143,10 @@ class Music(object):
         '''Creates a keyspace.'''
         data = {
             'replicationInfo': {
-                'class': 'SimpleStrategy',
-                'replication_factor': self.replication_factor,
+                'class': 'NetworkTopologyStrategy',
+                'dc1': self.replication_factor,
+                # 'class': 'SimpleStrategy',
+                # 'replication_factor': self.replication_factor,
             },
             'durabilityOfWrites': True,
             'consistencyInfo': {

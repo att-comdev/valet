@@ -8,7 +8,6 @@ from logging.handlers import RotatingFileHandler
 import os
 import sys
 
-from valet.engine.conf import register_conf
 from valet.engine.optimizer.ostro.ostro import Ostro
 from valet.engine.optimizer.ostro_server.configuration import Config
 from valet.engine.optimizer.ostro_server.daemon import Daemon   # implemented for Python v2.7
@@ -30,31 +29,32 @@ class OstroDaemon(Daemon):
 
 
 def verify_dirs(list_of_dirs):
-    for dir in list_of_dirs:
+    for d in list_of_dirs:
         try:
-            if not os.path.exists(dir):
-                os.makedirs(dir)
+            if not os.path.exists(d):
+                os.makedirs(d)
         except OSError:
-            print("Error while verifying: " + dir)
+            print("Error while verifying: " + d)
             sys.exit(2)
 
 
 if __name__ == "__main__":
     ''' configuration '''
     # Configuration
-    register_conf()
+    print("load configuration...")
     config = Config()
     config_status = config.configure()
-
     if config_status != "success":
         print(config_status)
         sys.exit(2)
 
     ''' verify directories '''
+    print("verify directories...")
     dirs_list = [config.logging_loc, config.resource_log_loc, config.app_log_loc, os.path.dirname(config.process)]
     verify_dirs(dirs_list)
 
     ''' logger '''
+    print("build logger...")
     log_formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
     log_handler = RotatingFileHandler(config.logging_loc + config.logger_name,
                                       mode='a',
@@ -69,19 +69,23 @@ if __name__ == "__main__":
     else:
         logger.setLevel(logging.INFO)
     logger.addHandler(log_handler)
+    print("call daemon with command '%s'..." % config.command)
 
     # Start daemon process
     daemon = OstroDaemon(config.priority, config.process, logger)
 
     exit_code = 0
-
     if config.command == 'start':
+        logger.info("start ostro...")
         daemon.start()
     elif config.command == 'stop':
+        logger.info("stop ostro...")
         daemon.stop()
     elif config.command == 'restart':
+        logger.info("restart ostro...")
         daemon.restart()
     elif config.command == 'status':
+        logger.info("status ostro...")
         exit_code = int(daemon.status())
     else:
         print("Unknown command: %s" % config.command)

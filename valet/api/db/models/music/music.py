@@ -296,10 +296,12 @@ class Music(object):
         response = self.rest.request(method='delete', path=path, data=data)
         return response.ok
 
-    def read_row(self, keyspace, table, pk_name, pk_value):
+    def read_row(self, keyspace, table, pk_name, pk_value, log=None):
         '''Read one row based on a primary key name/value.'''
         path = self.__row_url_path(keyspace, table, pk_name, pk_value)
         response = self.rest.request(path=path)
+        if log:
+            log.debug("response is %s, path is %s" % (response, path))
         return response.json()
 
     def read_all_rows(self, keyspace, table):

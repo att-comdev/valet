@@ -12,15 +12,21 @@
 
 import os
 from oslo_config import cfg
+from valet.engine.conf import register_conf
+
 
 CONF = cfg.CONF
 
 
 class Config(object):
 
-    def __init__(self):
+    def __init__(self, *default_config_files):
 
-        CONF(default_config_files=['/etc/valet/valet.conf'])
+        register_conf()
+        if default_config_files:
+            CONF(default_config_files=default_config_files)
+        else:
+            CONF(project='valet')
 
         # System parameters
         self.root_loc = os.path.dirname(CONF.default_config_files[0])

@@ -5,7 +5,6 @@
 
 import json
 import operator
-
 from valet.api.db.models.music import Music
 from valet.engine.optimizer.db_connect.event import Event
 
@@ -416,7 +415,7 @@ class MusicHandler(object):
 
         row = {}
         try:
-            row = self.music.read_row(self.config.db_keyspace, self.config.db_resource_table, 'site_name', _k)
+            row = self.music.read_row(self.config.db_keyspace, self.config.db_resource_table, 'site_name', _k, self.logger)
         except Exception as e:
             self.logger.error("MUSIC error while reading resource status: " + str(e))
             return None

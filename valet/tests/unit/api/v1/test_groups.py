@@ -1,7 +1,6 @@
 
 import mock
 import pecan
-from pecan import core
 from valet.api.db.models.music.groups import Group
 from valet.api.db.models.music import Query, Results
 import valet.api.v1.controllers.groups as groups
@@ -16,7 +15,7 @@ class TestGroups(ApiBase):
         super(TestGroups, self).setUp()
         self.tenant_id = "testprojectid"
 
-        core.state = mock.MagicMock()
+        # core.state = mock.MagicMock()
 
         # Testing class GroupsController
         self.groups_controller = GroupsController()

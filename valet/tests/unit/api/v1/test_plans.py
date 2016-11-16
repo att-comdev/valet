@@ -53,8 +53,7 @@ class TestPlans(ApiBase):
         self.plans_item_controller.index()
         self.validate_test("The POST method is not allowed" in ApiBase.response)
 
-    @mock.patch.object(plans, 'response')
-    def test_index_options(self, _):
+    def test_index_options(self):
         self.plans_controller.index_options()
         self.validate_test(plans.response.status == 204)
 

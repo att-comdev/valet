@@ -16,6 +16,7 @@ class ApiBase(Base):
         pecan.conf.identity = mock.MagicMock()
         pecan.conf.music = mock.MagicMock()
         self.response = None
+        pecan.core.state = mock.MagicMock()
 
     @classmethod
     def mock_error(cls, url, msg=None, **kwargs):

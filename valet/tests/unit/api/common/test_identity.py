@@ -39,7 +39,8 @@ class TestIdentity(ApiBase):
             self.validate_test(self.identity.validate_token("auth_token") is not None)
 
     def test_is_tenant_list_validself(self):
-        self.validate_test(self.identity.is_tenant_list_valid(["a", "b"]) is False)
+        with mock.patch('valet.api.common.identity.client'):
+            self.validate_test(self.identity.is_tenant_list_valid(["a", "b"]) is False)
 
 
 class TokenT(object):

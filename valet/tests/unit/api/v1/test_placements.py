@@ -54,8 +54,7 @@ class TestPlacements(ApiBase):
         self.placements_item_controller.index()
         self.validate_test("The PUT method is not allowed" in ApiBase.response)
 
-    @mock.patch.object(placements, 'response')
-    def test_index_options(self, _):
+    def test_index_options(self):
         self.placements_controller.index_options()
         self.validate_test(placements.response.status == 204)
 
@@ -82,8 +81,7 @@ class TestPlacements(ApiBase):
     @mock.patch.object(placements, 'error', ApiBase.mock_error)
     @mock.patch.object(Query, 'filter_by', mock.MagicMock)
     @mock.patch.object(placements, 'update_placements')
-    @mock.patch.object(placements, 'response')
-    def test_index_post(self, _, mock_plcment):
+    def test_index_post(self, mock_plcment):
         kwargs = {'resource_id': "resource_id", 'locations': ["test_location"]}
         self.placements_item_controller.index_post(**kwargs)
         self.validate_test(placements.response.status == 201)
@@ -102,7 +100,6 @@ class TestPlacements(ApiBase):
             self.placements_item_controller.index_post(**kwargs)
             self.validate_test(placements.response.status == 201)
 
-    @mock.patch.object(placements, 'response')
-    def test_index_delete(self, _):
+    def test_index_delete(self):
         self.placements_item_controller.index_delete()
         self.validate_test(placements.response.status == 204)

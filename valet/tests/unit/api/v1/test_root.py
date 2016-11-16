@@ -28,8 +28,7 @@ class TestRoot(ApiBase):
         self.root_controller.index()
         self.validate_test("The PUT method is not allowed" in ApiBase.response)
 
-    @mock.patch.object(root, 'response')
-    def test_index_options(self, _):
+    def test_index_options(self):
         self.root_controller.index_options()
         self.validate_test(root.response.status == 204)
 

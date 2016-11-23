@@ -25,5 +25,5 @@ python-novaclient<=4.0.0
 python-heatclient<=1.2.0
 
 oslo.messaging==1.8.3
-#tempest<=12.2.0
+#tempest<=12.1.0 ---------- needs to be installed on Jenkins, no output when using tox
 #tempest-lib>=0.8.0

@@ -107,7 +107,7 @@ class Identity(object):
         try:
             return self.client.tokens.validate(**kwargs)
         except Exception as ex:
-            print (ex.message)
+            print("Exception at validating token - %s" % ex.message)
             # FIXME: Return a 404 or at least an auth required?
             pass
         return None

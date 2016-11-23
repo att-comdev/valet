@@ -73,7 +73,6 @@ class ValetGroup(object):
 
             return group_details
         except Exception:
-            import traceback
             GeneralLogger.log_error(traceback.format_exc())
 
     def add_group_member(self, group_details):

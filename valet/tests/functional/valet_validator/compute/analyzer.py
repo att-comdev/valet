@@ -6,7 +6,7 @@ Created on May 4, 2016
 
 from novaclient import client
 import traceback
-from valet.tests.functional.valet_validator.common import Result, General
+from valet.tests.functional.valet_validator.common import Result, GeneralLogger
 from valet.tests.functional.valet_validator.common.auth import Auth
 from valet.tests.functional.valet_validator.common.init import CONF
 
@@ -15,7 +15,7 @@ class Analyzer(object):
 
     def __init__(self):
         ''' initializing the analyzer - connecting to nova '''
-        General.log_info("Initializing Analyzer")
+        GeneralLogger.log_info("Initializing Analyzer")
         self.nova = client.Client(CONF.nova.VERSION, session=Auth.get_auth_session())
 
     def get_host_name(self, instance_name):
@@ -25,12 +25,12 @@ class Analyzer(object):
 
     def get_all_hosts(self, instances_list):
         ''' Returning all hosts of all instances '''
-        General.log_debug("Getting hosts names")
+        GeneralLogger.log_debug("Getting hosts names")
         return [self.get_host_name(instance.name) for instance in instances_list]
 
     def check(self, resources):
         ''' Checking if all instances are on the Appropriate hosts and racks '''
-        General.log_debug("Starting to check instances location")
+        GeneralLogger.log_debug("Starting to check instances location")
         result = True
 
         try:
@@ -50,7 +50,7 @@ class Analyzer(object):
                     }[group.group_type]
 
         except Exception as ex:
-            General.log_error("Exception at method check: %s" % ex, traceback.format_exc())
+            GeneralLogger.log_error("Exception at method check: %s" % ex, traceback.format_exc())
             result = False
 
         return Result(result)
@@ -67,20 +67,22 @@ class Analyzer(object):
             return resources_to_compare
 
         except Exception as ex:
-            General.log_error("Exception at method get_resources_to_compare: %s" % ex, traceback.format_exc())
+            GeneralLogger.log_error("Exception at method get_resources_to_compare: %s" % ex, traceback.format_exc())
 
     def are_we_alone(self, hosts_list, ins_for_group):
         try:
-            instances = self.get_instances_per_host(hosts_list)
+            # instances is all the instances on this host
+            all_instances_on_host = self.get_instances_per_host(hosts_list)
             for instance in ins_for_group:
-                if instance.name in instances:
-                    instances.remove(instance.name)
+                if instance.name in all_instances_on_host:
+                    all_instances_on_host.remove(instance.name)
+            return not all_instances_on_host
 
-            return not instances
         except Exception as ex:
-            General.log_error("Exception at method are_we_alone: %s" % ex, traceback.format_exc())
+            GeneralLogger.log_error("Exception at method are_we_alone: %s" % ex, traceback.format_exc())
 
     def get_instances_per_host(self, hosts_list):
+        ''' get_instances_per_host '''
         instances = []
         try:
             for host in set(hosts_list):
@@ -89,7 +91,7 @@ class Analyzer(object):
 
             return instances
         except Exception as ex:
-            General.log_error("Exception at method get_instances_per_host: %s" % ex, traceback.format_exc())
+            GeneralLogger.log_error("Exception at method get_instances_per_host: %s" % ex, traceback.format_exc())
 
     def are_different(self, hosts_list, level):
         ''' Checking if all hosts (and racks) are different for all instances '''
@@ -102,11 +104,11 @@ class Analyzer(object):
             return True
 
         except Exception as ex:
-            General.log_error("Exception at method are_all_hosts_different: %s" % ex, traceback.format_exc())
+            GeneralLogger.log_error("Exception at method are_all_hosts_different: %s" % ex, traceback.format_exc())
             return False
 
     def are_the_same(self, hosts_list, level):
-        General.log_debug("Hosts are:")
+        GeneralLogger.log_debug("Hosts are:")
         try:
             for h in hosts_list:
                 if self.compare_host(self.get_host_or_rack(level, h), self.get_host_or_rack(level, hosts_list[0])) is False:
@@ -114,7 +116,7 @@ class Analyzer(object):
             return True
 
         except Exception as ex:
-            General.log_error("Exception at method are_all_hosts_different: %s" % ex, traceback.format_exc())
+            GeneralLogger.log_error("Exception at method are_all_hosts_different: %s" % ex, traceback.format_exc())
             return False
 
     def get_group_instances(self, resources, group_ins):
@@ -130,8 +132,7 @@ class Analyzer(object):
             return ins_for_group
 
         except Exception as ex:
-            General.log_error(ex)
-            General.log_error("Exception at method get_group_instances: %s" % ex, traceback.format_exc())
+            GeneralLogger.log_error("Exception at method get_group_instances: %s" % ex, traceback.format_exc())
             return None
 
     def get_hostname(self, vm):
@@ -145,11 +146,11 @@ class Analyzer(object):
         return False
 
     def compare_rack(self, current_host, first_host):
-        General.log_debug(current_host)
+        GeneralLogger.log_debug(current_host)
         return self.get_rack(current_host) == self.get_rack(first_host)
 
     def compare_host(self, current_host, first_host):
-        General.log_debug(current_host)
+        GeneralLogger.log_debug(current_host)
         return current_host == first_host
 
     def get_rack(self, host):
@@ -159,6 +160,4 @@ class Analyzer(object):
         return host if level == "host" else self.get_rack(host)
 
     def get_vms_by_hypervisor(self, host):
-        return [vm for vm in
-                self.nova.servers.list(search_opts={"all_tenants": True})
-                if self.get_hostname(vm) == host]
+        return [vm for vm in self.nova.servers.list(search_opts={"all_tenants": True}) if self.get_hostname(vm) == host]

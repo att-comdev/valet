@@ -18,5 +18,5 @@ class TestGroupcli(Base):
         ar = mock.MagicMock()
         ar.subcmd = "create"
 
-        res = grpcli.cmd_details(ar)
-        print(res)
+#         res = grpcli.cmd_details(ar)
+#         print(res)

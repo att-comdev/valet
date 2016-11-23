@@ -25,3 +25,5 @@ python-novaclient<=4.0.0
 python-heatclient<=1.2.0
 
 oslo.messaging==1.8.3
+#tempest<=12.2.0
+#tempest-lib>=0.8.0

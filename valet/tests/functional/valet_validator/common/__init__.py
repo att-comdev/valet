@@ -14,7 +14,7 @@ class Result(object):
         self.message = msg
 
 
-class General(object):
+class GeneralLogger(object):
     @staticmethod
     def delay(duration=None):
         time.sleep(duration or CONF.heat.DELAY_DURATION)

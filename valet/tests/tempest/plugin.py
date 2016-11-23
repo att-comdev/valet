@@ -35,12 +35,11 @@ class ValetTempestPlugin(plugins.TempestPlugin):
         return full_test_dir, base_path
 
     def register_opts(self, conf):
-        config.register_opt_group(
-            conf, project_config.service_available_group,
-            project_config.ServiceAvailableGroup)
-        config.register_opt_group(
-            conf, project_config.placement_group,
-            project_config.PlacementGroup)
+        config.register_opt_group(conf, project_config.service_available_group, project_config.ServiceAvailableGroup)
+
+        config.register_opt_group(conf, project_config.placement_group, project_config.PlacementGroup)
+
+        config.register_opt_group(conf, project_config.valet_group, project_config.opt_valet)
 
     def get_opt_lists(self):
         pass

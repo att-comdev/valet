@@ -38,3 +38,11 @@ PlacementGroup = [
                choices=["publicURL", "adminURL", "internalURL"],
                help="The endpoint type for valet service."),
 ]
+
+valet_group = cfg.OptGroup(name="valet", title="Valet basic")
+
+opt_valet = \
+    [
+        cfg.IntOpt('TRIES_TO_CREATE', default=5),
+        cfg.IntOpt('PAUSE', default=5),
+    ]

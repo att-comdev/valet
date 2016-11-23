@@ -44,8 +44,6 @@ class StatusController(object):
     @classmethod
     def _ping(cls):
         '''Ping each subsystem.'''
-        LOG.critical("in PING")
-        print ("in PING")
         ostro_response = StatusController._ping_ostro()
         # TODO(JD): Ping Music plus any others.
         # music_response = StatusController._ping_music()

@@ -7,7 +7,6 @@ import threading
 import time
 
 from copy import deepcopy
-from valet.engine.resource_manager.authentication import Authentication
 from valet.engine.resource_manager.compute import Compute
 from valet.engine.resource_manager.compute_simulator import SimCompute
 from valet.engine.resource_manager.resource_base import Host
@@ -29,7 +28,7 @@ class ComputeManager(threading.Thread):
 
         self.logger = _logger
 
-        self.auth = Authentication()
+        # self.auth = Authentication(_logger)
         self.admin_token = None
         self.project_token = None
 
@@ -101,21 +100,21 @@ class ComputeManager(threading.Thread):
 
         return True
 
-    def _set_admin_token(self):
-        self.admin_token = self.auth.get_tenant_token(self.config)
-        if self.admin_token is None:
-            self.logger.error("ComputeManager: " + self.auth.status)
-            return False
+    # def _set_admin_token(self):
+    #     self.admin_token = self.auth.get_tenant_token(self.config)
+    #     if self.admin_token is None:
+    #         self.logger.error("ComputeManager: " + self.auth.status)
+    #         return False
+    #
+    #     return True
 
-        return True
-
-    def _set_project_token(self):
-        self.project_token = self.auth.get_project_token(self.config, self.admin_token)
-        if self.project_token is None:
-            self.logger.error("ComputeManager: " + self.auth.status)
-            return False
-
-        return True
+    # def _set_project_token(self):
+    #     self.project_token = self.auth.get_project_token(self.config, self.admin_token)
+    #     if self.project_token is None:
+    #         self.logger.error("ComputeManager: " + self.auth.status)
+    #         return False
+    #
+    #     return True
 
     def set_hosts(self):
         hosts = {}
@@ -126,11 +125,9 @@ class ComputeManager(threading.Thread):
            self.config.mode.startswith("test") is True:
             compute = SimCompute(self.config)
         else:
-            if self._set_admin_token() is False or self._set_project_token() is False:
-                return False
-            compute = Compute(self.config, self.admin_token, self.project_token)
+            compute = Compute(self.config, self.logger)
 
-        status = compute.set_hosts(hosts, logical_groups, self.logger)
+        status = compute.set_hosts(hosts, logical_groups)
         if status != "success":
             self.logger.error("ComputeManager: " + status)
             return False
@@ -355,10 +352,7 @@ class ComputeManager(threading.Thread):
            self.config.mode.startswith("test") is True:
             compute = SimCompute(self.config)
         else:
-            if self._set_admin_token() is False or self._set_project_token() is False:
-                return False
-
-            compute = Compute(self.config, self.admin_token, self.project_token)
+            compute = Compute(self.config, self.logger)
 
         status = compute.set_flavors(flavors)
         if status != "success":

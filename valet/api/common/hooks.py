@@ -92,7 +92,6 @@ class NotFoundHook(PecanHook):
     '''Catchall 'not found' hook for API'''
     def on_error(self, state, exc):
         '''Redirects to app-specific not_found endpoint if 404 only'''
-        if isinstance(exc, webob.exc.WSGIHTTPException):
-            if exc.code == 404:
-                message = _('The resource could not be found.')
-                error('/errors/not_found', message)
+        if isinstance(exc, webob.exc.WSGIHTTPException) and exc.code == 404:
+            message = _('The resource could not be found.')
+            error('/errors/not_found', message)

@@ -2,8 +2,10 @@
 
 # Modified: Oct. 1, 2016
 
+
 import threading
 import time
+import traceback
 
 from valet.engine.optimizer.app_manager.app_handler import AppHandler
 from valet.engine.optimizer.app_manager.app_topology_base import VM, Volume
@@ -103,31 +105,35 @@ class Ostro(object):
     def bootstrap(self):
         self.logger.info("Ostro.bootstrap: start bootstrap")
 
-        resource_status = self.db.get_resource_status(self.resource.datacenter.name)
-        if resource_status is None:
-            return False
-
-        if len(resource_status) > 0:
-            self.logger.info("Ostro.bootstrap: bootstrap from db")
-            if self.resource.bootstrap_from_db(resource_status) is False:
-                return False
-        else:
-            self.logger.info("bootstrap from OpenStack")
-
-            if self._set_hosts() is False:
-                self.logger.error('_set_hosts is false')
+        try:
+            resource_status = self.db.get_resource_status(self.resource.datacenter.name)
+            if resource_status is None:
                 return False
 
-            if self._set_flavors() is False:
-                self.logger.info("_set_flavors is false")
-                return False
+            if len(resource_status) > 0:
+                self.logger.info("Ostro.bootstrap: bootstrap from db")
+                if self.resource.bootstrap_from_db(resource_status) is False:
+                    return False
+            else:
+                self.logger.info("bootstrap from OpenStack")
 
-            if self._set_topology() is False:
-                self.logger.error("_set_topology is false")
-                return False
+                if self._set_hosts() is False:
+                    self.logger.error('_set_hosts is false')
+                    return False
 
-        if self.resource.update_topology() is False:
-            pass
+                if self._set_flavors() is False:
+                    self.logger.info("_set_flavors is false")
+                    return False
+
+                if self._set_topology() is False:
+                    self.logger.error("_set_topology is false")
+                    return False
+
+            if self.resource.update_topology() is False:
+                pass
+
+        except Exception:
+            self.logger.critical("Ostro.bootstrap failed: " + traceback.format_exc())
 
         self.logger.info("Ostro.bootstrap: done bootstrap")
 

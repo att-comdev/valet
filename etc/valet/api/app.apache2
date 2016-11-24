@@ -23,7 +23,7 @@ ServerName valet
         Allow from all
     </Directory>
 
-    ErrorLog /var/log/apache2/valet/error.log
+    ErrorLog /var/log/valet/api.log
     LogLevel warn
-    CustomLog /var/log/apache2/valet/access.log combined
+    CustomLog /var/log/valet/access.log combined
 </VirtualHost>

@@ -27,8 +27,11 @@ import iso8601
 from keystoneauth1.identity import v2
 from keystoneauth1 import session
 from keystoneclient.v2_0 import client
+import logging
 from pecan import conf
 import pytz
+
+LOG = logging.getLogger(__name__)
 
 
 def utcnow():
@@ -107,24 +110,28 @@ class Identity(object):
         try:
             return self.client.tokens.validate(**kwargs)
         except Exception as ex:
-            print("Exception at validating token - %s" % ex.message)
-            # FIXME: Return a 404 or at least an auth required?
+            LOG.error("Identity.validate_token: " + ex.message)
             pass
+
         return None
 
     def is_tenant_list_valid(self, tenant_list):
         '''Returns true if tenant list contains valid tenant IDs'''
         tenants = self.client.tenants.list()
         if isinstance(tenant_list, list):
+            found = False
             for tenant_id in tenant_list:
-                found = False
-                for tenant in tenants:
-                    if tenant_id == tenant.id:
-                        found = True
-                        break
-                if not found:
-                    return False
-            return True
+                found = is_tenant_in_tenants(tenant_id, tenants)
+                if found:
+                    break
+            return found
+        return False
+
+
+def is_tenant_in_tenants(tenant_id, tenants):
+        for tenant in tenants:
+            if tenant_id == tenant.id:
+                return True
         return False
 
 

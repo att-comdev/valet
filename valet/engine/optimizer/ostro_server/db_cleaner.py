@@ -16,7 +16,7 @@ import sys
 
 from configuration import Config
 
-from valet.engine.optimizer.db_connect.music import Music
+from valet.api.db.models.music import Music
 
 
 class DBCleaner(object):

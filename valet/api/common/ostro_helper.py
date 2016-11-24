@@ -108,9 +108,8 @@ class Ostro(object):
         elif isinstance(data, list):
             for key, value in enumerate(data):
                 data[key] = self._map_names_to_uuids(mapping, value)
-        elif isinstance(data, basestring):
-            if data in mapping:
-                return mapping[data]
+        elif isinstance(data, basestring) and data in mapping:
+            return mapping[data]
         return data
 
     def _prepare_resources(self, resources):
@@ -136,7 +135,7 @@ class Ostro(object):
         PlacementRequest(stack_id=stack_id, request=request)  # pylint: disable=W0612
 
         # Wait for a response.
-        # FIXME: This is a blocking operation at the moment.
+        # TODO(JD): This is a blocking operation at the moment.
         for __ in range(self.tries, 0, -1):  # pylint: disable=W0612
             query = Query(PlacementResult)
             placement_result = query.filter_by(stack_id=stack_id).first()
@@ -174,27 +173,28 @@ class Ostro(object):
                         message = _("%s must not be used when {0} is '{1}'. ").format(GROUP_NAME, GROUP_TYPE, group_type)
                         break
                 elif group_type == EXCLUSIVITY:
-                    if not group_name:
-                        self.error_uri = '/errors/invalid'
-                        message = _("%s must be used when {0} is '{1}'.").format(GROUP_NAME, GROUP_TYPE, group_type)
-                        break
-                    group = Group.query.filter_by(  # pylint: disable=E1101
-                        name=group_name).first()
-                    if not group:
-                        self.error_uri = '/errors/not_found'
-                        message = "%s '%s' not found" % \
-                                  (GROUP_NAME, group_name)
-                        break
-                    elif group and tenant_id not in group.members:
-                        self.error_uri = '/errors/conflict'
-                        message = _("Tenant ID %s not a member of {0} '{1}' ({2})").format(self.tenant_id, GROUP_NAME, group.name, group.id)
-                        break
+                    message = self._verify_exclusivity(group_name, tenant_id)
                 else:
                     self.error_uri = '/errors/invalid'
                     message = _("{0} '{1}' is invalid.").format(GROUP_TYPE, group_type)
                     break
         if message:
             return self._build_error(message)
+
+    def _verify_exclusivity(self, group_name, tenant_id):
+        if not group_name:
+            self.error_uri = '/errors/invalid'
+            return _("%s must be used when {0} is '{1}'.").format(GROUP_NAME, GROUP_TYPE, EXCLUSIVITY)
+
+        group = Group.query.filter_by(  # pylint: disable=E1101
+            name=group_name).first()
+        if not group:
+            self.error_uri = '/errors/not_found'
+            return "%s '%s' not found" % (GROUP_NAME, group_name)
+        elif group and tenant_id not in group.members:
+            self.error_uri = '/errors/conflict'
+            return _("Tenant ID %s not a member of {0} '{1}' ({2})").format(self.tenant_id, GROUP_NAME, group.name, group.id)
+        return None
 
     def build_request(self, **kwargs):
         ''' Build an Ostro request. If False is returned,
@@ -238,7 +238,7 @@ class Ostro(object):
 
     def is_request_serviceable(self):
         ''' Returns true if the request has at least one serviceable resource. '''
-        # FIXME: Ostro should return no placements vs throw an error.
+        # TODO(JD): Ostro should return no placements vs throw an error.
         resources = self.request.get('resources', {})
         for res in resources.itervalues():
             res_type = res.get('type')

@@ -50,16 +50,20 @@ class V1Controller(SecureController):
     @classmethod
     def check_permissions(cls):
         '''SecureController permission check callback'''
+        token = None
         auth_token = request.headers.get('X-Auth-Token')
         msg = "Unauthorized - No auth token"
 
         if auth_token:
+            msg = "Unauthorized - invalid token"
             # The token must have an admin role
             # and be associated with a tenant.
             token = conf.identity.engine.validate_token(auth_token)
-            LOG.debug("Checking permissions")
+
+        if token:
+            LOG.debug("Checking token permissions")
             msg = "Unauthorized - Permission was not granted"
-            if token and V1Controller._permission_granted(request, token):
+            if V1Controller._permission_granted(request, token):
                 tenant_id = conf.identity.engine.tenant_from_token(token)
                 LOG.info("tenant_id - " + str(tenant_id))
                 if tenant_id:

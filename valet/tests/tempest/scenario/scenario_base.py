@@ -63,11 +63,11 @@ class ScenarioTestCase(test.BaseTestCase):
         tmplt_url = self.possible_topdir + template_path
         template = TemplateResources(tmplt_url)
 
-        env_data = self.get_env_file(template_path)
+        env_data = self.get_env_file(tmplt_url)
 
         self.log.log_info(" ******** Creating Stack ******** ")
         name = data_utils.rand_name(name=stack_name)
-        self.create_stack(name, env_data, template)
+        self.assertEqual(True, self.create_stack(name, env_data, template))
 
         self.log.log_info(" ******** Analyzing Stack ******** ")
         analyzer = Analyzer(self.log, self.stack_identifier, self.heat_client, self.nova_client)
@@ -96,6 +96,8 @@ class ScenarioTestCase(test.BaseTestCase):
 
         except Exception:
             self.log.log_error("Failed to create stack", traceback.format_exc())
+            return False
+        return True
 
     def create_valet_group(self, group_name):
         try:
@@ -110,8 +112,7 @@ class ScenarioTestCase(test.BaseTestCase):
             self.log.log_error("Failed to create valet group", traceback.format_exc())
 
     def get_env_file(self, template):
-        env_url = self.possible_topdir + template
-        env_url = env_url.replace(".yml", ".env")
+        env_url = template.replace(".yml", ".env")
 
         if os.path.exists(env_url):
             with open(env_url, "r") as f:

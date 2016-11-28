@@ -4,6 +4,7 @@ Created on Nov 8, 2016
 @author: Yael
 '''
 
+from collections import defaultdict
 import os
 from tempest import config
 import traceback
@@ -55,7 +56,6 @@ class Analyzer(object):
         return result
 
     def init_instances_for_group(self, resources):
-        from collections import defaultdict
         ins_group = defaultdict(list)
 
         for grp in resources.groups.keys():
@@ -128,11 +128,14 @@ class Analyzer(object):
             return False
 
     def are_we_alone(self, ins_for_group, level):
-        # TODO(yb): add rack level
-        self.log.log_info("in are_we_alone ")
+        self.log.log_info("are_we_alone ")
         self.log.log_info(ins_for_group)
 
         instances = self.instance_on_server.keys()
+        if level == "rack":
+            instances = self.get_rack_instances(set(self.instance_on_server.values()))
+
+        # instance_on_server should be all the instances on the rack
         if len(instances) < 1:
             return False
 
@@ -167,9 +170,19 @@ class Analyzer(object):
             return ins_for_group
 
         except Exception as ex:
-            self.log.log_error(ex)
             self.log.log_error("Exception at method get_group_instances: %s" % ex, traceback.format_exc())
             return None
+
+    def get_rack_instances(self, hosts):
+        racks = []
+        for host in hosts:
+            racks.append(self.get_rack(host))
+
+        instances = []
+        for x in self.instance_on_server:
+            if self.get_rack(self.instance_on_server[x]) in racks:
+                instances.append(x)
+        return instances
 
     def is_already_exists(self, diction, item):
         if item in diction:

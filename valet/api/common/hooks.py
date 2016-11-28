@@ -21,11 +21,14 @@
 import json
 import logging
 from valet.api.common.i18n import _
+from valet.api.common import terminate_thread
 from valet.api.v1.controllers import error
 
 from pecan import conf
 from pecan.hooks import PecanHook
+import threading
 import webob
+
 
 LOG = logging.getLogger(__name__)
 
@@ -84,8 +87,17 @@ class MessageNotificationHook(PecanHook):
                 'body': response_body,
             }
         }
-        notifier_fn(ctxt, event_type, payload)
-        LOG.info('valet notification - sent')
+
+        # notifier_fn blocks in case rabbit mq is down - it prevents Valet API to return its response :(
+        # send the notification in a different thread
+        notifier_thread = threading.Thread(target=notifier_fn, args=(ctxt, event_type, payload))
+        notifier_thread.start()
+        # launch a timer to verify no hung threads are left behind
+        # (when timeout expired kill the notifier thread if it still alive)
+        watcher = threading.Timer(conf.messaging.timeout, terminate_thread, args=[notifier_thread])
+        watcher.start()
+
+        LOG.info('valet notification hook - end')
 
 
 class NotFoundHook(PecanHook):

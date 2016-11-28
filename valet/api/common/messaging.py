@@ -20,7 +20,6 @@
 
 from oslo_config import cfg
 import oslo_messaging as messaging
-
 from pecan import conf
 
 # Not using oslo_config yet in earnest, but we need it for messaging.
@@ -33,7 +32,7 @@ def _messaging_notifier_from_config(config):
     transport = messaging.get_transport(cfg.CONF, transport_url)
     notifier = messaging.Notifier(transport, driver='messaging',
                                   publisher_id='valet',
-                                  topic='notifications')
+                                  topic='notifications', retry=1)
     return notifier
 
 
@@ -42,3 +41,4 @@ def init_messaging():
     config = conf.messaging.config
     notifier = _messaging_notifier_from_config(config)
     conf.messaging.notifier = notifier
+    conf.messaging.timeout = cfg.CONF.messaging.timeout

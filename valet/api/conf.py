@@ -19,6 +19,7 @@ messaging_opts = [
     cfg.StrOpt('password'),
     cfg.StrOpt('host'),
     cfg.StrOpt('port', default='5672'),
+    cfg.IntOpt('timeout', default=3),
 ]
 
 

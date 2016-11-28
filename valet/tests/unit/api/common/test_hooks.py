@@ -17,19 +17,47 @@ class TestHooks(ApiBase):
 
         self.message_notification_hook = MessageNotificationHook()
 
+    @mock.patch.object(hooks, 'threading')
     @mock.patch.object(hooks, 'conf')
     @mock.patch.object(hooks, 'webob')
-    def test_after(self, mock_bob, mock_conf):
+    def test_after_ok(self, mock_bob, mock_conf, mock_threading):
         mock_bob.exc.status_map = {"test_status_code": State}
         mock_bob.exc.HTTPOk = State
         mock_conf.messaging.notifier.return_value = "notifier"
-        self.message_notification_hook.after(State)
+        mock_conf.messaging.timeout = 1
 
-        self.validate_test(mock_conf.messaging.notifier.info.called)
+        self.message_notification_hook.after(State)
+        # print (dir(mock_conf))
+        # self.validate_test(mock_conf.messaging.notifier.info.called)
+
+        self.validate_test(mock_threading.Thread.called)
+        mock_threading.Thread.assert_called_once_with(target=mock_conf.messaging.notifier.info, args=(
+            {},
+            'api', {'response': {'body': State.response.body, 'status_code': State.response.status_code},
+                    'context': State.request.context,
+                    'request': {'path': 'test_path', 'method': 'test_method', 'body': None}}
+        ), )
+
+    @mock.patch.object(hooks, 'threading')
+    @mock.patch.object(hooks, 'conf')
+    @mock.patch.object(hooks, 'webob')
+    def test_after_with_error(self, mock_bob, mock_conf, mock_threading):
+        mock_bob.exc.status_map = {"test_status_code": State}
+        mock_conf.messaging.notifier.return_value = "notifier"
+        mock_conf.messaging.timeout = 1
 
         mock_bob.exc.HTTPOk = ApiBase
         self.message_notification_hook.after(State)
-        self.validate_test(mock_conf.messaging.notifier.error.called)
+
+        # self.validate_test(mock_conf.messaging.notifier.error.called)
+        self.validate_test(mock_threading.Thread.called)
+
+        mock_threading.Thread.assert_called_once_with(target=mock_conf.messaging.notifier.error, args=(
+            {},
+            'api', {'response': {'body': State.response.body, 'status_code': State.response.status_code},
+                    'context': State.request.context,
+                    'request': {'path': 'test_path', 'method': 'test_method', 'body': None}}
+        ), )
 
 
 class State(object):

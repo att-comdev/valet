@@ -306,11 +306,11 @@ class HaValetThread (threading.Thread):
                     priority_wait = False
                     if (not i_am_active and my_priority == PRIMARY_SETUP) or (standby_list is not None):
                         self.log.info('no running instance found, starting here; last start %s' % diff)
-                        self._activate_process(start_command)
+                        self._activate_process(start_command, my_priority)
                     else:
-                        host = standby_list[0]
+                        host = standby_list[0]  # LIMITATION - supporting only 1 stand by host
                         self.log.info('no running instances found, starting on %s; last start %s' % (host, diff))
-                        self._activate_process(start_command)
+                        self._activate_process(start_command, my_priority)
                         host = self.data.get(HOST, 'localhost')
                 else:
                     priority_wait = True
@@ -372,7 +372,7 @@ class HaValetThread (threading.Thread):
             self.log.error(str(e))
             return False
 
-    def _activate_process(self, activate_command):
+    def _activate_process(self, activate_command, priority):
         """ Activate valet on a given host. If host is omitted, local
 
             valet is started. Returns True if successful, False on error.
@@ -381,6 +381,7 @@ class HaValetThread (threading.Thread):
         try:
             self.log.info('activate_command: ' + activate_command)
             subprocess.check_call(activate_command, shell=True)
+            time.sleep(HEARTBEAT_SEC * priority)  # allow some grace period
             return True
         except subprocess.CalledProcessError as e:
             self.log.error(str(e))

@@ -125,7 +125,7 @@ class ComputeManager(threading.Thread):
            self.config.mode.startswith("test") is True:
             compute = SimCompute(self.config)
         else:
-            compute = Compute(self.config, self.logger)
+            compute = Compute(self.logger)
 
         status = compute.set_hosts(hosts, logical_groups)
         if status != "success":
@@ -352,7 +352,7 @@ class ComputeManager(threading.Thread):
            self.config.mode.startswith("test") is True:
             compute = SimCompute(self.config)
         else:
-            compute = Compute(self.config, self.logger)
+            compute = Compute(self.logger)
 
         status = compute.set_flavors(flavors)
         if status != "success":

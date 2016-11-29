@@ -21,9 +21,7 @@
 from oslo_config import cfg
 import oslo_messaging as messaging
 from pecan import conf
-
-# Not using oslo_config yet in earnest, but we need it for messaging.
-cfg.CONF = cfg.ConfigOpts()
+from valet.api.conf import set_domain, DOMAIN
 
 
 def _messaging_notifier_from_config(config):
@@ -38,6 +36,7 @@ def _messaging_notifier_from_config(config):
 
 def init_messaging():
     '''Initialize the messaging engine and place in the config.'''
+    set_domain(DOMAIN)
     config = conf.messaging.config
     notifier = _messaging_notifier_from_config(config)
     conf.messaging.notifier = notifier

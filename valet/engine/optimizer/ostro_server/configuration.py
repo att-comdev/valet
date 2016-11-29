@@ -41,16 +41,6 @@ class Config(object):
 
         self.api_protocol = 'http://'
 
-        self.keystone_url = None
-        self.keystone_tenant_token_api = None
-        self.keystone_project_token_api = None
-
-        self.nova_url = None
-        self.nova_host_resources_api = None
-        self.nova_host_zones_api = None
-        self.nova_host_aggregates_api = None
-        self.nova_flavors_api = None
-
         self.network_control = False
         self.network_control_api = None
 
@@ -182,23 +172,9 @@ class Config(object):
 
         self.datacenter_name = CONF.engine.datacenter_name
 
-        self.keystone_tenant_url = CONF.engine.keystone_tenant_url
-
-        self.keystone_project_url = CONF.engine.keystone_project_url
-
         self.network_control = CONF.engine.network_control
 
         self.network_control_url = CONF.engine.network_control_url
-
-        self.nova_url = CONF.engine.nova_url
-
-        self.nova_host_resources_api = CONF.engine.nova_host_resources_api
-
-        self.nova_host_zones_api = CONF.engine.nova_host_zones_api
-
-        self.nova_host_aggregates_api = CONF.engine.nova_host_aggregates_api
-
-        self.nova_flavors_api = CONF.engine.nova_flavors_api
 
         self.default_cpu_allocation_ratio = CONF.engine.default_cpu_allocation_ratio
 

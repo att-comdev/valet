@@ -14,8 +14,7 @@ CONF = cfg.CONF
 
 
 class Compute(object):
-    def __init__(self, _config, _logger):
-        self.config = _config
+    def __init__(self, _logger):
         self.logger = _logger
         self.nova = None
 

@@ -94,7 +94,6 @@ STAND_BY_LIST = 'stand_by_list'
 
 ostro_group = cfg.OptGroup(name='Ostro', title='Valet Engine HA conf')
 api_group = cfg.OptGroup(name='ValetApi', title='Valet Api HA conf')
-listener_group = cfg.OptGroup(name='EventsListener', title='Valet Events Listener HA conf')
 
 havalet_opts = [
     cfg.IntOpt(PRIORITY, default=1, help='master slave distinguish'),
@@ -113,11 +112,8 @@ CONF.register_opts(havalet_opts, api_group)
 CONF.register_group(ostro_group)
 CONF.register_opts(havalet_opts, ostro_group)
 
-CONF.register_group(listener_group)
-CONF.register_opts(havalet_opts, listener_group)
 
-
-def read_conf(processes):
+def read_conf():
     """returns dictionary of configured processes"""
     return dict([
         ('Ostro', {
@@ -130,18 +126,6 @@ def read_conf(processes):
             STOP_COMMAND: CONF.Ostro.stop,
             TEST_COMMAND: CONF.Ostro.test,
             STAND_BY_LIST: CONF.Ostro.stand_by_list
-        }),
-
-        ('EventsListener', {
-            NAME: 'EventsListener',
-            ORDER: CONF.EventsListener.order,
-            HOST: CONF.EventsListener.host,
-            USER: CONF.EventsListener.user,
-            PRIORITY: CONF.EventsListener.priority,
-            START_COMMAND: CONF.EventsListener.start,
-            STOP_COMMAND: CONF.EventsListener.stop,
-            TEST_COMMAND: CONF.EventsListener.test,
-            STAND_BY_LIST: CONF.EventsListener.stand_by_list
         }),
 
         ('ValetApi', {
@@ -472,7 +456,7 @@ class HAValet(object):
         # parser.add_argument('-f', '--file', help='configuraion file', default=DEFAULT_CONF_FILE)
         # args = parser.parse_args()
 
-        conf_data = read_conf(['ValetApi', 'EventsListener', 'Ostro'])
+        conf_data = read_conf()
 
         # if a specific process was asked for..
         # remove all others

@@ -59,9 +59,32 @@ engine_opts = [
                                                                    'that are set aside for applications workload spikes.'),
 ]
 
+listener_group = cfg.OptGroup(name='ostro_events_listener', title='Valet Engine listener')
+listener_opts = [
+    cfg.StrOpt('exchange', default='nova'),
+    cfg.StrOpt('exchange_type', default='topic'),
+    cfg.BoolOpt('auto_delete', default=False),
+    cfg.StrOpt('host', default='controller'),
+    cfg.IntOpt('port', default=5672),
+    cfg.StrOpt('username', default='openstack'),
+    cfg.StrOpt('password', default='qwer4321'),
+    cfg.StrOpt('output_format', default='dict'),
+    cfg.BoolOpt('store', default=False),
+    cfg.StrOpt('music', default='http://127.0.0.1:8080/'),
+    cfg.StrOpt('keyspace', default="valet_test"),
+    cfg.IntOpt('replication_factor', default=1),
+    cfg.StrOpt('logging_level', default='debug'),
+    cfg.StrOpt('logging_loc', default='/var/log/valet/'),
+    cfg.StrOpt('logger_name', default='ostro_listener.log'),
+    cfg.IntOpt('max_main_log_size', default=5000000),
+]
+
 
 def register_conf():
     api.register_conf()
     CONF.register_group(engine_group)
     CONF.register_opts(engine_opts, engine_group)
     CONF.register_cli_opts(ostro_cli_opts)
+
+    CONF.register_group(listener_group)
+    CONF.register_opts(listener_opts, listener_group)

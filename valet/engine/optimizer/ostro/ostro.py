@@ -3,10 +3,11 @@
 # Modified: Oct. 1, 2016
 
 
+from oslo_config import cfg
 import threading
 import time
 import traceback
-
+from valet.engine.listener.listener_manager import ListenerManager
 from valet.engine.optimizer.app_manager.app_handler import AppHandler
 from valet.engine.optimizer.app_manager.app_topology_base import VM, Volume
 from valet.engine.optimizer.db_connect.music_handler import MusicHandler
@@ -14,6 +15,8 @@ from valet.engine.optimizer.ostro.optimizer import Optimizer
 from valet.engine.resource_manager.compute_manager import ComputeManager
 from valet.engine.resource_manager.resource import Resource
 from valet.engine.resource_manager.topology_manager import TopologyManager
+
+CONF = cfg.CONF
 
 
 class Ostro(object):
@@ -46,6 +49,9 @@ class Ostro(object):
         self.compute = ComputeManager(2, "Compute", self.resource, self.data_lock, self.config, self.logger)
         self.logger.debug("done init compute")
 
+        self.listener = ListenerManager(3, "Listener", CONF)
+        self.logger.debug("done init listener")
+
         self.status = "success"
         self.end_of_process = False
 
@@ -54,9 +60,11 @@ class Ostro(object):
 
         self.topology.start()
         self.compute.start()
+        self.listener.start()
 
         self.thread_list.append(self.topology)
         self.thread_list.append(self.compute)
+        self.thread_list.append(self.listener)
 
         ''' for monitoring test '''
         # duration = 30.0

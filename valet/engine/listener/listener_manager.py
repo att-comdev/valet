@@ -10,7 +10,6 @@ import pika
 import pprint
 import threading
 import traceback
-from urlparse import urlparse
 from valet.api.db.models.music import Music
 from valet.engine.listener.oslo_messages import OsloMessage
 from valet.engine.optimizer.util.util import init_logger
@@ -21,10 +20,10 @@ class ListenerManager(threading.Thread):
 
     def __init__(self, _t_id, _t_name, _config):
         threading.Thread.__init__(self)
-
         self.thread_id = _t_id
         self.thread_name = _t_name
-        self.config = _config.ostro_events_listener
+        self.config = _config.events_listener
+        self.music_config = _config.music
         self.listener_logger = init_logger(self.config)
         self.MUSIC = None
 
@@ -37,22 +36,21 @@ class ListenerManager(threading.Thread):
         '''
         try:
             self.listener_logger.info("ListenerManager: start " + self.thread_name + " ......")
-            passwd = self.config.password
 
             if self.config.store:
-                music_args = urlparse(self.config.music)
+
                 kwargs = {
-                    'host': music_args.hostname,
-                    'port': music_args.port,
-                    'replication_factor': self.config.replication_factor,
+                    'host': self.music_config.host,
+                    'port': self.music_config.port,
+                    'replication_factor': self.music_config.replication_factor,
                 }
                 engine = Music(**kwargs)
-                engine.create_keyspace(self.config.keyspace)
-                self.MUSIC = {'engine': engine, 'keyspace': self.config.keyspace}
-                print('storing in music on %s, keyspace %s' % (self.config.music, self.config.keyspace))
+                engine.create_keyspace(self.music_config.keyspace)
+                self.MUSIC = {'engine': engine, 'keyspace': self.music_config.keyspace}
+                self.listener_logger.debug('Storing in music on %s, keyspace %s' % (self.music_config.host, self.music_config.keyspace))
 
-            # with open(self.config.passwdfile, 'rb') as fd:
-            credentials = pika.PlainCredentials(self.config.username, passwd)
+            self.listener_logger.debug('Connecting to %s, with %s' % (self.config.host, self.config.username))
+            credentials = pika.PlainCredentials(self.config.username, self.config.password)
             parameters = pika.ConnectionParameters(self.config.host, self.config.port, '/', credentials)
 
             connection = pika.BlockingConnection(parameters)
@@ -85,7 +83,7 @@ class ListenerManager(threading.Thread):
             # Start consuming messages
             channel.basic_consume(self.on_message, queue_name)
         except Exception:
-            self.logger.error(traceback.format_exc())
+            self.listener_logger.error(traceback.format_exc())
             return
 
         try:
@@ -121,7 +119,7 @@ class ListenerManager(threading.Thread):
                 self.listener_logger.debug(pprint.pformat(message_obj))
             channel.basic_ack(delivery_tag=method_frame.delivery_tag)
         except Exception:
-            self.logger.error(traceback.format_exc())
+            self.listener_logger.error(traceback.format_exc())
             return
 
     def is_message_wanted(self, message):

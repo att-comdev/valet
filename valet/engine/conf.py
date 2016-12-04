@@ -59,20 +59,17 @@ engine_opts = [
                                                                    'that are set aside for applications workload spikes.'),
 ]
 
-listener_group = cfg.OptGroup(name='ostro_events_listener', title='Valet Engine listener')
+listener_group = cfg.OptGroup(name='events_listener', title='Valet Engine listener')
 listener_opts = [
     cfg.StrOpt('exchange', default='nova'),
     cfg.StrOpt('exchange_type', default='topic'),
     cfg.BoolOpt('auto_delete', default=False),
-    cfg.StrOpt('host', default='controller'),
+    cfg.StrOpt('host', default='AMQP_HOST'),
     cfg.IntOpt('port', default=5672),
-    cfg.StrOpt('username', default='openstack'),
-    cfg.StrOpt('password', default='qwer4321'),
+    cfg.StrOpt('username', default='AMQP_USER'),
+    cfg.StrOpt('password', default='AMQP_PASSWORD'),
     cfg.StrOpt('output_format', default='dict'),
-    cfg.BoolOpt('store', default=False),
-    cfg.StrOpt('music', default='http://127.0.0.1:8080/'),
-    cfg.StrOpt('keyspace', default="valet_test"),
-    cfg.IntOpt('replication_factor', default=1),
+    cfg.BoolOpt('store', default=True),
     cfg.StrOpt('logging_level', default='debug'),
     cfg.StrOpt('logging_loc', default='/var/log/valet/'),
     cfg.StrOpt('logger_name', default='ostro_listener.log'),

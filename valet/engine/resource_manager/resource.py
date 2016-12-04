@@ -126,141 +126,146 @@ class Resource(object):
 
             # storage_hosts
             hosts = _resource_status.get("hosts")
-            for hk, h in hosts.iteritems():
-                host = Host(hk)
-                host.tag = h.get("tag")
-                host.status = h.get("status")
-                host.state = h.get("state")
-                host.vCPUs = h.get("vCPUs")
-                host.original_vCPUs = h.get("original_vCPUs")
-                host.avail_vCPUs = h.get("avail_vCPUs")
-                host.mem_cap = h.get("mem")
-                host.original_mem_cap = h.get("original_mem")
-                host.avail_mem_cap = h.get("avail_mem")
-                host.local_disk_cap = h.get("local_disk")
-                host.original_local_disk_cap = h.get("original_local_disk")
-                host.avail_local_disk_cap = h.get("avail_local_disk")
-                host.vCPUs_used = h.get("vCPUs_used")
-                host.free_mem_mb = h.get("free_mem_mb")
-                host.free_disk_gb = h.get("free_disk_gb")
-                host.disk_available_least = h.get("disk_available_least")
-                host.vm_list = h.get("vm_list")
-                host.volume_list = h.get("volume_list", [])
+            if hosts:
+                for hk, h in hosts.iteritems():
+                    host = Host(hk)
+                    host.tag = h.get("tag")
+                    host.status = h.get("status")
+                    host.state = h.get("state")
+                    host.vCPUs = h.get("vCPUs")
+                    host.original_vCPUs = h.get("original_vCPUs")
+                    host.avail_vCPUs = h.get("avail_vCPUs")
+                    host.mem_cap = h.get("mem")
+                    host.original_mem_cap = h.get("original_mem")
+                    host.avail_mem_cap = h.get("avail_mem")
+                    host.local_disk_cap = h.get("local_disk")
+                    host.original_local_disk_cap = h.get("original_local_disk")
+                    host.avail_local_disk_cap = h.get("avail_local_disk")
+                    host.vCPUs_used = h.get("vCPUs_used")
+                    host.free_mem_mb = h.get("free_mem_mb")
+                    host.free_disk_gb = h.get("free_disk_gb")
+                    host.disk_available_least = h.get("disk_available_least")
+                    host.vm_list = h.get("vm_list")
+                    host.volume_list = h.get("volume_list", [])
 
-                for lgk in h["membership_list"]:
-                    host.memberships[lgk] = self.logical_groups[lgk]
+                    for lgk in h["membership_list"]:
+                        host.memberships[lgk] = self.logical_groups[lgk]
 
-                for sk in h.get("switch_list", []):
-                    host.switches[sk] = self.switches[sk]
+                    for sk in h.get("switch_list", []):
+                        host.switches[sk] = self.switches[sk]
 
-                # host.storages
+                    # host.storages
 
-                self.hosts[hk] = host
+                    self.hosts[hk] = host
 
-            if len(self.hosts) > 0:
-                self.logger.debug("Resource.bootstrap_from_db: hosts loaded")
-            else:
-                self.logger.error("Resource.bootstrap_from_db: fail loading hosts")
-                # return False
+                if len(self.hosts) > 0:
+                    self.logger.debug("Resource.bootstrap_from_db: hosts loaded")
+                else:
+                    self.logger.error("Resource.bootstrap_from_db: fail loading hosts")
+                    # return False
 
             host_groups = _resource_status.get("host_groups")
-            for hgk, hg in host_groups.iteritems():
-                host_group = HostGroup(hgk)
-                host_group.host_type = hg.get("host_type")
-                host_group.status = hg.get("status")
-                host_group.vCPUs = hg.get("vCPUs")
-                host_group.original_vCPUs = hg.get("original_vCPUs")
-                host_group.avail_vCPUs = hg.get("avail_vCPUs")
-                host_group.mem_cap = hg.get("mem")
-                host_group.original_mem_cap = hg.get("original_mem")
-                host_group.avail_mem_cap = hg.get("avail_mem")
-                host_group.local_disk_cap = hg.get("local_disk")
-                host_group.original_local_disk_cap = hg.get("original_local_disk")
-                host_group.avail_local_disk_cap = hg.get("avail_local_disk")
-                host_group.vm_list = hg.get("vm_list")
-                host_group.volume_list = hg.get("volume_list", [])
+            if host_groups:
+                for hgk, hg in host_groups.iteritems():
+                    host_group = HostGroup(hgk)
+                    host_group.host_type = hg.get("host_type")
+                    host_group.status = hg.get("status")
+                    host_group.vCPUs = hg.get("vCPUs")
+                    host_group.original_vCPUs = hg.get("original_vCPUs")
+                    host_group.avail_vCPUs = hg.get("avail_vCPUs")
+                    host_group.mem_cap = hg.get("mem")
+                    host_group.original_mem_cap = hg.get("original_mem")
+                    host_group.avail_mem_cap = hg.get("avail_mem")
+                    host_group.local_disk_cap = hg.get("local_disk")
+                    host_group.original_local_disk_cap = hg.get("original_local_disk")
+                    host_group.avail_local_disk_cap = hg.get("avail_local_disk")
+                    host_group.vm_list = hg.get("vm_list")
+                    host_group.volume_list = hg.get("volume_list", [])
 
-                for lgk in hg.get("membership_list"):
-                    host_group.memberships[lgk] = self.logical_groups[lgk]
+                    for lgk in hg.get("membership_list"):
+                        host_group.memberships[lgk] = self.logical_groups[lgk]
 
-                for sk in hg.get("switch_list", []):
-                    host_group.switches[sk] = self.switches[sk]
+                    for sk in hg.get("switch_list", []):
+                        host_group.switches[sk] = self.switches[sk]
+
+                    # host.storages
+
+                    self.host_groups[hgk] = host_group
+
+                if len(self.host_groups) > 0:
+                    self.logger.debug("Resource.bootstrap_from_db: host_groups loaded")
+                else:
+                    self.logger.error("Resource.bootstrap_from_db: fail loading host_groups")
+                    # return False
+
+            dc = _resource_status.get("datacenter")
+            if dc:
+                self.datacenter.name = dc.get("name")
+                self.datacenter.region_code_list = dc.get("region_code_list")
+                self.datacenter.status = dc.get("status")
+                self.datacenter.vCPUs = dc.get("vCPUs")
+                self.datacenter.original_vCPUs = dc.get("original_vCPUs")
+                self.datacenter.avail_vCPUs = dc.get("avail_vCPUs")
+                self.datacenter.mem_cap = dc.get("mem")
+                self.datacenter.original_mem_cap = dc.get("original_mem")
+                self.datacenter.avail_mem_cap = dc.get("avail_mem")
+                self.datacenter.local_disk_cap = dc.get("local_disk")
+                self.datacenter.original_local_disk_cap = dc.get("original_local_disk")
+                self.datacenter.avail_local_disk_cap = dc.get("avail_local_disk")
+                self.datacenter.vm_list = dc.get("vm_list")
+                self.datacenter.volume_list = dc.get("volume_list", [])
+
+                for lgk in dc.get("membership_list"):
+                    self.datacenter.memberships[lgk] = self.logical_groups[lgk]
+
+                for sk in dc.get("switch_list", []):
+                    self.datacenter.root_switches[sk] = self.switches[sk]
 
                 # host.storages
 
-                self.host_groups[hgk] = host_group
+                for ck in dc.get("children"):
+                    if ck in self.host_groups.keys():
+                        self.datacenter.resources[ck] = self.host_groups[ck]
+                    elif ck in self.hosts.keys():
+                        self.datacenter.resources[ck] = self.hosts[ck]
 
-            if len(self.host_groups) > 0:
-                self.logger.debug("Resource.bootstrap_from_db: host_groups loaded")
-            else:
-                self.logger.error("Resource.bootstrap_from_db: fail loading host_groups")
-                # return False
-
-            dc = _resource_status.get("datacenter")
-            self.datacenter.name = dc.get("name")
-            self.datacenter.region_code_list = dc.get("region_code_list")
-            self.datacenter.status = dc.get("status")
-            self.datacenter.vCPUs = dc.get("vCPUs")
-            self.datacenter.original_vCPUs = dc.get("original_vCPUs")
-            self.datacenter.avail_vCPUs = dc.get("avail_vCPUs")
-            self.datacenter.mem_cap = dc.get("mem")
-            self.datacenter.original_mem_cap = dc.get("original_mem")
-            self.datacenter.avail_mem_cap = dc.get("avail_mem")
-            self.datacenter.local_disk_cap = dc.get("local_disk")
-            self.datacenter.original_local_disk_cap = dc.get("original_local_disk")
-            self.datacenter.avail_local_disk_cap = dc.get("avail_local_disk")
-            self.datacenter.vm_list = dc.get("vm_list")
-            self.datacenter.volume_list = dc.get("volume_list", [])
-
-            for lgk in dc.get("membership_list"):
-                self.datacenter.memberships[lgk] = self.logical_groups[lgk]
-
-            for sk in dc.get("switch_list", []):
-                self.datacenter.root_switches[sk] = self.switches[sk]
-
-            # host.storages
-
-            for ck in dc.get("children"):
-                if ck in self.host_groups.keys():
-                    self.datacenter.resources[ck] = self.host_groups[ck]
-                elif ck in self.hosts.keys():
-                    self.datacenter.resources[ck] = self.hosts[ck]
-
-            if len(self.datacenter.resources) > 0:
-                self.logger.debug("Resource.bootstrap_from_db: datacenter loaded")
-            else:
-                self.logger.error("Resource.bootstrap_from_db: fail loading datacenter")
-                # return False
+                if len(self.datacenter.resources) > 0:
+                    self.logger.debug("Resource.bootstrap_from_db: datacenter loaded")
+                else:
+                    self.logger.error("Resource.bootstrap_from_db: fail loading datacenter")
+                    # return False
 
             hgs = _resource_status.get("host_groups")
-            for hgk, hg in hgs.iteritems():
-                host_group = self.host_groups[hgk]
+            if hgs:
+                for hgk, hg in hgs.iteritems():
+                    host_group = self.host_groups[hgk]
 
-                pk = hg.get("parent")
-                if pk == self.datacenter.name:
-                    host_group.parent_resource = self.datacenter
-                elif pk in self.host_groups.keys():
-                    host_group.parent_resource = self.host_groups[pk]
+                    pk = hg.get("parent")
+                    if pk == self.datacenter.name:
+                        host_group.parent_resource = self.datacenter
+                    elif pk in self.host_groups.keys():
+                        host_group.parent_resource = self.host_groups[pk]
 
-                for ck in hg.get("children"):
-                    if ck in self.hosts.keys():
-                        host_group.child_resources[ck] = self.hosts[ck]
-                    elif ck in self.host_groups.keys():
-                        host_group.child_resources[ck] = self.host_groups[ck]
+                    for ck in hg.get("children"):
+                        if ck in self.hosts.keys():
+                            host_group.child_resources[ck] = self.hosts[ck]
+                        elif ck in self.host_groups.keys():
+                            host_group.child_resources[ck] = self.host_groups[ck]
 
-            self.logger.debug("Resource.bootstrap_from_db: host_groups'layout loaded")
+                self.logger.debug("Resource.bootstrap_from_db: host_groups'layout loaded")
 
             hs = _resource_status.get("hosts")
-            for hk, h in hs.iteritems():
-                host = self.hosts[hk]
+            if hs:
+                for hk, h in hs.iteritems():
+                    host = self.hosts[hk]
 
-                pk = h.get("parent")
-                if pk == self.datacenter.name:
-                    host.host_group = self.datacenter
-                elif pk in self.host_groups.keys():
-                    host.host_group = self.host_groups[pk]
+                    pk = h.get("parent")
+                    if pk == self.datacenter.name:
+                        host.host_group = self.datacenter
+                    elif pk in self.host_groups.keys():
+                        host.host_group = self.host_groups[pk]
 
-            self.logger.debug("Resource.bootstrap_from_db: hosts'layout loaded")
+                self.logger.debug("Resource.bootstrap_from_db: hosts'layout loaded")
 
             self._update_compute_avail()
             self._update_storage_avail()

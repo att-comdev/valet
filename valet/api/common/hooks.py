@@ -36,6 +36,7 @@ LOG = logging.getLogger(__name__)
 class MessageNotificationHook(PecanHook):
     '''Send API request/responses out as Oslo msg notifications.'''
     def after(self, state):
+        self.dummy = True
         LOG.info('sending notification')
         notifier = conf.messaging.notifier
         status_code = state.response.status_code
@@ -103,6 +104,7 @@ class MessageNotificationHook(PecanHook):
 class NotFoundHook(PecanHook):
     '''Catchall 'not found' hook for API'''
     def on_error(self, state, exc):
+        self.dummy = True
         '''Redirects to app-specific not_found endpoint if 404 only'''
         if isinstance(exc, webob.exc.WSGIHTTPException) and exc.code == 404:
             message = _('The resource could not be found.')

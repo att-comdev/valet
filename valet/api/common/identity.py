@@ -111,7 +111,6 @@ class Identity(object):
             return self.client.tokens.validate(**kwargs)
         except Exception as ex:
             LOG.error("Identity.validate_token: " + ex.message)
-            pass
 
         return None
 

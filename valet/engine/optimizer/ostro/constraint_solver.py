@@ -439,7 +439,7 @@ class ConstraintSolver(object):
             volume_sizes.append((_v.volume_class, _v.volume_size))
 
         avail_storages = _ch.get_avail_storages(_level)
-        for (vc, vs) in volume_sizes:
+        for vc, vs in volume_sizes:
             for _, s in avail_storages.iteritems():
                 if vc == "any" or s.storage_class == vc:
                     if s.storage_avail_disk >= vs:

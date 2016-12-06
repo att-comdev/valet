@@ -319,7 +319,7 @@ class MusicHandler(object):
         else:
             self.logger.debug("MusicHandler.get_uuid: heat uuid not found")
 
-        return (h_uuid, s_uuid)
+        return h_uuid, s_uuid
 
     def put_uuid(self, _e):
         heat_resource_uuid = "none"

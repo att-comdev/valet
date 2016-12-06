@@ -100,17 +100,17 @@ class Parser(object):
                         vgroup.vgroup_type = "EX"
                     else:
                         self.status = "unknown group = " + r["properties"]["group_type"]
-                        return ({}, {}, {})
+                        return {}, {}, {}
                 else:
                     self.status = "no group type"
-                    return ({}, {}, {})
+                    return {}, {}, {}
 
                 if "group_name" in r["properties"].keys():
                     vgroup.name = r["properties"]["group_name"]
                 else:
                     if vgroup.vgroup_type == "EX":
                         self.status = "no exclusivity group identifier"
-                        return ({}, {}, {})
+                        return {}, {}, {}
                     else:
                         vgroup.name = "any"
 
@@ -120,10 +120,10 @@ class Parser(object):
                         if self.high_level_allowed is False:
                             self.status = "only host level of affinity group allowed " + \
                                           "due to the mis-match of host naming convention"
-                            return ({}, {}, {})
+                            return {}, {}, {}
                 else:
                     self.status = "no grouping level"
-                    return ({}, {}, {})
+                    return {}, {}, {}
 
                 vgroups[vgroup.uuid] = vgroup
 
@@ -133,20 +133,20 @@ class Parser(object):
         self._set_vm_links(_elements, vms)
 
         if self._set_volume_links(_elements, vms, volumes) is False:
-            return ({}, {}, {})
+            return {}, {}, {}
 
         self._set_total_link_capacities(vms, volumes)
 
         self.logger.debug("Parser: all vms parsed")
 
         if self._merge_diversity_groups(_elements, vgroups, vms, volumes) is False:
-            return ({}, {}, {})
+            return {}, {}, {}
 
         if self._merge_exclusivity_groups(_elements, vgroups, vms, volumes) is False:
-            return ({}, {}, {})
+            return {}, {}, {}
 
         if self._merge_affinity_groups(_elements, vgroups, vms, volumes) is False:
-            return ({}, {}, {})
+            return {}, {}, {}
 
         ''' delete all EX and DIV vgroups after merging '''
         for vgk in vgroups.keys():
@@ -161,7 +161,7 @@ class Parser(object):
         if vgroup_captured is True:
             self.logger.debug("Parser: all groups resolved")
 
-        return (vgroups, vms, volumes)
+        return vgroups, vms, volumes
 
     def _set_vm_links(self, _elements, _vms):
         for _, r in _elements.iteritems():

@@ -57,7 +57,7 @@ class AppTopology(object):
         for _, vol in volumes.iteritems():
             self.volumes[vol.uuid] = vol
 
-        return (self.parser.stack_id, self.parser.application_name, self.parser.action)
+        return self.parser.stack_id, self.parser.application_name, self.parser.action
 
     def set_weight(self):
         for _, vm in self.vms.iteritems():

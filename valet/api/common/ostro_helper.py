@@ -182,6 +182,7 @@ class Ostro(object):
             return self._build_error(message)
 
     def _verify_exclusivity(self, group_name, tenant_id):
+        return_message = None
         if not group_name:
             self.error_uri = '/errors/invalid'
             return _("%s must be used when {0} is '{1}'.").format(GROUP_NAME, GROUP_TYPE, EXCLUSIVITY)
@@ -190,11 +191,11 @@ class Ostro(object):
             name=group_name).first()
         if not group:
             self.error_uri = '/errors/not_found'
-            return "%s '%s' not found" % (GROUP_NAME, group_name)
+            return_message = "%s '%s' not found" % (GROUP_NAME, group_name)
         elif group and tenant_id not in group.members:
             self.error_uri = '/errors/conflict'
-            return _("Tenant ID %s not a member of {0} '{1}' ({2})").format(self.tenant_id, GROUP_NAME, group.name, group.id)
-        return None
+            return_message = _("Tenant ID %s not a member of {0} '{1}' ({2})").format(self.tenant_id, GROUP_NAME, group.name, group.id)
+        return return_message
 
     def build_request(self, **kwargs):
         ''' Build an Ostro request. If False is returned,

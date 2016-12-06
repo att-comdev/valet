@@ -211,8 +211,7 @@ class Music(object):
         response = self.rest.request(method='get',
                                      content_type='text/plain', path=path)
 
-        status = (response.text.lower() == 'true')
-        return status
+        return response.text.lower() == 'true'
 
     def release_lock(self, lock_id):
         '''Release a lock.'''

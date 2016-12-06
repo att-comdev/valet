@@ -155,11 +155,10 @@ class AppHandler(object):
         return vm_info
 
     def update_vm_info(self, _s_uuid, _h_uuid):
-        if _h_uuid is not None and _h_uuid != "none" and \
-           _s_uuid is not None and _s_uuid != "none":
-            if self.db.update_vm_info(_s_uuid, _h_uuid) is False:
-                return False
-
+        s_uuid_exist = bool(_s_uuid is not None and _s_uuid != "none")
+        h_uuid_exist = bool(_h_uuid is not None and _h_uuid != "none")
+        if s_uuid_exist and h_uuid_exist:
+            return self.db.update_vm_info(_s_uuid, _h_uuid)
         return True
 
     def _regenerate_app_topology(self, _stack_id, _app, _app_topology, _action):

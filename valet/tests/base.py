@@ -4,13 +4,11 @@ Created on May 5, 2016
 @author: Yael
 '''
 
+import mock
 from oslo_config import fixture as fixture_config
-from oslo_log import log as logging
 from oslotest.base import BaseTestCase
+from valet import api
 from valet.tests.functional.valet_validator.common import init
-
-
-LOG = logging.getLogger(__name__)
 
 
 class Base(BaseTestCase):
@@ -22,6 +20,7 @@ class Base(BaseTestCase):
 
         self.CONF = self.useFixture(fixture_config.Config()).conf
         init.prepare(self.CONF)
+        api.LOG = mock.MagicMock()
 
     def setUp(self):
         super(Base, self).setUp()

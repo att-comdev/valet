@@ -58,14 +58,8 @@ class ComputeManager(threading.Thread):
                 time.sleep(60)
 
                 now = time.localtime()
-                if now.tm_year > last_trigger_year:
+                if now.tm_year > last_trigger_year or now.tm_mon > last_trigger_mon or now.tm_mday > last_trigger_mday:
                     timeout = False
-                else:
-                    if now.tm_mon > last_trigger_mon:
-                        timeout = False
-                    else:
-                        if now.tm_mday > last_trigger_mday:
-                            timeout = False
 
                 if timeout is False and \
                    now.tm_hour >= int(alarm_HH) and now.tm_min >= int(alarm_MM):

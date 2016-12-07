@@ -19,10 +19,8 @@
 '''Populate command'''
 
 from pecan.commands.base import BaseCommand
-# from pecan import conf
-
+from valet import api
 from valet.api.common.i18n import _
-from valet.api.conf import register_conf, set_domain
 from valet.api.db import models
 from valet.api.db.models import Event
 from valet.api.db.models import Group
@@ -30,11 +28,7 @@ from valet.api.db.models import Placement
 from valet.api.db.models import PlacementRequest
 from valet.api.db.models import PlacementResult
 from valet.api.db.models import Plan
-
-
-def out(string):
-    '''Output helper'''
-    print("==> %s" % string)
+from valet.common.conf import init_conf, get_logger
 
 
 class PopulateCommand(BaseCommand):
@@ -42,13 +36,15 @@ class PopulateCommand(BaseCommand):
 
     def run(self, args):
         super(PopulateCommand, self).run(args)
-        out(_("Loading environment"))
-        register_conf()
-        set_domain()
-        self.load_app()
-        out(_("Building schema"))
         try:
-            out(_("Starting a transaction..."))
+            init_conf("populate.log")
+#             cfg.CONF.log_file = "populate.log"
+#             cfg.CONF.use_stderr = True
+            LOG = api.LOG = get_logger("populate")
+            LOG.info(_("Loading environment"))
+            self.load_app()
+            LOG.info(_("Building schema"))
+            LOG.info(_("Starting a transaction..."))
             models.start()
 
             # FIXME: There's no create_all equivalent for Music.
@@ -63,10 +59,10 @@ class PopulateCommand(BaseCommand):
             Event.create_table()
             PlacementRequest.create_table()
             PlacementResult.create_table()
-        except Exception:
+        except Exception as ex:
             models.rollback()
-            out(_("Rolling back..."))
+            LOG.error("Rolling back... %s" % ex)
             raise
         else:
-            out(_("Committing."))
+            LOG.info(_("Committing."))
             models.commit()

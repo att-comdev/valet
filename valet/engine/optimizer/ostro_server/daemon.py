@@ -5,9 +5,12 @@
 
 import atexit
 import os
+from oslo_config import cfg
 from signal import SIGTERM
 import sys
 import time
+
+CONF = cfg.CONF
 
 
 class Daemon(object):
@@ -66,10 +69,10 @@ class Daemon(object):
         os.dup2(so.fileno(), sys.stdout.fileno())
         os.dup2(se.fileno(), sys.stderr.fileno())
 
-        # write pidfile
         atexit.register(self.delpid)
-        pid = str(os.getpid())
-        file(self.pidfile, 'w+').write("%s\n" % pid)
+        # write pidfile - moved to OstroDaemon.run
+        # pid = str(os.getpid())
+        # file(self.pidfile, 'w+').write("%s\n" % pid)
 
     def delpid(self):
         os.remove(self.pidfile)
@@ -86,16 +89,15 @@ class Daemon(object):
 
     def checkpid(self, pid):
         """ Check For the existence of a unix pid. """
-        if pid is None:
-            return False
-
+        alive = False
         try:
-            os.kill(pid, 0)
+            if pid:
+                os.kill(pid, 0)
+                alive = True
         except OSError:
             self.delpid()
-            return False
-        else:
-            return True
+
+        return alive
 
     def start(self):
         """Start the daemon"""
@@ -135,11 +137,6 @@ class Daemon(object):
                 # print str(err)
                 sys.exit(1)
 
-    def restart(self):
-        """Restart the daemon"""
-        self.stop()
-        self.start()
-
     def status(self):
         """ returns instance's priority """
         # Check for a pidfile to see if the daemon already runs
@@ -155,6 +152,11 @@ class Daemon(object):
 
         sys.stderr.write(message % self.pidfile)
         return status
+
+    def restart(self):
+        """Restart the daemon"""
+        self.stop()
+        self.start()
 
     def run(self):
         """ You should override this method when you subclass Daemon.

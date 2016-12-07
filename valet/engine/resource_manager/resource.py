@@ -618,9 +618,7 @@ class Resource(object):
             self._deduct_host_bandwidth(host, _bandwidth)
 
             rack = host.host_group
-            if isinstance(rack, Datacenter):
-                pass
-            else:
+            if not isinstance(rack, Datacenter):
                 self._deduct_host_bandwidth(rack, _bandwidth)
 
         elif _placement_level == "cluster":

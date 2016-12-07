@@ -137,11 +137,8 @@ class HostGroup(object):
             lg = self.memberships[lgk]
             if lg.group_type == "EX" or lg.group_type == "AFF" or lg.group_type == "DIV":
                 level = lg.name.split(":")[0]
-                if LEVELS.index(level) < LEVELS.index(self.host_type):
+                if LEVELS.index(level) < LEVELS.index(self.host_type) or self.name not in lg.vms_per_host.keys():
                     del self.memberships[lgk]
-                else:
-                    if self.name not in lg.vms_per_host.keys():
-                        del self.memberships[lgk]
             else:
                 del self.memberships[lgk]
 

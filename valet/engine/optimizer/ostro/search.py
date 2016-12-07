@@ -392,13 +392,9 @@ class Search(object):
         return host_name
 
     def _close_planned_placement(self, _level, _best, _v):
-        if _level == "host":
-            if _v not in self.planned_placements.keys():
+        if _v not in self.planned_placements.keys():
+            if _level == "host" or isinstance(_v, VGroup):
                 self.planned_placements[_v] = _best
-        else:
-            if isinstance(_v, VGroup):
-                if _v not in self.planned_placements.keys():
-                    self.planned_placements[_v] = _best
 
     def _create_avail_hosts(self):
         for hk, host in self.resource.hosts.iteritems():
@@ -1296,16 +1292,13 @@ class Search(object):
             return False
 
         exclusivities = self.constraint_solver.get_exclusivities(_n.node.exclusivity_groups, _level)
-        if len(exclusivities) > 1:
-            pass
-        else:
-            if len(exclusivities) == 1:
-                exc_id = exclusivities[exclusivities.keys()[0]]
-                if self.constraint_solver.exist_group(_level, exc_id, "EX", _candidate) is False:
-                    return False
-            else:
-                if self.constraint_solver.conflict_exclusivity(_level, _candidate) is True:
-                    return False
+        if len(exclusivities) == 1:
+            exc_id = exclusivities[exclusivities.keys()[0]]
+            if self.constraint_solver.exist_group(_level, exc_id, "EX", _candidate) is False:
+                return False
+        elif len(exclusivities) < 1:
+            if self.constraint_solver.conflict_exclusivity(_level, _candidate):
+                return False
 
         aff_id = _n.get_affinity_id()
         if aff_id is not None:
@@ -1678,13 +1671,9 @@ class Search(object):
         return nw_reservation
 
     def _close_node_placement(self, _level, _best, _v):
-        if _level == "host":
-            if _v not in self.node_placements.keys():
+        if _v not in self.node_placements.keys():
+            if _level == "host" or isinstance(_v, VGroup):
                 self.node_placements[_v] = _best
-        else:
-            if isinstance(_v, VGroup):
-                if _v not in self.node_placements.keys():
-                    self.node_placements[_v] = _best
 
     '''
     rollback modules

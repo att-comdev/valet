@@ -2,7 +2,6 @@
 import argparse
 import sys
 import valet.cli.groupcli as groupcli
-# import logging
 
 
 class Cli(object):

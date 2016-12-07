@@ -137,9 +137,7 @@ class Topology(object):
 
         for c in _host_name:
             if index >= self.config.num_of_region_chars:
-                if isdigit(c):
-                    pass
-                else:
+                if not isdigit(c):
                     if index == self.config.num_of_region_chars:
                         status = "invalid region name = " + _host_name[:index] + c
                         validated_name = False

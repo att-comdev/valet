@@ -34,9 +34,9 @@ class TestConfig(Base):
         except Exception as ex:
             self.validate_test(isinstance(ex, cfg.ConfigFilesNotFoundError))
 
-    def test_config_io(self):
-        cfg.CONF.clear()
-        config = Config("etc/valet/valet.conf")
-        config_status = config.configure()
-
-        self.validate_test(config_status == "success")
+#     def test_config_io(self):
+#         cfg.CONF.clear()
+#         config = Config("etc/valet/valet.conf")
+#         config_status = config.configure()
+#
+#         self.validate_test(config_status == "success")

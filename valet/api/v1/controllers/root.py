@@ -18,8 +18,6 @@
 
 '''Root'''
 
-import logging
-
 from pecan import expose, request, response
 from valet.api.common.i18n import _
 from valet.api.v1.controllers import error
@@ -27,8 +25,6 @@ from valet.api.v1.controllers.errors import ErrorsController, error_wrapper
 from valet.api.v1.controllers.v1 import V1Controller
 
 from webob.exc import status_map
-
-LOG = logging.getLogger(__name__)
 
 # pylint: disable=R0201
 

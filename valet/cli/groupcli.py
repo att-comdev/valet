@@ -3,7 +3,7 @@ import argparse
 import json
 from oslo_config import cfg
 import requests
-from valet.api.conf import register_conf, set_domain
+from valet.common import conf as common
 
 CONF = cfg.CONF
 
@@ -150,8 +150,7 @@ def populate_args_request_body(args):
 
 
 def run(args):
-    register_conf()
-    set_domain(project='valet')
+    common.init_conf("cli.log")
     args.host = args.host or CONF.server.host
     args.port = args.port or CONF.server.port
     args.timeout = args.timeout or 10

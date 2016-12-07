@@ -30,7 +30,7 @@ def _messaging_notifier_from_config(config):
     transport = messaging.get_transport(cfg.CONF, transport_url)
     notifier = messaging.Notifier(transport, driver='messaging',
                                   publisher_id='valet',
-                                  topic='notifications', retry=1)
+                                  topic='notifications', retry=10)
     return notifier
 
 

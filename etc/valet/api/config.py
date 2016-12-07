@@ -80,7 +80,7 @@ ostro = {
 messaging = {
     'config': {
         'transport_url': 'rabbit://' + CONF.messaging.username + ':' + CONF.messaging.password +
-        '@' + CONF.messaging.host + ':' + CONF.messaging.port + '/'
+        '@' + CONF.messaging.host + ':' + str(CONF.messaging.port) + '/'
     }
 }
 

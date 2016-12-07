@@ -22,9 +22,8 @@ class ListenerManager(threading.Thread):
         threading.Thread.__init__(self)
         self.thread_id = _t_id
         self.thread_name = _t_name
-        self.config = _config.events_listener
-        self.music_config = _config.music
-        self.listener_logger = init_logger(self.config)
+        self.config = _config
+        self.listener_logger = init_logger(self.config.events_listener)
         self.MUSIC = None
 
     def run(self):
@@ -37,29 +36,29 @@ class ListenerManager(threading.Thread):
         try:
             self.listener_logger.info("ListenerManager: start " + self.thread_name + " ......")
 
-            if self.config.store:
+            if self.config.events_listener.store:
 
                 kwargs = {
-                    'host': self.music_config.host,
-                    'port': self.music_config.port,
-                    'replication_factor': self.music_config.replication_factor,
+                    'host': self.config.music.host,
+                    'port': self.config.music.port,
+                    'replication_factor': self.config.music.replication_factor,
                 }
                 engine = Music(**kwargs)
-                engine.create_keyspace(self.music_config.keyspace)
-                self.MUSIC = {'engine': engine, 'keyspace': self.music_config.keyspace}
-                self.listener_logger.debug('Storing in music on %s, keyspace %s' % (self.music_config.host, self.music_config.keyspace))
+                engine.create_keyspace(self.config.music.keyspace)
+                self.MUSIC = {'engine': engine, 'keyspace': self.config.music.keyspace}
+                self.listener_logger.debug('Storing in music on %s, keyspace %s' % (self.config.music.host, self.config.music.keyspace))
 
-            self.listener_logger.debug('Connecting to %s, with %s' % (self.config.host, self.config.username))
-            credentials = pika.PlainCredentials(self.config.username, self.config.password)
-            parameters = pika.ConnectionParameters(self.config.host, self.config.port, '/', credentials)
+            self.listener_logger.debug('Connecting to %s, with %s' % (self.config.messaging.host, self.config.messaging.username))
+            credentials = pika.PlainCredentials(self.config.messaging.username, self.config.messaging.password)
+            parameters = pika.ConnectionParameters(self.config.messaging.host, self.config.messaging.port, '/', credentials)
 
             connection = pika.BlockingConnection(parameters)
             channel = connection.channel()
 
             # Select the exchange we want our queue to connect to
-            exchange_name = self.config.exchange
-            exchange_type = self.config.exchange_type
-            auto_delete = self.config.auto_delete
+            exchange_name = self.config.events_listener.exchange
+            exchange_type = self.config.events_listener.exchange_type
+            auto_delete = self.config.events_listener.auto_delete
 
             # Use the binding key to select what type of messages you want
             # to receive. '#' is a wild card -- meaning receive all messages
@@ -78,7 +77,7 @@ class ListenerManager(threading.Thread):
 
             # Bind the queue to the selected exchange
             channel.queue_bind(exchange=exchange_name, queue=queue_name, routing_key=binding_key)
-            self.listener_logger.info('Channel is bound, listening on %s %s', self.config.host, self.config.exchange)
+            self.listener_logger.info('Channel is bound, listening on %s exchange %s', self.config.messaging.host, self.config.events_listener.exchange)
 
             # Start consuming messages
             channel.basic_consume(self.on_message, queue_name)
@@ -111,9 +110,9 @@ class ListenerManager(threading.Thread):
             message_obj = yaml.load(body)
             if 'oslo.message' in message_obj.keys():
                 message_obj = yaml.load(message_obj['oslo.message'])
-            if self.config.output_format == 'json':
+            if self.config.events_listener.output_format == 'json':
                 self.listener_logger.debug(json.dumps(message_obj, sort_keys=True, indent=2))
-            elif self.config.output_format == 'yaml':
+            elif self.config.events_listener.output_format == 'yaml':
                 self.listener_logger.debug(yaml.dump(message_obj))
             else:
                 self.listener_logger.debug(pprint.pformat(message_obj))
@@ -144,7 +143,7 @@ class ListenerManager(threading.Thread):
         '''Store message in Music'''
         timestamp = datetime.now().isoformat()
         args = json.dumps(message.get('args', None))
-        exchange = self.config.exchange
+        exchange = self.config.events_listener.exchange
         method = message.get('method', None)
 
         kwargs = {

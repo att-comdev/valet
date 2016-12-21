@@ -27,3 +27,7 @@ Valet responds to the challenges outlined above by enhancing OpenStack Nova sche
 * [OpenStack Heat Resource Plugins](https://github.com/att-comdev/valet/blob/master/valet_plugins/valet_plugins/heat/README.md): Heat resources
 * [Placement API](https://github.com/att-comdev/valet/blob/master/doc/valet_api.md): API requests/responses
 * [Using Postman with valet-api](https://github.com/att-comdev/valet/blob/master/valet/tests/api/README.md): Postman support
+
+## License:
+
+Valet is distributed under the terms of the Apache License, Version 2.0. The full terms and conditions of this license are detailed in the LICENSE file.

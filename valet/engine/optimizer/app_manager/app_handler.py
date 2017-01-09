@@ -26,59 +26,58 @@ class AppHandler(object):
 
         self.status = "success"
 
-    def add_app(self, _app_data):
+    def add_app(self, _app):
         self.apps.clear()
 
         app_topology = AppTopology(self.resource, self.logger)
 
-        for app in _app_data:
-            self.logger.debug("AppHandler: parse app")
+        self.logger.debug("AppHandler: parse app")
 
-            stack_id = None
-            if "stack_id" in app.keys():
-                stack_id = app["stack_id"]
-            else:
-                stack_id = "none"
+        stack_id = None
+        if "stack_id" in _app.keys():
+            stack_id = _app["stack_id"]
+        else:
+            stack_id = "none"
 
-            application_name = None
-            if "application_name" in app.keys():
-                application_name = app["application_name"]
-            else:
-                application_name = "none"
+        application_name = None
+        if "application_name" in _app.keys():
+            application_name = _app["application_name"]
+        else:
+            application_name = "none"
 
-            action = app["action"]
-            if action == "ping":
-                self.logger.debug("AppHandler: got ping")
-            elif action == "replan" or action == "migrate":
-                re_app = self._regenerate_app_topology(stack_id, app, app_topology, action)
-                if re_app is None:
-                    self.apps[stack_id] = None
-                    self.status = "cannot locate the original plan for stack = " + stack_id
-                    return None
+        action = _app["action"]
+        if action == "ping":
+            self.logger.debug("AppHandler: got ping")
+        elif action == "replan" or action == "migrate":
+            re_app = self._regenerate_app_topology(stack_id, _app, app_topology, action)
+            if re_app is None:
+                self.apps[stack_id] = None
+                self.status = "cannot locate the original plan for stack = " + stack_id
+                return None
 
-                if action == "replan":
-                    self.logger.debug("AppHandler: got replan: " + stack_id)
-                elif action == "migrate":
-                    self.logger.debug("AppHandler: got migration: " + stack_id)
+            if action == "replan":
+                self.logger.debug("AppHandler: got replan: " + stack_id)
+            elif action == "migrate":
+                self.logger.debug("AppHandler: got migration: " + stack_id)
 
-                app_id = app_topology.set_app_topology(re_app)
+            app_id = app_topology.set_app_topology(re_app)
 
-                if app_id is None:
-                    self.logger.error("AppHandler: " + app_topology.status)
-                    self.status = app_topology.status
-                    self.apps[stack_id] = None
-                    return None
-            else:
-                app_id = app_topology.set_app_topology(app)
+            if app_id is None:
+                self.logger.error("AppHandler: " + app_topology.status)
+                self.status = app_topology.status
+                self.apps[stack_id] = None
+                return None
+        else:
+            app_id = app_topology.set_app_topology(_app)
 
-                if app_id is None:
-                    self.logger.error("AppHandler: " + app_topology.status)
-                    self.status = app_topology.status
-                    self.apps[stack_id] = None
-                    return None
+            if app_id is None:
+                self.logger.error("AppHandler: " + app_topology.status)
+                self.status = app_topology.status
+                self.apps[stack_id] = None
+                return None
 
-            new_app = App(stack_id, application_name, action)
-            self.apps[stack_id] = new_app
+        new_app = App(stack_id, application_name, action)
+        self.apps[stack_id] = new_app
 
         return app_topology
 

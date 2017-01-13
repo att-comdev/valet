@@ -113,7 +113,6 @@ class ValetFilter(filters.BaseHostFilter):
         # TODO(JD): If we can't reach Valet at all, we may opt to fail
         # TODO(JD): all hosts depending on a TBD config flag.
 
-#         if not filter_properties.get(hints_key, {}).has_key(orch_id_key):
         if orch_id_key not in filter_properties.get(hints_key, {}):
             self._authorize()
             LOG.warn(_LW("Valet: Heat Stack Lifecycle Scheduler Hints not found. Performing ad-hoc placement."))

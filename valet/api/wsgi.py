@@ -42,8 +42,6 @@ if __name__ == '__main__':
     from wsgiref.simple_server import make_server  # disable=C0411,C0413
 
     # TODO(JD): At some point, it would be nice to use pecan_mount
-    # import pecan_mount
-    # HTTPD = make_server('', 8090, pecan_mount.tree)
     from valet.api.conf import register_conf, set_domain
     register_conf()
     set_domain()

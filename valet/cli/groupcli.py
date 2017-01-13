@@ -117,7 +117,6 @@ def cmd_details(args):
 
 
 def get_token(timeout, args):
-    # tenant_name = args.os_tenant_name if args.os_tenant_name else os.environ.get('OS_TENANT_NAME')
     tenant_name = args.os_tenant_name if args.os_tenant_name else CONF.identity.project_name
     auth_name = args.os_username if args.os_username else CONF.identity.username
     password = args.os_password if args.os_password else CONF.identity.password
@@ -145,7 +144,6 @@ def get_token(timeout, args):
         return resp.json()['access']['token']['id']
     except Exception as e:
         message = 'Failed in get_token'
-        # logger.log_exception(message, str(e))
         print(e)
         raise ConnectionError(message)
 

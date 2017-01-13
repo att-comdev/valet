@@ -18,9 +18,7 @@
 from datetime import datetime
 
 import iso8601
-# https://github.com/openstack/python-keystoneclient/blob/
-#         master/keystoneclient/v2_0/client.py
-# import keystoneauth1.exceptions
+
 from keystoneauth1.identity import v2
 from keystoneauth1 import session
 from keystoneclient.v2_0 import client

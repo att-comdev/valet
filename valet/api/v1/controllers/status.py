@@ -43,12 +43,10 @@ class StatusController(object):
         '''Ping each subsystem.'''
         ostro_response = StatusController._ping_ostro()
         # TODO(JD): Ping Music plus any others.
-        # music_response = StatusController._ping_music()
 
         response = {
             "status": {
                 "ostro": ostro_response,
-                # "music": music_response,
             }
         }
 

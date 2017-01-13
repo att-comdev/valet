@@ -16,7 +16,6 @@
 '''Populate command'''
 
 from pecan.commands.base import BaseCommand
-# from pecan import conf
 
 from valet.api.common.i18n import _
 from valet.api.conf import register_conf, set_domain
@@ -49,7 +48,6 @@ class PopulateCommand(BaseCommand):
             models.start()
 
             # FIXME: There's no create_all equivalent for Music.
-            # models.Base.metadata.create_all(conf.sqlalchemy.engine)
 
             # Valet
             Group.create_table()

@@ -161,7 +161,6 @@ class ValetAPIWrapper(object):
                 req = requests.get(url, headers=self.headers, timeout=timeout)
 
             # TODO(JD): Raise an exception IFF the scheduler can handle it
-            # req.raise_for_status()
 
             response = json.loads(req.text)
         except Exception:  # pylint: disable=W0702

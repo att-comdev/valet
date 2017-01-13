@@ -154,7 +154,6 @@ class HaValetThread (threading.Thread):
 
     def __init__(self, data, exit_event):
         threading.Thread.__init__(self)
-        # self.exitFlag = exit_event
         self.data = data
         self.log = None
 
@@ -168,7 +167,6 @@ class HaValetThread (threading.Thread):
         fqdn_list.append(this_node)
 
         # Read list of standby valet nodes and find us
-        # standby_list = []
         standby_list = self.data.get(STAND_BY_LIST, None)
 
         while not len(standby_list) is 0:            # loop until we find us
@@ -448,22 +446,7 @@ class HAValet(object):
         prepare_log(self, 'havalet')
         self.log.info('ha_valet v1.1 starting')
 
-        # parser = argparse.ArgumentParser()
-        # parser.add_argument('-p', '--process', help='process name to monitor', default='')
-        # parser.add_argument('-f', '--file', help='configuraion file', default=DEFAULT_CONF_FILE)
-        # args = parser.parse_args()
-
         conf_data = read_conf()
-
-        # if a specific process was asked for..
-        # remove all others
-        # if args.process is not '':
-        #     for key in conf_data.keys():
-        #         if key != args.process:
-        #             del conf_data[key]
-        #
-        #     if conf_data.get(args.process) is None:
-        #        print args.process, ' - process not found in conf.'
 
         if len(conf_data.keys()) is 0:
             self.log.warn('Processes list is empty - leaving.')

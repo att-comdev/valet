@@ -103,7 +103,6 @@ class SimCompute(object):
             flavor.mem_cap = self.config.base_flavor_mem * (a_num + 1)
             flavor.disk_cap = self.config.base_flavor_disk * (a_num + 1)
 
-            # flavor.extra_specs["availability_zone"] = "nova"
             flavor.extra_specs["cpu_allocation_ratio"] = "0.5"
 
             _flavors[flavor.name] = flavor

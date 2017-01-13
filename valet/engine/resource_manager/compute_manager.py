@@ -38,7 +38,6 @@ class ComputeManager(threading.Thread):
 
         self.logger = _logger
 
-        # self.auth = Authentication(_logger)
         self.admin_token = None
         self.project_token = None
 
@@ -92,10 +91,10 @@ class ComputeManager(threading.Thread):
 
             if triggered_host_updates is True and triggered_flavor_updates is True:
                 if self.resource.update_topology() is False:
-                    # TODO(GY): error in MUSIC. ignore?
+                    # TODO: error in MUSIC. ignore?
                     pass
             else:
-                # TODO(GY): error handling, e.g., 3 times failure then stop Ostro?
+                # TODO: error handling, e.g., 3 times failure then stop Ostro?
                 pass
         finally:
             self.data_lock.release()
@@ -103,22 +102,6 @@ class ComputeManager(threading.Thread):
         self.logger.info("ComputeManager: --- done compute_nodes status update ---")
 
         return True
-
-    # def _set_admin_token(self):
-    #     self.admin_token = self.auth.get_tenant_token(self.config)
-    #     if self.admin_token is None:
-    #         self.logger.error("ComputeManager: " + self.auth.status)
-    #         return False
-    #
-    #     return True
-
-    # def _set_project_token(self):
-    #     self.project_token = self.auth.get_project_token(self.config, self.admin_token)
-    #     if self.project_token is None:
-    #         self.logger.error("ComputeManager: " + self.auth.status)
-    #         return False
-    #
-    #     return True
 
     def set_hosts(self):
         hosts = {}

@@ -53,21 +53,6 @@ class Topology(object):
             if region_name not in _datacenter.region_code_list:
                 _datacenter.region_code_list.append(region_name)
 
-            '''
-            if status == "success":
-                if _datacenter.region_code != None:
-                    if _datacenter.region_code == "none":
-                        pass
-                    else:
-                        if _datacenter.region_code != region_name:
-                            _datacenter.region_code = "none"
-                else:
-                    _datacenter.region_code = region_name
-            else:
-                self.logger.warn(status + "  while parsing host_name (" + rhk + ")")
-                _datacenter.region_code = region_name
-            '''
-
             if rack_name not in _host_groups.keys():
                 host_group = HostGroup(rack_name)
                 host_group.host_type = "rack"

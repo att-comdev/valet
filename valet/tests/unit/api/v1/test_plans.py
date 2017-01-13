@@ -99,4 +99,4 @@ class TestPlans(ApiBase):
             self.plans_item_controller.index_put(**kwargs)
             self.validate_test("Ostro error:" in ApiBase.response)
 
-# TODO(YB): test_index_post, test_index_put needs to be written again
+# TODO: test_index_post, test_index_put needs to be written again

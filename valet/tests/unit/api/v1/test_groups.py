@@ -29,8 +29,6 @@ class TestGroups(ApiBase):
         super(TestGroups, self).setUp()
         self.tenant_id = "testprojectid"
 
-        # core.state = mock.MagicMock()
-
         # Testing class GroupsController
         self.groups_controller = GroupsController()
 

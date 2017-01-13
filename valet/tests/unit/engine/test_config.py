@@ -26,13 +26,6 @@ class TestConfig(Base):
         super(TestConfig, self).setUp()
         sys.argv = [sys.argv[0]]
 
-#     def test_simple_config(self):
-#         cfg.CONF.clear()
-#         config = Config()
-#         config_status = config.configure()
-#
-#         self.validate_test(config_status == "success")
-
     def test_unhappy_config_io(self):
         cfg.CONF.clear()
         try:

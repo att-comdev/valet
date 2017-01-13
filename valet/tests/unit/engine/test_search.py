@@ -30,5 +30,3 @@ class TestSearch(Base):
 
     def test_copy_resource_status(self):
         self.search.copy_resource_status(mock.MagicMock())
-
-#     def test_place_nodes(self):

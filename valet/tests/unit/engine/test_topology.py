@@ -53,14 +53,7 @@ class TestTopology(Base):
         self.validate_test(node_type is None)
         self.validate_test(status == "invalid number of identification fields = 1")
 
-#     def test_unhappy_topology_c_domain(self):
-#         (region, rack, node_type, status) = self.topo._set_layout_by_name("pdk15r05001.emea.att.com")
-#         self.validate_test(region == "none")
-#         self.validate_test(rack == "none")
-#         self.validate_test(node_type is None)
-#         self.validate_test(status == "invalid number of identification fields = 1")
-
-# TODO(GY): add validation to topology for region
+# TODO: add validation to topology for region
 
 
 class Config(object):

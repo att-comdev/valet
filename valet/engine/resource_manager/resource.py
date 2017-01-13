@@ -90,7 +90,6 @@ class Resource(object):
                 self.logger.debug("Resource.bootstrap_from_db: flavors loaded")
             else:
                 self.logger.error("Resource.bootstrap_from_db: fail loading flavors")
-                # return False
 
             switches = _resource_status.get("switches")
             if switches:
@@ -133,7 +132,6 @@ class Resource(object):
                 self.logger.debug("Resource.bootstrap_from_db: switch links loaded")
             else:
                 self.logger.error("Resource.bootstrap_from_db: fail loading switches")
-                # return False
 
             # storage_hosts
             hosts = _resource_status.get("hosts")
@@ -173,7 +171,6 @@ class Resource(object):
                     self.logger.debug("Resource.bootstrap_from_db: hosts loaded")
                 else:
                     self.logger.error("Resource.bootstrap_from_db: fail loading hosts")
-                    # return False
 
             host_groups = _resource_status.get("host_groups")
             if host_groups:
@@ -207,7 +204,6 @@ class Resource(object):
                     self.logger.debug("Resource.bootstrap_from_db: host_groups loaded")
                 else:
                     self.logger.error("Resource.bootstrap_from_db: fail loading host_groups")
-                    # return False
 
             dc = _resource_status.get("datacenter")
             if dc:
@@ -244,7 +240,6 @@ class Resource(object):
                     self.logger.debug("Resource.bootstrap_from_db: datacenter loaded")
                 else:
                     self.logger.error("Resource.bootstrap_from_db: fail loading datacenter")
-                    # return False
 
             hgs = _resource_status.get("host_groups")
             if hgs:

@@ -144,12 +144,9 @@ class Compute(object):
                     result_status_detail = self._get_vm_detail(vm_uuid, vm_detail)
 
                     if result_status_detail == "success":
-                        # if vm_detail[3] != "SHUTOFF":  # status == "ACTIVE" or "SUSPENDED"
                         vm_id = ("none", vm_detail[0], vm_uuid)
                         _hosts[hk].vm_list.append(vm_id)
 
-                        # _logical_groups[vm_detail[1]].vm_list.append(vm_id)
-                        # _logical_groups[vm_detail[1]].vms_per_host[hk].append(vm_id)
                     else:
                         error_status = result_status_detail
                         break
@@ -303,44 +300,3 @@ class Compute(object):
             return "Error while getting flavor extra spec"
 
         return "success"
-
-
-# Unit test
-'''
-if __name__ == '__main__':
-    config = Config()
-    config_status = config.configure()
-    if config_status != "success":
-        print "Error while configuring Ostro: " + config_status
-        sys.exit(2)
-
-    auth = Authentication()
-
-    admin_token = auth.get_tenant_token(config)
-    if admin_token is None:
-        print "Error while getting admin_token"
-        sys.exit(2)
-    else:
-        print "admin_token=",admin_token
-
-    project_token = auth.get_project_token(config, admin_token)
-    if project_token is None:
-        print "Error while getting project_token"
-        sys.exit(2)
-    else:
-        print "project_token=",project_token
-
-    c = Compute(config, admin_token, project_token)
-
-    hosts = {}
-    logical_groups = {}
-    flavors = {}
-
-    #c._set_availability_zones(hosts, logical_groups)
-    #c._set_aggregates(None, logical_groups)
-    #c._set_placed_vms(hosts, logical_groups)
-    #c._get_vms_of_host("qos101", None)
-    #c._get_vm_detail("20b2890b-81bb-4942-94bf-c6bee29630bb", None)
-    c._set_resources(hosts)
-    #c._set_flavors(flavors)
-'''

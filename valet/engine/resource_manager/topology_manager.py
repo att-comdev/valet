@@ -83,7 +83,7 @@ class TopologyManager(threading.Thread):
         try:
             if self.set_topology() is True:
                 if self.resource.update_topology() is False:
-                    # TODO(GY): ignore?
+                    # TODO: ignore?
                     pass
         finally:
             self.data_lock.release()

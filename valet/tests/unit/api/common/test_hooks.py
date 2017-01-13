@@ -36,8 +36,6 @@ class TestHooks(ApiBase):
         mock_conf.messaging.timeout = 1
 
         self.message_notification_hook.after(State)
-        # print (dir(mock_conf))
-        # self.validate_test(mock_conf.messaging.notifier.info.called)
 
         self.validate_test(mock_threading.Thread.called)
         mock_threading.Thread.assert_called_once_with(target=mock_conf.messaging.notifier.info, args=(
@@ -58,7 +56,6 @@ class TestHooks(ApiBase):
         mock_bob.exc.HTTPOk = ApiBase
         self.message_notification_hook.after(State)
 
-        # self.validate_test(mock_conf.messaging.notifier.error.called)
         self.validate_test(mock_threading.Thread.called)
 
         mock_threading.Thread.assert_called_once_with(target=mock_conf.messaging.notifier.error, args=(

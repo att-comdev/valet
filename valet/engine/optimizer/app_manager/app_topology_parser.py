@@ -599,22 +599,6 @@ class Parser(object):
                             if tvk == voll.node.uuid:
                                 self._add_io_link(voll, _vgroup)
                                 break
-            # elif isinstance(svg, Volume):
-            #     for vml in svg.vm_list:
-            #         found = False
-            #         for _, tvgroup in _vgroups.iteritems():
-            #             containing_vg_uuid = self._exist_in_subgroups(vml.node.uuid, tvgroup)
-            #             if containing_vg_uuid is not None:
-            #                 found = True
-            #                 if containing_vg_uuid != _vgroup.uuid and \
-            #                    self._exist_in_subgroups(containing_vg_uuid, _vgroup) is None:
-            #                     self._add_io_link(vml, _vgroup)
-            #                 break
-            #         if found is False:
-            #             for tvk in _vms.keys():
-            #                 if tvk == vml.node.uuid:
-            #                     self._add_io_link(vml, _vgroup)
-            #                     break
             elif isinstance(svg, VGroup):
                 self._set_vgroup_links(svg, _vgroups, _vms, _volumes)
 

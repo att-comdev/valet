@@ -40,7 +40,7 @@ class ValetPlanTest(base.BaseValetTest):
 
     def _get_resource_property(self):
         properties = {}
-        # TODO(kr336r): Use tempest to get/create flavour, image, networks
+        # TODO: Use tempest to get/create flavour, image, networks
         # Is it required really ???
         properties['flavor'] = "m1.small"
         properties['image'] = "ubuntu_1204"

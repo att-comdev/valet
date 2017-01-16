@@ -243,8 +243,7 @@ class Ostro(object):
                     break
 
         for vm_id in vm_id_list:
-            if vm_id[2] != "none":   # if physical_uuid != 'none'
-                vm_list.append(vm_id[2])
+            vm_list.append(vm_id[2])
 
         return vm_list
 
@@ -372,8 +371,7 @@ class Ostro(object):
 
                         if len(vm_info) == 0:
                             '''
-                            h_uuid is None or "none" because vm is not created by stack
-                            or, stack not found because vm is created by the other stack
+                            stack not found because vm is created by the other stack
                             '''
                             self.logger.warn("Ostro: no vm_info found in app placement record")
                             self._add_vm_to_host(e.uuid, orch_id[0], e.host, e.vcpus, e.mem, e.local_disk)

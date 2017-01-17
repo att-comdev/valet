@@ -250,8 +250,3 @@ $ sudo pip uninstall ostro-listener
 
 Remove previously made configuration file changes, files, and other
 settings as needed.
-
-Contact
--------
-
-Joe D'Andrea <jdandrea@research.att.com>

@@ -104,8 +104,3 @@ Examples
         start_command="sudo python @ALLEGRO_WSGI_DIR@/wsgi.py &"
         stop_command="sudo pkill -f wsgi"
         test_command="netstat -nap  | grep %s | grep LISTEN | wc -l | exit $(awk \'{print $1}\')" % (port)
-
-Contact
--------
-
-Joe D'Andrea <jdandrea@research.att.com>

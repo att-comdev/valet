@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-'''OsloMessage Database Model'''
+"""OsloMessage Database Model"""
 
 # This is based on Music models used in Valet.
 
@@ -32,7 +32,7 @@ class OsloMessage(object):
 
     @classmethod
     def schema(cls):
-        '''Return schema.'''
+        """Return schema."""
         schema = {
             'timestamp': 'text',
             'args': 'text',
@@ -50,7 +50,7 @@ class OsloMessage(object):
         return self.timestamp
 
     def insert(self):
-        '''Insert row.'''
+        """Insert row."""
         keyspace = self._database.get('keyspace')
         kwargs = {
             'keyspace': keyspace,

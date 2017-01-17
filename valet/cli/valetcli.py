@@ -26,8 +26,10 @@ class Cli(object):
         self.parser = None
 
     def create_parser(self):
-        self.parser = argparse.ArgumentParser(prog='valet', description='VALET REST CLI')
-        service_sub = self.parser.add_subparsers(dest='service', metavar='<service>')
+        self.parser = argparse.ArgumentParser(prog='valet',
+                                              description='VALET REST CLI')
+        service_sub = self.parser.add_subparsers(dest='service',
+                                                 metavar='<service>')
         self.submod = {'group': groupcli}
         for s in self.submod.values():
             s.add_to_parser(service_sub)

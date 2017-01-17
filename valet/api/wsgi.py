@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-'''WSGI Wrapper'''
+"""WSGI Wrapper"""
 
 from common.i18n import _
 import os
@@ -45,7 +45,8 @@ if __name__ == '__main__':
     from valet.api.conf import register_conf, set_domain
     register_conf()
     set_domain()
-    HTTPD = make_server('', 8090, deploy(config_file('/var/www/valet/config.py')))
+    HTTPD = make_server('', 8090,
+                        deploy(config_file('/var/www/valet/config.py')))
     print(_("Serving HTTP on port 8090..."))
 
     # Respond to requests until process is killed

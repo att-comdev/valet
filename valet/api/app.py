@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-'''Application'''
+"""Application"""
 
 from pecan.deploy import deploy
 from pecan import make_app

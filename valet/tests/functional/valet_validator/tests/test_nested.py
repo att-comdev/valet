@@ -32,7 +32,7 @@ LOG = logging.getLogger(__name__)
 class TestNested(FunctionalTestCase):
 
     def setUp(self):
-        ''' Adding configuration and logging mechanism '''
+        """ Adding configuration and logging mechanism """
         super(TestNested, self).setUp()
         self.init_template(CONF.test_nested)
 

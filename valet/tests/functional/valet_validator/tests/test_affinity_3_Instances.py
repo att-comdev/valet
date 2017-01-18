@@ -31,7 +31,7 @@ LOG = logging.getLogger(__name__)
 class TestAffinity_3(FunctionalTestCase):
 
     def setUp(self):
-        ''' Adding configuration and logging mechanism '''
+        """ Adding configuration and logging mechanism """
         super(TestAffinity_3, self).setUp()
         self.init_template(CONF.test_affinity_3)
 

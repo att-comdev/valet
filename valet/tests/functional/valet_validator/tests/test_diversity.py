@@ -32,7 +32,7 @@ LOG = logging.getLogger(__name__)
 class TestDiversity(FunctionalTestCase):
 
     def setUp(self):
-        ''' Initiating template '''
+        """ Initiating template """
         super(TestDiversity, self).setUp()
         self.init_template(CONF.test_diversity)
 

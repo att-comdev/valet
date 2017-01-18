@@ -58,18 +58,18 @@ class TestPlansItemController(object):
     def test_get_index_single_plan(self, session):
         Plan(PLAN_NAME, STACK_ID)
         session.commit()
-        result = session.app.get('/v1/plans/%s/' % (STACK_ID))
+        result = session.app.get('/v1/plans/%s/' % STACK_ID)
         assert result.status_int == 200
 
     def test_get_index_no_plan(self, session):
-        result = session.app.get('/v1/plans/%s/' % (STACK_ID),
+        result = session.app.get('/v1/plans/%s/' % STACK_ID,
                                  expect_errors=True)
         assert result.status_int == 404
 
     def test_get_index_single_plan_data(self, session):
         Plan(PLAN_NAME, STACK_ID)
         session.commit()
-        result = session.app.get('/v1/plans/%s/' % (STACK_ID))
+        result = session.app.get('/v1/plans/%s/' % STACK_ID)
         json = result.json
         assert is_valid_uuid4(json['id'])
         assert json['name'] == PLAN_NAME
@@ -89,7 +89,7 @@ class TestPlansItemController(object):
             location='foo_2'
         )
         session.commit()
-        result = session.app.get('/v1/plans/%s/' % (STACK_ID))
+        result = session.app.get('/v1/plans/%s/' % STACK_ID)
         json = result.json
         assert is_valid_uuid4(json['id'])
         assert json['name'] == PLAN_NAME

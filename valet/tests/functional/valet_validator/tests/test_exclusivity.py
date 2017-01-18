@@ -32,7 +32,7 @@ LOG = logging.getLogger(__name__)
 class TestExclusivity(FunctionalTestCase):
 
     def setUp(self):
-        ''' Initiating template '''
+        """ Initiating template """
         super(TestExclusivity, self).setUp()
         self.init_template(CONF.test_exclusivity)
 

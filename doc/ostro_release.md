@@ -38,5 +38,3 @@ Valet1.0/Ostro features
 -   Runtime update via the Oslo message bus or RO Working on this.
 
 -   Migration tip Working on this.
-
-

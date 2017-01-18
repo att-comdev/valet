@@ -26,7 +26,8 @@ class Daemon(object):
     Usage: subclass the Daemon class and override the run() method
     """
 
-    def __init__(self, priority, pidfile, logger, stdin='/dev/null', stdout='/dev/null', stderr='/dev/null'):
+    def __init__(self, priority, pidfile, logger, stdin='/dev/null',
+                 stdout='/dev/null', stderr='/dev/null'):
         self.stdin = stdin
         self.stdout = stdout
         self.stderr = stderr
@@ -47,7 +48,8 @@ class Daemon(object):
                 sys.exit(0)
         except OSError as e:
             self.logger.error("Daemon error at step1: " + e.strerror)
-            sys.stderr.write("fork #1 failed: %d (%s)\n" % (e.errno, e.strerror))
+            sys.stderr.write("fork #1 failed: %d (%s)\n" %
+                             (e.errno, e.strerror))
             sys.exit(1)
 
         # decouple from parent environment
@@ -63,7 +65,8 @@ class Daemon(object):
                 sys.exit(0)
         except OSError as e:
             self.logger.error("Daemon error at step2: " + e.strerror)
-            sys.stderr.write("fork #2 failed: %d (%s)\n" % (e.errno, e.strerror))
+            sys.stderr.write("fork #2 failed: %d (%s)\n" %
+                             (e.errno, e.strerror))
             sys.exit(1)
 
         # redirect standard file descriptors
@@ -85,7 +88,7 @@ class Daemon(object):
         os.remove(self.pidfile)
 
     def getpid(self):
-        """returns the content of pidfile or None."""
+        """ Returns the content of pidfile or None. """
         try:
             pf = file(self.pidfile, 'r')
             pid = int(pf.read().strip())
@@ -108,7 +111,7 @@ class Daemon(object):
             return True
 
     def start(self):
-        """Start the daemon"""
+        """ Start the daemon """
         # Check for a pidfile to see if the daemon already runs
         pid = self.getpid()
 
@@ -122,7 +125,7 @@ class Daemon(object):
         self.run()
 
     def stop(self):
-        """Stop the daemon"""
+        """ Stop the daemon """
         # Get the pid from the pidfile
         pid = self.getpid()
 
@@ -146,7 +149,7 @@ class Daemon(object):
                 sys.exit(1)
 
     def restart(self):
-        """Restart the daemon"""
+        """ Restart the daemon """
         self.stop()
         self.start()
 
@@ -161,7 +164,8 @@ class Daemon(object):
             message = "status: pidfile %s exist. Daemon is running\n"
             status = self.priority
         else:
-            message = "status: pidfile %s does not exist. Daemon is not running\n"
+            message = "status: pidfile %s does not exist. Daemon is not " \
+                      "running\n"
 
         sys.stderr.write(message % self.pidfile)
         return status
@@ -169,5 +173,6 @@ class Daemon(object):
     def run(self):
         """ You should override this method when you subclass Daemon.
 
-        It will be called after the process has been daemonized by start() or restart().
+        It will be called after the process has been daemonized by start()
+        or restart().
         """

@@ -27,12 +27,15 @@ class Topology(object):
         self.logger = _logger
 
     # Triggered by rhosts change
-    def set_topology(self, _datacenter, _host_groups, _hosts, _rhosts, _switches):
-        result_status = self._set_host_topology(_datacenter, _host_groups, _hosts, _rhosts)
+    def set_topology(self, _datacenter, _host_groups, _hosts, _rhosts,
+                     _switches):
+        result_status = self._set_host_topology(_datacenter, _host_groups,
+                                                _hosts, _rhosts)
         if result_status != "success":
             return result_status
 
-        result_status = self._set_network_topology(_datacenter, _host_groups, _hosts, _switches)
+        result_status = self._set_network_topology(_datacenter, _host_groups,
+                                                   _hosts, _switches)
         if result_status != "success":
             return result_status
 
@@ -80,7 +83,8 @@ class Topology(object):
         return "success"
 
     # NOTE: this is just muck-ups
-    def _set_network_topology(self, _datacenter, _host_groups, _hosts, _switches):
+    def _set_network_topology(self, _datacenter, _host_groups, _hosts,
+                              _switches):
         root_switch = Switch(_datacenter.name)
         root_switch.switch_type = "root"
 
@@ -134,7 +138,8 @@ class Topology(object):
             if index >= self.config.num_of_region_chars:
                 if not isdigit(c):
                     if index == self.config.num_of_region_chars:
-                        status = "invalid region name = " + _host_name[:index] + c
+                        status = "invalid region name = " + \
+                                 _host_name[:index] + c
                         validated_name = False
                         break
 
@@ -152,7 +157,8 @@ class Topology(object):
                         validated_name = False
                         break
 
-                    if end_of_rack_index == 0 and index > (end_of_region_index + 1):
+                    if end_of_rack_index == 0 and \
+                                    index > (end_of_region_index + 1):
                         end_of_rack_index = index
                         num_of_fields += 1
 
@@ -179,7 +185,8 @@ class Topology(object):
             validated_name = False
 
         if num_of_fields != 3:
-            status = "invalid number of identification fields = " + str(num_of_fields)
+            status = "invalid number of identification fields = " + \
+                     str(num_of_fields)
             validated_name = False
 
         if validated_name is False:

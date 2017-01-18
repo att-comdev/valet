@@ -10,19 +10,10 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-
-#################################################################################################################
-# Author: Gueyoung Jung
-# Contact: gjung@research.att.com
-# Version 2.0.2: Feb. 9, 2016
-#
-# Functions
 # - Simulate datacenter configurations (i.e., layout, cabling)
-#
-#################################################################################################################
 
-
-from valet.engine.resource_manager.resource_base import HostGroup, Host, Switch, Link
+from valet.engine.resource_manager.resource_base \
+    import HostGroup, Host, Switch, Link
 
 
 class SimTopology(object):
@@ -71,7 +62,8 @@ class SimTopology(object):
                     ps = None
                     if (s_num % 2) == 0:
                         if (s_num + 1) < self.config.num_of_spine_switches:
-                            ps = _switches[root_switch.name + "s" + str(s_num + 1)]
+                            ps = _switches[root_switch.name + "s" +
+                                           str(s_num + 1)]
                     else:
                         ps = _switches[root_switch.name + "s" + str(s_num - 1)]
                     if ps is not None:
@@ -87,7 +79,8 @@ class SimTopology(object):
             parent_switch_list = []
             if self.config.num_of_spine_switches > 0:
                 for s_num in range(0, self.config.num_of_spine_switches):
-                    parent_switch_list.append(_switches[root_switch.name + "s" + str(s_num)])
+                    parent_switch_list.append(_switches[root_switch.name +
+                                                        "s" + str(s_num)])
             else:
                 parent_switch_list.append(_switches[root_switch.name])
 

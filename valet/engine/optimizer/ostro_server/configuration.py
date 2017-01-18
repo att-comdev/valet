@@ -181,17 +181,21 @@ class Config(object):
 
         self.network_control_url = CONF.engine.network_control_url
 
-        self.default_cpu_allocation_ratio = CONF.engine.default_cpu_allocation_ratio
+        self.default_cpu_allocation_ratio = \
+            CONF.engine.default_cpu_allocation_ratio
 
-        self.default_ram_allocation_ratio = CONF.engine.default_ram_allocation_ratio
+        self.default_ram_allocation_ratio = \
+            CONF.engine.default_ram_allocation_ratio
 
-        self.default_disk_allocation_ratio = CONF.engine.default_disk_allocation_ratio
+        self.default_disk_allocation_ratio = \
+            CONF.engine.default_disk_allocation_ratio
 
         self.static_cpu_standby_ratio = CONF.engine.static_cpu_standby_ratio
 
         self.static_mem_standby_ratio = CONF.engine.static_mem_standby_ratio
 
-        self.static_local_disk_standby_ratio = CONF.engine.static_local_disk_standby_ratio
+        self.static_local_disk_standby_ratio = \
+            CONF.engine.static_local_disk_standby_ratio
 
         self.topology_trigger_time = CONF.engine.topology_trigger_time
 

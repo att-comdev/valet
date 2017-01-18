@@ -56,7 +56,7 @@ class Compute(object):
         return "success"
 
     def _get_nova_client(self):
-        '''Returns a nova client'''
+        """ Returns a nova client """
         self.nova = nova_client.Client(VERSION,
                                        CONF.identity.username,
                                        CONF.identity.password,
@@ -86,7 +86,8 @@ class Compute(object):
                         if host.name not in logical_group.vms_per_host.keys():
                             logical_group.vms_per_host[host.name] = []
 
-                        self.logger.info("adding Host LogicalGroup: " + str(host.__dict__))
+                        self.logger.info("adding Host LogicalGroup: " +
+                                         str(host.__dict__))
 
                         _hosts[host.name] = host
 
@@ -114,7 +115,8 @@ class Compute(object):
                     metadata[mk] = a.metadata.get(mk)
                 aggregate.metadata = metadata
 
-                self.logger.info("adding aggregate LogicalGroup: " + str(aggregate.__dict__))
+                self.logger.info("adding aggregate LogicalGroup: " +
+                                 str(aggregate.__dict__))
 
                 _logical_groups[aggregate.name] = aggregate
 
@@ -141,7 +143,8 @@ class Compute(object):
             if result_status == "success":
                 for vm_uuid in vm_uuid_list:
                     vm_detail = []  # (vm_name, az, metadata, status)
-                    result_status_detail = self._get_vm_detail(vm_uuid, vm_detail)
+                    result_status_detail = self._get_vm_detail(vm_uuid,
+                                                               vm_detail)
 
                     if result_status_detail == "success":
                         vm_id = ("none", vm_detail[0], vm_uuid)
@@ -162,7 +165,8 @@ class Compute(object):
             return error_status
 
     def _get_vms_of_host(self, _hk, _vm_list):
-        hypervisor_list = self.nova.hypervisors.search(hypervisor_match=_hk, servers=True)
+        hypervisor_list = self.nova.hypervisors.search(hypervisor_match=_hk,
+                                                       servers=True)
 
         try:
             for hv in hypervisor_list:
@@ -260,7 +264,8 @@ class Compute(object):
 
                 ephemeral_gb = 0.0
                 if hasattr(f, "OS-FLV-EXT-DATA:ephemeral"):
-                    ephemeral_gb = float(getattr(f, "OS-FLV-EXT-DATA:ephemeral"))
+                    ephemeral_gb = float(getattr(f,
+                                                 "OS-FLV-EXT-DATA:ephemeral"))
 
                 swap_mb = 0.0
                 if hasattr(f, "swap"):

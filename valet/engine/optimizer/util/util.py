@@ -85,7 +85,8 @@ def adjust_json_string(_data):
 
 
 def init_logger(config):
-    log_formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
+    log_formatter = logging.Formatter("%(asctime)s - %(levelname)s - "
+                                      "%(message)s")
     log_handler = RotatingFileHandler(config.logging_loc + config.logger_name,
                                       mode='a',
                                       maxBytes=config.max_main_log_size,
@@ -94,7 +95,8 @@ def init_logger(config):
                                       delay=0)
     log_handler.setFormatter(log_formatter)
     logger = logging.getLogger(config.logger_name)
-    logger.setLevel(logging.DEBUG if config.logging_level == "debug" else logging.INFO)
+    logger.setLevel(logging.DEBUG if config.logging_level == "debug"
+                    else logging.INFO)
     logger.addHandler(log_handler)
 
     return logger

@@ -18,7 +18,7 @@ import sys
 import traceback
 from valet.engine.optimizer.ostro.ostro import Ostro
 from valet.engine.optimizer.ostro_server.configuration import Config
-from valet.engine.optimizer.ostro_server.daemon import Daemon   # implemented for Python v2.7
+from valet.engine.optimizer.ostro_server.daemon import Daemon
 from valet.engine.optimizer.util.util import init_logger
 
 
@@ -50,7 +50,7 @@ def verify_dirs(list_of_dirs):
 
 
 if __name__ == "__main__":
-    ''' configuration '''
+    """ configuration """
     # Configuration
     try:
         config = Config()
@@ -59,11 +59,12 @@ if __name__ == "__main__":
             print(config_status)
             sys.exit(2)
 
-        ''' verify directories '''
-        dirs_list = [config.logging_loc, config.resource_log_loc, config.app_log_loc, os.path.dirname(config.process)]
+        """ verify directories """
+        dirs_list = [config.logging_loc, config.resource_log_loc,
+                     config.app_log_loc, os.path.dirname(config.process)]
         verify_dirs(dirs_list)
 
-        ''' logger '''
+        """ logger """
         logger = init_logger(config)
 
         # Start daemon process

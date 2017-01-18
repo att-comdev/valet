@@ -249,7 +249,3 @@ $ sudo pip uninstall valet-api
 ```
 
 Remove previously made configuration file changes, OpenStack user accounts, and other settings as needed.
-
-## Contact
-
-Joe D'Andrea <jdandrea@research.att.com>

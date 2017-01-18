@@ -21,4 +21,5 @@ class TestExclusivity(ScenarioTestCase):
 
     def test_exclusivity(self):
         logger = GeneralLogger("test_exclusivity")
-        self.run_test(logger, "exclusivity", "/templates/exclusivity_basic_2_instances.yml")
+        self.run_test(logger, "exclusivity",
+                      "/templates/exclusivity_basic_2_instances.yml")

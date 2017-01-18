@@ -21,7 +21,7 @@ from tempest_lib.common import rest_client
 
 class ValetClient(rest_client.RestClient):
 
-    """Tempest REST client for Valet.
+    """ Tempest REST client for Valet.
 
     Implements
     1. create, delete, update, list and show groups

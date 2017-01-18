@@ -21,4 +21,5 @@ class TestDiversity(ScenarioTestCase):
 
     def test_diversity(self):
         logger = GeneralLogger("test_diversity")
-        self.run_test(logger, "diversity", "/templates/diversity_basic_2_instances.yml")
+        self.run_test(logger, "diversity",
+                      "/templates/diversity_basic_2_instances.yml")

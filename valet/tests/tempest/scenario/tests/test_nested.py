@@ -21,4 +21,5 @@ class TestNested(ScenarioTestCase):
 
     def test_nested(self):
         logger = GeneralLogger("test_nested")
-        self.run_test(logger, "affinity_diversity", "/templates/diversity_between_2_affinity.yml")
+        self.run_test(logger, "affinity_diversity",
+                      "/templates/diversity_between_2_affinity.yml")

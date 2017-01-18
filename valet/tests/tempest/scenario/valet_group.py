@@ -31,7 +31,8 @@ class ValetGroup(object):
 
     def create_group(self, group_name, group_type):
         grp_data = {"name": group_name, "type": group_type}
-        return requests.post(self.groups_url, data=json.dumps(grp_data), headers=self.headers)
+        return requests.post(self.groups_url, data=json.dumps(grp_data),
+                             headers=self.headers)
 
     def get_list_groups(self):
         list_response = requests.get(self.groups_url, headers=self.headers)
@@ -66,17 +67,18 @@ class ValetGroup(object):
         return requests.delete(url, headers=self.headers)
 
     def get_group_id_and_members(self, group_name, group_type="exclusivity"):
-        ''' Checks if group name exists, if not - creates it
+        """ Checks if group name exists, if not - creates it
 
         returns group's id and members list
-        '''
+        """
         group_details = self.check_group_exists(group_name)
 
         try:
             if group_details is None:
                 GeneralLogger.log_info("Creating group")
                 create_response = self.create_group(group_name, group_type)
-                return create_response.json()["id"], create_response.json()["members"]
+                return create_response.json()["id"], \
+                       create_response.json()["members"]
             else:
                 GeneralLogger.log_info("Group exists")
 
@@ -85,17 +87,18 @@ class ValetGroup(object):
             GeneralLogger.log_error(traceback.format_exc())
 
     def add_group_member(self, group_details):
-        ''' Checks if member exists in group, if not - adds it '''
+        """ Checks if member exists in group, if not - adds it """
         # group_details - group id, group members
         try:
             if Auth.get_project_id() not in group_details[1]:
                 GeneralLogger.log_info("Adding member to group")
                 self.update_group_members(group_details[0])
         except Exception:
-            GeneralLogger.log_error("Failed to add group member", traceback.format_exc())
+            GeneralLogger.log_error("Failed to add group member",
+                                    traceback.format_exc())
 
     def check_group_exists(self, group_name):
-        ''' Checks if group exists in group list, if not returns None '''
+        """ Checks if group exists in group list, if not returns None """
         for grp in self.get_list_groups():
             if grp["name"] == group_name:
                 return grp["id"], grp["members"]
@@ -105,7 +108,10 @@ class ValetGroup(object):
     def delete_all_groups(self):
         DELETED = 204
         for group in self.get_list_groups():
-            codes = [self.delete_all_group_member(group["id"]).status_code, self.delete_group(group["id"]).status_code]
+            codes = [
+                self.delete_all_group_member(group["id"]).status_code,
+                self.delete_group(group["id"]).status_code
+            ]
 
             res = filter(lambda a: a != DELETED, codes)
             if res:

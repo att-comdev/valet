@@ -23,7 +23,7 @@ TEMPLATE_RES = "resources"
 
 
 class TemplateResources(object):
-    ''' Heat template parser '''
+    """ Heat template parser """
     def __init__(self, template):
         self.instances = []
         self.groups = {}
@@ -70,7 +70,8 @@ class Instance(object):
 
     def get_ins(self):
         return("type: %s, name: %s, image: %s, flavor: %s, resource_name: %s "
-               % (self.type, self.name, self.image, self.flavor, self.resource_name))
+               % (self.type, self.name, self.image, self.flavor,
+                  self.resource_name))
 
 
 class Group(object):
@@ -87,7 +88,8 @@ class Group(object):
             template_property = doc[TEMPLATE_RES][group_name]["properties"]
 
             self.group_type = template_property["group_type"]
-            self.group_name = template_property["group_name"] if "group_name" in template_property else None
+            self.group_name = template_property["group_name"] if \
+                "group_name" in template_property else None
             self.level = template_property["level"]
             for res in template_property[TEMPLATE_RES]:
                 self.group_resources.append(res["get_resource"])

@@ -21,7 +21,7 @@ from valet.tests.tempest.api import base
 
 
 class ValetGroupsTest(base.BaseValetTest):
-    """Here we test the basic group operations of Valet Groups"""
+    """ Here we test the basic group operations of Valet Groups """
 
     @classmethod
     def setup_clients(cls):

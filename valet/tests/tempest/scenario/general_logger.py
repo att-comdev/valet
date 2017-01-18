@@ -36,15 +36,21 @@ class GeneralLogger(object):
         self.test_name = name
 
     def log_info(self, msg):
-        LOG.info("%s %s - %s %s %s" % (COLORS["L_PURPLE"], self.test_name, COLORS["L_GREEN"], msg, COLORS["WHITE"]))
+        LOG.info("%s %s - %s %s %s" % (COLORS["L_PURPLE"], self.test_name,
+                                       COLORS["L_GREEN"], msg, COLORS["WHITE"]))
 
     def log_error(self, msg, trc_back=None):
-        LOG.error("%s %s - %s %s %s" % (COLORS["L_PURPLE"], self.test_name, COLORS["L_RED"], msg, COLORS["WHITE"]))
+        LOG.error("%s %s - %s %s %s" % (COLORS["L_PURPLE"], self.test_name,
+                                        COLORS["L_RED"], msg, COLORS["WHITE"]))
         if trc_back:
-            LOG.error("%s %s - %s %s %s" % (COLORS["L_PURPLE"], self.test_name, COLORS["L_RED"], trc_back, COLORS["WHITE"]))
+            LOG.error("%s %s - %s %s %s" % (COLORS["L_PURPLE"], self.test_name,
+                                            COLORS["L_RED"], trc_back,
+                                            COLORS["WHITE"]))
 
     def log_debug(self, msg):
-        LOG.debug("%s %s - %s %s %s" % (COLORS["L_PURPLE"], self.test_name, COLORS["L_BLUE"], msg, COLORS["WHITE"]))
+        LOG.debug("%s %s - %s %s %s" % (COLORS["L_PURPLE"], self.test_name,
+                                        COLORS["L_BLUE"], msg, COLORS["WHITE"]))
 
     def log_group(self, msg):
-        LOG.info("%s %s - %s %s %s" % (COLORS["L_PURPLE"], self.test_name, COLORS["Yellow"], msg, COLORS["WHITE"]))
+        LOG.info("%s %s - %s %s %s" % (COLORS["L_PURPLE"], self.test_name,
+                                       COLORS["Yellow"], msg, COLORS["WHITE"]))

@@ -75,7 +75,9 @@ class ValetPlanTest(base.BaseValetTest):
         plan_name = resp['plan']['name']
         for key, value in resp['plan']['placements'].iteritems():
             stack_and_plan['resource_id'] = key
-        location = resp['plan']['placements'][stack_and_plan['resource_id']]['location']
+        location = resp['plan']['placements'][
+            stack_and_plan['resource_id']
+        ]['location']
         stack_and_plan['stack_id'] = stack_id
         stack_and_plan['plan_id'] = plan_id
         stack_and_plan['name'] = plan_name

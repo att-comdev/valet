@@ -24,10 +24,11 @@ CONF = config.CONF
 class Analyzer(object):
 
     def __init__(self, logger, stack_id, heat, nova):
-        ''' initializing the analyzer - connecting to nova '''
+        """ Initializing the analyzer - connecting to Nova """
         self.heat_client = heat
         self.nova_client = nova
-        self.possible_topdir = os.path.normpath(os.path.join(os.path.abspath(__file__), os.pardir))
+        self.possible_topdir = os.path.normpath(os.path.join(
+            os.path.abspath(__file__), os.pardir))
         self.stack_identifier = stack_id
         self.log = logger
         self.resource_name = {}
@@ -35,7 +36,7 @@ class Analyzer(object):
         self.group_instance_name = {}
 
     def check(self, resources):
-        ''' Checking if all instances are on the Appropriate hosts and racks '''
+        """ Checking if all instances are on the Appropriate hosts and racks """
         self.log.log_info("Starting to check instances location")
         result = True
 
@@ -59,7 +60,8 @@ class Analyzer(object):
                     result = result and fn(instances, level)
 
         except Exception as ex:
-            self.log.log_error("Exception at method check: %s" % ex, traceback.format_exc())
+            self.log.log_error("Exception at method check: %s" % ex,
+                               traceback.format_exc())
             result = False
 
         return result
@@ -68,9 +70,12 @@ class Analyzer(object):
         ins_group = defaultdict(list)
 
         for grp in resources.groups.keys():
-            self.group_instance_name[grp] = resources.groups[grp].group_resources
-            resources.groups[grp].group_resources.append(resources.groups[grp].level)
-            ins_group[resources.groups[grp].group_type].append(resources.groups[grp].group_resources)
+            self.group_instance_name[grp] = \
+                resources.groups[grp].group_resources
+            resources.groups[grp].group_resources.append(
+                resources.groups[grp].level)
+            ins_group[resources.groups[grp].group_type].append(
+                resources.groups[grp].group_resources)
 
         # replacing group for it's instances
         ins_group = self.organize(ins_group)
@@ -85,8 +90,10 @@ class Analyzer(object):
         servers_list = self.nova_client.list_servers()
 
         for i in range(len(servers_list["servers"])):
-            server = self.nova_client.show_server(servers_list["servers"][i]["id"])
-            self.instance_on_server[servers_list["servers"][i]["name"]] = server["server"]["OS-EXT-SRV-ATTR:host"]
+            server = \
+                self.nova_client.show_server(servers_list["servers"][i]["id"])
+            self.instance_on_server[servers_list["servers"][i]["name"]] = \
+                server["server"]["OS-EXT-SRV-ATTR:host"]
 
     def get_instance_name(self, res_name):
         return self.resource_name[res_name]
@@ -96,7 +103,8 @@ class Analyzer(object):
 
         if len(self.instance_on_server) == 0:
             self.init_servers_list()
-            self.log.log_info("instance_on_server: %s" % self.instance_on_server)
+            self.log.log_info("instance_on_server: %s" %
+                              self.instance_on_server)
 
         for res in res_name:
             name = self.get_instance_name(res)
@@ -111,16 +119,21 @@ class Analyzer(object):
 
         try:
             for h in hosts_list:
-                if self.compare_host(self.get_host_or_rack(level, h), self.get_host_or_rack(level, hosts_list[0])) is False:
+                if self.compare_host(
+                        self.get_host_or_rack(level, h),
+                        self.get_host_or_rack(level, hosts_list[0])) is False:
                     return False
             return True
 
         except Exception as ex:
-            self.log.log_error("Exception at method are_the_same: %s" % ex, traceback.format_exc())
+            self.log.log_error("Exception at method are_the_same: %s" %
+                               ex, traceback.format_exc())
             return False
 
     def are_different(self, res_name, level):
-        ''' Checking if all hosts (and racks) are different for all instances '''
+        """ Checking if all hosts (and racks) are
+        different for all instances
+        """
         self.log.log_info("are_different")
         diction = {}
         hosts_list = self.get_instance_host(res_name)
@@ -128,12 +141,14 @@ class Analyzer(object):
 
         try:
             for h in hosts_list:
-                if self.is_already_exists(diction, self.get_host_or_rack(level, h)):
+                if self.is_already_exists(diction, self.get_host_or_rack(level,
+                                                                         h)):
                     return False
             return True
 
         except Exception as ex:
-            self.log.log_error("Exception at method are_all_hosts_different: %s" % ex, traceback.format_exc())
+            self.log.log_error("Exception at method are_all_hosts_different: %s"
+                               % ex, traceback.format_exc())
             return False
 
     def are_we_alone(self, ins_for_group, level):
@@ -142,7 +157,8 @@ class Analyzer(object):
 
         instances = self.instance_on_server.keys()
         if level == "rack":
-            instances = self.get_rack_instances(set(self.instance_on_server.values()))
+            instances = self.get_rack_instances(set(
+                self.instance_on_server.values()))
 
         # instance_on_server should be all the instances on the rack
         if len(instances) < 1:
@@ -167,10 +183,11 @@ class Analyzer(object):
         return ins_group
 
     def get_group_instances(self, resources, group_ins):
-        ''' gets the instance object according to the group_ins
+        """ gets the instance object according to the group_ins
 
-        group_ins - the group_resources name of the instances belong to this group (['my-instance-1', 'my-instance-2'])
-        '''
+        group_ins - the group_resources name of the instances belong to this
+        group (['my-instance-1', 'my-instance-2'])
+        """
         ins_for_group = []
         try:
             for instance in resources.instances:

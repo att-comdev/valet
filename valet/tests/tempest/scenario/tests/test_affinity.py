@@ -21,4 +21,5 @@ class TestAffinity(ScenarioTestCase):
 
     def test_affinity(self):
         logger = GeneralLogger("test_affinity")
-        self.run_test(logger, "affinity", "/templates/affinity_basic_2_instances.yml")
+        self.run_test(logger, "affinity",
+                      "/templates/affinity_basic_2_instances.yml")

@@ -38,12 +38,16 @@ class TestHooks(ApiBase):
         self.message_notification_hook.after(State)
 
         self.validate_test(mock_threading.Thread.called)
-        mock_threading.Thread.assert_called_once_with(target=mock_conf.messaging.notifier.info, args=(
-            {},
-            'api', {'response': {'body': State.response.body, 'status_code': State.response.status_code},
-                    'context': State.request.context,
-                    'request': {'path': 'test_path', 'method': 'test_method', 'body': None}}
-        ), )
+        mock_threading.Thread.assert_called_once_with(
+            target=mock_conf.messaging.notifier.info, args=(
+                {},
+                'api', {'response': {'body': State.response.body,
+                                     'status_code': State.response.status_code},
+                        'context': State.request.context,
+                        'request': {'path': 'test_path',
+                                    'method': 'test_method',
+                                    'body': None}}
+            ), )
 
     @mock.patch.object(hooks, 'threading')
     @mock.patch.object(hooks, 'conf')
@@ -58,12 +62,16 @@ class TestHooks(ApiBase):
 
         self.validate_test(mock_threading.Thread.called)
 
-        mock_threading.Thread.assert_called_once_with(target=mock_conf.messaging.notifier.error, args=(
-            {},
-            'api', {'response': {'body': State.response.body, 'status_code': State.response.status_code},
-                    'context': State.request.context,
-                    'request': {'path': 'test_path', 'method': 'test_method', 'body': None}}
-        ), )
+        mock_threading.Thread.assert_called_once_with(
+            target=mock_conf.messaging.notifier.error, args=(
+                {},
+                'api', {'response': {'body': State.response.body,
+                                     'status_code': State.response.status_code},
+                        'context': State.request.context,
+                        'request': {'path': 'test_path',
+                                    'method': 'test_method',
+                                    'body': None}}
+            ), )
 
 
 class State(object):

@@ -22,7 +22,7 @@ from valet.tests.unit.api.v1.api_base import ApiBase
 
 
 class TestPlans(ApiBase):
-    '''Unit tests for valet.api.v1.controllers.placements '''
+    """Unit tests for valet.api.v1.controllers.placements """
 
     def setUp(self):
         super(TestPlans, self).setUp()
@@ -42,14 +42,17 @@ class TestPlans(ApiBase):
             self.validate_test("'str' object has no attribute 'id'" in e)
         self.validate_test("Plan not found" in ApiBase.response)
 
-        mock_filter.return_value = Results([Plan("test_name", "stack_id", _insert=False)])
+        mock_filter.return_value = Results([Plan("test_name",
+                                                 "stack_id",
+                                                 _insert=False)])
 
         return PlansItemController("uuid4")
 
     def test_allow(self):
         self.validate_test(self.plans_controller.allow() == 'GET,POST')
 
-        self.validate_test(self.plans_item_controller.allow() == 'GET,PUT,DELETE')
+        self.validate_test(
+            self.plans_item_controller.allow() == 'GET,PUT,DELETE')
 
     @mock.patch.object(plans, 'error', ApiBase.mock_error)
     @mock.patch.object(plans, 'request')
@@ -93,7 +96,9 @@ class TestPlans(ApiBase):
     @mock.patch.object(plans, 'error', ApiBase.mock_error)
     @mock.patch.object(Query, 'filter_by', mock.MagicMock)
     def test_index_put(self):
-        kwargs = {'action': "migrate", 'excluded_hosts': [], "resources": ["ggg", "fff"]}
+        kwargs = {'action': "migrate",
+                  'excluded_hosts': [],
+                  "resources": ["ggg", "fff"]}
 
         with mock.patch('valet.api.v1.controllers.plans.Ostro'):
             self.plans_item_controller.index_put(**kwargs)

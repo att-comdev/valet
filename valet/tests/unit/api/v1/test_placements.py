@@ -22,7 +22,7 @@ from valet.tests.unit.api.v1.api_base import ApiBase
 
 
 class TestPlacements(ApiBase):
-    '''Unit tests for valet.api.v1.controllers.placements '''
+    """Unit tests for valet.api.v1.controllers.placements """
 
     def setUp(self):
         super(TestPlacements, self).setUp()
@@ -43,14 +43,19 @@ class TestPlacements(ApiBase):
         self.validate_test("Placement not found" in ApiBase.response)
 
         mock_filter.return_value = Results([
-            Placement("test_name", "test_orchestration_id", plan=Plan("plan_name", "stack_id", _insert=False), location="test_location", _insert=False)])
+            Placement("test_name",
+                      "test_orchestration_id",
+                      plan=Plan("plan_name", "stack_id", _insert=False),
+                      location="test_location",
+                      _insert=False)])
 
         return PlacementsItemController("uuid4")
 
     def test_allow(self):
         self.validate_test(self.placements_controller.allow() == 'GET')
 
-        self.validate_test(self.placements_item_controller.allow() == 'GET,POST,DELETE')
+        self.validate_test(
+            self.placements_item_controller.allow() == 'GET,POST,DELETE')
 
     @mock.patch.object(placements, 'error', ApiBase.mock_error)
     @mock.patch.object(placements, 'request')
@@ -83,7 +88,8 @@ class TestPlacements(ApiBase):
         response = self.placements_item_controller.index_get()
 
         self.validate_test("test_name" in response['placement'].name)
-        self.validate_test("test_orchestration_id" in response['placement'].orchestration_id)
+        self.validate_test("test_orchestration_id" in
+                           response['placement'].orchestration_id)
         self.validate_test("plan_name" in response['placement'].plan.name)
         self.validate_test("stack_id" in response['placement'].plan.stack_id)
 
@@ -95,7 +101,8 @@ class TestPlacements(ApiBase):
         self.placements_item_controller.index_post(**kwargs)
         self.validate_test(placements.response.status == 201)
 
-        with mock.patch('valet.api.v1.controllers.placements.Ostro') as mock_ostro:
+        with mock.patch('valet.api.v1.controllers.placements.Ostro') \
+                as mock_ostro:
             kwargs = {'resource_id': "resource_id", 'locations': [""]}
             self.placements_item_controller.index_post(**kwargs)
             self.validate_test("Ostro error:" in ApiBase.response)
@@ -103,7 +110,8 @@ class TestPlacements(ApiBase):
             mock_plcment.return_value = None
 
             status_type = mock.MagicMock()
-            status_type.response = {"status": {"type": "ok"}, "resources": {"iterkeys": []}}
+            status_type.response = {"status": {"type": "ok"},
+                                    "resources": {"iterkeys": []}}
             mock_ostro.return_value = status_type
 
             self.placements_item_controller.index_post(**kwargs)

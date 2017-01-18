@@ -39,45 +39,57 @@ class TestOstroHelper(ApiBase):
         kwargs = {'tenant_id': 'test_tenant_id',
                   'args': {'stack_id': 'test_stack_id',
                            'plan_name': 'test_plan_name',
-                           'resources': {'test_resource': {'Type': 'ATT::Valet::GroupAssignment',
-                                                           'Properties': {'resources': ['my-instance-1', 'my-instance-2'],
-                                                                          'group_type': 'affinity',
-                                                                          'level': 'host'},
-                                                           'name': 'test-affinity-group3'}}}}
+                           'resources': {'test_resource': {
+                               'Type': 'ATT::Valet::GroupAssignment',
+                                       'Properties': {
+                                           'resources': ['my-instance-1',
+                                                         'my-instance-2'],
+                                           'group_type': 'affinity',
+                                           'level': 'host'},
+                                       'name': 'test-affinity-group3'}}}}
         self.validate_test(self.ostro.build_request(**kwargs))
 
         kwargs = {'tenant_id': 'test_tenant_id',
                   'args': {'stack_id': 'test_stack_id',
                            'plan_name': 'test_plan_name',
-                           'resources': {'test_resource': {'Type': 'ATT::Valet::GroupAssignment',
-                                                           'Properties': {'resources': ['my-instance-1', 'my-instance-2'],
-                                                                          'group_type': 'affinity',
-                                                                          'group_name': "test_group_name",
-                                                                          'level': 'host'},
-                                                           'name': 'test-affinity-group3'}}}}
+                           'resources': {'test_resource': {
+                               'Type': 'ATT::Valet::GroupAssignment',
+                                       'Properties': {
+                                           'resources': ['my-instance-1',
+                                                         'my-instance-2'],
+                                           'group_type': 'affinity',
+                                           'group_name': "test_group_name",
+                                           'level': 'host'},
+                                       'name': 'test-affinity-group3'}}}}
         self.validate_test(not self.ostro.build_request(**kwargs))
         self.validate_test("conflict" in self.ostro.error_uri)
 
         kwargs = {'tenant_id': 'test_tenant_id',
                   'args': {'stack_id': 'test_stack_id',
                            'plan_name': 'test_plan_name',
-                           'resources': {'test_resource': {'Type': 'ATT::Valet::GroupAssignment',
-                                                           'Properties': {'resources': ['my-instance-1', 'my-instance-2'],
-                                                                          'group_type': 'exclusivity',
-                                                                          'level': 'host'},
-                                                           'name': 'test-affinity-group3'}}}}
+                           'resources': {'test_resource': {
+                               'Type': 'ATT::Valet::GroupAssignment',
+                                       'Properties': {
+                                           'resources': ['my-instance-1',
+                                                         'my-instance-2'],
+                                           'group_type': 'exclusivity',
+                                           'level': 'host'},
+                                       'name': 'test-affinity-group3'}}}}
         self.validate_test(not self.ostro.build_request(**kwargs))
         self.validate_test("invalid" in self.ostro.error_uri)
 
         kwargs = {'tenant_id': 'test_tenant_id',
                   'args': {'stack_id': 'test_stack_id',
                            'plan_name': 'test_plan_name',
-                           'resources': {'test_resource': {'Type': 'ATT::Valet::GroupAssignment',
-                                                           'Properties': {'resources': ['my-instance-1', 'my-instance-2'],
-                                                                          'group_type': 'exclusivity',
-                                                                          'group_name': "test_group_name",
-                                                                          'level': 'host'},
-                                                           'name': 'test-affinity-group3'}}}}
+                           'resources': {'test_resource': {
+                               'Type': 'ATT::Valet::GroupAssignment',
+                                       'Properties': {
+                                           'resources': ['my-instance-1',
+                                                         'my-instance-2'],
+                                           'group_type': 'exclusivity',
+                                           'group_name': "test_group_name",
+                                           'level': 'host'},
+                                       'name': 'test-affinity-group3'}}}}
         self.validate_test(not self.ostro.build_request(**kwargs))
         self.validate_test("not_found" in self.ostro.error_uri)
 
@@ -85,12 +97,16 @@ class TestOstroHelper(ApiBase):
                   'args': {'stack_id': 'test_stack_id',
                            'plan_name': 'test_plan_name',
                            'timeout': '60 sec',
-                           'resources': {'ca039d18-1976-4e13-b083-edb12b806e25': {'Type': 'ATT::Valet::GroupAssignment',
-                                                                                  'Properties': {'resources': ['my-instance-1', 'my-instance-2'],
-                                                                                                 'group_type': 'non_type',
-                                                                                                 'group_name': "test_group_name",
-                                                                                                 'level': 'host'},
-                                                                                  'name': 'test-affinity-group3'}}}}
+                           'resources': {
+                               'ca039d18-1976-4e13-b083-edb12b806e25': {
+                                   'Type': 'ATT::Valet::GroupAssignment',
+                                           'Properties': {
+                                               'resources': ['my-instance-1',
+                                                             'my-instance-2'],
+                                               'group_type': 'non_type',
+                                               'group_name': "test_group_name",
+                                               'level': 'host'},
+                                           'name': 'test-affinity-group3'}}}}
         self.validate_test(not self.ostro.build_request(**kwargs))
         self.validate_test("invalid" in self.ostro.error_uri)
 
@@ -102,7 +118,8 @@ class TestOstroHelper(ApiBase):
         self.validate_test(self.ostro.request['stack_id'] == "test_stack_id")
 
     def test_is_request_serviceable(self):
-        self.ostro.request = {'resources': {"bla": {'type': "OS::Nova::Server"}}}
+        self.ostro.request = {
+            'resources': {"bla": {'type': "OS::Nova::Server"}}}
         self.validate_test(self.ostro.is_request_serviceable())
 
         self.ostro.request = {}
@@ -117,8 +134,12 @@ class TestOstroHelper(ApiBase):
 
         self.validate_test(self.ostro.request['stack_id'] == "test_stack_id")
         self.validate_test(self.ostro.request['locations'] == "test_locations")
-        self.validate_test(self.ostro.request['orchestration_id'] == "test_orchestration_id")
-        self.validate_test(self.ostro.request['exclusions'] == "test_exclusions")
+
+        self.validate_test(
+            self.ostro.request['orchestration_id'] == "test_orchestration_id")
+
+        self.validate_test(
+            self.ostro.request['exclusions'] == "test_exclusions")
 
     def test_migrate(self):
         kwargs = {'args': {'stack_id': 'test_stack_id',
@@ -127,8 +148,12 @@ class TestOstroHelper(ApiBase):
         self.ostro.migrate(**kwargs)
 
         self.validate_test(self.ostro.request['stack_id'] == "test_stack_id")
-        self.validate_test(self.ostro.request['excluded_hosts'] == "test_excluded_hosts")
-        self.validate_test(self.ostro.request['orchestration_id'] == "test_orchestration_id")
+
+        self.validate_test(
+            self.ostro.request['excluded_hosts'] == "test_excluded_hosts")
+
+        self.validate_test(
+            self.ostro.request['orchestration_id'] == "test_orchestration_id")
 
     @mock.patch.object(helper, 'uuid')
     def test_query(self, mock_uuid):
@@ -139,7 +164,9 @@ class TestOstroHelper(ApiBase):
 
         self.validate_test(self.ostro.request['stack_id'] == "test_stack_id")
         self.validate_test(self.ostro.request['type'] == "test_type")
-        self.validate_test(self.ostro.request['parameters'] == "test_parameters")
+
+        self.validate_test(
+            self.ostro.request['parameters'] == "test_parameters")
 
     @mock.patch.object(models, 'PlacementRequest', mock.MagicMock)
     @mock.patch.object(models, 'Query', mock.MagicMock)

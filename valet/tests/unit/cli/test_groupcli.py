@@ -21,7 +21,7 @@ from valet.tests.base import Base
 
 
 class TestGroupcli(Base):
-    ''' Unit tests for valet.valetcli '''
+    """ Unit tests for valet.valetcli """
 
     def setUp(self):
         super(TestGroupcli, self).setUp()

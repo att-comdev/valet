@@ -20,7 +20,7 @@ from valet.tests.unit.api.v1.api_base import ApiBase
 
 
 class TestPlacement(ApiBase):
-    '''Unit tests for valet.api.v1.controllers.placements '''
+    """Unit tests for valet.api.v1.controllers.placements """
 
     def setUp(self):
         super(TestPlacement, self).setUp()
@@ -30,7 +30,11 @@ class TestPlacement(ApiBase):
     @mock.patch.object(Base, 'insert')
     def init_Placement(self, mock_insert):
         mock_insert.return_value = None
-        return Placement("test_name", "test_orchestration_id", plan=Plan("plan_name", "stack_id", _insert=False), location="test_location", _insert=False)
+        return Placement("test_name",
+                         "test_orchestration_id",
+                         plan=Plan("plan_name", "stack_id", _insert=False),
+                         location="test_location",
+                         _insert=False)
 
     def test__repr__(self):
         self.validate_test("test_name" in self.placement.__repr__())

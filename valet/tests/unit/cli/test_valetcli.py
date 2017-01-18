@@ -19,7 +19,7 @@ from valet.tests.base import Base
 
 
 class TestValetcli(Base):
-    ''' Unit tests for valet.valetcli '''
+    """ Unit tests for valet.valetcli """
 
     def setUp(self):
         super(TestValetcli, self).setUp()
@@ -40,5 +40,7 @@ class TestValetcli(Base):
         cli.logic()
 
         self.validate_test(len(cli.submod.mock_calls) == 2)
-        self.validate_test("call.__getitem__('group')" in str(cli.submod.mock_calls[0]))
-        self.validate_test("call.__getitem__().run" in str(cli.submod.mock_calls[1]))
+        self.validate_test("call.__getitem__('group')" in
+                           str(cli.submod.mock_calls[0]))
+        self.validate_test("call.__getitem__().run" in
+                           str(cli.submod.mock_calls[1]))

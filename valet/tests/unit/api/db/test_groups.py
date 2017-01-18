@@ -20,7 +20,7 @@ from valet.tests.unit.api.v1.api_base import ApiBase
 
 
 class TestGroups(ApiBase):
-    '''Unit tests for valet.api.v1.controllers.placements '''
+    """Unit tests for valet.api.v1.controllers.placements """
 
     def setUp(self):
         super(TestGroups, self).setUp()

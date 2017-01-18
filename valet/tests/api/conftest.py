@@ -60,8 +60,10 @@ def connection(app, request):
     print("=" * 80)
     print("CREATING TEMPORARY DATABASE FOR TESTS")
     print("=" * 80)
-    subprocess.call(['mysqladmin', '-f', '-uroot', '-ppassword', 'drop', DBNAME])
-    subprocess.call(['mysqladmin', '-f', '-uroot', '-ppassword', 'create', DBNAME])
+    subprocess.call(['mysqladmin', '-f', '-uroot', '-ppassword', 'drop',
+                     DBNAME])
+    subprocess.call(['mysqladmin', '-f', '-uroot', '-ppassword', 'create',
+                     DBNAME])
 
     # Bind and create the database tables
     _db.clear()
@@ -137,7 +139,8 @@ def session(connection, request):
 
 
 class TestApp(object):
-    """ A controller test starts a database transaction and creates a fake WSGI app. """
+    """ A controller test starts a database transaction
+    and creates a fake WSGI app. """
 
     __headers__ = {}
 

@@ -24,17 +24,18 @@ MIN_TOKEN_LIFE_SECONDS = 120
 
 
 class Auth(object):
-    ''' Singleton class for authentication token '''
+    """ Singleton class for authentication token """
     auth = None
     session = None
 
     @staticmethod
     def _init():
         if Auth.is_auth_invalid():
-                Auth.auth = identity.Password(auth_url=CONF.auth.OS_AUTH_URL_WITH_VERSION,
-                                              username=CONF.auth.OS_USERNAME,
-                                              password=CONF.auth.OS_PASSWORD,
-                                              tenant_name=CONF.auth.OS_TENANT_NAME)
+                Auth.auth = identity.Password(
+                    auth_url=CONF.auth.OS_AUTH_URL_WITH_VERSION,
+                    username=CONF.auth.OS_USERNAME,
+                    password=CONF.auth.OS_PASSWORD,
+                    tenant_name=CONF.auth.OS_TENANT_NAME)
                 Auth.session = session.Session(auth=Auth.auth)
 
     @staticmethod
@@ -53,8 +54,10 @@ class Auth(object):
 
     @staticmethod
     def get_project_id():
-        return Auth.get_password_plugin().get_project_id(Auth.get_auth_session())
+        return Auth.get_password_plugin().get_project_id(
+            Auth.get_auth_session())
 
     @staticmethod
     def is_auth_invalid():
-        return Auth.auth is None or Auth.auth.get_auth_ref(Auth.session).will_expire_soon(CONF.auth.TOKEN_EXPIRATION)
+        return Auth.auth is None or Auth.auth.get_auth_ref(
+            Auth.session).will_expire_soon(CONF.auth.TOKEN_EXPIRATION)

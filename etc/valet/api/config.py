@@ -94,8 +94,9 @@ ostro = {
 
 messaging = {
     'config': {
-        'transport_url': 'rabbit://' + CONF.messaging.username + ':' + CONF.messaging.password +
-        '@' + CONF.messaging.host + ':' + str(CONF.messaging.port) + '/'
+        'transport_url': 'rabbit://' + CONF.messaging.username + ':' +
+        CONF.messaging.password + '@' + CONF.messaging.host + ':' +
+        str(CONF.messaging.port) + '/'
     }
 }
 

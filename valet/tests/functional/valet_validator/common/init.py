@@ -45,7 +45,8 @@ COLORS = \
 
 opts_auth = \
     [
-        cfg.StrOpt('OS_AUTH_URL_WITH_VERSION', default='http://controller:5000/v2.0'),
+        cfg.StrOpt('OS_AUTH_URL_WITH_VERSION',
+                   default='http://controller:5000/v2.0'),
         cfg.StrOpt('OS_USERNAME', default="addddmin"),
         cfg.StrOpt('OS_PASSWORD', default="qwer4321"),
         cfg.StrOpt('OS_TENANT_NAME', default="demo"),
@@ -94,9 +95,12 @@ def prepare(CONF):
             _initialized = True
 
         # Adding config file
-            possible_topdir = os.path.normpath(os.path.join(os.path.abspath(__file__), os.pardir, os.pardir, os.pardir))
+            possible_topdir = os.path.normpath(
+                os.path.join(os.path.abspath(__file__), os.pardir,
+                             os.pardir, os.pardir))
             conf_file = os.path.join(possible_topdir, 'etc', DOMAIN + '.cfg')
-            CONF([], project=DOMAIN, default_config_files=[conf_file] or None, validate_default_values=True)
+            CONF([], project=DOMAIN, default_config_files=[conf_file] or None,
+                 validate_default_values=True)
 
             logging.setup(CONF, DOMAIN)
 

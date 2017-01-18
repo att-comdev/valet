@@ -20,7 +20,8 @@ import traceback
 
 from valet.engine.optimizer.app_manager.app_topology_base import LEVELS
 from valet.engine.optimizer.util import util as util
-from valet.engine.resource_manager.resource_base import Datacenter, HostGroup, Host, LogicalGroup
+from valet.engine.resource_manager.resource_base \
+    import Datacenter, HostGroup, Host, LogicalGroup
 from valet.engine.resource_manager.resource_base import Flavor, Switch, Link
 
 
@@ -32,21 +33,21 @@ class Resource(object):
         self.config = _config
         self.logger = _logger
 
-        ''' resource data '''
+        """ resource data """
         self.datacenter = Datacenter(self.config.datacenter_name)
         self.host_groups = {}
         self.hosts = {}
         self.switches = {}
         self.storage_hosts = {}
 
-        ''' metadata '''
+        """ metadata """
         self.logical_groups = {}
         self.flavors = {}
 
         self.current_timestamp = 0
         self.last_log_index = 0
 
-        ''' resource status aggregation '''
+        """ resource status aggregation """
         self.CPU_avail = 0
         self.mem_avail = 0
         self.local_disk_avail = 0
@@ -69,9 +70,11 @@ class Resource(object):
                     self.logical_groups[lgk] = logical_group
 
             if len(self.logical_groups) > 0:
-                self.logger.debug("Resource.bootstrap_from_db: logical_groups loaded")
+                self.logger.debug("Resource.bootstrap_from_db: logical_groups "
+                                  "loaded")
             else:
-                self.logger.warn("Resource.bootstrap_from_db: no logical_groups")
+                self.logger.warn("Resource.bootstrap_from_db: no "
+                                 "logical_groups")
 
             flavors = _resource_status.get("flavors")
             if flavors:
@@ -89,7 +92,8 @@ class Resource(object):
             if len(self.flavors) > 0:
                 self.logger.debug("Resource.bootstrap_from_db: flavors loaded")
             else:
-                self.logger.error("Resource.bootstrap_from_db: fail loading flavors")
+                self.logger.error("Resource.bootstrap_from_db: fail loading "
+                                  "flavors")
 
             switches = _resource_status.get("switches")
             if switches:
@@ -129,9 +133,11 @@ class Resource(object):
 
                     switch.peer_links = peer_links
 
-                self.logger.debug("Resource.bootstrap_from_db: switch links loaded")
+                self.logger.debug("Resource.bootstrap_from_db: switch links "
+                                  "loaded")
             else:
-                self.logger.error("Resource.bootstrap_from_db: fail loading switches")
+                self.logger.error("Resource.bootstrap_from_db: fail loading "
+                                  "switches")
 
             # storage_hosts
             hosts = _resource_status.get("hosts")
@@ -168,9 +174,11 @@ class Resource(object):
                     self.hosts[hk] = host
 
                 if len(self.hosts) > 0:
-                    self.logger.debug("Resource.bootstrap_from_db: hosts loaded")
+                    self.logger.debug("Resource.bootstrap_from_db: hosts "
+                                      "loaded")
                 else:
-                    self.logger.error("Resource.bootstrap_from_db: fail loading hosts")
+                    self.logger.error("Resource.bootstrap_from_db: fail "
+                                      "loading hosts")
 
             host_groups = _resource_status.get("host_groups")
             if host_groups:
@@ -185,7 +193,8 @@ class Resource(object):
                     host_group.original_mem_cap = hg.get("original_mem")
                     host_group.avail_mem_cap = hg.get("avail_mem")
                     host_group.local_disk_cap = hg.get("local_disk")
-                    host_group.original_local_disk_cap = hg.get("original_local_disk")
+                    host_group.original_local_disk_cap = \
+                        hg.get("original_local_disk")
                     host_group.avail_local_disk_cap = hg.get("avail_local_disk")
                     host_group.vm_list = hg.get("vm_list")
                     host_group.volume_list = hg.get("volume_list", [])
@@ -201,9 +210,11 @@ class Resource(object):
                     self.host_groups[hgk] = host_group
 
                 if len(self.host_groups) > 0:
-                    self.logger.debug("Resource.bootstrap_from_db: host_groups loaded")
+                    self.logger.debug("Resource.bootstrap_from_db: host_groups "
+                                      "loaded")
                 else:
-                    self.logger.error("Resource.bootstrap_from_db: fail loading host_groups")
+                    self.logger.error("Resource.bootstrap_from_db: fail "
+                                      "loading host_groups")
 
             dc = _resource_status.get("datacenter")
             if dc:
@@ -217,7 +228,8 @@ class Resource(object):
                 self.datacenter.original_mem_cap = dc.get("original_mem")
                 self.datacenter.avail_mem_cap = dc.get("avail_mem")
                 self.datacenter.local_disk_cap = dc.get("local_disk")
-                self.datacenter.original_local_disk_cap = dc.get("original_local_disk")
+                self.datacenter.original_local_disk_cap = \
+                    dc.get("original_local_disk")
                 self.datacenter.avail_local_disk_cap = dc.get("avail_local_disk")
                 self.datacenter.vm_list = dc.get("vm_list")
                 self.datacenter.volume_list = dc.get("volume_list", [])
@@ -237,9 +249,11 @@ class Resource(object):
                         self.datacenter.resources[ck] = self.hosts[ck]
 
                 if len(self.datacenter.resources) > 0:
-                    self.logger.debug("Resource.bootstrap_from_db: datacenter loaded")
+                    self.logger.debug("Resource.bootstrap_from_db: datacenter "
+                                      "loaded")
                 else:
-                    self.logger.error("Resource.bootstrap_from_db: fail loading datacenter")
+                    self.logger.error("Resource.bootstrap_from_db: fail "
+                                      "loading datacenter")
 
             hgs = _resource_status.get("host_groups")
             if hgs:
@@ -258,7 +272,8 @@ class Resource(object):
                         elif ck in self.host_groups.keys():
                             host_group.child_resources[ck] = self.host_groups[ck]
 
-                self.logger.debug("Resource.bootstrap_from_db: host_groups'layout loaded")
+                self.logger.debug("Resource.bootstrap_from_db: "
+                                  "host_groups'layout loaded")
 
             hs = _resource_status.get("hosts")
             if hs:
@@ -271,16 +286,19 @@ class Resource(object):
                     elif pk in self.host_groups.keys():
                         host.host_group = self.host_groups[pk]
 
-                self.logger.debug("Resource.bootstrap_from_db: hosts'layout loaded")
+                self.logger.debug("Resource.bootstrap_from_db: "
+                                  "hosts'layout loaded")
 
             self._update_compute_avail()
             self._update_storage_avail()
             self._update_nw_bandwidth_avail()
 
-            self.logger.debug("Resource.bootstrap_from_db: resource availability updated")
+            self.logger.debug("Resource.bootstrap_from_db: "
+                              "resource availability updated")
 
         except Exception:
-            self.logger.error("Resource.bootstrap_from_db - FAILED:" + traceback.format_exc())
+            self.logger.error("Resource.bootstrap_from_db - "
+                              "FAILED:" + traceback.format_exc())
 
         return True
 
@@ -304,7 +322,8 @@ class Resource(object):
     def _update_topology(self):
         for level in LEVELS:
             for _, host_group in self.host_groups.iteritems():
-                if host_group.host_type == level and host_group.check_availability() is True:
+                if host_group.host_type == level and \
+                                host_group.check_availability() is True:
                     if host_group.last_update > self.current_timestamp:
                         self._update_host_group_topology(host_group)
 
@@ -326,7 +345,8 @@ class Resource(object):
                 _host_group.original_mem_cap += host.original_mem_cap
                 _host_group.avail_mem_cap += host.avail_mem_cap
                 _host_group.local_disk_cap += host.local_disk_cap
-                _host_group.original_local_disk_cap += host.original_local_disk_cap
+                _host_group.original_local_disk_cap += \
+                    host.original_local_disk_cap
                 _host_group.avail_local_disk_cap += host.avail_local_disk_cap
 
                 for shk, storage_host in host.storages.iteritems():
@@ -362,8 +382,10 @@ class Resource(object):
                 self.datacenter.original_mem_cap += resource.original_mem_cap
                 self.datacenter.avail_mem_cap += resource.avail_mem_cap
                 self.datacenter.local_disk_cap += resource.local_disk_cap
-                self.datacenter.original_local_disk_cap += resource.original_local_disk_cap
-                self.datacenter.avail_local_disk_cap += resource.avail_local_disk_cap
+                self.datacenter.original_local_disk_cap += \
+                    resource.original_local_disk_cap
+                self.datacenter.avail_local_disk_cap += \
+                    resource.avail_local_disk_cap
 
                 for shk, storage_host in resource.storages.iteritems():
                     if storage_host.status == "enabled":
@@ -413,7 +435,8 @@ class Resource(object):
                     for sk, s in h.switches.iteritems():
                         if s.status == "enabled":
                             for ulk, ul in s.up_links.iteritems():
-                                avail_nw_bandwidth_list.append(ul.avail_nw_bandwidth)
+                                avail_nw_bandwidth_list.append(
+                                    ul.avail_nw_bandwidth)
                     self.nw_bandwidth_avail += min(avail_nw_bandwidth_list)
         elif level == "spine":
             for _, hg in self.host_groups.iteritems():
@@ -422,7 +445,8 @@ class Resource(object):
                     for _, s in hg.switches.iteritems():
                         if s.status == "enabled":
                             for _, ul in s.up_links.iteritems():
-                                avail_nw_bandwidth_list.append(ul.avail_nw_bandwidth)
+                                avail_nw_bandwidth_list.append(
+                                    ul.avail_nw_bandwidth)
                             # NOTE: peer links?
                     self.nw_bandwidth_avail += min(avail_nw_bandwidth_list)
 
@@ -466,7 +490,8 @@ class Resource(object):
                 last_update_time = s.last_update
 
         for hk, host in self.hosts.iteritems():
-            if host.last_update > self.current_timestamp or host.last_link_update > self.current_timestamp:
+            if host.last_update > self.current_timestamp or \
+                            host.last_link_update > self.current_timestamp:
                 host_updates[hk] = host.get_json_info()
 
                 if host.last_update > self.current_timestamp:
@@ -493,11 +518,10 @@ class Resource(object):
             if self.datacenter.last_link_update > self.current_timestamp:
                 last_update_time = self.datacenter.last_link_update
 
-        (resource_logfile, last_index, mode) = util.get_last_logfile(self.config.resource_log_loc,
-                                                                     self.config.max_log_size,
-                                                                     self.config.max_num_of_logs,
-                                                                     self.datacenter.name,
-                                                                     self.last_log_index)
+        (resource_logfile, last_index, mode) = util.get_last_logfile(
+            self.config.resource_log_loc, self.config.max_log_size,
+            self.config.max_num_of_logs, self.datacenter.name,
+            self.last_log_index)
         self.last_log_index = last_index
 
         logging = open(self.config.resource_log_loc + resource_logfile, mode)
@@ -527,12 +551,15 @@ class Resource(object):
 
         logging.close()
 
-        self.logger.info("Resource._store_topology_updates: log resource status in " + resource_logfile)
+        self.logger.info("Resource._store_topology_updates: log resource "
+                         "status in " + resource_logfile)
 
         if self.db is not None:
-            if self.db.update_resource_status(self.datacenter.name, json_logging) is False:
+            if self.db.update_resource_status(self.datacenter.name,
+                                              json_logging) is False:
                 return None
-            if self.db.update_resource_log_index(self.datacenter.name, self.last_log_index) is False:
+            if self.db.update_resource_log_index(self.datacenter.name,
+                                                 self.last_log_index) is False:
                 return None
 
         return last_update_time
@@ -574,7 +601,8 @@ class Resource(object):
         host.free_disk_gb -= _ldisk
         host.disk_available_least -= _ldisk
 
-    def remove_vm_by_h_uuid_from_host(self, _host_name, _h_uuid, _vcpus, _mem, _ldisk):
+    def remove_vm_by_h_uuid_from_host(self, _host_name, _h_uuid, _vcpus, _mem,
+                                      _ldisk):
         host = self.hosts[_host_name]
 
         host.remove_vm_by_h_uuid(_h_uuid)
@@ -588,7 +616,8 @@ class Resource(object):
         host.free_disk_gb += _ldisk
         host.disk_available_least += _ldisk
 
-    def remove_vm_by_uuid_from_host(self, _host_name, _uuid, _vcpus, _mem, _ldisk):
+    def remove_vm_by_uuid_from_host(self, _host_name, _uuid, _vcpus, _mem,
+                                    _ldisk):
         host = self.hosts[_host_name]
 
         host.remove_vm_by_uuid(_uuid)
@@ -612,7 +641,8 @@ class Resource(object):
 
         storage_host.avail_disk_cap -= _disk
 
-    # NOTE: Assume the up-link of spine switch is not used except out-going from datacenter
+    # NOTE: Assume the up-link of spine switch is not used except out-going
+    # from datacenter
     # NOTE: What about peer-switches?
     def deduct_bandwidth(self, _host_name, _placement_level, _bandwidth):
         host = self.hosts[_host_name]
@@ -648,26 +678,30 @@ class Resource(object):
 
             hs.last_update = time.time()
 
-    def update_host_resources(self, _hn, _st, _vcpus, _vcpus_used, _mem, _fmem, _ldisk, _fldisk, _avail_least):
+    def update_host_resources(self, _hn, _st, _vcpus, _vcpus_used, _mem, _fmem,
+                              _ldisk, _fldisk, _avail_least):
         updated = False
 
         host = self.hosts[_hn]
 
         if host.status != _st:
             host.status = _st
-            self.logger.debug("Resource.update_host_resources: host status changed")
+            self.logger.debug("Resource.update_host_resources: host status "
+                              "changed")
             updated = True
 
         if host.original_vCPUs != _vcpus or \
            host.vCPUs_used != _vcpus_used:
-            self.logger.debug("Resource.update_host_resources: host cpu changed")
+            self.logger.debug("Resource.update_host_resources: host cpu "
+                              "changed")
             host.original_vCPUs = _vcpus
             host.vCPUs_used = _vcpus_used
             updated = True
 
         if host.free_mem_mb != _fmem or \
            host.original_mem_cap != _mem:
-            self.logger.debug("Resource.update_host_resources: host mem changed")
+            self.logger.debug("Resource.update_host_resources: host mem "
+                              "changed")
             host.free_mem_mb = _fmem
             host.original_mem_cap = _mem
             updated = True
@@ -675,7 +709,8 @@ class Resource(object):
         if host.free_disk_gb != _fldisk or \
            host.original_local_disk_cap != _ldisk or \
            host.disk_available_least != _avail_least:
-            self.logger.debug("Resource.update_host_resources: host disk changed")
+            self.logger.debug("Resource.update_host_resources: host disk "
+                              "changed")
             host.free_disk_gb = _fldisk
             host.original_local_disk_cap = _ldisk
             host.disk_available_least = _avail_least
@@ -728,15 +763,18 @@ class Resource(object):
                     if lg.add_vm_by_h_uuid(_vm_id, _host.name) is True:
                         lg.last_update = time.time()
                 elif isinstance(_host, HostGroup):
-                    if lg.group_type == "EX" or lg.group_type == "AFF" or lg.group_type == "DIV":
+                    if lg.group_type == "EX" or lg.group_type == "AFF" or \
+                                    lg.group_type == "DIV":
                         if lgk.split(":")[0] == _host.host_type:
                             if lg.add_vm_by_h_uuid(_vm_id, _host.name) is True:
                                 lg.last_update = time.time()
 
         if isinstance(_host, Host) and _host.host_group is not None:
-            self.add_vm_to_logical_groups(_host.host_group, _vm_id, _logical_groups_of_vm)
+            self.add_vm_to_logical_groups(_host.host_group, _vm_id,
+                                          _logical_groups_of_vm)
         elif isinstance(_host, HostGroup) and _host.parent_resource is not None:
-            self.add_vm_to_logical_groups(_host.parent_resource, _vm_id, _logical_groups_of_vm)
+            self.add_vm_to_logical_groups(_host.parent_resource, _vm_id,
+                                          _logical_groups_of_vm)
 
     def remove_vm_by_h_uuid_from_logical_groups(self, _host, _h_uuid):
         for lgk in _host.memberships.keys():
@@ -752,7 +790,8 @@ class Resource(object):
                     _host.last_update = time.time()
 
             elif isinstance(_host, HostGroup):
-                if lg.group_type == "EX" or lg.group_type == "AFF" or lg.group_type == "DIV":
+                if lg.group_type == "EX" or lg.group_type == "AFF" or \
+                                lg.group_type == "DIV":
                     if lgk.split(":")[0] == _host.host_type:
                         if lg.remove_vm_by_h_uuid(_h_uuid, _host.name) is True:
                             lg.last_update = time.time()
@@ -760,14 +799,17 @@ class Resource(object):
                         if _host.remove_membership(lg) is True:
                             _host.last_update = time.time()
 
-            if lg.group_type == "EX" or lg.group_type == "AFF" or lg.group_type == "DIV":
+            if lg.group_type == "EX" or lg.group_type == "AFF" or \
+                            lg.group_type == "DIV":
                 if len(lg.vm_list) == 0:
                     del self.logical_groups[lgk]
 
         if isinstance(_host, Host) and _host.host_group is not None:
-            self.remove_vm_by_h_uuid_from_logical_groups(_host.host_group, _h_uuid)
+            self.remove_vm_by_h_uuid_from_logical_groups(_host.host_group,
+                                                         _h_uuid)
         elif isinstance(_host, HostGroup) and _host.parent_resource is not None:
-            self.remove_vm_by_h_uuid_from_logical_groups(_host.parent_resource, _h_uuid)
+            self.remove_vm_by_h_uuid_from_logical_groups(_host.parent_resource,
+                                                         _h_uuid)
 
     def remove_vm_by_uuid_from_logical_groups(self, _host, _uuid):
         for lgk in _host.memberships.keys():
@@ -783,7 +825,8 @@ class Resource(object):
                     _host.last_update = time.time()
 
             elif isinstance(_host, HostGroup):
-                if lg.group_type == "EX" or lg.group_type == "AFF" or lg.group_type == "DIV":
+                if lg.group_type == "EX" or lg.group_type == "AFF" or \
+                                lg.group_type == "DIV":
                     if lgk.split(":")[0] == _host.host_type:
                         if lg.remove_vm_by_uuid(_uuid, _host.name) is True:
                             lg.last_update = time.time()
@@ -791,14 +834,16 @@ class Resource(object):
                         if _host.remove_membership(lg) is True:
                             _host.last_update = time.time()
 
-            if lg.group_type == "EX" or lg.group_type == "AFF" or lg.group_type == "DIV":
+            if lg.group_type == "EX" or lg.group_type == "AFF" or \
+                            lg.group_type == "DIV":
                 if len(lg.vm_list) == 0:
                     del self.logical_groups[lgk]
 
         if isinstance(_host, Host) and _host.host_group is not None:
             self.remove_vm_by_uuid_from_logical_groups(_host.host_group, _uuid)
         elif isinstance(_host, HostGroup) and _host.parent_resource is not None:
-            self.remove_vm_by_uuid_from_logical_groups(_host.parent_resource, _uuid)
+            self.remove_vm_by_uuid_from_logical_groups(_host.parent_resource,
+                                                       _uuid)
 
     def clean_none_vms_from_logical_groups(self, _host):
         for lgk in _host.memberships.keys():
@@ -814,7 +859,8 @@ class Resource(object):
                     _host.last_update = time.time()
 
             elif isinstance(_host, HostGroup):
-                if lg.group_type == "EX" or lg.group_type == "AFF" or lg.group_type == "DIV":
+                if lg.group_type == "EX" or lg.group_type == "AFF" or \
+                                lg.group_type == "DIV":
                     if lgk.split(":")[0] == _host.host_type:
                         if lg.clean_none_vms(_host.name) is True:
                             lg.last_update = time.time()
@@ -822,7 +868,8 @@ class Resource(object):
                         if _host.remove_membership(lg) is True:
                             _host.last_update = time.time()
 
-            if lg.group_type == "EX" or lg.group_type == "AFF" or lg.group_type == "DIV":
+            if lg.group_type == "EX" or lg.group_type == "AFF" or \
+                            lg.group_type == "DIV":
                 if len(lg.vm_list) == 0:
                     del self.logical_groups[lgk]
 
@@ -839,7 +886,8 @@ class Resource(object):
                 if lg.update_uuid(_h_uuid, _uuid, _host.name) is True:
                     lg.last_update = time.time()
             elif isinstance(_host, HostGroup):
-                if lg.group_type == "EX" or lg.group_type == "AFF" or lg.group_type == "DIV":
+                if lg.group_type == "EX" or lg.group_type == "AFF" or \
+                                lg.group_type == "DIV":
                     if lgk.split(":")[0] == _host.host_type:
                         if lg.update_uuid(_h_uuid, _uuid, _host.name) is True:
                             lg.last_update = time.time()
@@ -847,7 +895,8 @@ class Resource(object):
         if isinstance(_host, Host) and _host.host_group is not None:
             self.update_uuid_in_logical_groups(_h_uuid, _uuid, _host.host_group)
         elif isinstance(_host, HostGroup) and _host.parent_resource is not None:
-            self.update_uuid_in_logical_groups(_h_uuid, _uuid, _host.parent_resource)
+            self.update_uuid_in_logical_groups(_h_uuid, _uuid,
+                                               _host.parent_resource)
 
     def update_h_uuid_in_logical_groups(self, _h_uuid, _uuid, _host):
         for lgk in _host.memberships.keys():
@@ -857,15 +906,18 @@ class Resource(object):
                 if lg.update_h_uuid(_h_uuid, _uuid, _host.name) is True:
                     lg.last_update = time.time()
             elif isinstance(_host, HostGroup):
-                if lg.group_type == "EX" or lg.group_type == "AFF" or lg.group_type == "DIV":
+                if lg.group_type == "EX" or lg.group_type == "AFF" or \
+                                lg.group_type == "DIV":
                     if lgk.split(":")[0] == _host.host_type:
                         if lg.update_h_uuid(_h_uuid, _uuid, _host.name) is True:
                             lg.last_update = time.time()
 
         if isinstance(_host, Host) and _host.host_group is not None:
-            self.update_h_uuid_in_logical_groups(_h_uuid, _uuid, _host.host_group)
+            self.update_h_uuid_in_logical_groups(_h_uuid, _uuid,
+                                                 _host.host_group)
         elif isinstance(_host, HostGroup) and _host.parent_resource is not None:
-            self.update_h_uuid_in_logical_groups(_h_uuid, _uuid, _host.parent_resource)
+            self.update_h_uuid_in_logical_groups(_h_uuid, _uuid,
+                                                 _host.parent_resource)
 
     def compute_avail_resources(self, hk, host):
         ram_allocation_ratio_list = []
@@ -875,11 +927,14 @@ class Resource(object):
         for _, lg in host.memberships.iteritems():
             if lg.group_type == "AGGR":
                 if "ram_allocation_ratio" in lg.metadata.keys():
-                    ram_allocation_ratio_list.append(float(lg.metadata["ram_allocation_ratio"]))
+                    ram_allocation_ratio_list.append(
+                        float(lg.metadata["ram_allocation_ratio"]))
                 if "cpu_allocation_ratio" in lg.metadata.keys():
-                    cpu_allocation_ratio_list.append(float(lg.metadata["cpu_allocation_ratio"]))
+                    cpu_allocation_ratio_list.append(
+                        float(lg.metadata["cpu_allocation_ratio"]))
                 if "disk_allocation_ratio" in lg.metadata.keys():
-                    disk_allocation_ratio_list.append(float(lg.metadata["disk_allocation_ratio"]))
+                    disk_allocation_ratio_list.append(
+                        float(lg.metadata["disk_allocation_ratio"]))
 
         ram_allocation_ratio = 1.0
         if len(ram_allocation_ratio_list) > 0:
@@ -890,12 +945,15 @@ class Resource(object):
 
         static_ram_standby_ratio = 0
         if self.config.static_mem_standby_ratio > 0:
-            static_ram_standby_ratio = float(self.config.static_mem_standby_ratio) / float(100)
+            static_ram_standby_ratio = \
+                float(self.config.static_mem_standby_ratio) / float(100)
 
         host.compute_avail_mem(ram_allocation_ratio, static_ram_standby_ratio)
 
-        self.logger.debug("Resource.compute_avail_resources: host (" + hk + ")'s total_mem = " +
-                          str(host.mem_cap) + ", avail_mem = " + str(host.avail_mem_cap))
+        self.logger.debug("Resource.compute_avail_resources: host (" +
+                          hk + ")'s total_mem = " +
+                          str(host.mem_cap) + ", avail_mem = " +
+                          str(host.avail_mem_cap))
 
         cpu_allocation_ratio = 1.0
         if len(cpu_allocation_ratio_list) > 0:
@@ -906,28 +964,36 @@ class Resource(object):
 
         static_cpu_standby_ratio = 0
         if self.config.static_cpu_standby_ratio > 0:
-            static_cpu_standby_ratio = float(self.config.static_cpu_standby_ratio) / float(100)
+            static_cpu_standby_ratio = \
+                float(self.config.static_cpu_standby_ratio) / float(100)
 
         host.compute_avail_vCPUs(cpu_allocation_ratio, static_cpu_standby_ratio)
 
-        self.logger.debug("Resource.compute_avail_resources: host (" + hk + ")'s total_vCPUs = " +
-                          str(host.vCPUs) + ", avail_vCPUs = " + str(host.avail_vCPUs))
+        self.logger.debug("Resource.compute_avail_resources: host (" +
+                          hk + ")'s total_vCPUs = " +
+                          str(host.vCPUs) + ", avail_vCPUs = " +
+                          str(host.avail_vCPUs))
 
         disk_allocation_ratio = 1.0
         if len(disk_allocation_ratio_list) > 0:
             disk_allocation_ratio = min(disk_allocation_ratio_list)
         else:
             if self.config.default_disk_allocation_ratio > 0:
-                disk_allocation_ratio = self.config.default_disk_allocation_ratio
+                disk_allocation_ratio = \
+                    self.config.default_disk_allocation_ratio
 
         static_disk_standby_ratio = 0
         if self.config.static_local_disk_standby_ratio > 0:
-            static_disk_standby_ratio = float(self.config.static_local_disk_standby_ratio) / float(100)
+            static_disk_standby_ratio = \
+                float(self.config.static_local_disk_standby_ratio) / float(100)
 
-        host.compute_avail_disk(disk_allocation_ratio, static_disk_standby_ratio)
+        host.compute_avail_disk(disk_allocation_ratio,
+                                static_disk_standby_ratio)
 
-        self.logger.debug("Resource.compute_avail_resources: host (" + hk + ")'s total_local_disk = " +
-                          str(host.local_disk_cap) + ", avail_local_disk = " + str(host.avail_local_disk_cap))
+        self.logger.debug("Resource.compute_avail_resources: host (" +
+                          hk + ")'s total_local_disk = " +
+                          str(host.local_disk_cap) + ", avail_local_disk = " +
+                          str(host.avail_local_disk_cap))
 
     def get_flavor(self, _name):
         flavor = None

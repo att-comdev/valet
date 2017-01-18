@@ -16,7 +16,8 @@
 import threading
 import time
 
-from valet.engine.resource_manager.resource_base import Datacenter, HostGroup, Host, Switch, Link
+from valet.engine.resource_manager.resource_base \
+    import Datacenter, HostGroup, Host, Switch, Link
 from valet.engine.resource_manager.topology import Topology
 
 
@@ -37,7 +38,8 @@ class TopologyManager(threading.Thread):
         self.logger = _logger
 
     def run(self):
-        self.logger.info("TopologyManager: start " + self.thread_name + " ......")
+        self.logger.info("TopologyManager: start " +
+                         self.thread_name + " ......")
 
         if self.config.topology_trigger_freq > 0:
             period_end = time.time() + self.config.topology_trigger_freq
@@ -61,7 +63,9 @@ class TopologyManager(threading.Thread):
                 time.sleep(70)
 
                 now = time.localtime()
-                if now.tm_year > last_trigger_year or now.tm_mon > last_trigger_mon or now.tm_mday > last_trigger_mday:
+                if now.tm_year > last_trigger_year or \
+                                now.tm_mon > last_trigger_mon or \
+                                now.tm_mday > last_trigger_mday:
                     timeout = False
 
                 if timeout is False and \
@@ -77,7 +81,8 @@ class TopologyManager(threading.Thread):
 
     def _run(self):
 
-        self.logger.info("TopologyManager: --- start topology status update ---")
+        self.logger.info("TopologyManager: --- start topology "
+                         "status update ---")
 
         self.data_lock.acquire()
         try:
@@ -105,7 +110,8 @@ class TopologyManager(threading.Thread):
 
         topology = Topology(self.config, self.logger)
 
-        status = topology.set_topology(datacenter, host_groups, hosts, self.resource.hosts, switches)
+        status = topology.set_topology(datacenter, host_groups, hosts,
+                                       self.resource.hosts, switches)
         if status != "success":
             self.logger.error("TopologyManager: " + status)
             return False
@@ -122,7 +128,8 @@ class TopologyManager(threading.Thread):
 
                 new_switch.last_update = time.time()
 
-                self.logger.warn("TopologyManager: new switch (" + new_switch.name + ") added")
+                self.logger.warn("TopologyManager: new switch (" +
+                                 new_switch.name + ") added")
 
         for rsk in self.resource.switches.keys():
             if rsk not in _switches.keys():
@@ -131,7 +138,8 @@ class TopologyManager(threading.Thread):
 
                 switch.last_update = time.time()
 
-                self.logger.warn("TopologyManager: switch (" + switch.name + ") disabled")
+                self.logger.warn("TopologyManager: switch (" +
+                                 switch.name + ") disabled")
 
         for hk in _hosts.keys():
             if hk not in self.resource.hosts.keys():
@@ -140,7 +148,8 @@ class TopologyManager(threading.Thread):
 
                 new_host.last_update = time.time()
 
-                self.logger.warn("TopologyManager: new host (" + new_host.name + ") added from configuration")
+                self.logger.warn("TopologyManager: new host (" +
+                                 new_host.name + ") added from configuration")
 
         for rhk in self.resource.hosts.keys():
             if rhk not in _hosts.keys():
@@ -150,7 +159,8 @@ class TopologyManager(threading.Thread):
 
                 host.last_update = time.time()
 
-                self.logger.warn("TopologyManager: host (" + host.name + ") removed from configuration")
+                self.logger.warn("TopologyManager: host (" +
+                                 host.name + ") removed from configuration")
 
         for hgk in _host_groups.keys():
             if hgk not in self.resource.host_groups.keys():
@@ -159,7 +169,8 @@ class TopologyManager(threading.Thread):
 
                 new_host_group.last_update = time.time()
 
-                self.logger.warn("TopologyManager: new host_group (" + new_host_group.name + ") added")
+                self.logger.warn("TopologyManager: new host_group (" +
+                                 new_host_group.name + ") added")
 
         for rhgk in self.resource.host_groups.keys():
             if rhgk not in _host_groups.keys():
@@ -168,7 +179,8 @@ class TopologyManager(threading.Thread):
 
                 host_group.last_update = time.time()
 
-                self.logger.warn("TopologyManager: host_group (" + host_group.name + ") disabled")
+                self.logger.warn("TopologyManager: host_group (" +
+                                 host_group.name + ") disabled")
 
         for sk in _switches.keys():
             switch = _switches[sk]
@@ -180,7 +192,8 @@ class TopologyManager(threading.Thread):
         for hk in _hosts.keys():
             host = _hosts[hk]
             rhost = self.resource.hosts[hk]
-            (topology_updated, link_updated) = self._check_host_update(host, rhost)
+            (topology_updated, link_updated) = \
+                self._check_host_update(host, rhost)
             if topology_updated is True:
                 rhost.last_update = time.time()
             if link_updated is True:
@@ -189,13 +202,15 @@ class TopologyManager(threading.Thread):
         for hgk in _host_groups.keys():
             hg = _host_groups[hgk]
             rhg = self.resource.host_groups[hgk]
-            (topology_updated, link_updated) = self._check_host_group_update(hg, rhg)
+            (topology_updated, link_updated) = \
+                self._check_host_group_update(hg, rhg)
             if topology_updated is True:
                 rhg.last_update = time.time()
             if link_updated is True:
                 rhg.last_link_update = time.time()
 
-        (topology_updated, link_updated) = self._check_datacenter_update(_datacenter)
+        (topology_updated, link_updated) = \
+            self._check_datacenter_update(_datacenter)
         if topology_updated is True:
             self.resource.datacenter.last_update = time.time()
         if link_updated is True:
@@ -242,12 +257,14 @@ class TopologyManager(threading.Thread):
         if _switch.switch_type != _rswitch.switch_type:
             _rswitch.switch_type = _switch.switch_type
             updated = True
-            self.logger.warn("TopologyManager: switch (" + _rswitch.name + ") updated (switch type)")
+            self.logger.warn("TopologyManager: switch (" + _rswitch.name +
+                             ") updated (switch type)")
 
         if _rswitch.status == "disabled":
             _rswitch.status = "enabled"
             updated = True
-            self.logger.warn("TopologyManager: switch (" + _rswitch.name + ") updated (enabled)")
+            self.logger.warn("TopologyManager: switch (" + _rswitch.name +
+                             ") updated (enabled)")
 
         for ulk in _switch.up_links.keys():
             exist = False
@@ -259,7 +276,8 @@ class TopologyManager(threading.Thread):
                 new_link = self._create_new_link(_switch.up_links[ulk])
                 _rswitch.up_links[new_link.name] = new_link
                 updated = True
-                self.logger.warn("TopologyManager: switch (" + _rswitch.name + ") updated (new link)")
+                self.logger.warn("TopologyManager: switch (" + _rswitch.name +
+                                 ") updated (new link)")
 
         for rulk in _rswitch.up_links.keys():
             exist = False
@@ -270,14 +288,16 @@ class TopologyManager(threading.Thread):
             if exist is False:
                 del _rswitch.up_links[rulk]
                 updated = True
-                self.logger.warn("TopologyManager: switch (" + _rswitch.name + ") updated (link removed)")
+                self.logger.warn("TopologyManager: switch (" + _rswitch.name +
+                                 ") updated (link removed)")
 
         for ulk in _rswitch.up_links.keys():
             link = _switch.up_links[ulk]
             rlink = _rswitch.up_links[ulk]
             if self._check_link_update(link, rlink) is True:
                 updated = True
-                self.logger.warn("TopologyManager: switch (" + _rswitch.name + ") updated (bandwidth)")
+                self.logger.warn("TopologyManager: switch (" + _rswitch.name +
+                                 ") updated (bandwidth)")
 
         for plk in _switch.peer_links.keys():
             exist = False
@@ -289,7 +309,8 @@ class TopologyManager(threading.Thread):
                 new_link = self._create_new_link(_switch.peer_links[plk])
                 _rswitch.peer_links[new_link.name] = new_link
                 updated = True
-                self.logger.warn("TopologyManager: switch (" + _rswitch.name + ") updated (new link)")
+                self.logger.warn("TopologyManager: switch (" + _rswitch.name +
+                                 ") updated (new link)")
 
         for rplk in _rswitch.peer_links.keys():
             exist = False
@@ -300,14 +321,16 @@ class TopologyManager(threading.Thread):
             if exist is False:
                 del _rswitch.peer_links[rplk]
                 updated = True
-                self.logger.warn("TopologyManager: switch (" + _rswitch.name + ") updated (link removed)")
+                self.logger.warn("TopologyManager: switch (" + _rswitch.name +
+                                 ") updated (link removed)")
 
         for plk in _rswitch.peer_links.keys():
             link = _switch.peer_links[plk]
             rlink = _rswitch.peer_links[plk]
             if self._check_link_update(link, rlink) is True:
                 updated = True
-                self.logger.warn("TopologyManager: switch (" + _rswitch.name + ") updated (bandwidth)")
+                self.logger.warn("TopologyManager: switch (" + _rswitch.name +
+                                 ") updated (bandwidth)")
 
         return updated
 
@@ -327,15 +350,19 @@ class TopologyManager(threading.Thread):
         if "infra" not in _rhost.tag:
             _rhost.tag.append("infra")
             updated = True
-            self.logger.warn("TopologyManager: host (" + _rhost.name + ") updated (tag)")
+            self.logger.warn("TopologyManager: host (" + _rhost.name +
+                             ") updated (tag)")
 
-        if _rhost.host_group is None or _host.host_group.name != _rhost.host_group.name:
+        if _rhost.host_group is None or \
+                        _host.host_group.name != _rhost.host_group.name:
             if _host.host_group.name in self.resource.host_groups.keys():
-                _rhost.host_group = self.resource.host_groups[_host.host_group.name]
+                _rhost.host_group = \
+                    self.resource.host_groups[_host.host_group.name]
             else:
                 _rhost.host_group = self.resource.datacenter
             updated = True
-            self.logger.warn("TopologyManager: host (" + _rhost.name + ") updated (host_group)")
+            self.logger.warn("TopologyManager: host (" + _rhost.name +
+                             ") updated (host_group)")
 
         for sk in _host.switches.keys():
             exist = False
@@ -346,7 +373,8 @@ class TopologyManager(threading.Thread):
             if exist is False:
                 _rhost.switches[sk] = self.resource.switches[sk]
                 link_updated = True
-                self.logger.warn("TopologyManager: host (" + _rhost.name + ") updated (new switch)")
+                self.logger.warn("TopologyManager: host (" + _rhost.name +
+                                 ") updated (new switch)")
 
         for rsk in _rhost.switches.keys():
             exist = False
@@ -357,7 +385,8 @@ class TopologyManager(threading.Thread):
             if exist is False:
                 del _rhost.switches[rsk]
                 link_updated = True
-                self.logger.warn("TopologyManager: host (" + _rhost.name + ") updated (switch removed)")
+                self.logger.warn("TopologyManager: host (" + _rhost.name +
+                                 ") updated (switch removed)")
 
         return (updated, link_updated)
 
@@ -368,20 +397,25 @@ class TopologyManager(threading.Thread):
         if _hg.host_type != _rhg.host_type:
             _rhg.host_type = _hg.host_type
             updated = True
-            self.logger.warn("TopologyManager: host_group (" + _rhg.name + ") updated (hosting type)")
+            self.logger.warn("TopologyManager: host_group (" + _rhg.name +
+                             ") updated (hosting type)")
 
         if _rhg.status == "disabled":
             _rhg.status = "enabled"
             updated = True
-            self.logger.warn("TopologyManager: host_group (" + _rhg.name + ") updated (enabled)")
+            self.logger.warn("TopologyManager: host_group (" + _rhg.name +
+                             ") updated (enabled)")
 
-        if _rhg.parent_resource is None or _hg.parent_resource.name != _rhg.parent_resource.name:
+        if _rhg.parent_resource is None or \
+                        _hg.parent_resource.name != _rhg.parent_resource.name:
             if _hg.parent_resource.name in self.resource.host_groups.keys():
-                _rhg.parent_resource = self.resource.host_groups[_hg.parent_resource.name]
+                _rhg.parent_resource = \
+                    self.resource.host_groups[_hg.parent_resource.name]
             else:
                 _rhg.parent_resource = self.resource.datacenter
             updated = True
-            self.logger.warn("TopologyManager: host_group (" + _rhg.name + ") updated (parent host_group)")
+            self.logger.warn("TopologyManager: host_group (" + _rhg.name +
+                             ") updated (parent host_group)")
 
         for rk in _hg.child_resources.keys():
             exist = False
@@ -395,7 +429,8 @@ class TopologyManager(threading.Thread):
                 elif _rhg.host_type == "cluster":
                     _rhg.child_resources[rk] = self.resource.host_groups[rk]
                 updated = True
-                self.logger.warn("TopologyManager: host_group (" + _rhg.name + ") updated (new child host)")
+                self.logger.warn("TopologyManager: host_group (" + _rhg.name +
+                                 ") updated (new child host)")
 
         for rrk in _rhg.child_resources.keys():
             exist = False
@@ -406,7 +441,8 @@ class TopologyManager(threading.Thread):
             if exist is False:
                 del _rhg.child_resources[rrk]
                 updated = True
-                self.logger.warn("TopologyManager: host_group (" + _rhg.name + ") updated (child host removed)")
+                self.logger.warn("TopologyManager: host_group (" + _rhg.name +
+                                 ") updated (child host removed)")
 
         for sk in _hg.switches.keys():
             exist = False
@@ -417,7 +453,8 @@ class TopologyManager(threading.Thread):
             if exist is False:
                 _rhg.switches[sk] = self.resource.switches[sk]
                 link_updated = True
-                self.logger.warn("TopologyManager: host_group (" + _rhg.name + ") updated (new switch)")
+                self.logger.warn("TopologyManager: host_group (" + _rhg.name +
+                                 ") updated (new switch)")
 
         for rsk in _rhg.switches.keys():
             exist = False
@@ -428,7 +465,8 @@ class TopologyManager(threading.Thread):
             if exist is False:
                 del _rhg.switches[rsk]
                 link_updated = True
-                self.logger.warn("TopologyManager: host_group (" + _rhg.name + ") updated (switch removed)")
+                self.logger.warn("TopologyManager: host_group (" + _rhg.name +
+                                 ") updated (switch removed)")
 
         return (updated, link_updated)
 
@@ -440,13 +478,15 @@ class TopologyManager(threading.Thread):
             if rc not in self.resource.datacenter.region_code_list:
                 self.resource.datacenter.region_code_list.append(rc)
                 updated = True
-                self.logger.warn("TopologyManager: datacenter updated (new region code, " + rc + ")")
+                self.logger.warn("TopologyManager: datacenter updated "
+                                 "(new region code, " + rc + ")")
 
         for rrc in self.resource.datacenter.region_code_list:
             if rrc not in _datacenter.region_code_list:
                 self.resource.datacenter.region_code_list.remove(rrc)
                 updated = True
-                self.logger.warn("TopologyManager: datacenter updated (region code, " + rrc + ", removed)")
+                self.logger.warn("TopologyManager: datacenter updated "
+                                 "(region code, " + rrc + ", removed)")
 
         for rk in _datacenter.resources.keys():
             exist = False
@@ -457,11 +497,14 @@ class TopologyManager(threading.Thread):
             if exist is False:
                 r = _datacenter.resources[rk]
                 if isinstance(r, HostGroup):
-                    self.resource.datacenter.resources[rk] = self.resource.host_groups[rk]
+                    self.resource.datacenter.resources[rk] = \
+                        self.resource.host_groups[rk]
                 elif isinstance(r, Host):
-                    self.resource.datacenter.resources[rk] = self.resource.hosts[rk]
+                    self.resource.datacenter.resources[rk] = \
+                        self.resource.hosts[rk]
                 updated = True
-                self.logger.warn("TopologyManager: datacenter updated (new resource)")
+                self.logger.warn("TopologyManager: datacenter updated "
+                                 "(new resource)")
 
         for rrk in self.resource.datacenter.resources.keys():
             exist = False
@@ -472,7 +515,8 @@ class TopologyManager(threading.Thread):
             if exist is False:
                 del self.resource.datacenter.resources[rrk]
                 updated = True
-                self.logger.warn("TopologyManager: datacenter updated (resource removed)")
+                self.logger.warn("TopologyManager: datacenter updated "
+                                 "(resource removed)")
 
         for sk in _datacenter.root_switches.keys():
             exist = False
@@ -481,9 +525,11 @@ class TopologyManager(threading.Thread):
                     exist = True
                     break
             if exist is False:
-                self.resource.datacenter.root_switches[sk] = self.resource.switches[sk]
+                self.resource.datacenter.root_switches[sk] = \
+                    self.resource.switches[sk]
                 link_updated = True
-                self.logger.warn("TopologyManager: datacenter updated (new switch)")
+                self.logger.warn("TopologyManager: datacenter updated "
+                                 "(new switch)")
 
         for rsk in self.resource.datacenter.root_switches.keys():
             exist = False
@@ -494,6 +540,7 @@ class TopologyManager(threading.Thread):
             if exist is False:
                 del self.resource.datacenter.root_switches[rsk]
                 link_updated = True
-                self.logger.warn("TopologyManager: datacenter updated (switch removed)")
+                self.logger.warn("TopologyManager: datacenter updated "
+                                 "(switch removed)")
 
         return (updated, link_updated)

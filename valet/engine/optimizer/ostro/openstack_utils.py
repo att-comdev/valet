@@ -70,7 +70,10 @@ def match(value, req):
 
 
 def aggregate_metadata_get_by_host(_level, _host, _key=None):
-    """Returns a dict of all metadata based on a metadata key for a specific host. If the key is not provided, returns a dict of all metadata."""
+    """
+    Returns a dict of all metadata based on a metadata key for a specific
+    host. If the key is not provided, returns a dict of all metadata.
+    """
 
     metadatas = {}
 

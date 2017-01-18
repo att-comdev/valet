@@ -25,7 +25,8 @@ class Datacenter(object):
 
         self.status = "enabled"
 
-        self.memberships = {}            # all available logical groups (e.g., aggregate) in the datacenter
+        # all available logical groups (e.g., aggregate) in the datacenter
+        self.memberships = {}
 
         self.vCPUs = 0
         self.original_vCPUs = 0
@@ -42,8 +43,11 @@ class Datacenter(object):
 
         self.resources = {}
 
-        self.vm_list = []                # a list of placed vms, (ochestration_uuid, vm_name, physical_uuid)
-        self.volume_list = []            # a list of placed volumes
+        # a list of placed vms, (ochestration_uuid, vm_name, physical_uuid)
+        self.vm_list = []
+
+        # a list of placed volumes
+        self.volume_list = []
 
         self.last_update = 0
         self.last_link_update = 0
@@ -103,11 +107,14 @@ class HostGroup(object):
 
     def __init__(self, _id):
         self.name = _id
-        self.host_type = "rack"          # rack or cluster(e.g., power domain, zone)
+
+        # rack or cluster(e.g., power domain, zone)
+        self.host_type = "rack"
 
         self.status = "enabled"
 
-        self.memberships = {}            # all available logical groups (e.g., aggregate) in this group
+        # all available logical groups (e.g., aggregate) in this group
+        self.memberships = {}
 
         self.vCPUs = 0
         self.original_vCPUs = 0
@@ -125,8 +132,11 @@ class HostGroup(object):
         self.parent_resource = None      # e.g., datacenter
         self.child_resources = {}        # e.g., hosting servers
 
-        self.vm_list = []                # a list of placed vms, (ochestration_uuid, vm_name, physical_uuid)
-        self.volume_list = []            # a list of placed volumes
+        # a list of placed vms, (ochestration_uuid, vm_name, physical_uuid)
+        self.vm_list = []
+
+        # a list of placed volumes
+        self.volume_list = []
 
         self.last_update = 0
         self.last_link_update = 0
@@ -145,9 +155,11 @@ class HostGroup(object):
     def init_memberships(self):
         for lgk in self.memberships.keys():
             lg = self.memberships[lgk]
-            if lg.group_type == "EX" or lg.group_type == "AFF" or lg.group_type == "DIV":
+            if lg.group_type == "EX" or lg.group_type == "AFF" or \
+                            lg.group_type == "DIV":
                 level = lg.name.split(":")[0]
-                if LEVELS.index(level) < LEVELS.index(self.host_type) or self.name not in lg.vms_per_host.keys():
+                if LEVELS.index(level) < LEVELS.index(self.host_type) or \
+                                self.name not in lg.vms_per_host.keys():
                     del self.memberships[lgk]
             else:
                 del self.memberships[lgk]
@@ -155,7 +167,8 @@ class HostGroup(object):
     def remove_membership(self, _lg):
         cleaned = False
 
-        if _lg.group_type == "EX" or _lg.group_type == "AFF" or _lg.group_type == "DIV":
+        if _lg.group_type == "EX" or _lg.group_type == "AFF" or \
+                        _lg.group_type == "DIV":
             if self.name not in _lg.vms_per_host.keys():
                 del self.memberships[_lg.name]
                 cleaned = True
@@ -212,11 +225,13 @@ class Host(object):
     def __init__(self, _name):
         self.name = _name
 
-        self.tag = []                    # mark if this is synch'ed by multiple sources
+        # mark if this is synch'ed by multiple sources
+        self.tag = []
         self.status = "enabled"
         self.state = "up"
 
-        self.memberships = {}            # logical group (e.g., aggregate) this hosting server is involved in
+        # logical group (e.g., aggregate) this hosting server is involved in
+        self.memberships = {}
 
         self.vCPUs = 0
         self.original_vCPUs = 0
@@ -238,8 +253,11 @@ class Host(object):
 
         self.host_group = None           # e.g., rack
 
-        self.vm_list = []                # a list of placed vms, (ochestration_uuid, vm_name, physical_uuid)
-        self.volume_list = []            # a list of placed volumes
+        # a list of placed vms, (ochestration_uuid, vm_name, physical_uuid)
+        self.vm_list = []
+
+        # a list of placed volumes
+        self.volume_list = []
 
         self.last_update = 0
         self.last_link_update = 0
@@ -258,7 +276,8 @@ class Host(object):
     def remove_membership(self, _lg):
         cleaned = False
 
-        if _lg.group_type == "EX" or _lg.group_type == "AFF" or _lg.group_type == "DIV":
+        if _lg.group_type == "EX" or _lg.group_type == "AFF" or \
+                        _lg.group_type == "DIV":
             if self.name not in _lg.vms_per_host.keys():
                 del self.memberships[_lg.name]
                 cleaned = True
@@ -266,7 +285,8 @@ class Host(object):
         return cleaned
 
     def check_availability(self):
-        if self.status == "enabled" and self.state == "up" and ("nova" in self.tag) and ("infra" in self.tag):
+        if self.status == "enabled" and self.state == "up" and \
+                ("nova" in self.tag) and ("infra" in self.tag):
             return True
         else:
             return False
@@ -358,19 +378,24 @@ class Host(object):
         return success
 
     def compute_avail_vCPUs(self, _overcommit_ratio, _standby_ratio):
-        self.vCPUs = self.original_vCPUs * _overcommit_ratio * (1.0 - _standby_ratio)
+        self.vCPUs = \
+            self.original_vCPUs * _overcommit_ratio * (1.0 - _standby_ratio)
 
         self.avail_vCPUs = self.vCPUs - self.vCPUs_used
 
     def compute_avail_mem(self, _overcommit_ratio, _standby_ratio):
-        self.mem_cap = self.original_mem_cap * _overcommit_ratio * (1.0 - _standby_ratio)
+        self.mem_cap = \
+            self.original_mem_cap * _overcommit_ratio * (1.0 - _standby_ratio)
 
         used_mem_mb = self.original_mem_cap - self.free_mem_mb
 
         self.avail_mem_cap = self.mem_cap - used_mem_mb
 
     def compute_avail_disk(self, _overcommit_ratio, _standby_ratio):
-        self.local_disk_cap = self.original_local_disk_cap * _overcommit_ratio * (1.0 - _standby_ratio)
+        self.local_disk_cap = \
+            self.original_local_disk_cap * \
+            _overcommit_ratio * \
+            (1.0 - _standby_ratio)
 
         free_disk_cap = self.free_disk_gb
         if self.disk_available_least > 0:
@@ -421,16 +446,23 @@ class LogicalGroup(object):
 
     def __init__(self, _name):
         self.name = _name
-        self.group_type = "AGGR"         # AGGR, AZ, INTG, EX, DIV, or AFF
+
+        # AGGR, AZ, INTG, EX, DIV, or AFF
+        self.group_type = "AGGR"
 
         self.status = "enabled"
 
-        self.metadata = {}               # any metadata to be matched when placing nodes
+        # any metadata to be matched when placing nodes
+        self.metadata = {}
 
-        self.vm_list = []                # a list of placed vms, (ochestration_uuid, vm_name, physical_uuid)
-        self.volume_list = []            # a list of placed volumes
+        # a list of placed vms, (ochestration_uuid, vm_name, physical_uuid)
+        self.vm_list = []
 
-        self.vms_per_host = {}           # key = host_id, value = a list of placed vms
+        # a list of placed volumes
+        self.volume_list = []
+
+        # key = host_id, value = a list of placed vms
+        self.vms_per_host = {}
 
         self.last_update = 0
 
@@ -512,7 +544,8 @@ class LogicalGroup(object):
         if self.exist_vm_by_h_uuid(_vm_id[0]) is False:
             self.vm_list.append(_vm_id)
 
-            if self.group_type == "EX" or self.group_type == "AFF" or self.group_type == "DIV":
+            if self.group_type == "EX" or self.group_type == "AFF" or \
+                            self.group_type == "DIV":
                 if _host_id not in self.vms_per_host.keys():
                     self.vms_per_host[_host_id] = []
             self.vms_per_host[_host_id].append(_vm_id)
@@ -537,8 +570,10 @@ class LogicalGroup(object):
                     success = True
                     break
 
-        if self.group_type == "EX" or self.group_type == "AFF" or self.group_type == "DIV":
-            if (_host_id in self.vms_per_host.keys()) and len(self.vms_per_host[_host_id]) == 0:
+        if self.group_type == "EX" or self.group_type == "AFF" or \
+                        self.group_type == "DIV":
+            if (_host_id in self.vms_per_host.keys()) and \
+                            len(self.vms_per_host[_host_id]) == 0:
                 del self.vms_per_host[_host_id]
 
         return success
@@ -559,8 +594,10 @@ class LogicalGroup(object):
                     success = True
                     break
 
-        if self.group_type == "EX" or self.group_type == "AFF" or self.group_type == "DIV":
-            if (_host_id in self.vms_per_host.keys()) and len(self.vms_per_host[_host_id]) == 0:
+        if self.group_type == "EX" or self.group_type == "AFF" or \
+                        self.group_type == "DIV":
+            if (_host_id in self.vms_per_host.keys()) and \
+                            len(self.vms_per_host[_host_id]) == 0:
                 del self.vms_per_host[_host_id]
 
         return success
@@ -579,8 +616,10 @@ class LogicalGroup(object):
                     self.vms_per_host[_host_id].remove(vm_id)
                     success = True
 
-        if self.group_type == "EX" or self.group_type == "AFF" or self.group_type == "DIV":
-            if (_host_id in self.vms_per_host.keys()) and len(self.vms_per_host[_host_id]) == 0:
+        if self.group_type == "EX" or self.group_type == "AFF" or \
+                        self.group_type == "DIV":
+            if (_host_id in self.vms_per_host.keys()) and \
+                            len(self.vms_per_host[_host_id]) == 0:
                 del self.vms_per_host[_host_id]
 
         return success
@@ -644,15 +683,15 @@ class StorageHost(object):
 
     def __init__(self, _name):
         self.name = _name
-        self.storage_class = None        # tiering, e.g., platinum, gold, silver
+        self.storage_class = None   # tiering, e.g., platinum, gold, silver
 
         self.status = "enabled"
         self.host_list = []
 
-        self.disk_cap = 0                # GB
+        self.disk_cap = 0   # GB
         self.avail_disk_cap = 0
 
-        self.volume_list = []            # list of volume names placed in this host
+        self.volume_list = []   # list of volume names placed in this host
 
         self.last_update = 0
         self.last_cap_update = 0

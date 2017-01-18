@@ -52,8 +52,10 @@ class TestPlugins(Base):
         self.valet_life_cycle_plugin.hints_enabled = True
         stack.status = "IN_PROGRESS"
         self.valet_life_cycle_plugin.do_pre_op(cnxt, stack, action="DELETE")
-        self.validate_test("plans_delete" in self.valet_life_cycle_plugin.api.method_calls[0])
+        self.validate_test("plans_delete" in
+                           self.valet_life_cycle_plugin.api.method_calls[0])
 
         # action create
         self.valet_life_cycle_plugin.do_pre_op(cnxt, stack, action="CREATE")
-        self.validate_test("plans_create" in self.valet_life_cycle_plugin.api.method_calls[1])
+        self.validate_test("plans_create" in
+                           self.valet_life_cycle_plugin.api.method_calls[1])

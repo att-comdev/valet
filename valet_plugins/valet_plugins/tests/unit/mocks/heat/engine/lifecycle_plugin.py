@@ -14,7 +14,7 @@
 # limitations under the License.
 
 class LifecyclePlugin(object):
-    ''' classdocs '''
+    """ classdocs """
 
     def __init__(self, params):
-        ''' Constructor '''
+        """ Constructor """

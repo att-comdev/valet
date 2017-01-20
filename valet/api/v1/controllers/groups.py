@@ -214,7 +214,8 @@ class GroupsItemController(object):
 
     def __init__(self, group_id):
         """Initialize group"""
-        group = Group.query.filter_by(id=group_id).first() #pylint:disable=E1101
+        # pylint:disable=E1101
+        group = Group.query.filter_by(id=group_id).first()
         if not group:
             error('/errors/not_found', _('Group not found'))
         request.context['group'] = group

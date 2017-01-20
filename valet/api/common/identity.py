@@ -19,9 +19,9 @@ from datetime import datetime
 
 import iso8601
 
-from keystoneclient.v2_0 import client
 from keystoneauth1 import session
 from keystoneauth1.identity import v2
+from keystoneclient.v2_0 import client
 import logging
 from pecan import conf
 import pytz

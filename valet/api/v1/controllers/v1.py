@@ -74,8 +74,10 @@ class V1Controller(SecureController):
 
     @classmethod
     def _action_is_migrate(cls, request):
-        return "plan" in request.path and hasattr(request, "json") and "action"\
-                        in request.json and request.json["action"] == "migrate"
+        return "plan" in request.path \
+               and hasattr(request, "json") \
+               and "action" in request.json \
+               and request.json["action"] == "migrate"
 
     @classmethod
     def _permission_granted(cls, request, token):

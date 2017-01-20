@@ -53,7 +53,7 @@ class Group(Base):
 
     def values(self):
         """Values"""
-        # TODO: Support lists in Music
+        # TODO(UNKNOWN): Support lists in Music
         # Lists aren't directly supported in Music, so we have to
         # convert to/from json on the way out/in.
         return {
@@ -73,7 +73,7 @@ class Group(Base):
             self.members = []  # members ignored at init time
             self.insert()
         else:
-            # TODO: Support lists in Music
+            # TODO(UNKNOWN): Support lists in Music
             self.members = simplejson.loads(members)
 
     def __repr__(self):

@@ -1,6 +1,6 @@
 #!/bin/python
 
-# Modified: Jan. 6, 2017
+# Modified: Jan. 21, 2017
 
 
 import threading
@@ -352,7 +352,7 @@ class ComputeManager(threading.Thread):
 
         status = compute.set_flavors(flavors)
         if status != "success":
-            self.logger.error("ComputeManager: " + status)
+            self.logger.error(status)
             return False
 
         self.data_lock.acquire()
@@ -367,14 +367,14 @@ class ComputeManager(threading.Thread):
                 self.resource.flavors[fk] = deepcopy(_flavors[fk])
 
                 self.resource.flavors[fk].last_update = time.time()
-                self.logger.warn("ComputeManager: new flavor (" + fk + ") added")
+                self.logger.warn("new flavor (" + fk + ") added")
 
         for rfk in self.resource.flavors.keys():
             if rfk not in _flavors.keys():
                 self.resource.flavors[rfk].status = "disabled"
 
                 self.resource.flavors[rfk].last_update = time.time()
-                self.logger.warn("ComputeManager: flavor (" + rfk + ") removed")
+                self.logger.warn("flavor (" + rfk + ") removed")
 
         for fk in _flavors.keys():
             f = _flavors[fk]
@@ -382,7 +382,7 @@ class ComputeManager(threading.Thread):
 
             if self._check_flavor_spec_update(f, rf) is True:
                 rf.last_update = time.time()
-                self.logger.warn("ComputeManager: flavor (" + fk + ") spec updated")
+                self.logger.warn("flavor (" + fk + ") spec updated")
 
     def _check_flavor_spec_update(self, _f, _rf):
         spec_updated = False

@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Controllers Package"""
+"""Controllers Package."""
 
 import logging
 from notario.decorators import instance_of
@@ -33,7 +33,7 @@ LOG = logging.getLogger(__name__)
 #
 
 def valid_group_name(value):
-    '''Validator for group name type.'''
+    """Validator for group name type."""
     if not value or not set(value) <= set(string.letters + string.digits + "-._~"):
         LOG.error("group name is not valid")
         LOG.error("group name must contain only uppercase and lowercase letters, decimal digits, \
@@ -56,7 +56,7 @@ def valid_plan_update_action(value):
 
 
 def set_placements(plan, resources, placements):
-    """Set placements"""
+    """Set placements."""
     for uuid in placements.iterkeys():
         name = resources[uuid]['name']
         properties = placements[uuid]['properties']
@@ -67,7 +67,7 @@ def set_placements(plan, resources, placements):
 
 
 def reserve_placement(placement, resource_id=None, reserve=True, update=True):
-    """ Reserve placement. Can optionally set the physical resource id.
+    """Reserve placement. Can optionally set the physical resource id.
 
     Set reserve=False to unreserve. Set update=False to not update
     the data store (if the update will be made later).
@@ -116,7 +116,7 @@ def update_placements(placements, reserve_id=None, unlock_all=False):
 #
 
 def error(url, msg=None, **kwargs):
-    """Error handler"""
+    """Error handler."""
     if msg:
         request.context['error_message'] = msg
     if kwargs:

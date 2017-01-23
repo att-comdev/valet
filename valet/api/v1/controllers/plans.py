@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Plans"""
+"""Plans."""
 
 import logging
 
@@ -53,7 +53,7 @@ UPDATE_SCHEMA = (
 
 
 class PlansItemController(object):
-    """ Plans Item Controller /v1/plans/{plan_id} """
+    """Plan Item Controller /v1/plans/{plan_id}."""
 
     def __init__(self, uuid4):
         """Initializer."""
@@ -71,32 +71,31 @@ class PlansItemController(object):
 
     @classmethod
     def allow(cls):
-        """Allowed methods"""
+        """Allowed methods."""
         return 'GET,PUT,DELETE'
 
     @expose(generic=True, template='json')
     def index(self):
-        """Catchall for unallowed methods"""
+        """Catchall for unallowed methods."""
         message = _('The %s method is not allowed.') % request.method
         kwargs = {'allow': self.allow()}
         error('/errors/not_allowed', message, **kwargs)
 
     @index.when(method='OPTIONS', template='json')
     def index_options(self):
-        """Options"""
+        """Index Options."""
         response.headers['Allow'] = self.allow()
         response.status = 204
 
     @index.when(method='GET', template='json')
     def index_get(self):
-        """Get plan"""
+        """Get plan."""
         return {"plan": self.plan}
 
     @index.when(method='PUT', template='json')
     @validate(UPDATE_SCHEMA, '/errors/schema')
     def index_put(self, **kwargs):
-        """Update a Plan"""
-
+        """Update a Plan."""
         action = kwargs.get('action')
         if action == 'migrate':
             # Replan the placement of an existing resource.
@@ -197,7 +196,7 @@ class PlansItemController(object):
 
     @index.when(method='DELETE', template='json')
     def index_delete(self):
-        """Delete a Plan"""
+        """Delete a Plan."""
         for placement in self.plan.placements():
             placement.delete()
         stack_id = self.plan.stack_id
@@ -207,29 +206,29 @@ class PlansItemController(object):
 
 
 class PlansController(object):
-    """ Plans Controller /v1/plans """
+    """Plans Controller /v1/plans."""
 
     @classmethod
     def allow(cls):
-        """Allowed methods"""
+        """Allowed methods."""
         return 'GET,POST'
 
     @expose(generic=True, template='json')
     def index(self):
-        """Catchall for unallowed methods"""
+        """Catchall for unallowed methods."""
         message = _('The %s method is not allowed.') % request.method
         kwargs = {'allow': self.allow()}
         error('/errors/not_allowed', message, **kwargs)
 
     @index.when(method='OPTIONS', template='json')
     def index_options(self):
-        """Options"""
+        """Index Options."""
         response.headers['Allow'] = self.allow()
         response.status = 204
 
     @index.when(method='GET', template='json')
     def index_get(self):
-        """Get all the plans"""
+        """Get all the plans."""
         plans_array = []
         for plan in Plan.query.all():  # pylint: disable=E1101
             plans_array.append(plan)
@@ -238,7 +237,7 @@ class PlansController(object):
     @index.when(method='POST', template='json')
     @validate(CREATE_SCHEMA, '/errors/schema')
     def index_post(self):
-        """Create a Plan"""
+        """Create a Plan."""
         ostro = Ostro()
         args = request.json
 
@@ -288,5 +287,5 @@ class PlansController(object):
 
     @expose()
     def _lookup(self, uuid4, *remainder):
-        """Pecan subcontroller routing callback"""
+        """Pecan subcontroller routing callback."""
         return PlansItemController(uuid4), remainder

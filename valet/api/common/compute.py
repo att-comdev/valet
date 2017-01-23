@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Compute helper library"""
+"""Compute helper library."""
 
 from novaclient import client
 from pecan import conf

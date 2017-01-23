@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Messaging helper library"""
+"""Messaging helper library."""
 
 from oslo_config import cfg
 import oslo_messaging as messaging

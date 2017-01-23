@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Placements"""
+"""Placements."""
 
 import logging
 
@@ -32,7 +32,7 @@ LOG = logging.getLogger(__name__)
 
 
 class PlacementsItemController(object):
-    """ Placements Item Controller /v1/placements/{placement_id} """
+    """Placements Item Controller /v1/placements/{placement_id}."""
 
     def __init__(self, uuid4):
         """Initializer."""
@@ -49,25 +49,25 @@ class PlacementsItemController(object):
 
     @classmethod
     def allow(cls):
-        """Allowed methods"""
+        """Allowed methods."""
         return 'GET,POST,DELETE'
 
     @expose(generic=True, template='json')
     def index(self):
-        """Catchall for unallowed methods"""
+        """Catchall for unallowed methods."""
         message = _('The %s method is not allowed.') % request.method
         kwargs = {'allow': self.allow()}
         error('/errors/not_allowed', message, **kwargs)
 
     @index.when(method='OPTIONS', template='json')
     def index_options(self):
-        """Options"""
+        """Index Options."""
         response.headers['Allow'] = self.allow()
         response.status = 204
 
     @index.when(method='GET', template='json')
     def index_get(self):
-        """ Inspect a placement.
+        """Inspect a placement.
 
         Use POST for reserving placements made by a scheduler.
         """
@@ -75,7 +75,7 @@ class PlacementsItemController(object):
 
     @index.when(method='POST', template='json')
     def index_post(self, **kwargs):
-        """ Reserve a placement. This and other placements may be replanned.
+        """Reserve a placement. This and other placements may be replanned.
 
         Once reserved, the location effectively becomes immutable.
         """
@@ -155,7 +155,7 @@ class PlacementsItemController(object):
 
     @index.when(method='DELETE', template='json')
     def index_delete(self):
-        """Delete a Placement"""
+        """Delete a Placement."""
         orch_id = self.placement.orchestration_id
         self.placement.delete()
         LOG.info(_('Placement with orchestration id %s deleted.'), orch_id)
@@ -163,23 +163,23 @@ class PlacementsItemController(object):
 
 
 class PlacementsController(object):
-    """ Placements Controller /v1/placements """
+    """Placements Controller /v1/placements."""
 
     @classmethod
     def allow(cls):
-        """Allowed methods"""
+        """Allowed methods."""
         return 'GET'
 
     @expose(generic=True, template='json')
     def index(self):
-        """Catchall for unallowed methods"""
+        """Catchall for unallowed methods."""
         message = _('The %s method is not allowed.') % request.method
         kwargs = {'allow': self.allow()}
         error('/errors/not_allowed', message, **kwargs)
 
     @index.when(method='OPTIONS', template='json')
     def index_options(self):
-        """Options"""
+        """Index Options."""
         response.headers['Allow'] = self.allow()
         response.status = 204
 
@@ -193,5 +193,5 @@ class PlacementsController(object):
 
     @expose()
     def _lookup(self, uuid4, *remainder):
-        """Pecan subcontroller routing callback"""
+        """Pecan subcontroller routing callback."""
         return PlacementsItemController(uuid4), remainder

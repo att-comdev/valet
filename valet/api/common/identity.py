@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Identity helper library"""
+"""Identity helper library."""
 
 from datetime import datetime
 

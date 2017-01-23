@@ -31,8 +31,11 @@ class FunctionalTestCase(Base):
     """Test case base class for all unit tests."""
 
     def __init__(self, *args, **kwds):
-        """ initializing the FunctionalTestCase - loading the
-        logger, loader and analyzer """
+        """Initializing the FunctionalTestCase - loading the
+        logger, loader and analyzer
+
+        """
+
         super(FunctionalTestCase, self).__init__(*args, **kwds)
 
     def setUp(self):

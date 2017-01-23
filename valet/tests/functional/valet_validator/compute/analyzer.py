@@ -118,10 +118,8 @@ class Analyzer(object):
                                     % ex, traceback.format_exc())
 
     def are_different(self, hosts_list, level):
-        """ 
-        Checking if all hosts (and racks)
-        are different for all instances 
-        """
+        """Checking if all hosts (and racks) are different for all instances"""
+
         diction = {}
 
         try:

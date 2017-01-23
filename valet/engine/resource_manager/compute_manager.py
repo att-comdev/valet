@@ -1,6 +1,6 @@
 #!/bin/python
 
-# Modified: Jan. 21, 2017
+# Modified: Jan. 23, 2017
 
 
 import threading
@@ -33,7 +33,7 @@ class ComputeManager(threading.Thread):
         self.project_token = None
 
     def run(self):
-        self.logger.info("ComputeManager: start " + self.thread_name + " ......")
+        self.logger.info("start compute_manager " + self.thread_name + " ......")
 
         if self.config.compute_trigger_freq > 0:
             period_end = time.time() + self.config.compute_trigger_freq
@@ -70,10 +70,10 @@ class ComputeManager(threading.Thread):
                     last_trigger_mon = now.tm_mon
                     last_trigger_mday = now.tm_mday
 
-        self.logger.info("ComputeManager: exit " + self.thread_name)
+        self.logger.info("exit compute_manager " + self.thread_name)
 
     def _run(self):
-        self.logger.info("ComputeManager: --- start compute_nodes status update ---")
+        self.logger.info("--- start compute_nodes status update ---")
 
         triggered_host_updates = self.set_hosts()
         triggered_flavor_updates = self.set_flavors()
@@ -90,7 +90,7 @@ class ComputeManager(threading.Thread):
             # TODO(GY): error handling, e.g., 3 times failure then stop Ostro?
             pass
 
-        self.logger.info("ComputeManager: --- done compute_nodes status update ---")
+        self.logger.info("--- done compute_nodes status update ---")
 
         return True
 
@@ -123,7 +123,7 @@ class ComputeManager(threading.Thread):
 
         status = compute.set_hosts(hosts, logical_groups)
         if status != "success":
-            self.logger.error("ComputeManager: " + status)
+            # self.logger.error("ComputeManager: " + status)
             return False
 
         self._compute_avail_host_resources(hosts)
@@ -145,7 +145,7 @@ class ComputeManager(threading.Thread):
                 self.resource.logical_groups[lk] = deepcopy(_logical_groups[lk])
 
                 self.resource.logical_groups[lk].last_update = time.time()
-                self.logger.warn("ComputeManager: new logical group (" + lk + ") added")
+                self.logger.warn("new logical group (" + lk + ") added")
 
         for rlk in self.resource.logical_groups.keys():
             rl = self.resource.logical_groups[rlk]
@@ -154,7 +154,7 @@ class ComputeManager(threading.Thread):
                     self.resource.logical_groups[rlk].status = "disabled"
 
                     self.resource.logical_groups[rlk].last_update = time.time()
-                    self.logger.warn("ComputeManager: logical group (" + rlk + ") removed")
+                    self.logger.warn("logical group (" + rlk + ") removed")
 
         for lk in _logical_groups.keys():
             lg = _logical_groups[lk]
@@ -163,7 +163,7 @@ class ComputeManager(threading.Thread):
                 if self._check_logical_group_metadata_update(lg, rlg) is True:
 
                     rlg.last_update = time.time()
-                    self.logger.warn("ComputeManager: logical group (" + lk + ") updated")
+                    self.logger.warn("logical group (" + lk + ") updated")
 
     def _check_logical_group_metadata_update(self, _lg, _rlg):
         if _lg.status != _rlg.status:
@@ -192,7 +192,7 @@ class ComputeManager(threading.Thread):
                 self.resource.hosts[new_host.name] = new_host
 
                 new_host.last_update = time.time()
-                self.logger.warn("ComputeManager: new host (" + new_host.name + ") added")
+                self.logger.warn("new host (" + new_host.name + ") added")
 
         for rhk, rhost in self.resource.hosts.iteritems():
             if rhk not in _hosts.keys():
@@ -200,7 +200,7 @@ class ComputeManager(threading.Thread):
                     rhost.tag.remove("nova")
 
                     rhost.last_update = time.time()
-                    self.logger.warn("ComputeManager: host (" + rhost.name + ") disabled")
+                    self.logger.warn("host (" + rhost.name + ") disabled")
 
         for hk in _hosts.keys():
             host = _hosts[hk]
@@ -211,7 +211,7 @@ class ComputeManager(threading.Thread):
         for hk, h in self.resource.hosts.iteritems():
             if h.clean_memberships() is True:
                 h.last_update = time.time()
-                self.logger.warn("ComputeManager: host (" + h.name + ") updated (delete EX/AFF/DIV membership)")
+                self.logger.warn("host (" + h.name + ") updated (delete EX/AFF/DIV membership)")
 
         for hk, host in self.resource.hosts.iteritems():
             if host.last_update > self.resource.current_timestamp:
@@ -233,17 +233,17 @@ class ComputeManager(threading.Thread):
         if "nova" not in _rhost.tag:
             _rhost.tag.append("nova")
             topology_updated = True
-            self.logger.warn("ComputeManager: host (" + _rhost.name + ") updated (tag added)")
+            self.logger.warn("host (" + _rhost.name + ") updated (tag added)")
 
         if _host.status != _rhost.status:
             _rhost.status = _host.status
             topology_updated = True
-            self.logger.warn("ComputeManager: host (" + _rhost.name + ") updated (status changed)")
+            self.logger.warn("host (" + _rhost.name + ") updated (status changed)")
 
         if _host.state != _rhost.state:
             _rhost.state = _host.state
             topology_updated = True
-            self.logger.warn("ComputeManager: host (" + _rhost.name + ") updated (state changed)")
+            self.logger.warn("host (" + _rhost.name + ") updated (state changed)")
 
         return topology_updated
 
@@ -257,7 +257,7 @@ class ComputeManager(threading.Thread):
             _rhost.original_vCPUs = _host.original_vCPUs
             _rhost.avail_vCPUs = _host.avail_vCPUs
             topology_updated = True
-            self.logger.warn("ComputeManager: host (" + _rhost.name + ") updated (CPU updated)")
+            self.logger.warn("host (" + _rhost.name + ") updated (CPU updated)")
 
         if _host.mem_cap != _rhost.mem_cap or \
            _host.original_mem_cap != _rhost.original_mem_cap or \
@@ -266,7 +266,7 @@ class ComputeManager(threading.Thread):
             _rhost.original_mem_cap = _host.original_mem_cap
             _rhost.avail_mem_cap = _host.avail_mem_cap
             topology_updated = True
-            self.logger.warn("ComputeManager: host (" + _rhost.name + ") updated (mem updated)")
+            self.logger.warn("host (" + _rhost.name + ") updated (mem updated)")
 
         if _host.local_disk_cap != _rhost.local_disk_cap or \
            _host.original_local_disk_cap != _rhost.original_local_disk_cap or \
@@ -275,7 +275,7 @@ class ComputeManager(threading.Thread):
             _rhost.original_local_disk_cap = _host.original_local_disk_cap
             _rhost.avail_local_disk_cap = _host.avail_local_disk_cap
             topology_updated = True
-            self.logger.warn("ComputeManager: host (" + _rhost.name + ") updated (local disk space updated)")
+            self.logger.warn("host (" + _rhost.name + ") updated (local disk space updated)")
 
         if _host.vCPUs_used != _rhost.vCPUs_used or \
            _host.free_mem_mb != _rhost.free_mem_mb or \
@@ -286,7 +286,7 @@ class ComputeManager(threading.Thread):
             _rhost.free_disk_gb = _host.free_disk_gb
             _rhost.disk_available_least = _host.disk_available_least
             topology_updated = True
-            self.logger.warn("ComputeManager: host (" + _rhost.name + ") updated (other resource numbers)")
+            self.logger.warn("host (" + _rhost.name + ") updated (other resource numbers)")
 
         return topology_updated
 
@@ -297,7 +297,7 @@ class ComputeManager(threading.Thread):
             if mk not in _rhost.memberships.keys():
                 _rhost.memberships[mk] = self.resource.logical_groups[mk]
                 topology_updated = True
-                self.logger.warn("ComputeManager: host (" + _rhost.name + ") updated (new membership)")
+                self.logger.warn("host (" + _rhost.name + ") updated (new membership)")
 
         for mk in _rhost.memberships.keys():
             m = _rhost.memberships[mk]
@@ -305,7 +305,7 @@ class ComputeManager(threading.Thread):
                 if mk not in _host.memberships.keys():
                     del _rhost.memberships[mk]
                     topology_updated = True
-                    self.logger.warn("ComputeManager: host (" + _rhost.name + ") updated (delete membership)")
+                    self.logger.warn("host (" + _rhost.name + ") updated (delete membership)")
 
         return topology_updated
 
@@ -318,7 +318,7 @@ class ComputeManager(threading.Thread):
                 _rhost.vm_list.remove(rvm_id)
 
                 topology_updated = True
-                self.logger.warn("ComputeManager: host (" + _rhost.name + ") updated (none vm removed)")
+                self.logger.warn("host (" + _rhost.name + ") updated (none vm removed)")
 
         self.resource.clean_none_vms_from_logical_groups(_rhost)
 
@@ -327,7 +327,7 @@ class ComputeManager(threading.Thread):
                 _rhost.vm_list.append(vm_id)
 
                 topology_updated = True
-                self.logger.warn("ComputeManager: host (" + _rhost.name + ") updated (new vm placed)")
+                self.logger.warn("host (" + _rhost.name + ") updated (new vm placed)")
 
         for rvm_id in _rhost.vm_list:
             if _host.exist_vm_by_uuid(rvm_id[2]) is False:
@@ -336,7 +336,7 @@ class ComputeManager(threading.Thread):
                 self.resource.remove_vm_by_uuid_from_logical_groups(_rhost, rvm_id[2])
 
                 topology_updated = True
-                self.logger.warn("ComputeManager: host (" + _rhost.name + ") updated (vm removed)")
+                self.logger.warn("host (" + _rhost.name + ") updated (vm removed)")
 
         return topology_updated
 

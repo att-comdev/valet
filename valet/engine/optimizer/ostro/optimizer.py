@@ -1,6 +1,6 @@
 #!/bin/python
 
-# Modified: Sep. 27, 2016
+# Modified: Jan. 23, 2017
 
 import time
 
@@ -48,7 +48,7 @@ class Optimizer(object):
                     uuid_map = self._delete_old_vms(_app_topology.old_vm_map)
                     self.resource.update_topology(store=False)
 
-                    self.logger.debug("Optimizer: remove old placements for replan")
+                    self.logger.debug("remove old placements for replan")
         else:
             success = self.search.place_nodes(_app_topology, self.resource)
 
@@ -57,7 +57,7 @@ class Optimizer(object):
         if success is True:
 
             self.logger.debug("Optimizer: search running time = " + str(end_ts - start_ts) + " sec")
-            self.logger.debug("Optimizer: total bandwidth = " + str(self.search.bandwidth_usage))
+            # self.logger.debug("Optimizer: total bandwidth = " + str(self.search.bandwidth_usage))
             self.logger.debug("Optimizer: total number of hosts = " + str(self.search.num_of_hosts))
 
             placement_map = {}

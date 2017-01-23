@@ -1,14 +1,14 @@
 #!/bin/python
 
-# Modified: Sep. 27, 2016
+# Modified: Jan. 23, 2017
 
 
-import json
+# import json
 
 from valet.engine.optimizer.app_manager.app_topology import AppTopology
 from valet.engine.optimizer.app_manager.app_topology_base import VM
 from valet.engine.optimizer.app_manager.application import App
-from valet.engine.optimizer.util import util as util
+# from valet.engine.optimizer.util import util as util
 
 
 class AppHandler(object):
@@ -31,7 +31,7 @@ class AppHandler(object):
 
         app_topology = AppTopology(self.resource, self.logger)
 
-        self.logger.debug("AppHandler: parse app")
+        self.logger.debug("parse app")
 
         stack_id = None
         if "stack_id" in _app.keys():
@@ -47,7 +47,7 @@ class AppHandler(object):
 
         action = _app["action"]
         if action == "ping":
-            self.logger.debug("AppHandler: got ping")
+            self.logger.debug("got ping")
         elif action == "replan" or action == "migrate":
             re_app = self._regenerate_app_topology(stack_id, _app, app_topology, action)
             if re_app is None:
@@ -56,14 +56,14 @@ class AppHandler(object):
                 return None
 
             if action == "replan":
-                self.logger.debug("AppHandler: got replan: " + stack_id)
+                self.logger.debug("got replan: " + stack_id)
             elif action == "migrate":
-                self.logger.debug("AppHandler: got migration: " + stack_id)
+                self.logger.debug("got migration: " + stack_id)
 
             app_id = app_topology.set_app_topology(re_app)
 
             if app_id is None:
-                self.logger.error("AppHandler: " + app_topology.status)
+                self.logger.error(app_topology.status)
                 self.status = app_topology.status
                 self.apps[stack_id] = None
                 return None
@@ -71,7 +71,7 @@ class AppHandler(object):
             app_id = app_topology.set_app_topology(_app)
 
             if app_id is None:
-                self.logger.error("AppHandler: " + app_topology.status)
+                self.logger.error(app_topology.status)
                 self.status = app_topology.status
                 self.apps[stack_id] = None
                 return None
@@ -102,29 +102,26 @@ class AppHandler(object):
                         self.apps[v.app_uuid].add_vgroup(v, hg.name)
 
         if self._store_app_placements() is False:
-            # NOTE: ignore?
             pass
 
     def _store_app_placements(self):
-        (app_logfile, last_index, mode) = util.get_last_logfile(
-            self.config.app_log_loc, self.config.max_log_size, self.config.max_num_of_logs,
-            self.resource.datacenter.name, self.last_log_index)
-        self.last_log_index = last_index
+        # (app_logfile, last_index, mode) = util.get_last_logfile(
+        #     self.config.app_log_loc, self.config.max_log_size, self.config.max_num_of_logs,
+        #     self.resource.datacenter.name, self.last_log_index)
+        # self.last_log_index = last_index
 
-        # TODO(GJ): error handling
+        # logging = open(self.config.app_log_loc + app_logfile, mode)
 
-        logging = open(self.config.app_log_loc + app_logfile, mode)
+        # for appk, app in self.apps.iteritems():
+        #     json_log = app.log_in_info()
+        #     log_data = json.dumps(json_log)
 
-        for appk, app in self.apps.iteritems():
-            json_log = app.log_in_info()
-            log_data = json.dumps(json_log)
+        #     logging.write(log_data)
+        #     logging.write("\n")
 
-            logging.write(log_data)
-            logging.write("\n")
+        # logging.close()
 
-        logging.close()
-
-        self.logger.info("AppHandler: log app in " + app_logfile)
+        # self.logger.info("log app in " + app_logfile)
 
         if self.db is not None:
             for appk, app in self.apps.iteritems():
@@ -132,8 +129,8 @@ class AppHandler(object):
                 if self.db.add_app(appk, json_info) is False:
                     return False
 
-            if self.db.update_app_log_index(self.resource.datacenter.name, self.last_log_index) is False:
-                return False
+            # if self.db.update_app_log_index(self.resource.datacenter.name, self.last_log_index) is False:
+            #     return False
 
         return True
 
@@ -141,8 +138,7 @@ class AppHandler(object):
         if self.db is not None:
             for appk, _ in self.apps.iteritems():
                 if self.db.add_app(appk, None) is False:
-                    self.logger.error("AppHandler: error while adding app info to MUSIC")
-                    # NOTE: ignore?
+                    self.logger.error("error while adding app info to MUSIC")
 
     def get_vm_info(self, _s_uuid, _h_uuid, _host):
         vm_info = {}
@@ -165,11 +161,11 @@ class AppHandler(object):
         old_app = self.db.get_app_info(_stack_id)
         if old_app is None:
             self.status = "error while getting old_app from MUSIC"
-            self.logger.error("AppHandler: " + self.status)
+            self.logger.error(self.status)
             return None
         elif len(old_app) == 0:
             self.status = "cannot find the old app in MUSIC"
-            self.logger.error("AppHandler: " + self.status)
+            self.logger.error(self.status)
             return None
 
         re_app["action"] = "create"
@@ -208,14 +204,14 @@ class AppHandler(object):
                     if vmk == _app["orchestration_id"]:
                         _app_topology.candidate_list_map[vmk] = _app["locations"]
 
-                        self.logger.debug("AppHandler: re-requested vm = " + vm["name"] + " in")
+                        self.logger.debug("re-requested vm = " + vm["name"] + " in")
                         for hk in _app["locations"]:
                             self.logger.debug("    " + hk)
 
                     elif vmk in _app["exclusions"]:
                         _app_topology.planned_vm_map[vmk] = vm["host"]
 
-                        self.logger.debug("AppHandler: exception from replan = " + vm["name"])
+                        self.logger.debug("exception from replan = " + vm["name"])
 
                 elif _action == "migrate":
                     if vmk == _app["orchestration_id"]:

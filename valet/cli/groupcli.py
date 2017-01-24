@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Group Cli."""
+
 import argparse
 import json
 from oslo_config import cfg
@@ -23,14 +25,20 @@ CONF = cfg.CONF
 
 
 class ResponseError(Exception):
+    """Response Error Exception."""
+
     pass
 
 
 class ConnectionError(Exception):
+    """Connection Error Exception."""
+
     pass
 
 
 def print_verbose(verbose, url, headers, body, rest_cmd, timeout):
+    """Print verbose data."""
+    # TODO(Chris Martin): Replace prints with logs
     if verbose:
         print("Sending Request:\nurl: %s\nheaders: "
               "%s\nbody: %s\ncmd: %s\ntimeout: %d\n"
@@ -39,6 +47,8 @@ def print_verbose(verbose, url, headers, body, rest_cmd, timeout):
 
 
 def pretty_print_json(json_thing, sort=True, indents=4):
+    """Print parser in nice format."""
+    # TODO(Chris Martin): Replace prints with logs
     if type(json_thing) is str:
         print(json.dumps(json.loads(json_thing), sort_keys=sort,
                          indent=indents))
@@ -48,11 +58,12 @@ def pretty_print_json(json_thing, sort=True, indents=4):
 
 
 def add_to_parser(service_sub):
+    """Return parser."""
     parser = service_sub.add_parser('group', help='Group Management',
                                     formatter_class=lambda
                                     prog: argparse.HelpFormatter(
-                                            prog, max_help_position=30,
-                                            width=120))
+                                        prog, max_help_position=30,
+                                        width=120))
     parser.add_argument('--version', action='version', version='%(prog)s 1.1')
     parser.add_argument('--timeout', type=int,
                         help='Set request timeout in seconds (default: 10)')
@@ -127,6 +138,7 @@ def add_to_parser(service_sub):
 
 
 def cmd_details(args):
+    """Command details."""
     if args.subcmd == 'create':
         return requests.post, ''
     elif args.subcmd == 'update':
@@ -146,6 +158,7 @@ def cmd_details(args):
 
 
 def get_token(timeout, args):
+    """Return JSON of access token id."""
     tenant_name = args.os_tenant_name if args.os_tenant_name \
         else CONF.identity.project_name
     auth_name = args.os_username if args.os_username \
@@ -181,6 +194,7 @@ def get_token(timeout, args):
 
 
 def populate_args_request_body(args):
+    """Return JSON of filtered body dictionary."""
     body_args_list = ['name', 'type', 'description', 'members']
     # assign values to dict (if val exist) members will be assign as a list
     body_dict = {}
@@ -196,6 +210,7 @@ def populate_args_request_body(args):
 
 
 def run(args):
+    """Run."""
     register_conf()
     set_domain(project='valet')
     args.host = args.host or CONF.server.host

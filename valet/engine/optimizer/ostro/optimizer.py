@@ -56,9 +56,9 @@ class Optimizer(object):
 
         if success is True:
 
-            self.logger.debug("Optimizer: search running time = " + str(end_ts - start_ts) + " sec")
-            # self.logger.debug("Optimizer: total bandwidth = " + str(self.search.bandwidth_usage))
-            self.logger.debug("Optimizer: total number of hosts = " + str(self.search.num_of_hosts))
+            self.logger.debug("EVAL: search running time = " + str(end_ts - start_ts) + " sec")
+            # self.logger.debug("EVAL: total bandwidth = " + str(self.search.bandwidth_usage))
+            self.logger.debug("EVAL: total number of hosts = " + str(self.search.num_of_hosts))
 
             placement_map = {}
             for v in self.search.node_placements.keys():

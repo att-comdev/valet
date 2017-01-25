@@ -218,7 +218,7 @@ class HaValetThread (threading.Thread):
         user = self.data.get(USER, None)
         self.use(user)
         my_priority = int(self.data.get(PRIORITY, 1))
-        start_command = eval(self.data.get(START_COMMAND, None))
+        start_command = self.data.get(START_COMMAND, None)
         stop_command = self.data.get(STOP_COMMAND, None)
         test_command = self.data.get(TEST_COMMAND, None)
         standby_list = self.data.get(STAND_BY_LIST)
@@ -232,7 +232,7 @@ class HaValetThread (threading.Thread):
                 time.sleep(HEARTBEAT_SEC / my_priority)
 
             self.log.info('checking status here - ' + host + ', my priority: ' + str(my_priority))
-            i_am_active, priority = self._is_active(eval(test_command))
+            i_am_active, priority = self._is_active(test_command % {'host': host, 'user': user})
             self.log.info(host + ': host_active = ' + str(i_am_active) + ', ' + str(priority))
             any_active = i_am_active
             self.log.info('any active = ' + str(any_active))
@@ -247,9 +247,9 @@ class HaValetThread (threading.Thread):
                         continue
 
                     self.log.info('checking status on - ' + host_in_list)
-                    host = host_in_list
-                    host_active, host_priority = self._is_active(eval(test_command))
-                    host = self.data.get(HOST, 'localhost')
+                    # host = host_in_list
+                    host_active, host_priority = self._is_active(test_command % {'host': host_in_list, 'user': user})
+                    # host = self.data.get(HOST, 'localhost')
                     self.log.info(host_in_list + ' - host_active = ' + str(host_active) + ', ' + str(host_priority))
                     # Check for split brain: 2 valets active
                     if i_am_active and host_active:
@@ -257,14 +257,15 @@ class HaValetThread (threading.Thread):
                         should_be_active = self._should_be_active(host_priority, my_priority)
                         if should_be_active:
                             self.log.info('deactivate myself, ' + host_in_list + ' already running')
-                            self._deactivate_process(eval(stop_command))     # Deactivate myself
+                            self._deactivate_process(stop_command % {'host': host, 'user': user})  # Deactivate myself
                             i_am_active = False
                         else:
                             self.log.info('deactivate ' + self.data[NAME] + ' on ' + host_in_list +
                                           ', already running here')
-                            host = host_in_list
-                            self._deactivate_process(eval(stop_command))  # Deactivate other valet
-                            host = self.data.get(HOST, 'localhost')
+                            # host = host_in_list
+                            # Deactivate other valet
+                            self._deactivate_process(stop_command % {'host': host_in_list, 'user': user})
+                            # host = self.data.get(HOST, 'localhost')
 
                     # Track that at-least one valet is active
                     any_active = any_active or host_active
@@ -291,12 +292,12 @@ class HaValetThread (threading.Thread):
                     priority_wait = False
                     if (not i_am_active and my_priority == PRIMARY_SETUP) or (standby_list is not None):
                         self.log.info('no running instance found, starting here; last start %s' % diff)
-                        self._activate_process(start_command, my_priority)
+                        self._activate_process(start_command % {'host': host, 'user': user}, my_priority)
                     else:
-                        host = standby_list[0]  # LIMITATION - supporting only 1 stand by host
+                        # host = standby_list[0]  # LIMITATION - supporting only 1 stand by host
                         self.log.info('no running instances found, starting on %s; last start %s' % (host, diff))
-                        self._activate_process(start_command, my_priority)
-                        host = self.data.get(HOST, 'localhost')
+                        self._activate_process(start_command % {'host': standby_list[0], 'user': user}, my_priority)
+                        # host = self.data.get(HOST, 'localhost')
                 else:
                     priority_wait = True
             else:
@@ -379,54 +380,6 @@ class HAValet(object):
         if not os.path.exists(LOG_DIR):
             os.makedirs(LOG_DIR)
         self.log = None
-
-    @DeprecationWarning
-    def _parse_valet_conf_v010(self, conf_file_name=DEFAULT_CONF_FILE, process=''):
-        """ This function reads the valet config file and returns configuration
-
-            attributes in key/value format
-
-        :param conf_file_name: config file name
-        :type conf_file_name: string
-        :param process: specific process name
-                        when not supplied - the module launches all the processes in the configuration
-        :type process: string
-        :return: dictionary of configured monitored processes
-        :rtype: dict
-        """
-
-        cdata = {}
-        section = ''
-
-        try:
-            with open(conf_file_name, 'r') as valet_conf_file:
-                for line in valet_conf_file.readlines():
-                    if line.strip(' \t\r\n')[:1] == '#' or line.__len__() == 2:
-                        continue
-                    elif line.lstrip(' \t\r\n')[:1] == ':':
-                        tokens = line.lstrip(' \t\n\r').split(' ')
-                        section = tokens[0][1:].strip('\n\r\n')
-                        cdata[section] = {}
-                        cdata[section][NAME] = section
-                    else:
-                        if line[:1] == '\n':
-                            continue
-                        tokens = line.split('=')
-                        key = tokens[0].strip(' \t\n\r')
-                        value = tokens[1].strip(' \t\n\r')
-                        cdata[section][key] = value
-
-            # if need to run a specific process
-            # remove all others
-            if process is not '':
-                for key in cdata.keys():
-                    if key != process:
-                        del cdata[key]
-
-            return cdata
-        except OSError:
-            print('unable to open %s file for some reason' % conf_file_name)
-        return cdata
 
     def _valid_process_conf_data(self, process_data):
         """ verify all mandatory parameters are found in the monitored process configuration only standby_list is optional

@@ -367,14 +367,15 @@ class ComputeManager(threading.Thread):
                 self.resource.flavors[fk] = deepcopy(_flavors[fk])
 
                 self.resource.flavors[fk].last_update = time.time()
-                self.logger.warn("new flavor (" + fk + ") added")
+                self.logger.warn("new flavor (" + fk + ":" + _flavors[fk].flavor_id + ") added")
 
         for rfk in self.resource.flavors.keys():
+            rf = self.resource.flavors[rfk]
             if rfk not in _flavors.keys():
-                self.resource.flavors[rfk].status = "disabled"
+                rf.status = "disabled"
 
-                self.resource.flavors[rfk].last_update = time.time()
-                self.logger.warn("flavor (" + rfk + ") removed")
+                rf.last_update = time.time()
+                self.logger.warn("flavor (" + rfk + ":" + rf.flavor_id + ") removed")
 
         for fk in _flavors.keys():
             f = _flavors[fk]
@@ -382,7 +383,7 @@ class ComputeManager(threading.Thread):
 
             if self._check_flavor_spec_update(f, rf) is True:
                 rf.last_update = time.time()
-                self.logger.warn("flavor (" + fk + ") spec updated")
+                self.logger.warn("flavor (" + fk + ":" + rf.flavor_id + ") spec updated")
 
     def _check_flavor_spec_update(self, _f, _rf):
         spec_updated = False

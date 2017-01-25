@@ -509,7 +509,7 @@ class MusicHandler(object):
             self.logger.error("DB: " + str(e))
             return False
 
-        # self.logger.info("DB: resource status updated")
+        self.logger.info("DB: resource status updated")
 
         return True
 

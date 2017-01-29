@@ -1,6 +1,6 @@
 #!/bin/python
 
-# Modified: Jan. 23, 2017
+# Modified: Jan. 30, 2017
 
 import six
 
@@ -133,7 +133,7 @@ class Parser(object):
 
                 vgroups[vgroup.uuid] = vgroup
 
-                self.logger.debug("group = " + vgroup.name)
+                self.logger.debug("group = " + vgroup.name + vgroup.name + ", type = " + vgroup.vgroup_type)
                 vgroup_captured = True
 
         self._set_vm_links(_elements, vms)

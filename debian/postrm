@@ -1,0 +1,2 @@
+rm -rf /usr/local/lib/python2.7/dist-packages/valet/*
+rm -rf /usr/local/lib/python2.7/dist-packages/valet-0.0.0-py2.7.egg-info/*

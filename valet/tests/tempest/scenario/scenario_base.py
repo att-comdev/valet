@@ -111,6 +111,7 @@ class ScenarioTestCase(test.BaseTestCase):
 
         except Exception:
             self.log.log_error("Failed to create valet group", traceback.format_exc())
+            raise
 
     def get_env_file(self, template):
         try:
@@ -131,12 +132,21 @@ class ScenarioTestCase(test.BaseTestCase):
             self.log.log_error("Failed to load environment file", traceback.format_exc())
 
     def _delete_group(self, group_id):
-        self.valet_client.delete_all_members(group_id)
-        self.valet_client.delete_group(group_id)
+        try:
+            self.valet_client.delete_all_members(group_id)
+            self.valet_client.delete_group(group_id)
+        except Exception:
+            self.log.log_error("Failed to delete group", traceback.format_exc())
+            raise
 
     def delete_stack(self):
-        self.heat_client.delete_stack(self.stack_identifier)
-        self.heat_client.wait_for_stack_status(self.stack_identifier, "DELETE_COMPLETE", failure_pattern='^.*DELETE_FAILED$')
+        try:
+            self.heat_client.delete_stack(self.stack_identifier)
+            self.heat_client.wait_for_stack_status(self.stack_identifier, "DELETE_COMPLETE", failure_pattern='^.*DELETE_FAILED$')
+
+        except Exception:
+            self.log.log_error("Failed to delete stack", traceback.format_exc())
+            raise
 
     def show_stack(self, stack_id):
         return self.heat_client.show_stack(stack_id)

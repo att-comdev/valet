@@ -1,6 +1,6 @@
 #!/bin/python
 
-# Modified: Jan. 23, 2017
+# Modified: Jan. 30, 2017
 
 
 import json
@@ -25,6 +25,11 @@ class MusicHandler(object):
             self.music = Music()
         elif self.config.mode.startswith("live"):
             self.music = Music(hosts=self.config.db_hosts, replication_factor=self.config.replication_factor)
+            if self.config.db_hosts is not None and len(self.config.db_hosts) > 0:
+                for dbh in self.config.db_hosts:
+                    self.logger.debug("DB: music host = " + dbh)
+            if self.config.replication_factor is not None:
+                self.logger.debug("DB: music replication factor = " + str(self.config.replication_factor))
 
     def init_db(self):
         try:

@@ -1,6 +1,6 @@
 #!/bin/python
 
-# Modified: Jan. 23, 2017
+# Modified: Jan. 30, 2017
 
 
 from valet.engine.optimizer.app_manager.app_topology_base import VGroup, VM, LEVELS
@@ -53,8 +53,8 @@ class ConstraintSolver(object):
                     self.status = "violate availability zone constraint for node = " + _n.node.name
                     self.logger.error(self.status)
                     return candidate_list
-                else:
-                    self.logger.debug("done availability_zone constraint " + str(len(candidate_list)))
+                # else:
+                #     self.logger.debug("done availability_zone constraint " + str(len(candidate_list)))
 
         ''' host aggregate constraint '''
         if isinstance(_n.node, VGroup) or isinstance(_n.node, VM):
@@ -64,8 +64,8 @@ class ConstraintSolver(object):
                     self.status = "violate host aggregate constraint for node = " + _n.node.name
                     self.logger.error(self.status)
                     return candidate_list
-                else:
-                    self.logger.debug("done host_aggregate constraint " + str(len(candidate_list)))
+                # else:
+                #     self.logger.debug("done host_aggregate constraint " + str(len(candidate_list)))
 
         ''' cpu capacity constraint '''
         if isinstance(_n.node, VGroup) or isinstance(_n.node, VM):
@@ -74,8 +74,8 @@ class ConstraintSolver(object):
                 self.status = "violate cpu capacity constraint for node = " + _n.node.name
                 self.logger.error(self.status)
                 return candidate_list
-            else:
-                self.logger.debug("done cpu capacity constraint " + str(len(candidate_list)))
+            # else:
+            #     self.logger.debug("done cpu capacity constraint " + str(len(candidate_list)))
 
         ''' memory capacity constraint '''
         if isinstance(_n.node, VGroup) or isinstance(_n.node, VM):
@@ -84,8 +84,8 @@ class ConstraintSolver(object):
                 self.status = "violate memory capacity constraint for node = " + _n.node.name
                 self.logger.error(self.status)
                 return candidate_list
-            else:
-                self.logger.debug("done memory capacity constraint " + str(len(candidate_list)))
+            # else:
+            #     self.logger.debug("done memory capacity constraint " + str(len(candidate_list)))
 
         ''' local disk capacity constraint '''
         if isinstance(_n.node, VGroup) or isinstance(_n.node, VM):
@@ -94,8 +94,8 @@ class ConstraintSolver(object):
                 self.status = "violate local disk capacity constraint for node = " + _n.node.name
                 self.logger.error(self.status)
                 return candidate_list
-            else:
-                self.logger.debug("done local disk capacity constraint " + str(len(candidate_list)))
+            # else:
+            #     self.logger.debug("done local disk capacity constraint " + str(len(candidate_list)))
 
         ''' network bandwidth constraint '''
         # self._constrain_nw_bandwidth_capacity(_level, _n, _node_placements, candidate_list)
@@ -124,8 +124,8 @@ class ConstraintSolver(object):
                     self.status = "violate diversity constraint for node = " + _n.node.name
                     self.logger.error(self.status)
                     return candidate_list
-                else:
-                    self.logger.debug("done diversity_group constraint " + str(len(candidate_list)))
+                # else:
+                #     self.logger.debug("done diversity_group constraint " + str(len(candidate_list)))
 
         ''' exclusivity constraint '''
         exclusivities = self.get_exclusivities(_n.node.exclusivity_groups, _level)
@@ -142,16 +142,16 @@ class ConstraintSolver(object):
                         self.status = "violate exclusivity constraint for node = " + _n.node.name
                         self.logger.error(self.status)
                         return candidate_list
-                    else:
-                        self.logger.debug("done exclusivity_group constraint " + str(len(candidate_list)))
+                    # else:
+                    #     self.logger.debug("done exclusivity_group constraint " + str(len(candidate_list)))
             else:
                 self._constrain_non_exclusivity(_level, candidate_list)
                 if len(candidate_list) == 0:
                     self.status = "violate non-exclusivity constraint for node = " + _n.node.name
                     self.logger.error(self.status)
                     return candidate_list
-                else:
-                    self.logger.debug("done non-exclusivity_group constraint " + str(len(candidate_list)))
+                # else:
+                #     self.logger.debug("done non-exclusivity_group constraint " + str(len(candidate_list)))
 
         ''' affinity constraint '''
         affinity_id = _n.get_affinity_id()  # level:name, except name == "any"
@@ -163,8 +163,8 @@ class ConstraintSolver(object):
                         self.status = "violate affinity constraint for node = " + _n.node.name
                         self.logger.error(self.status)
                         return candidate_list
-                    else:
-                        self.logger.debug("done affinity_group constraint " + str(len(candidate_list)))
+                    # else:
+                    #     self.logger.debug("done affinity_group constraint " + str(len(candidate_list)))
 
         return candidate_list
 

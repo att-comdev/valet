@@ -1,6 +1,6 @@
 #!/bin/python
 
-# Modified: Jan. 23, 2017
+# Modified: Jan. 30, 2017
 
 import time
 
@@ -75,7 +75,7 @@ class Optimizer(object):
                     elif v.level == "cluster":
                         placement_map[v] = self.search.node_placements[v].cluster_name
 
-                self.logger.debug("    " + v.name + " placed in " + placement_map[v])
+                self.logger.debug("    " + v.uuid + " placed in " + placement_map[v])
 
             self._update_resource_status(uuid_map)
 

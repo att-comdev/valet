@@ -33,6 +33,7 @@ class Analyzer(object):
         self.log.log_info("Starting to check instances location")
         result = True
 
+        self.init_servers_list()
         self.init_resources(resources)
         ins_group = self.init_instances_for_group(resources)
 
@@ -104,7 +105,6 @@ class Analyzer(object):
     def get_instance_host(self, res_name):
         hosts = []
 
-        self.init_servers_list()
         self.log.log_debug("host - instance dictionary is: %s" % self.host_instance_dict)
 
         for res in res_name:
@@ -151,6 +151,7 @@ class Analyzer(object):
         exclusivity_group_hosts = self.get_exclusivity_group_hosts()
 
         self.log.log_debug("exclusivity group hosts are: %s " % exclusivity_group_hosts)
+        self.log.log_debug("instances on host are: %s " % self.instances_on_host)
 
         # instances - all the instances on the exclusivity group hosts
         for host in exclusivity_group_hosts:

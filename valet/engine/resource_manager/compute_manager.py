@@ -1,17 +1,19 @@
 #
 # Copyright 2014-2017 AT&T Intellectual Property
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #     http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+"""Compute Manager."""
 
 import threading
 import time
@@ -23,8 +25,14 @@ from valet.engine.resource_manager.resource_base import Host
 
 
 class ComputeManager(threading.Thread):
+    """Compute Manager Class.
+
+    Threaded class to setup and manage compute for resources, hosts,
+    flavors, etc. Calls many functions from Resource.
+    """
 
     def __init__(self, _t_id, _t_name, _rsc, _data_lock, _config, _logger):
+        """Init Compute Manager."""
         threading.Thread.__init__(self)
 
         self.thread_id = _t_id
@@ -42,6 +50,7 @@ class ComputeManager(threading.Thread):
         self.project_token = None
 
     def run(self):
+        """Start Compute Manager thread to run setup."""
         self.logger.info("ComputeManager: start " + self.thread_name +
                          " ......")
 
@@ -69,8 +78,9 @@ class ComputeManager(threading.Thread):
 
                 now = time.localtime()
                 if now.tm_year > last_trigger_year or \
-                                now.tm_mon > last_trigger_mon or \
-                                now.tm_mday > last_trigger_mday:
+                    now.tm_mon > last_trigger_mon or \
+                    now.tm_mday > last_trigger_mday:
+
                     timeout = False
 
                 if timeout is False and \
@@ -94,12 +104,13 @@ class ComputeManager(threading.Thread):
             triggered_flavor_updates = self.set_flavors()
 
             if triggered_host_updates is True and \
-                            triggered_flavor_updates is True:
+                    triggered_flavor_updates is True:
                 if self.resource.update_topology() is False:
-                    # TODO: error in MUSIC. ignore?
+                    # TODO(UNKNOWN): error in MUSIC. ignore?
                     pass
             else:
-                # TODO: error handling, e.g., 3 times failure then stop Ostro?
+                # TODO(UNKNOWN): error handling, e.g.,
+                # 3 times failure then stop Ostro?
                 pass
         finally:
             self.data_lock.release()
@@ -110,12 +121,13 @@ class ComputeManager(threading.Thread):
         return True
 
     def set_hosts(self):
+        """Return True if hosts set, compute avail resources, checks update."""
         hosts = {}
         logical_groups = {}
 
         compute = None
         if self.config.mode.startswith("sim") is True or \
-           self.config.mode.startswith("test") is True:
+                self.config.mode.startswith("test") is True:
             compute = SimCompute(self.config)
         else:
             compute = Compute(self.logger)
@@ -148,7 +160,7 @@ class ComputeManager(threading.Thread):
         for rlk in self.resource.logical_groups.keys():
             rl = self.resource.logical_groups[rlk]
             if rl.group_type != "EX" and rl.group_type != "AFF" and \
-                            rl.group_type != "DIV":
+                    rl.group_type != "DIV":
                 if rlk not in _logical_groups.keys():
                     self.resource.logical_groups[rlk].status = "disabled"
 
@@ -160,7 +172,7 @@ class ComputeManager(threading.Thread):
             lg = _logical_groups[lk]
             rlg = self.resource.logical_groups[lk]
             if lg.group_type != "EX" and lg.group_type != "AFF" and \
-                            lg.group_type != "DIV":
+                    lg.group_type != "DIV":
                 if self._check_logical_group_metadata_update(lg, rlg) is True:
 
                     rlg.last_update = time.time()
@@ -315,7 +327,7 @@ class ComputeManager(threading.Thread):
         for mk in _rhost.memberships.keys():
             m = _rhost.memberships[mk]
             if m.group_type != "EX" and m.group_type != "AFF" and \
-                            m.group_type != "DIV":
+                    m.group_type != "DIV":
                 if mk not in _host.memberships.keys():
                     del _rhost.memberships[mk]
                     topology_updated = True
@@ -360,11 +372,12 @@ class ComputeManager(threading.Thread):
         return topology_updated
 
     def set_flavors(self):
+        """Return True if compute set flavors returns success."""
         flavors = {}
 
         compute = None
         if self.config.mode.startswith("sim") is True or \
-           self.config.mode.startswith("test") is True:
+                self.config.mode.startswith("test") is True:
             compute = SimCompute(self.config)
         else:
             compute = Compute(self.logger)
@@ -412,7 +425,7 @@ class ComputeManager(threading.Thread):
             spec_updated = True
 
         if _f.vCPUs != _rf.vCPUs or _f.mem_cap != _rf.mem_cap or \
-                        _f.disk_cap != _rf.disk_cap:
+                _f.disk_cap != _rf.disk_cap:
             _rf.vCPUs = _f.vCPUs
             _rf.mem_cap = _f.mem_cap
             _rf.disk_cap = _f.disk_cap

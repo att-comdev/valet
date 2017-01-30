@@ -1,17 +1,19 @@
 #
 # Copyright 2015-2017 AT&T Intellectual Property
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #     http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+"""Listener Manager."""
 
 from datetime import datetime
 import json
@@ -26,8 +28,10 @@ import yaml
 
 
 class ListenerManager(threading.Thread):
+    """Listener Manager Thread Class."""
 
     def __init__(self, _t_id, _t_name, _config):
+        """Init."""
         threading.Thread.__init__(self)
         self.thread_id = _t_id
         self.thread_name = _t_name
@@ -36,12 +40,12 @@ class ListenerManager(threading.Thread):
         self.MUSIC = None
 
     def run(self):
-        """Entry point
+        """Entry point.
 
-            Connect to localhost rabbitmq servers, use
-            username:password@ipaddress:port. The port is typically 5672,
-            and the default username and password are guest and guest.
-            credentials = pika.PlainCredentials("guest", "PASSWORD")
+        Connect to localhost rabbitmq servers, use
+        username:password@ipaddress:port. The port is typically 5672,
+        and the default username and password are guest and guest.
+        credentials = pika.PlainCredentials("guest", "PASSWORD").
         """
         try:
             self.listener_logger.info("ListenerManager: start " +
@@ -117,8 +121,8 @@ class ListenerManager(threading.Thread):
         connection.close()
 
     def on_message(self, channel, method_frame, _, body):
+        """Specify the action to be taken on a message received."""
         # pylint: disable=W0613
-        """Specify the action to be taken on a message received"""
         message = yaml.load(body)
         try:
             if 'oslo.message' in message.keys():
@@ -147,8 +151,10 @@ class ListenerManager(threading.Thread):
             return
 
     def is_message_wanted(self, message):
-        """ Based on markers from Ostro,
-        determine if this is a wanted message. """
+        """Based on markers from Ostro.
+
+        Determine if this is a wanted message.
+        """
         method = message.get('method', None)
         args = message.get('args', None)
 
@@ -158,21 +164,21 @@ class ListenerManager(threading.Thread):
 
         is_data = method and args
         is_nova = is_data and 'objinst' in args \
-                  and nova_props.issubset(args['objinst'])
+            and nova_props.issubset(args['objinst'])
 
         action_instance = is_nova and method == 'object_action' \
-                          and self.is_nova_name(args) \
-                          and self.is_nova_state(args)
+            and self.is_nova_name(args) \
+            and self.is_nova_state(args)
 
         action_compute = is_nova and self.is_compute_name(args)
         create_instance = is_data and method == 'build_and_run_instance' \
-                          and args_props.issubset(args) \
-                          and 'nova_object.data' in args['instance']
+            and args_props.issubset(args) \
+            and 'nova_object.data' in args['instance']
 
         return action_instance or action_compute or create_instance
 
     def store_message(self, message):
-        """Store message in Music"""
+        """Store message in Music."""
         timestamp = datetime.now().isoformat()
         args = json.dumps(message.get('args', None))
         exchange = self.config.events_listener.exchange
@@ -188,11 +194,14 @@ class ListenerManager(threading.Thread):
         OsloMessage(**kwargs)  # pylint: disable=W0612
 
     def is_nova_name(self, args):
+        """Return True if object name is Instance."""
         return args['objinst']['nova_object.name'] == 'Instance'
 
     def is_nova_state(self, args):
+        """Return True if object vm_state is deleted or active."""
         return args['objinst']['nova_object.data']['vm_state'] \
-               in ['deleted', 'active']
+            in ['deleted', 'active']
 
     def is_compute_name(self, args):
+        """Return True if object name is ComputeNode."""
         return args['objinst']['nova_object.name'] == 'ComputeNode'

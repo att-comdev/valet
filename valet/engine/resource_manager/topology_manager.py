@@ -1,17 +1,24 @@
 #
 # Copyright 2014-2017 AT&T Intellectual Property
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #     http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+"""Topology Manager.
+
+Actions involved in setting up and managing topology. This includes setting
+topology, checking updates, creating new switches( also hosts and links), as
+well as updating them.
+"""
 
 import threading
 import time
@@ -22,8 +29,10 @@ from valet.engine.resource_manager.topology import Topology
 
 
 class TopologyManager(threading.Thread):
+    """Topology Manager Class."""
 
     def __init__(self, _t_id, _t_name, _resource, _data_lock, _config, _logger):
+        """Init Topology Manager."""
         threading.Thread.__init__(self)
 
         self.thread_id = _t_id
@@ -38,6 +47,7 @@ class TopologyManager(threading.Thread):
         self.logger = _logger
 
     def run(self):
+        """Function starts and tracks Topology Manager Thread."""
         self.logger.info("TopologyManager: start " +
                          self.thread_name + " ......")
 
@@ -64,8 +74,9 @@ class TopologyManager(threading.Thread):
 
                 now = time.localtime()
                 if now.tm_year > last_trigger_year or \
-                                now.tm_mon > last_trigger_mon or \
-                                now.tm_mday > last_trigger_mday:
+                    now.tm_mon > last_trigger_mon or \
+                    now.tm_mday > last_trigger_mday:
+
                     timeout = False
 
                 if timeout is False and \
@@ -88,7 +99,7 @@ class TopologyManager(threading.Thread):
         try:
             if self.set_topology() is True:
                 if self.resource.update_topology() is False:
-                    # TODO: ignore?
+                    # TODO(UNKOWN): ignore?
                     pass
         finally:
             self.data_lock.release()
@@ -96,6 +107,7 @@ class TopologyManager(threading.Thread):
         self.logger.info("TopologyManager: --- done topology status update ---")
 
     def set_topology(self):
+        """Return True if datacenter topology successfully setup."""
         datacenter = None
         host_groups = {}
         hosts = {}
@@ -354,7 +366,8 @@ class TopologyManager(threading.Thread):
                              ") updated (tag)")
 
         if _rhost.host_group is None or \
-                        _host.host_group.name != _rhost.host_group.name:
+            _host.host_group.name != _rhost.host_group.name:
+
             if _host.host_group.name in self.resource.host_groups.keys():
                 _rhost.host_group = \
                     self.resource.host_groups[_host.host_group.name]
@@ -407,7 +420,8 @@ class TopologyManager(threading.Thread):
                              ") updated (enabled)")
 
         if _rhg.parent_resource is None or \
-                        _hg.parent_resource.name != _rhg.parent_resource.name:
+            _hg.parent_resource.name != _rhg.parent_resource.name:
+
             if _hg.parent_resource.name in self.resource.host_groups.keys():
                 _rhg.parent_resource = \
                     self.resource.host_groups[_hg.parent_resource.name]

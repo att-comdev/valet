@@ -1,17 +1,19 @@
 #
 # Copyright 2014-2017 AT&T Intellectual Property
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #     http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+"""App Handler."""
 
 import json
 
@@ -22,8 +24,15 @@ from valet.engine.optimizer.util import util as util
 
 
 class AppHandler(object):
+    """App Handler Class.
+
+    This class handles operations for the management of applications.
+    Functions related to adding apps and adding/removing them from
+    placement and updating topology info.
+    """
 
     def __init__(self, _resource, _db, _config, _logger):
+        """Init App Handler Class."""
         self.resource = _resource
         self.db = _db
         self.config = _config
@@ -37,6 +46,7 @@ class AppHandler(object):
         self.status = "success"
 
     def add_app(self, _app_data):
+        """Add app and set or regenerate topology, return updated topology."""
         self.apps.clear()
 
         app_topology = AppTopology(self.resource, self.logger)
@@ -95,6 +105,7 @@ class AppHandler(object):
         return app_topology
 
     def add_placement(self, _placement_map, _timestamp):
+        """Change requested apps to scheduled and place them."""
         for v in _placement_map.keys():
             if self.apps[v.app_uuid].status == "requested":
                 self.apps[v.app_uuid].status = "scheduled"
@@ -123,7 +134,7 @@ class AppHandler(object):
             self.last_log_index)
         self.last_log_index = last_index
 
-        # TODO: error handling
+        # TODO(UNKNOWN): error handling
 
         logging = open(self.config.app_log_loc + app_logfile, mode)
 
@@ -151,6 +162,7 @@ class AppHandler(object):
         return True
 
     def remove_placement(self):
+        """Remove App from placement."""
         if self.db is not None:
             for appk, _ in self.apps.iteritems():
                 if self.db.add_app(appk, None) is False:
@@ -159,6 +171,7 @@ class AppHandler(object):
                     # NOTE: ignore?
 
     def get_vm_info(self, _s_uuid, _h_uuid, _host):
+        """Return vm_info from database."""
         vm_info = {}
 
         if _h_uuid is not None and _h_uuid != "none" and \
@@ -168,6 +181,7 @@ class AppHandler(object):
         return vm_info
 
     def update_vm_info(self, _s_uuid, _h_uuid):
+        """Update vm info (the ids) in the database."""
         s_uuid_exist = bool(_s_uuid is not None and _s_uuid != "none")
         h_uuid_exist = bool(_h_uuid is not None and _h_uuid != "none")
         if s_uuid_exist and h_uuid_exist:

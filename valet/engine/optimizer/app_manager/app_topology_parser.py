@@ -1,23 +1,20 @@
 #
 # Copyright 2014-2017 AT&T Intellectual Property
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #     http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from valet.engine.optimizer.app_manager.app_topology_base \
-    import VGroup, VGroupLink, VM, VMLink, LEVELS
+"""App Topology Parser.
 
-
-'''
 - Restrictions of nested groups: EX in EX, EX in DIV, DIV in EX, DIV in DIV
 - VM/group cannot exist in multiple EX groups
 - Nested group's level cannot be higher than nesting group
@@ -27,12 +24,21 @@ from valet.engine.optimizer.app_manager.app_topology_base \
     OS::Heat::Stack
     OS::Heat::ResourceGroup
     OS::Heat::ResourceGroup
-'''
+"""
+
+from valet.engine.optimizer.app_manager.app_topology_base \
+    import VGroup, VGroupLink, VM, VMLink, LEVELS
 
 
 class Parser(object):
+    """Parser Class.
+
+    This class handles parsing out the data related to the desired
+    topology from a template.
+    """
 
     def __init__(self, _high_level_allowed, _logger):
+        """Init Parser Class."""
         self.logger = _logger
 
         self.high_level_allowed = _high_level_allowed
@@ -45,6 +51,7 @@ class Parser(object):
         self.status = "success"
 
     def set_topology(self, _graph):
+        """Return result of set_topology which parses input to get topology."""
         if "version" in _graph.keys():
             self.format_version = _graph["version"]
         else:
@@ -72,7 +79,7 @@ class Parser(object):
         vgroup_captured = False
         vms = {}
 
-        ''' empty at this version '''
+        """ empty at this version """
         volumes = {}
 
         for rk, r in _elements.iteritems():
@@ -166,7 +173,7 @@ class Parser(object):
                 is False:
             return {}, {}, {}
 
-        ''' delete all EX and DIV vgroups after merging '''
+        """ delete all EX and DIV vgroups after merging """
         for vgk in vgroups.keys():
             vg = vgroups[vgk]
             if vg.vgroup_type == "DIV" or vg.vgroup_type == "EX":
@@ -243,18 +250,16 @@ class Parser(object):
                                 return False
 
                             if vg.vgroup_type == "DIV" or \
-                                            vg.vgroup_type == "EX":
+                                    vg.vgroup_type == "EX":
                                 self.status = "group type (" + \
                                               vg.vgroup_type + ") not allowd " \
-                                                               "to be nested " \
-                                                               "in diversity " \
-                                                               "group at " \
-                                                               "this version"
+                                              "to be nested in diversity " \
+                                              "group at this version"
                                 return False
 
                             vgroup.subvgroups[vk] = vg
                             vg.diversity_groups[rk] = vgroup.level + ":" + \
-                                                      vgroup.name
+                                vgroup.name
                         else:
                             self.status = "invalid resource = " + vk
                             return False
@@ -300,7 +305,7 @@ class Parser(object):
 
                             vgroup.subvgroups[vk] = vg
                             vg.exclusivity_groups[rk] = vgroup.level + ":" + \
-                                                        vgroup.name
+                                vgroup.name
                         else:
                             self.status = "invalid resource = " + vk
                             return False
@@ -366,7 +371,7 @@ class Parser(object):
 
                             if vg.vgroup_type == "DIV" or vg.vgroup_type == "EX":
                                 if self._merge_subgroups(
-                                        vgroup, vg.subvgroups,_vms, _volumes,
+                                        vgroup, vg.subvgroups, _vms, _volumes,
                                         _vgroups, _elements, affinity_map) \
                                         is False:
                                     return False

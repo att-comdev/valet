@@ -1,25 +1,33 @@
 #
 # Copyright 2014-2017 AT&T Intellectual Property
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #     http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""App Topology."""
+
 from valet.engine.optimizer.app_manager.app_topology_base import VM, VGroup
 from valet.engine.optimizer.app_manager.app_topology_parser import Parser
 
 
 class AppTopology(object):
+    """App Topology Class.
+
+    This class contains functions for parsing and setting each app, as well as
+    calculating and setting optimization.
+    """
 
     def __init__(self, _resource, _logger):
+        """Init App Topology Class."""
         self.vgroups = {}
         self.vms = {}
         self.volumes = {}
@@ -51,8 +59,12 @@ class AppTopology(object):
 
         self.status = "success"
 
-    """ parse and set each app """
     def set_app_topology(self, _app_graph):
+        """Set app topology (Parse and set each app).
+
+        Set app topology by calling parser to determine vgroups,
+        vms and volumes. Then return parsed stack_id, app_name and action.
+        """
         (vgroups, vms, volumes) = self.parser.set_topology(_app_graph)
 
         if len(vgroups) == 0 and len(vms) == 0 and len(volumes) == 0:
@@ -68,9 +80,10 @@ class AppTopology(object):
             self.volumes[vol.uuid] = vol
 
         return self.parser.stack_id, self.parser.application_name, \
-               self.parser.action
+            self.parser.action
 
     def set_weight(self):
+        """Set weight of vms and vgroups."""
         for _, vm in self.vms.iteritems():
             self._set_vm_weight(vm)
         for _, vg in self.vgroups.iteritems():
@@ -89,21 +102,21 @@ class AppTopology(object):
         else:
             if self.resource.CPU_avail > 0:
                 _v.vCPU_weight = float(_v.vCPUs) / \
-                                 float(self.resource.CPU_avail)
+                    float(self.resource.CPU_avail)
             else:
                 _v.vCPU_weight = 1.0
             self.total_CPU += _v.vCPUs
 
             if self.resource.mem_avail > 0:
                 _v.mem_weight = float(_v.mem) / \
-                                float(self.resource.mem_avail)
+                    float(self.resource.mem_avail)
             else:
                 _v.mem_weight = 1.0
             self.total_mem += _v.mem
 
             if self.resource.local_disk_avail > 0:
                 _v.local_volume_weight = float(_v.local_volume_size) / \
-                                         float(self.resource.local_disk_avail)
+                    float(self.resource.local_disk_avail)
             else:
                 if _v.local_volume_size > 0:
                     _v.local_volume_weight = 1.0
@@ -115,7 +128,7 @@ class AppTopology(object):
 
             if self.resource.nw_bandwidth_avail > 0:
                 _v.bandwidth_weight = float(bandwidth) / \
-                                      float(self.resource.nw_bandwidth_avail)
+                    float(self.resource.nw_bandwidth_avail)
             else:
                 if bandwidth > 0:
                     _v.bandwidth_weight = 1.0
@@ -134,9 +147,10 @@ class AppTopology(object):
             _vg.local_volume_size += sg.local_volume_size
 
     def _set_vgroup_weight(self, _vgroup):
+        """Calculate weights for vgroup."""
         if self.resource.CPU_avail > 0:
             _vgroup.vCPU_weight = float(_vgroup.vCPUs) / \
-                                  float(self.resource.CPU_avail)
+                float(self.resource.CPU_avail)
         else:
             if _vgroup.vCPUs > 0:
                 _vgroup.vCPU_weight = 1.0
@@ -145,7 +159,7 @@ class AppTopology(object):
 
         if self.resource.mem_avail > 0:
             _vgroup.mem_weight = float(_vgroup.mem) / \
-                                 float(self.resource.mem_avail)
+                float(self.resource.mem_avail)
         else:
             if _vgroup.mem > 0:
                 _vgroup.mem_weight = 1.0
@@ -154,7 +168,7 @@ class AppTopology(object):
 
         if self.resource.local_disk_avail > 0:
             _vgroup.local_volume_weight = float(_vgroup.local_volume_size) / \
-                                          float(self.resource.local_disk_avail)
+                float(self.resource.local_disk_avail)
         else:
             if _vgroup.local_volume_size > 0:
                 _vgroup.local_volume_weight = 1.0
@@ -165,7 +179,7 @@ class AppTopology(object):
 
         if self.resource.nw_bandwidth_avail > 0:
             _vgroup.bandwidth_weight = float(bandwidth) / \
-                                       float(self.resource.nw_bandwidth_avail)
+                float(self.resource.nw_bandwidth_avail)
         else:
             if bandwidth > 0:
                 _vgroup.bandwidth_weight = 1.0
@@ -177,14 +191,20 @@ class AppTopology(object):
                 self._set_vgroup_weight(svg)
 
     def set_optimization_priority(self):
+        """Set Optimization Priority.
+
+        This function calculates weights for bandwidth, cpu, memory, local
+        and overall volume for an app. Then Sorts the results and sets
+        optimization order accordingly.
+        """
         if len(self.vgroups) == 0 and len(self.vms) == 0 and \
-                        len(self.volumes) == 0:
+                len(self.volumes) == 0:
             return
 
         app_nw_bandwidth_weight = -1
         if self.resource.nw_bandwidth_avail > 0:
             app_nw_bandwidth_weight = float(self.total_nw_bandwidth) / \
-                                      float(self.resource.nw_bandwidth_avail)
+                float(self.resource.nw_bandwidth_avail)
         else:
             if self.total_nw_bandwidth > 0:
                 app_nw_bandwidth_weight = 1.0
@@ -194,7 +214,7 @@ class AppTopology(object):
         app_CPU_weight = -1
         if self.resource.CPU_avail > 0:
             app_CPU_weight = float(self.total_CPU) / \
-                             float(self.resource.CPU_avail)
+                float(self.resource.CPU_avail)
         else:
             if self.total_CPU > 0:
                 app_CPU_weight = 1.0
@@ -204,7 +224,7 @@ class AppTopology(object):
         app_mem_weight = -1
         if self.resource.mem_avail > 0:
             app_mem_weight = float(self.total_mem) / \
-                             float(self.resource.mem_avail)
+                float(self.resource.mem_avail)
         else:
             if self.total_mem > 0:
                 app_mem_weight = 1.0
@@ -214,7 +234,7 @@ class AppTopology(object):
         app_local_vol_weight = -1
         if self.resource.local_disk_avail > 0:
             app_local_vol_weight = float(self.total_local_vol) / \
-                                   float(self.resource.local_disk_avail)
+                float(self.resource.local_disk_avail)
         else:
             if self.total_local_vol > 0:
                 app_local_vol_weight = 1.0
@@ -228,7 +248,7 @@ class AppTopology(object):
         app_vol_weight = -1
         if self.resource.disk_avail > 0:
             app_vol_weight = float(sum(total_vol_list)) / \
-                             float(self.resource.disk_avail)
+                float(self.resource.disk_avail)
         else:
             if sum(total_vol_list) > 0:
                 app_vol_weight = 1.0

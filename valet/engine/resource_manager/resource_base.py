@@ -1,24 +1,37 @@
 #
 # Copyright 2014-2017 AT&T Intellectual Property
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #     http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Resource Base.
+
+File contains resource datatype objects from base type of a flavor and
+builds all the way up to a datacenter object.
+"""
+
 from valet.engine.optimizer.app_manager.app_topology_base import LEVELS
 
 
 class Datacenter(object):
+    """Datacenter Class.
+
+    This object represents a datacenter. It contains all memberships or
+    logical groups in the datacenter, all resources available, placed vms,
+    and more throughout the datacenter.
+    """
 
     def __init__(self, _name):
+        """Init Datacenter object."""
         self.name = _name
 
         self.region_code_list = []
@@ -53,6 +66,7 @@ class Datacenter(object):
         self.last_link_update = 0
 
     def init_resources(self):
+        """Init datacenter resources to 0."""
         self.vCPUs = 0
         self.original_vCPUs = 0
         self.avail_vCPUs = 0
@@ -64,6 +78,7 @@ class Datacenter(object):
         self.avail_local_disk_cap = 0
 
     def get_json_info(self):
+        """Return JSON info for datacenter object."""
         membership_list = []
         for lgk in self.memberships.keys():
             membership_list.append(lgk)
@@ -104,8 +119,15 @@ class Datacenter(object):
 
 # data container for rack or cluster
 class HostGroup(object):
+    """Class for Host Group Object.
+
+    This Class represents a group of hosts. If a single host is a single server
+    then host group is a rack or cluster of servers. This class contains all
+    memberships and resources for the group of hosts.
+    """
 
     def __init__(self, _id):
+        """Init for Host Group Class."""
         self.name = _id
 
         # rack or cluster(e.g., power domain, zone)
@@ -142,6 +164,7 @@ class HostGroup(object):
         self.last_link_update = 0
 
     def init_resources(self):
+        """Init all host group resources to 0."""
         self.vCPUs = 0
         self.original_vCPUs = 0
         self.avail_vCPUs = 0
@@ -153,22 +176,24 @@ class HostGroup(object):
         self.avail_local_disk_cap = 0
 
     def init_memberships(self):
+        """Init Host Group memberships."""
         for lgk in self.memberships.keys():
             lg = self.memberships[lgk]
             if lg.group_type == "EX" or lg.group_type == "AFF" or \
-                            lg.group_type == "DIV":
+                lg.group_type == "DIV":
                 level = lg.name.split(":")[0]
                 if LEVELS.index(level) < LEVELS.index(self.host_type) or \
-                                self.name not in lg.vms_per_host.keys():
+                    self.name not in lg.vms_per_host.keys():
                     del self.memberships[lgk]
             else:
                 del self.memberships[lgk]
 
     def remove_membership(self, _lg):
+        """Return True if membership to group _lg removed."""
         cleaned = False
 
         if _lg.group_type == "EX" or _lg.group_type == "AFF" or \
-                        _lg.group_type == "DIV":
+            _lg.group_type == "DIV":
             if self.name not in _lg.vms_per_host.keys():
                 del self.memberships[_lg.name]
                 cleaned = True
@@ -176,12 +201,14 @@ class HostGroup(object):
         return cleaned
 
     def check_availability(self):
+        """Return True if Host Group status is 'enabled'."""
         if self.status == "enabled":
             return True
         else:
             return False
 
     def get_json_info(self):
+        """Return JSON info for Host Group object."""
         membership_list = []
         for lgk in self.memberships.keys():
             membership_list.append(lgk)
@@ -221,8 +248,16 @@ class HostGroup(object):
 
 
 class Host(object):
+    """Class for Host Object.
+
+    This class is for a Host Object, imagine a server. This means
+    information about the groups the host is a part of, all the hardware
+    parameters (vCPUs, local disk, memory) as well as the list of vms and
+    volumes placed on the host.
+    """
 
     def __init__(self, _name):
+        """Init for Host object."""
         self.name = _name
 
         # mark if this is synch'ed by multiple sources
@@ -263,6 +298,7 @@ class Host(object):
         self.last_link_update = 0
 
     def clean_memberships(self):
+        """Return True if host cleaned from logical group membership."""
         cleaned = False
 
         for lgk in self.memberships.keys():
@@ -274,10 +310,11 @@ class Host(object):
         return cleaned
 
     def remove_membership(self, _lg):
+        """Return True if host removed from logical group _lg passed in."""
         cleaned = False
 
         if _lg.group_type == "EX" or _lg.group_type == "AFF" or \
-                        _lg.group_type == "DIV":
+            _lg.group_type == "DIV":
             if self.name not in _lg.vms_per_host.keys():
                 del self.memberships[_lg.name]
                 cleaned = True
@@ -285,6 +322,7 @@ class Host(object):
         return cleaned
 
     def check_availability(self):
+        """Return True if host is up, enabled and tagged as nova infra."""
         if self.status == "enabled" and self.state == "up" and \
                 ("nova" in self.tag) and ("infra" in self.tag):
             return True
@@ -292,6 +330,7 @@ class Host(object):
             return False
 
     def get_uuid(self, _h_uuid):
+        """Return uuid of vm with matching orchestration id(_h_uuid)."""
         uuid = None
 
         for vm_id in self.vm_list:
@@ -302,6 +341,7 @@ class Host(object):
         return uuid
 
     def exist_vm_by_h_uuid(self, _h_uuid):
+        """Return True if vm with orchestration id(_h_uuid) exists on host."""
         exist = False
 
         for vm_id in self.vm_list:
@@ -312,6 +352,7 @@ class Host(object):
         return exist
 
     def exist_vm_by_uuid(self, _uuid):
+        """Return True if vm with physical id(_uuid) exists on host."""
         exist = False
 
         for vm_id in self.vm_list:
@@ -322,6 +363,7 @@ class Host(object):
         return exist
 
     def remove_vm_by_h_uuid(self, _h_uuid):
+        """Return True if vm removed with matching _h_uuid."""
         success = False
 
         for vm_id in self.vm_list:
@@ -333,6 +375,7 @@ class Host(object):
         return success
 
     def remove_vm_by_uuid(self, _uuid):
+        """Return True if vm removed with matching _uuid."""
         success = False
 
         for vm_id in self.vm_list:
@@ -344,6 +387,7 @@ class Host(object):
         return success
 
     def update_uuid(self, _h_uuid, _uuid):
+        """Return True if vm physical id updated."""
         success = False
 
         vm_name = "none"
@@ -361,6 +405,7 @@ class Host(object):
         return success
 
     def update_h_uuid(self, _h_uuid, _uuid):
+        """Return True if vm orchestration id (_h_uuid) updated."""
         success = False
 
         vm_name = "none"
@@ -378,12 +423,14 @@ class Host(object):
         return success
 
     def compute_avail_vCPUs(self, _overcommit_ratio, _standby_ratio):
+        """Calc avail_vCPUs by calculating vCPUs and subtracting in use."""
         self.vCPUs = \
             self.original_vCPUs * _overcommit_ratio * (1.0 - _standby_ratio)
 
         self.avail_vCPUs = self.vCPUs - self.vCPUs_used
 
     def compute_avail_mem(self, _overcommit_ratio, _standby_ratio):
+        """Calc avail_mem by calculating mem_cap and subtract used mem."""
         self.mem_cap = \
             self.original_mem_cap * _overcommit_ratio * (1.0 - _standby_ratio)
 
@@ -392,6 +439,7 @@ class Host(object):
         self.avail_mem_cap = self.mem_cap - used_mem_mb
 
     def compute_avail_disk(self, _overcommit_ratio, _standby_ratio):
+        """Calc avail_disk by calc local_disk_cap and subtract used disk."""
         self.local_disk_cap = \
             self.original_local_disk_cap * \
             _overcommit_ratio * \
@@ -406,6 +454,7 @@ class Host(object):
         self.avail_local_disk_cap = self.local_disk_cap - used_disk_cap
 
     def get_json_info(self):
+        """Return JSON info for Host object."""
         membership_list = []
         for lgk in self.memberships.keys():
             membership_list.append(lgk)
@@ -443,8 +492,14 @@ class Host(object):
 
 
 class LogicalGroup(object):
+    """Logical Group class.
+
+    This class contains info about grouped vms, such as metadata when placing
+    nodes, list of placed vms, list of placed volumes and group type.
+    """
 
     def __init__(self, _name):
+        """Init Logical Group object."""
         self.name = _name
 
         # AGGR, AZ, INTG, EX, DIV, or AFF
@@ -467,6 +522,7 @@ class LogicalGroup(object):
         self.last_update = 0
 
     def exist_vm_by_h_uuid(self, _h_uuid):
+        """Return True if h_uuid exist in vm_list as an orchestration_uuid."""
         exist = False
 
         for vm_id in self.vm_list:
@@ -477,6 +533,7 @@ class LogicalGroup(object):
         return exist
 
     def exist_vm_by_uuid(self, _uuid):
+        """Return True if uuid exist in vm_list as physical_uuid."""
         exist = False
 
         for vm_id in self.vm_list:
@@ -487,6 +544,7 @@ class LogicalGroup(object):
         return exist
 
     def update_uuid(self, _h_uuid, _uuid, _host_id):
+        """Return True if _uuid and/or _host_id successfully updated."""
         success = False
 
         vm_name = "none"
@@ -513,6 +571,7 @@ class LogicalGroup(object):
         return success
 
     def update_h_uuid(self, _h_uuid, _uuid, _host_id):
+        """Return True physical_uuid and/or _host_id successfully updated."""
         success = False
 
         vm_name = "none"
@@ -539,13 +598,14 @@ class LogicalGroup(object):
         return success
 
     def add_vm_by_h_uuid(self, _vm_id, _host_id):
+        """Return True if vm added with id _vm_id(orchestration id)."""
         success = False
 
         if self.exist_vm_by_h_uuid(_vm_id[0]) is False:
             self.vm_list.append(_vm_id)
 
             if self.group_type == "EX" or self.group_type == "AFF" or \
-                            self.group_type == "DIV":
+                self.group_type == "DIV":
                 if _host_id not in self.vms_per_host.keys():
                     self.vms_per_host[_host_id] = []
             self.vms_per_host[_host_id].append(_vm_id)
@@ -555,6 +615,7 @@ class LogicalGroup(object):
         return success
 
     def remove_vm_by_h_uuid(self, _h_uuid, _host_id):
+        """Return True if vm removed with id _h_uuid(orchestration id)."""
         success = False
 
         for vm_id in self.vm_list:
@@ -571,14 +632,15 @@ class LogicalGroup(object):
                     break
 
         if self.group_type == "EX" or self.group_type == "AFF" or \
-                        self.group_type == "DIV":
+            self.group_type == "DIV":
             if (_host_id in self.vms_per_host.keys()) and \
-                            len(self.vms_per_host[_host_id]) == 0:
+                len(self.vms_per_host[_host_id]) == 0:
                 del self.vms_per_host[_host_id]
 
         return success
 
     def remove_vm_by_uuid(self, _uuid, _host_id):
+        """Return True if vm with matching uuid found and removed."""
         success = False
 
         for vm_id in self.vm_list:
@@ -595,14 +657,15 @@ class LogicalGroup(object):
                     break
 
         if self.group_type == "EX" or self.group_type == "AFF" or \
-                        self.group_type == "DIV":
+            self.group_type == "DIV":
             if (_host_id in self.vms_per_host.keys()) and \
-                            len(self.vms_per_host[_host_id]) == 0:
+                len(self.vms_per_host[_host_id]) == 0:
                 del self.vms_per_host[_host_id]
 
         return success
 
     def clean_none_vms(self, _host_id):
+        """Return True if vm's or host vm's removed with physical id none."""
         success = False
 
         for vm_id in self.vm_list:
@@ -617,14 +680,15 @@ class LogicalGroup(object):
                     success = True
 
         if self.group_type == "EX" or self.group_type == "AFF" or \
-                        self.group_type == "DIV":
+            self.group_type == "DIV":
             if (_host_id in self.vms_per_host.keys()) and \
-                            len(self.vms_per_host[_host_id]) == 0:
+                len(self.vms_per_host[_host_id]) == 0:
                 del self.vms_per_host[_host_id]
 
         return success
 
     def get_json_info(self):
+        """Return JSON info for Logical Group object."""
         return {'status': self.status,
                 'group_type': self.group_type,
                 'metadata': self.metadata,
@@ -635,8 +699,10 @@ class LogicalGroup(object):
 
 
 class Switch(object):
+    """Switch class."""
 
     def __init__(self, _switch_id):
+        """Init Switch object."""
         self.name = _switch_id
         self.switch_type = "ToR"         # root, spine, ToR, or leaf
 
@@ -649,6 +715,7 @@ class Switch(object):
         self.last_update = 0
 
     def get_json_info(self):
+        """Return JSON info on Switch object."""
         ulinks = {}
         for ulk, ul in self.up_links.iteritems():
             ulinks[ulk] = ul.get_json_info()
@@ -665,8 +732,10 @@ class Switch(object):
 
 
 class Link(object):
+    """Link class."""
 
     def __init__(self, _name):
+        """Init Link object."""
         self.name = _name                # format: source + "-" + target
         self.resource = None             # switch beging connected to
 
@@ -674,14 +743,17 @@ class Link(object):
         self.avail_nw_bandwidth = 0
 
     def get_json_info(self):
+        """Return JSON info on Link object."""
         return {'resource': self.resource.name,
                 'bandwidth': self.nw_bandwidth,
                 'avail_bandwidth': self.avail_nw_bandwidth}
 
 
 class StorageHost(object):
+    """Storage Host class."""
 
     def __init__(self, _name):
+        """Init Storage Host object."""
         self.name = _name
         self.storage_class = None   # tiering, e.g., platinum, gold, silver
 
@@ -697,6 +769,7 @@ class StorageHost(object):
         self.last_cap_update = 0
 
     def get_json_info(self):
+        """Return JSON info on Storage Host object."""
         return {'status': self.status,
                 'class': self.storage_class,
                 'host_list': self.host_list,
@@ -708,8 +781,10 @@ class StorageHost(object):
 
 
 class Flavor(object):
+    """Flavor class."""
 
     def __init__(self, _name):
+        """Init flavor object."""
         self.name = _name
         self.flavor_id = None
 
@@ -724,6 +799,7 @@ class Flavor(object):
         self.last_update = 0
 
     def get_json_info(self):
+        """Return JSON info of Flavor Object."""
         return {'status': self.status,
                 'flavor_id': self.flavor_id,
                 'vCPUs': self.vCPUs,

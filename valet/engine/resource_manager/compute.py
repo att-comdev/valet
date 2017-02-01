@@ -1,17 +1,19 @@
 #
 # Copyright 2014-2017 AT&T Intellectual Property
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #     http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+"""Compute."""
 
 from novaclient import client as nova_client
 from oslo_config import cfg
@@ -25,12 +27,21 @@ CONF = cfg.CONF
 
 
 class Compute(object):
+    """Compute Class.
+
+    This class performs functions of setting hosts, availability zones,
+    aggregates, placed vms, resources, flavors, etc.
+
+    Interacts with nova client to perform these actions.
+    """
+
     def __init__(self, _logger):
+        """Compute init."""
         self.logger = _logger
         self.nova = None
 
     def set_hosts(self, _hosts, _logical_groups):
-
+        """Return success if az's, aggregates, vms, resources, all set."""
         self._get_nova_client()
 
         status = self._set_availability_zones(_hosts, _logical_groups)
@@ -56,7 +67,7 @@ class Compute(object):
         return "success"
 
     def _get_nova_client(self):
-        """ Returns a nova client """
+        """Return a nova client."""
         self.nova = nova_client.Client(VERSION,
                                        CONF.identity.username,
                                        CONF.identity.password,
@@ -225,6 +236,7 @@ class Compute(object):
         return "success"
 
     def set_flavors(self, _flavors):
+        """Set flavors."""
         error_status = None
 
         self._get_nova_client()

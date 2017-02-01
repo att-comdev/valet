@@ -1,27 +1,33 @@
-# Licensed under the Apache License, Version 2.0 (the "License"); you may
-# not use this file except in compliance with the License. You may obtain
-# a copy of the License at
 #
-#      http://www.apache.org/licenses/LICENSE-2.0
+# Copyright 2014-2017 AT&T Intellectual Property
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
-# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
-# License for the specific language governing permissions and limitations
-# under the License.
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
-# - Simulate hosts and flavors
+"""Simulate hosts and flavors."""
 
 from valet.engine.resource_manager.resource_base \
     import Host, LogicalGroup, Flavor
 
 
 class SimCompute(object):
+    """Simulate Compute class."""
 
     def __init__(self, _config):
+        """Init."""
         self.config = _config
 
     def set_hosts(self, _hosts, _logical_groups):
+        """Return success after setting sim hosts and flavors."""
         self._set_availability_zones(_hosts, _logical_groups)
 
         self._set_aggregates(_hosts, _logical_groups)
@@ -64,7 +70,7 @@ class SimCompute(object):
             for r_num in range(0, self.config.num_of_racks):
                 for h_num in range(0, self.config.num_of_hosts_per_rack):
                     host_name = self.config.mode + "0r" + str(r_num) + "c" + \
-                                str(h_num)
+                        str(h_num)
                     if host_name in _hosts.keys():
                         if (h_num %
                                 (self.config.aggregated_ratio + a_num)) == 0:
@@ -80,7 +86,7 @@ class SimCompute(object):
         for r_num in range(0, self.config.num_of_racks):
             for h_num in range(0, self.config.num_of_hosts_per_rack):
                 host_name = self.config.mode + "0r" + str(r_num) + "c" + \
-                            str(h_num)
+                    str(h_num)
                 if host_name in _hosts.keys():
                     host = _hosts[host_name]
                     host.original_vCPUs = float(self.config.cpus_per_host)
@@ -93,6 +99,7 @@ class SimCompute(object):
                     host.disk_available_least = host.original_local_disk_cap
 
     def set_flavors(self, _flavors):
+        """Return success after setting passed in flavors."""
         for f_num in range(0, self.config.num_of_basic_flavors):
             flavor = Flavor("bflavor" + str(f_num))
             flavor.vCPUs = float(self.config.base_flavor_cpus * (f_num + 1))

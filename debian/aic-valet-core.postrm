@@ -1,0 +1,15 @@
+#!/bin/sh
+
+set -e
+
+case "$1" in
+    purge)
+        # Remove swift user if possible
+        userdel valet || true
+        rm -rf /var/lib/valet
+        ;;
+esac
+
+#DEBHELPER#
+
+exit 0

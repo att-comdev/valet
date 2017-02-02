@@ -1,0 +1,5 @@
+/var/lib/valet
+/var/log/valet
+/var/log/havalet
+/var/log/apache2/valet
+/var/run/valet

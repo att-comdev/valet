@@ -24,7 +24,8 @@ from valet.engine.optimizer.db_connect.event import Event
 class MusicHandler(object):
     """Music Handler Class.
 
-    This
+    This Class consists of functions that interact with the music
+    database for valet and returns/deletes/updates objects within it.
     """
 
     def __init__(self, _config, _logger):

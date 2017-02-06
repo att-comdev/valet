@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Base."""
+
 from oslo_config import fixture as fixture_config
 from oslo_log import log as logging
 from oslotest.base import BaseTestCase
@@ -26,24 +28,31 @@ class Base(BaseTestCase):
     """Test case base class for all unit tests."""
 
     def __init__(self, *args, **kwds):
-
+        """Init Base."""
         super(Base, self).__init__(*args, **kwds)
 
         self.CONF = self.useFixture(fixture_config.Config()).conf
         init.prepare(self.CONF)
 
     def setUp(self):
+        """Setup."""
         super(Base, self).setUp()
 
     def run_test(self, stack_name, template_path):
-        """ main function """
+        """Main Function."""
         pass
 
     def validate(self, result):
+        """Validate."""
+        # TODO(CM): Maybe fix unnecessary obfuscation of assertEqual code.
         self.assertEqual(True, result.ok, result.message)
 
     def validate_test(self, result):
+        """Validate Test."""
+        # TODO(CM): Maybe fix unnecessary obfuscation of assertTrue code.
         self.assertTrue(result)
 
     def get_name(self):
+        """Get Name."""
+        # TODO(CM): Make this function actually do something.
         pass

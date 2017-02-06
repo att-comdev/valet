@@ -1,24 +1,33 @@
 #
 # Copyright 2014-2017 AT&T Intellectual Property
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #     http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Event."""
+
 import json
 
 
 class Event(object):
+    """Event Class.
+
+    This class represents an event and all the necessary metadata to
+    properly track it and set the data for the event. Handles object_action
+    events and build and run instance events.
+    """
 
     def __init__(self, _id):
+        """Init Event Class."""
         self.event_id = _id
         self.exchange = None
         self.method = None
@@ -56,6 +65,13 @@ class Event(object):
         self.uuid = None
 
     def set_data(self):
+        """Set event data depending on method(action) performed.
+
+        -   If object_action, change data and calculate correct
+            compute resources for instance or Compute Node.
+        -   If building_and_run_instance, get data from scheduler
+            and set heat values.
+        """
         if self.method == 'object_action':
             self.change_list = self.args['objinst']['nova_object.changes']
             self.change_data = self.args['objinst']['nova_object.data']
@@ -106,7 +122,7 @@ class Event(object):
                 if 'deleted' in self.change_list and 'deleted' in \
                         self.change_data.keys():
                     if self.change_data['deleted'] == "true" or \
-                                    self.change_data['deleted'] is True:
+                            self.change_data['deleted'] is True:
                         self.status = "disabled"
 
                 if 'vcpus' in self.change_list and 'vcpus' in \

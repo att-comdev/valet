@@ -1,17 +1,19 @@
 #
 # Copyright 2014-2017 AT&T Intellectual Property
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #     http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+"""Music Handler."""
 
 import json
 import operator
@@ -20,8 +22,13 @@ from valet.engine.optimizer.db_connect.event import Event
 
 
 class MusicHandler(object):
+    """Music Handler Class.
+
+    This
+    """
 
     def __init__(self, _config, _logger):
+        """Init Music Handler."""
         self.config = _config
         self.logger = _logger
 
@@ -37,6 +44,12 @@ class MusicHandler(object):
                 replication_factor=self.config.replication_factor)
 
     def init_db(self):
+        """Init Database.
+
+        This function initializes a database in Music by creating all the
+        necessary tables with the proper schemas in Music using API calls.
+        Return True if no exceptions are caught.
+        """
         self.logger.info("MusicHandler.init_db: create table")
 
         try:
@@ -149,6 +162,12 @@ class MusicHandler(object):
         return True
 
     def get_events(self):
+        """Get Events.
+
+        This function obtains all events from the database and then
+        iterates through all of them to check the method and perform the
+        corresponding action on them. Return Event list.
+        """
         event_list = []
 
         events = {}
@@ -312,6 +331,7 @@ class MusicHandler(object):
         return event_list
 
     def delete_event(self, _event_id):
+        """Return True after deleting corresponding event row in db."""
         try:
             self.music.delete_row_eventually(self.config.db_keyspace,
                                              self.config.db_event_table,
@@ -323,6 +343,7 @@ class MusicHandler(object):
         return True
 
     def get_uuid(self, _uuid):
+        """Return h_uuid and s_uuid from matching _uuid row in music db."""
         h_uuid = "none"
         s_uuid = "none"
 
@@ -346,13 +367,14 @@ class MusicHandler(object):
         return h_uuid, s_uuid
 
     def put_uuid(self, _e):
+        """Insert uuid, h_uuid and s_uuid from event into new row in db."""
         heat_resource_uuid = "none"
         heat_root_stack_id = "none"
         if _e.heat_resource_uuid is not None and \
-                        _e.heat_resource_uuid != "none":
+                _e.heat_resource_uuid != "none":
             heat_resource_uuid = _e.heat_resource_uuid
         if _e.heat_root_stack_id is not None and \
-                        _e.heat_root_stack_id != "none":
+                _e.heat_root_stack_id != "none":
             heat_root_stack_id = _e.heat_root_stack_id
 
         data = {
@@ -373,6 +395,7 @@ class MusicHandler(object):
         return True
 
     def delete_uuid(self, _k):
+        """Return True after deleting row corresponding to event uuid."""
         try:
             self.music.delete_row_eventually(self.config.db_keyspace,
                                              self.config.db_uuid_table, 'uuid',
@@ -384,6 +407,7 @@ class MusicHandler(object):
         return True
 
     def get_requests(self):
+        """Return list of requests that consists of all rows in a db table."""
         request_list = []
 
         requests = {}
@@ -408,6 +432,7 @@ class MusicHandler(object):
         return request_list
 
     def put_result(self, _result):
+        """Return True after putting result in db(create and delete rows)."""
         for appk, app_placement in _result.iteritems():
             data = {
                 'stack_id': appk,
@@ -441,6 +466,7 @@ class MusicHandler(object):
         return True
 
     def get_resource_status(self, _k):
+        """Get Row of resource related to '_k' and return resource as json."""
         json_resource = {}
 
         row = {}
@@ -463,6 +489,7 @@ class MusicHandler(object):
         return json_resource
 
     def update_resource_status(self, _k, _status):
+        """Update resource _k to the new _status (flavors, lgs, hosts, etc)."""
         row = {}
         try:
             row = self.music.read_row(self.config.db_keyspace,
@@ -557,6 +584,7 @@ class MusicHandler(object):
         return True
 
     def update_resource_log_index(self, _k, _index):
+        """Update resource log index in database and return True."""
         data = {
             'site_name': _k,
             'resource_log_index': str(_index)
@@ -577,6 +605,7 @@ class MusicHandler(object):
         return True
 
     def update_app_log_index(self, _k, _index):
+        """Update app log index in database and return True."""
         data = {
             'site_name': _k,
             'app_log_index': str(_index)
@@ -597,6 +626,7 @@ class MusicHandler(object):
         return True
 
     def add_app(self, _k, _app_data):
+        """Add app to database in music and return True."""
         try:
             self.music.delete_row_eventually(
                 self.config.db_keyspace, self.config.db_app_table,
@@ -625,6 +655,7 @@ class MusicHandler(object):
         return True
 
     def get_app_info(self, _s_uuid):
+        """Get app info for stack id and return as json object."""
         json_app = {}
 
         row = {}
@@ -642,8 +673,9 @@ class MusicHandler(object):
 
         return json_app
 
-    # TODO: get all other VMs related to this VM
+    # TODO(UNKNOWN): get all other VMs related to this VM
     def get_vm_info(self, _s_uuid, _h_uuid, _host):
+        """Return vm info connected with ids and host passed in."""
         updated = False
         json_app = {}
 
@@ -671,7 +703,8 @@ class MusicHandler(object):
                             vm["host"] = _host
                             self.logger.warn("db: conflicted placement "
                                              "decision from Ostro")
-                            # TODO: affinity, diversity, exclusivity check
+                            # TODO(UNKOWN): affinity, diversity,
+                            # exclusivity check
                             updated = True
                         else:
                             self.logger.debug("db: placement as expected")
@@ -697,6 +730,7 @@ class MusicHandler(object):
         return vm_info
 
     def update_vm_info(self, _s_uuid, _h_uuid):
+        """Return true if vm's heat and heat stack ids are updated in db."""
         updated = False
         json_app = {}
 

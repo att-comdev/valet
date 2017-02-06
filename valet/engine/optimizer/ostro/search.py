@@ -124,7 +124,7 @@ class Search(object):
 
         if len(self.app_topology.old_vm_map) > 0:
             self._adjust_resources()
-            self.logger.debug("adjust resources by deducting prior placements")
+            # self.logger.debug("adjust resources by deducting prior placements")
 
         self._compute_resource_weights()
 
@@ -777,7 +777,7 @@ class Search(object):
         ''' already planned vgroup '''
         planned_host = None
         if _n.node in self.planned_placements.keys():
-            self.logger.debug("already determined node = " + _n.node.uuid)
+            # self.logger.debug("already determined node = " + _n.node.uuid)
             copied_host = self.planned_placements[_n.node]
             if _level == "host":
                 planned_host = _avail_resources[copied_host.host_name]

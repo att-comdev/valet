@@ -4,4 +4,4 @@ aic-valet-core/etc/valet/api/config.py var/www/valet/
 aic-valet-core/etc/valet/api/valet_apache.conf etc/apache2/sites-available/
 aic-valet-core/valet/ha/ha_valet.cfg etc/valet/ha/
 aic-valet-core/etc/valet/valet.conf etc/valet/
-aic-valet-core/* opt/app/aic-valet-core/
+aic-valet-core/tools/utils/* opt/app/aic-valet-tools/

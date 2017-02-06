@@ -76,19 +76,11 @@ class ComputeManager(threading.Thread):
         self.logger.info("--- start compute_nodes status update ---")
 
         triggered_host_updates = self.set_hosts()
+        if triggered_host_updates is not True:
+            self.logger.warn("fail to set hosts from nova")
         triggered_flavor_updates = self.set_flavors()
-
-        if triggered_host_updates is True and triggered_flavor_updates is True:
-            self.data_lock.acquire()
-            update_status = self.resource.update_topology(store=False)
-            self.data_lock.release()
-
-            if update_status is False:
-                # TODO(GY): error in MUSIC. ignore?
-                pass
-        else:
-            # TODO(GY): error handling, e.g., 3 times failure then stop Ostro?
-            pass
+        if triggered_flavor_updates is not True:
+            self.logger.warn("fail to set flavor from nova")
 
         self.logger.info("--- done compute_nodes status update ---")
 
@@ -129,8 +121,11 @@ class ComputeManager(threading.Thread):
         self._compute_avail_host_resources(hosts)
 
         self.data_lock.acquire()
-        self._check_logical_group_update(logical_groups)
-        self._check_host_update(hosts)
+        lg_updated = self._check_logical_group_update(logical_groups)
+        host_updated = self._check_host_update(hosts)
+
+        if lg_updated is True or host_updated is True:
+            self.resource.update_topology(store=False)
         self.data_lock.release()
 
         return True
@@ -140,12 +135,15 @@ class ComputeManager(threading.Thread):
             self.resource.compute_avail_resources(hk, host)
 
     def _check_logical_group_update(self, _logical_groups):
+        updated = False
+
         for lk in _logical_groups.keys():
             if lk not in self.resource.logical_groups.keys():
                 self.resource.logical_groups[lk] = deepcopy(_logical_groups[lk])
 
                 self.resource.logical_groups[lk].last_update = time.time()
                 self.logger.warn("new logical group (" + lk + ") added")
+                updated = True
 
         for rlk in self.resource.logical_groups.keys():
             rl = self.resource.logical_groups[rlk]
@@ -155,6 +153,7 @@ class ComputeManager(threading.Thread):
 
                     self.resource.logical_groups[rlk].last_update = time.time()
                     self.logger.warn("logical group (" + rlk + ") removed")
+                    updated = True
 
         for lk in _logical_groups.keys():
             lg = _logical_groups[lk]
@@ -164,28 +163,42 @@ class ComputeManager(threading.Thread):
 
                     rlg.last_update = time.time()
                     self.logger.warn("logical group (" + lk + ") updated")
+                    updated = True
+
+        return updated
 
     def _check_logical_group_metadata_update(self, _lg, _rlg):
+        updated = False
+
         if _lg.status != _rlg.status:
             _rlg.status = _lg.status
+            updated = True
 
         for mdk in _lg.metadata.keys():
             if mdk not in _rlg.metadata.keys():
                 _rlg.metadata[mdk] = _lg.metadata[mdk]
+                updated = True
 
         for rmdk in _rlg.metadata.keys():
             if rmdk not in _lg.metadata.keys():
                 del _rlg.metadata[rmdk]
+                updated = True
 
         for hk in _lg.vms_per_host.keys():
             if hk not in _rlg.vms_per_host.keys():
                 _rlg.vms_per_host[hk] = deepcopy(_lg.vms_per_host[hk])
+                updated = True
 
         for rhk in _rlg.vms_per_host.keys():
             if rhk not in _lg.vms_per_host.keys():
                 del _rlg.vms_per_host[rhk]
+                updated = True
+
+        return updated
 
     def _check_host_update(self, _hosts):
+        updated = False
+
         for hk in _hosts.keys():
             if hk not in self.resource.hosts.keys():
                 new_host = Host(hk)
@@ -193,6 +206,7 @@ class ComputeManager(threading.Thread):
 
                 new_host.last_update = time.time()
                 self.logger.warn("new host (" + new_host.name + ") added")
+                updated = True
 
         for rhk, rhost in self.resource.hosts.iteritems():
             if rhk not in _hosts.keys():
@@ -201,21 +215,26 @@ class ComputeManager(threading.Thread):
 
                     rhost.last_update = time.time()
                     self.logger.warn("host (" + rhost.name + ") disabled")
+                    updated = True
 
         for hk in _hosts.keys():
             host = _hosts[hk]
             rhost = self.resource.hosts[hk]
             if self._check_host_config_update(host, rhost) is True:
                 rhost.last_update = time.time()
+                updated = True
 
         for hk, h in self.resource.hosts.iteritems():
             if h.clean_memberships() is True:
                 h.last_update = time.time()
                 self.logger.warn("host (" + h.name + ") updated (delete EX/AFF/DIV membership)")
+                updated = True
 
         for hk, host in self.resource.hosts.iteritems():
-            if host.last_update > self.resource.current_timestamp:
+            if host.last_update >= self.resource.current_timestamp:
                 self.resource.update_rack_resource(host)
+
+        return updated
 
     def _check_host_config_update(self, _host, _rhost):
         topology_updated = False
@@ -356,18 +375,22 @@ class ComputeManager(threading.Thread):
             return False
 
         self.data_lock.acquire()
-        self._check_flavor_update(flavors)
+        if self._check_flavor_update(flavors) is True:
+            self.resource.update_topology(store=False)
         self.data_lock.release()
 
         return True
 
     def _check_flavor_update(self, _flavors):
+        updated = False
+
         for fk in _flavors.keys():
             if fk not in self.resource.flavors.keys():
                 self.resource.flavors[fk] = deepcopy(_flavors[fk])
 
                 self.resource.flavors[fk].last_update = time.time()
                 self.logger.warn("new flavor (" + fk + ":" + _flavors[fk].flavor_id + ") added")
+                updated = True
 
         for rfk in self.resource.flavors.keys():
             rf = self.resource.flavors[rfk]
@@ -376,6 +399,7 @@ class ComputeManager(threading.Thread):
 
                 rf.last_update = time.time()
                 self.logger.warn("flavor (" + rfk + ":" + rf.flavor_id + ") removed")
+                updated = True
 
         for fk in _flavors.keys():
             f = _flavors[fk]
@@ -384,6 +408,9 @@ class ComputeManager(threading.Thread):
             if self._check_flavor_spec_update(f, rf) is True:
                 rf.last_update = time.time()
                 self.logger.warn("flavor (" + fk + ":" + rf.flavor_id + ") spec updated")
+                updated = True
+
+        return updated
 
     def _check_flavor_spec_update(self, _f, _rf):
         spec_updated = False

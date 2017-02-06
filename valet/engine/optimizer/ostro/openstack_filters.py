@@ -74,13 +74,13 @@ class AggregateInstanceExtraSpecsFilter(object):
 
             aggregate_vals = _metadata.get(key, None)
             if not aggregate_vals:
-                self.logger.debug("key (" + key + ") not exists in logical_group (" + _lg_name + ") " + " of host (" + _h_name + ")")
+                # self.logger.debug("key (" + key + ") not exists in logical_group (" + _lg_name + ") " + " of host (" + _h_name + ")")
                 return False
             for aggregate_val in aggregate_vals:
                 if openstack_utils.match(aggregate_val, req):
                     break
             else:
-                self.logger.debug("key (" + key + ")'s value (" + req + ") not exists in logical_group " + "(" + _lg_name + ") " + " of host (" + _h_name + ")")
+                # self.logger.debug("key (" + key + ")'s value (" + req + ") not exists in logical_group " + "(" + _lg_name + ") " + " of host (" + _h_name + ")")
                 return False
 
         return True
@@ -117,7 +117,7 @@ class AvailabilityZoneFilter(object):
 
         for azr in az_request_list:
             if azr not in availability_zone_list:
-                self.logger.debug("AZ (" + azr + ") not exists in host " + "(" + _host.get_resource_name(_level) + ")")
+                # self.logger.debug("AZ (" + azr + ") not exists in host " + "(" + _host.get_resource_name(_level) + ")")
                 return False
 
         return True
@@ -155,8 +155,8 @@ class RamFilter(object):
 
         # Do not allow an instance to overcommit against itself, only against other instances.
         if not total_ram >= requested_ram:
-            self.logger.debug("requested mem (" + str(requested_ram) + ") more than total mem (" +
-                              str(total_ram) + ") in host (" + _host.get_resource_name(_level) + ")")
+            # self.logger.debug("requested mem (" + str(requested_ram) + ") more than total mem (" +
+            #                   str(total_ram) + ") in host (" + _host.get_resource_name(_level) + ")")
             return False
 
         # ram_allocation_ratio = self._get_ram_allocation_ratio(host_state, spec_obj)
@@ -166,8 +166,8 @@ class RamFilter(object):
         # usable_ram = memory_mb_limit - used_ram_mb
 
         if not usable_ram >= requested_ram:
-            self.logger.debug("requested mem (" + str(requested_ram) + ") more than avail mem (" +
-                              str(usable_ram) + ") in host (" + _host.get_resource_name(_level) + ")")
+            # self.logger.debug("requested mem (" + str(requested_ram) + ") more than avail mem (" +
+            #                   str(usable_ram) + ") in host (" + _host.get_resource_name(_level) + ")")
             return False
 
         # save oversubscription limit for compute node to test against:
@@ -203,14 +203,14 @@ class CoreFilter(object):
 
         # Do not allow an instance to overcommit against itself, only against other instances.
         if instance_vCPUs > vCPUs:
-            self.logger.debug("requested vCPUs (" + str(instance_vCPUs) + ") more than total vCPUs (" +
-                              str(vCPUs) + ") in host (" + _host.get_resource_name(_level) + ")")
+            # self.logger.debug("requested vCPUs (" + str(instance_vCPUs) + ") more than total vCPUs (" +
+            #                   str(vCPUs) + ") in host (" + _host.get_resource_name(_level) + ")")
             return False
 
         # free_vcpus = vcpus_total - host_state.vcpus_used
         if avail_vCPUs < instance_vCPUs:
-            self.logger.debug("requested vCPUs (" + str(instance_vCPUs) + ") more than avail vCPUs (" +
-                              str(avail_vCPUs) + ") in host (" + _host.get_resource_name(_level) + ")")
+            # self.logger.debug("requested vCPUs (" + str(instance_vCPUs) + ") more than avail vCPUs (" +
+            #                   str(avail_vCPUs) + ") in host (" + _host.get_resource_name(_level) + ")")
             return False
 
         return True
@@ -237,8 +237,8 @@ class DiskFilter(object):
         # usable_disk_mb = disk_mb_limit - used_disk_mb
 
         if not usable_disk >= requested_disk:
-            self.logger.debug("requested disk (" + str(requested_disk) + ") more than avail disk (" +
-                              str(usable_disk) + ") in host (" + _host.get_resource_name(_level) + ")")
+            # self.logger.debug("requested disk (" + str(requested_disk) + ") more than avail disk (" +
+            #                   str(usable_disk) + ") in host (" + _host.get_resource_name(_level) + ")")
             return False
 
         # disk_gb_limit = disk_mb_limit / 1024

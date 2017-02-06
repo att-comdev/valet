@@ -56,7 +56,7 @@ class Ostro(object):
         self.end_of_process = False
 
         self.batch_store_trigger = 10  # sec
-        self.batch_events_count = 1
+        # self.batch_events_count = 1
 
     '''
     def run_ostro(self):
@@ -89,9 +89,12 @@ class Ostro(object):
                 else:
                     if self.resource.resource_updated is True and \
                        (time.time()-self.resource.curr_db_timestamp) >= self.batch_store_trigger:
+                        self.data_lock.acquire()
                         if self.resource.store_topology_updates() is False:
+                            self.data_lock.release()
                             break
                         self.resource.resource_updated = False
+                        self.data_lock.release()
                     else:
                         time.sleep(0.1)
 
@@ -136,9 +139,12 @@ class Ostro(object):
                 else:
                     if self.resource.resource_updated is True and \
                        (time.time() - self.resource.curr_db_timestamp) >= self.batch_store_trigger:
+                        self.data_lock.acquire()
                         if self.resource.store_topology_updates() is False:
+                            self.data_lock.release()
                             break
                         self.resource.resource_updated = False
+                        self.data_lock.release()
 
         self.topology.end_of_process = True
         self.compute.end_of_process = True
@@ -248,7 +254,7 @@ class Ostro(object):
                 self.logger.info("done app placement")
 
         end_time = time.time()
-        self.logger.info("EVAL: total decision delay of request = " + str(end_time - start_time) + " sec")
+        self.logger.debug("EVAL: total decision delay of request = " + str(end_time - start_time))
 
         return True
 
@@ -387,8 +393,6 @@ class Ostro(object):
             if self._set_flavors() is False:
                 return False
 
-            self.resource.update_topology(store=False)
-
             flavor = self.resource.get_flavor(_vm.flavor)
             if flavor is None:
                 return False
@@ -408,10 +412,12 @@ class Ostro(object):
     def handle_events(self, _event_list):
         self.data_lock.acquire()
 
+        event_handler_start_time = time.time()
+
         resource_updated = False
 
-        events_count = 0
-        handled_event_list = []
+        # events_count = 0
+        # handled_event_list = []
         for e in _event_list:
             if e.host is not None and e.host != "none":
                 if self._check_host(e.host) is False:
@@ -510,15 +516,15 @@ class Ostro(object):
             else:
                 self.logger.warn("EVENT: unknown method = " + e.method)
 
-            events_count += 1
-            handled_event_list.append(e)
-            if events_count >= self.batch_events_count:
-                break
+            # events_count += 1
+            # handled_event_list.append(e)
+            # if events_count >= self.batch_events_count:
+            #     break
 
         if resource_updated is True:
             self.resource.update_topology(store=False)
 
-        for e in handled_event_list:
+        for e in _event_list:
             if self.db.delete_event(e.event_id) is False:
                 self.data_lock.release()
                 return False
@@ -528,6 +534,8 @@ class Ostro(object):
                         if self.db.delete_uuid(e.uuid) is False:
                             self.data_lock.release()
                             return False
+
+        self.logger.debug("EVAL: total delay for event handling = " + str(time.time() - event_handler_start_time))
 
         self.data_lock.release()
 

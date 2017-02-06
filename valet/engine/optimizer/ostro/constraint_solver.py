@@ -29,7 +29,7 @@ class ConstraintSolver(object):
 
         ''' when replanning '''
         if _n.node.host is not None and len(_n.node.host) > 0:
-            self.logger.debug("reconsider with given candidates for replanning")
+            # self.logger.debug("reconsider with given candidates for replanning")
             for hk in _n.node.host:
                 for ark, ar in _avail_resources.iteritems():
                     if hk == ark:
@@ -254,8 +254,8 @@ class ConstraintSolver(object):
                 if r not in conflict_list:
                     conflict_list.append(r)
 
-                    debug_resource_name = r.get_resource_name(_level)
-                    self.logger.debug("exclusivity defined in resource = " + debug_resource_name)
+                    # debug_resource_name = r.get_resource_name(_level)
+                    # self.logger.debug("exclusivity defined in resource = " + debug_resource_name)
 
         _candidate_list[:] = [c for c in _candidate_list if c not in conflict_list]
 
@@ -294,9 +294,9 @@ class ConstraintSolver(object):
             if self.exist_group(_level, _exclusivity_id, "EX", r) is True:
                 if r not in candidate_list:
                     candidate_list.append(r)
-            else:
-                debug_resource_name = r.get_resource_name(_level)
-                self.logger.debug("exclusivity not exist in resource = " + debug_resource_name)
+            # else:
+            #     debug_resource_name = r.get_resource_name(_level)
+            #     self.logger.debug("exclusivity not exist in resource = " + debug_resource_name)
 
         return candidate_list
 
@@ -307,9 +307,9 @@ class ConstraintSolver(object):
             if self.check_hibernated(_level, r) is True:
                 if r not in candidate_list:
                     candidate_list.append(r)
-            else:
-                debug_resource_name = r.get_resource_name(_level)
-                self.logger.debug("exclusivity not allowed in resource = " + debug_resource_name)
+            # else:
+            #     debug_resource_name = r.get_resource_name(_level)
+            #     self.logger.debug("exclusivity not allowed in resource = " + debug_resource_name)
 
         return candidate_list
 

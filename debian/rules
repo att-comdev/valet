@@ -5,4 +5,6 @@
 #export DH_VERBOSE=1
 
 %:
-	dh $@ 
+	dh $@ --buildsystem=python_distutils -D aic-valet-core
+
+override_dh_usrlocal:

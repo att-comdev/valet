@@ -1,12 +1,5 @@
-cd /opt/app/aic-valet-core
-git init
-python setup.py install
-mkdir /opt/app/aic-valet-tools
-cp /opt/app/aic-valet-core/tools/utils/* /opt/app/aic-valet-tools/
 chown -R m04060:m04060 /opt/app/aic-valet-tools
 chmod 755 /opt/app/aic-valet-tools/*
-mkdir /etc/valet
-mkdir /etc/valet/ha
 chown -R m04060:m04060 /etc/valet
 mkdir /var/run/valet
 chown m04060:m04060 /var/run/valet
@@ -19,5 +12,3 @@ chown m04060:m04060 /var/www/valet/app.wsgi
 chown m04060:m04060 /etc/supervisor/conf.d/HAValet.conf
 chown m04060:m04060 /var/www/valet/config.py
 ln -s /etc/apache2/sites-available/valet_apache.conf /etc/apache2/sites-enabled/valet_apache.conf
-cd /opt/app
-rm -rf /opt/app/aic-valet-core

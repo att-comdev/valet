@@ -32,6 +32,8 @@ class Parser(object):
         self.application_name = None
         self.action = None            # [create|update|ping]
 
+        self.candidate_list_map = {}
+
         self.status = "success"
 
     def set_topology(self, _graph):
@@ -54,6 +56,11 @@ class Parser(object):
             self.action = _graph["action"]
         else:
             self.action = "any"
+
+        if "locations" in _graph.keys() and len(_graph["locations"]) > 0:
+            if len(_graph["resources"]) == 1:
+                v_uuid = _graph["resources"].keys()[0]
+                self.candidate_list_map[v_uuid] = _graph["locations"]
 
         return self._set_topology(_graph["resources"])
 
@@ -85,6 +92,10 @@ class Parser(object):
                     az = r["properties"]["availability_zone"]
                     # NOTE: do not allow to specify a certain host name
                     vm.availability_zone = az.split(":")[0]
+
+                if "locations" in r.keys():
+                    if len(r["locations"]) > 0:
+                        self.candidate_list_map[rk] = r["locations"]
 
                 vms[vm.uuid] = vm
 

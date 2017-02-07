@@ -13,13 +13,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Test General."""
+
 from valet.tests.base import Base
 
 
 class TestGeneral(Base):
+	"""Test General Class."""
 
     def setUp(self):
+    	"""Setup Test General."""
         super(TestGeneral, self).setUp()
 
     def test_general(self):
+    	"""Test General performs validate test with True."""
         self.validate_test(True)

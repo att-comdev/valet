@@ -13,20 +13,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Test Messaging."""
+
 import mock
 import valet.api.common.messaging as messaging
 from valet.tests.unit.api.v1.api_base import ApiBase
 
 
 class TestMessaging(ApiBase):
+    """Test Messaging Class for messaging api."""
 
     def setUp(self):
+        """Setup test messaging."""
         super(TestMessaging, self).setUp()
 
     @mock.patch.object(messaging, 'cfg')
     @mock.patch.object(messaging, 'conf')
     @mock.patch.object(messaging, 'messaging')
     def test_messaging(self, mock_msg, mock_conf, mock_cfg):
+        """Validate messaging in api."""
         mock_conf.messaging.config = {"transport_url": "test_transport_url"}
         mock_msg.get_transport.return_value = "get_transport_method"
         mock_msg.Notifier.return_value = "Notifier"

@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Test Hooks."""
+
 import mock
 import valet.api.common.hooks as hooks
 from valet.api.common.hooks import MessageNotificationHook
@@ -20,8 +22,10 @@ from valet.tests.unit.api.v1.api_base import ApiBase
 
 
 class TestHooks(ApiBase):
+    """Test Hooks Class to test api hooks."""
 
     def setUp(self):
+        """Setup Test Hooks."""
         super(TestHooks, self).setUp()
 
         self.message_notification_hook = MessageNotificationHook()
@@ -30,6 +34,7 @@ class TestHooks(ApiBase):
     @mock.patch.object(hooks, 'conf')
     @mock.patch.object(hooks, 'webob')
     def test_after_ok(self, mock_bob, mock_conf, mock_threading):
+        """Test message notification hook after with an ok."""
         mock_bob.exc.status_map = {"test_status_code": State}
         mock_bob.exc.HTTPOk = State
         mock_conf.messaging.notifier.return_value = "notifier"
@@ -53,6 +58,7 @@ class TestHooks(ApiBase):
     @mock.patch.object(hooks, 'conf')
     @mock.patch.object(hooks, 'webob')
     def test_after_with_error(self, mock_bob, mock_conf, mock_threading):
+        """Test message notification hook after with an error."""
         mock_bob.exc.status_map = {"test_status_code": State}
         mock_conf.messaging.notifier.return_value = "notifier"
         mock_conf.messaging.timeout = 1
@@ -75,11 +81,17 @@ class TestHooks(ApiBase):
 
 
 class State(object):
+    """State Class."""
+
     class response(object):
+        """Response Class."""
+
         status_code = "test_status_code"
         body = "test_body"
 
     class request(object):
+        """Request Class."""
+
         path = "test_path"
         method = "test_method"
         body = "test_req_body"

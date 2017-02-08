@@ -12,6 +12,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+"""Test Config."""
+
 import sys
 from valet.engine.optimizer.ostro_server.configuration import Config
 from valet.tests.base import Base
@@ -20,12 +23,15 @@ from oslo_config import cfg
 
 
 class TestConfig(Base):
+    """Unit tests for Valet.engine.optimizer.ostro_server.configuration."""
 
     def setUp(self):
+        """Setup Test Config Testing Class."""
         super(TestConfig, self).setUp()
         sys.argv = [sys.argv[0]]
 
     def test_unhappy_config_io(self):
+        """Test unhappy.cfg I/O and validate I/O error in config status."""
         cfg.CONF.clear()
         try:
             config = Config("unhappy.cfg")
@@ -36,6 +42,7 @@ class TestConfig(Base):
             self.validate_test(isinstance(ex, cfg.ConfigFilesNotFoundError))
 
     def test_config_io(self):
+        """Test config I/O and validate config status is success."""
         cfg.CONF.clear()
         config = Config("etc/valet/valet.conf")
         config_status = config.configure()

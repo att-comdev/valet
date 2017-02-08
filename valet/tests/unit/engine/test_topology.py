@@ -13,17 +13,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Test Topology."""
+
 from valet.engine.resource_manager.topology import Topology
 from valet.tests.base import Base
 
 
 class TestTopology(Base):
+    """Unit Tests for valet.engine.resource_manager.topology."""
 
     def setUp(self):
+        """Setup TestTopology Test Class."""
         super(TestTopology, self).setUp()
         self.topo = Topology(Config(), None)
 
     def test_simple_topology(self):
+        """Validate simple topology (region, rack, node_type and status)."""
         (region, rack, node_type, status) = \
             self.topo._set_layout_by_name("pdk15r05c001")
 
@@ -33,6 +38,7 @@ class TestTopology(Base):
         self.validate_test(status == "success")
 
     def test_domain_topology(self):
+        """Test Domain Topology."""
         (region, rack, node_type, status) = \
             self.topo._set_layout_by_name("ihk01r01c001.emea.att.com")
 
@@ -42,6 +48,7 @@ class TestTopology(Base):
         self.validate_test(status == "success")
 
     def test_unhappy_topology_r(self):
+        """Test unhappy topology, region/rack/node none, invalid status 0."""
         (region, rack, node_type, status) = \
             self.topo._set_layout_by_name("pdk1505c001")
         self.validate_test(region == "none")
@@ -51,6 +58,7 @@ class TestTopology(Base):
                                      "identification fields = 0")
 
     def test_unhappy_topology_c(self):
+        """Test unhappy topology with values none and 1 invalid status."""
         (region, rack, node_type, status) = \
             self.topo._set_layout_by_name("pdk15r05001")
         self.validate_test(region == "none")
@@ -59,10 +67,12 @@ class TestTopology(Base):
         self.validate_test(status == "invalid number of "
                                      "identification fields = 1")
 
-# TODO: add validation to topology for region
+# TODO(UNKNOWN): add validation to topology for region
 
 
 class Config(object):
+    """Config for topology."""
+
     num_of_region_chars = 3
     rack_code_list = "r"
     node_code_list = "a,c,u,f,o,p,s"

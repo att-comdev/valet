@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Test Search."""
+
 import logging
 import mock
 from valet.engine.optimizer.ostro.search import Search
@@ -22,11 +24,14 @@ LOG = logging.getLogger(__name__)
 
 
 class TestSearch(Base):
+    """Unit tests for valet.engine.optimizer.ostro.search."""
 
     def setUp(self):
+        """Setup Test Search Class."""
         super(TestSearch, self).setUp()
 
         self.search = Search(LOG)
 
     def test_copy_resource_status(self):
+        """Test Copy Resource Status."""
         self.search.copy_resource_status(mock.MagicMock())

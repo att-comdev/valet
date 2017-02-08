@@ -13,18 +13,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Test Valetcli."""
+
 import mock
 from valet.cli.valetcli import Cli
 from valet.tests.base import Base
 
 
 class TestValetcli(Base):
-    """ Unit tests for valet.valetcli """
+    """Unit tests for valet.valetcli."""
 
     def setUp(self):
+        """Setup TestValetCli class."""
         super(TestValetcli, self).setUp()
 
     def test_parse(self):
+        """Create cli parser and validate by parsing test args."""
         cli = Cli()
         cli.create_parser()
         argv = ['/path/to/valetcli.py', 'group', 'list']
@@ -33,6 +37,7 @@ class TestValetcli(Base):
         self.validate_test(cli.args.service == 'group')
 
     def test_logic(self):
+        """Test cli logic methods getitem and getitem.run."""
         cli = Cli()
         cli.submod = mock.MagicMock()
         cli.args = mock.MagicMock()

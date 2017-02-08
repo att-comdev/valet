@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Test GroupCli."""
+
 import mock
 # from valet.cli.groupcli import cmd_details
 import valet.cli.groupcli as grpcli
@@ -21,13 +23,15 @@ from valet.tests.base import Base
 
 
 class TestGroupcli(Base):
-    """ Unit tests for valet.valetcli """
+    """Unit tests for valet.valetcli."""
 
     def setUp(self):
+        """Setup Test Group cli."""
         super(TestGroupcli, self).setUp()
 
     @mock.patch.object(grpcli, 'requests')
     def test_cmd_details(self, mock_requests):
+        """Test command details, mock the requests and ar."""
         mock_requests.post = 'post'
 
         ar = mock.MagicMock()

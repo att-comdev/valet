@@ -13,14 +13,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Api Base."""
+
 import mock
 import pecan
 from valet.tests.base import Base
 
 
 class ApiBase(Base):
+	"""Api Base Test Class, calls valet tests base."""
 
     def setUp(self):
+    	"""Setup api base and mock pecan identity/music/state."""
         super(ApiBase, self).setUp()
         pecan.conf.identity = mock.MagicMock()
         pecan.conf.music = mock.MagicMock()
@@ -29,4 +33,5 @@ class ApiBase(Base):
 
     @classmethod
     def mock_error(cls, url, msg=None, **kwargs):
+    	"""Mock error and set response to msg."""
         cls.response = msg

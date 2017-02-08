@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Test Groups."""
+
 import mock
 import pecan
 from valet.api.db.models.music.groups import Group
@@ -23,7 +25,7 @@ from valet.tests.unit.api.v1.api_base import ApiBase
 
 
 class TestGroups(ApiBase):
-    """ Unit tests for valet.api.v1.controllers.groups """
+    """Unit tests for valet.api.v1.controllers.groups."""
 
     def setUp(self):
         super(TestGroups, self).setUp()

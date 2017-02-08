@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Test Placements."""
+
 import mock
 import valet.api.v1.controllers.placements as placements
 from valet.api.v1.controllers.placements import PlacementsController, PlacementsItemController
@@ -22,9 +24,10 @@ from valet.tests.unit.api.v1.api_base import ApiBase
 
 
 class TestPlacements(ApiBase):
-    """Unit tests for valet.api.v1.controllers.placements """
+    """Unit tests for valet.api.v1.controllers.placements."""
 
     def setUp(self):
+        """Setup Test Placements, call placements controller/ItemController."""
         super(TestPlacements, self).setUp()
 
         self.placements_controller = PlacementsController()
@@ -34,6 +37,7 @@ class TestPlacements(ApiBase):
     @mock.patch.object(Query, 'filter_by')
     @mock.patch.object(placements, 'request')
     def init_PlacementsItemController(self, mock_request, mock_filter):
+        """Called by Setup, return PlacementsItemController with uuid4."""
         mock_request.context = {}
         mock_filter.return_value = Results(["", "second"])
         try:
@@ -52,6 +56,7 @@ class TestPlacements(ApiBase):
         return PlacementsItemController("uuid4")
 
     def test_allow(self):
+        """Test placements allow method with GET and GET,POST,DELETE."""
         self.validate_test(self.placements_controller.allow() == 'GET')
 
         self.validate_test(
@@ -60,6 +65,7 @@ class TestPlacements(ApiBase):
     @mock.patch.object(placements, 'error', ApiBase.mock_error)
     @mock.patch.object(placements, 'request')
     def test_index(self, mock_request):
+        """Test placements index method with POST and PUT (not allowed)."""
         mock_request.method = "POST"
         self.placements_controller.index()
         self.validate_test("The POST method is not allowed" in ApiBase.response)
@@ -69,6 +75,7 @@ class TestPlacements(ApiBase):
         self.validate_test("The PUT method is not allowed" in ApiBase.response)
 
     def test_index_options(self):
+        """Test placements index_options method."""
         self.placements_controller.index_options()
         self.validate_test(placements.response.status == 204)
 
@@ -77,6 +84,7 @@ class TestPlacements(ApiBase):
 
     @mock.patch.object(Query, 'all')
     def test_index_get(self, mock_all):
+        """Test index_get method for placements, validate based on response."""
         all_groups = ["group1", "group2", "group3"]
         mock_all.return_value = all_groups
         response = self.placements_controller.index_get()
@@ -97,6 +105,7 @@ class TestPlacements(ApiBase):
     @mock.patch.object(Query, 'filter_by', mock.MagicMock)
     @mock.patch.object(placements, 'update_placements')
     def test_index_post(self, mock_plcment):
+        """Test index_post for placements, validate from response status."""
         kwargs = {'resource_id': "resource_id", 'locations': ["test_location"]}
         self.placements_item_controller.index_post(**kwargs)
         self.validate_test(placements.response.status == 201)
@@ -118,5 +127,6 @@ class TestPlacements(ApiBase):
             self.validate_test(placements.response.status == 201)
 
     def test_index_delete(self):
+        """Test placements_item_controller index_delete method."""
         self.placements_item_controller.index_delete()
         self.validate_test(placements.response.status == 204)

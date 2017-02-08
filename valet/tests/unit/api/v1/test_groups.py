@@ -28,6 +28,7 @@ class TestGroups(ApiBase):
     """Unit tests for valet.api.v1.controllers.groups."""
 
     def setUp(self):
+        """Setup TestGroups by initializing Groups and Members controllers."""
         super(TestGroups, self).setUp()
         self.tenant_id = "testprojectid"
 
@@ -46,6 +47,7 @@ class TestGroups(ApiBase):
     @mock.patch.object(groups, 'request')
     @mock.patch.object(Query, 'filter_by')
     def init_GroupsItemController(self, mock_filter, mock_request):
+        """Called by Setup, return GroupsItemController object with id."""
         mock_request.context = {}
         mock_filter.return_value = Results([Group("test_name",
                                                   "test_description",
@@ -58,12 +60,14 @@ class TestGroups(ApiBase):
 
     @mock.patch.object(groups, 'error', ApiBase.mock_error)
     def test_init_GroupsItemController_unhappy(self):
+        """Test GroupsItemController when 'Group not found'."""
         GroupsItemController("group_id")
         self.validate_test("Group not found" in TestGroups.response)
 
     @mock.patch.object(groups, 'error', ApiBase.mock_error)
     @mock.patch.object(groups, 'request')
     def init_MembersItemController(self, mock_request):
+        """Called by Setup, return MembersItemController with demo members."""
         grp = Group("test_member_item_name",
                     "test_description",
                     "test_type",
@@ -80,6 +84,7 @@ class TestGroups(ApiBase):
         return contrler
 
     def test_allow(self):
+        """Test group and member controller allow method."""
         self.validate_test(self.groups_controller.allow() == 'GET,POST')
 
         self.validate_test(self.members_controller.allow() == 'PUT,DELETE')
@@ -92,6 +97,7 @@ class TestGroups(ApiBase):
     @mock.patch.object(groups, 'error', ApiBase.mock_error)
     @mock.patch.object(groups, 'request')
     def test_index(self, mock_request):
+        """Test controller index method with requests HEAD,GET,POST,PUT."""
         mock_request.method = "HEAD"
         self.groups_controller.index()
         self.validate_test("The HEAD method is not allowed" in
@@ -114,6 +120,7 @@ class TestGroups(ApiBase):
 
     @mock.patch.object(groups, 'request')
     def index_put(self, mock_request):
+        """Test members_controller index_put method, check status/tenant_id."""
         pecan.conf.identity.engine.is_tenant_list_valid.return_value = True
 
         mock_request.context = {'group': Group("test_name",
@@ -130,6 +137,7 @@ class TestGroups(ApiBase):
     @mock.patch.object(groups, 'error', ApiBase.mock_error)
     @mock.patch.object(groups, 'request')
     def test_index_put_unhappy(self, mock_request):
+        """Test members_controller index_put method with invalid tenants."""
         pecan.conf.identity.engine.is_tenant_list_valid.return_value = False
 
         mock_request.context = {'group': Group("test_name",
@@ -144,6 +152,7 @@ class TestGroups(ApiBase):
     @mock.patch.object(groups, 'tenant_servers_in_group')
     @mock.patch.object(groups, 'request')
     def test_index_put_delete(self, mock_request, mock_func):
+        """Test members_controller index_delete method."""
         grp_with_member = self.index_put()
 
         mock_request.context = {'group': grp_with_member}
@@ -156,6 +165,7 @@ class TestGroups(ApiBase):
     @mock.patch.object(groups, 'tenant_servers_in_group')
     @mock.patch.object(groups, 'request')
     def test_index_delete_member_item_controller(self, mock_request, mock_func):
+        """Members_item_controller index_delete, check status and members."""
         grp = Group("test_name", "test_description", "test_type", None)
         grp.members = ["demo members"]
 
@@ -173,6 +183,7 @@ class TestGroups(ApiBase):
     def test_index_delete_member_item_controller_unhappy(self,
                                                          mock_request,
                                                          mock_func):
+        """Members_item_controller index_delete, check member not found."""
         grp = Group("test_name", "test_description", "test_type", None)
         grp.members = ["demo members"]
 
@@ -187,6 +198,7 @@ class TestGroups(ApiBase):
     @mock.patch.object(groups, 'tenant_servers_in_group')
     @mock.patch.object(groups, 'request')
     def test_index_delete_unhappy(self, mock_request, mock_func):
+        """Members_controller index_delete, check TestGroups response."""
         grp_with_member = self.index_put()
 
         mock_request.context = {'group': grp_with_member}
@@ -197,6 +209,7 @@ class TestGroups(ApiBase):
 
     @mock.patch.object(groups, 'request')
     def test_index_put_groups_item_controller(self, mock_request):
+        """Test index_put for item_controller, check status and description."""
         mock_request.context = {'group': Group("test_name",
                                                "test_description",
                                                "test_type",
@@ -217,6 +230,7 @@ class TestGroups(ApiBase):
 
     @mock.patch.object(groups, 'request')
     def test_index_delete_groups_item_controller(self, mock_request):
+        """Test groups_item_controller index_delete works, check response."""
         mock_request.context = {'group': Group("test_name",
                                                "test_description",
                                                "test_type",
@@ -228,6 +242,7 @@ class TestGroups(ApiBase):
     @mock.patch.object(groups, 'error', ApiBase.mock_error)
     @mock.patch.object(groups, 'request')
     def test_index_delete_groups_item_controller_unhappy(self, mock_request):
+        """Test to check that you can't delete a group with members."""
         grp = Group("test_name", "test_description", "test_type", None)
         grp.members = ["demo members"]
         mock_request.context = {'group': grp}
@@ -240,6 +255,7 @@ class TestGroups(ApiBase):
     @mock.patch.object(groups, 'request')
     @mock.patch.object(Query, 'all')
     def test_index_get(self, mock_all, mock_request):
+        """Groups_controller index_get method, check response to verify."""
         all_groups = ["group1", "group2", "group3"]
         mock_all.return_value = all_groups
         response = self.groups_controller.index_get()
@@ -259,6 +275,7 @@ class TestGroups(ApiBase):
         self.validate_test(all_groups == response["groups"])
 
     def test_index_post(self):
+        """Test group_controller index_post, check status and name."""
         group = self.groups_controller.index_post(name="testgroup",
                                                   description="test description",
                                                   type="testtype")
@@ -268,6 +285,7 @@ class TestGroups(ApiBase):
 
     @mock.patch.object(groups, 'error', ApiBase.mock_error)
     def test_index_post_unhappy(self):
+        """Test groups_controller index_post with error."""
         pecan.conf.music = None
         self.groups_controller.index_post(name="testgroup",
                                           description="test description",
@@ -276,6 +294,7 @@ class TestGroups(ApiBase):
         self.validate_test("Unable to create Group" in TestGroups.response)
 
     def test_index_options(self):
+        """Test controller index_options method, check response status."""
         self.groups_item_controller.index_options()
         self.validate_test(groups.response.status == 204)
 

@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Init."""
+
 import os
 from oslo_config import cfg
 from oslo_log import log as logging
@@ -88,6 +90,7 @@ _initialized = False
 
 
 def prepare(CONF):
+    """Prepare config options."""
     global _initialized
     try:
         if _initialized is False:

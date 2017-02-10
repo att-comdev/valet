@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Functional Base."""
 
 import os
 from oslo_log import log as logging
@@ -31,14 +32,15 @@ class FunctionalTestCase(Base):
     """Test case base class for all unit tests."""
 
     def __init__(self, *args, **kwds):
-        """Initializing the FunctionalTestCase - loading the
-        logger, loader and analyzer
+        """Init.
 
+        Initializing the FunctionalTestCase - loading the
+        logger, loader and analyzer.
         """
-
         super(FunctionalTestCase, self).__init__(*args, **kwds)
 
     def setUp(self):
+        """Start loader and analyzer."""
         super(FunctionalTestCase, self).setUp()
 
         self.load = Loader()
@@ -49,8 +51,9 @@ class FunctionalTestCase(Base):
                                               COLORS["WHITE"]))
 
     def run_test(self, stack_name, template_path):
-        """ scenario -
+        """Run Test.
 
+        scenario -
                 deletes all stacks
                 create new stack
                 checks if host (or rack) is the same for all instances
@@ -76,6 +79,7 @@ class FunctionalTestCase(Base):
                  % (COLORS["L_PURPLE"], COLORS["WHITE"]))
 
     def try_again(self, res, stack_name, my_resources):
+        """Try creating stack again."""
         tries = CONF.valet.TRIES_TO_CREATE
         while "Ostro error" in res.message and tries > 0:
             LOG.error("Ostro error - try number %d"
@@ -88,11 +92,13 @@ class FunctionalTestCase(Base):
         return res
 
     def get_template_path(self, template_name):
+        """Return template path for the template name given."""
         possible_topdir = os.path.normpath(os.path.join(
             os.path.abspath(__file__), os.pardir, os.pardir))
         return os.path.join(possible_topdir, 'tests/templates',
                             template_name + '.yml')
 
     def init_template(self, test):
+        """Init template, call get path for test template."""
         self.stack_name = test.STACK_NAME
         self.template_path = self.get_template_path(test.TEMPLATE_NAME)

@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Analyzer."""
+
 from novaclient import client
 import traceback
 from valet.tests.functional.valet_validator.common import Result, GeneralLogger
@@ -21,26 +23,27 @@ from valet.tests.functional.valet_validator.common.init import CONF
 
 
 class Analyzer(object):
+    """Methods to perform analysis on hosts, vms, racks."""
 
     def __init__(self):
-        """ initializing the analyzer - connecting to nova """
+        """Initializing the analyzer - connecting to nova."""
         GeneralLogger.log_info("Initializing Analyzer")
         self.nova = client.Client(CONF.nova.VERSION,
                                   session=Auth.get_auth_session())
 
     def get_host_name(self, instance_name):
-        """ Returning host by instance name """
+        """Returning host by instance name."""
         serv = self.nova.servers.find(name=instance_name)
         return self.get_hostname(serv)
 
     def get_all_hosts(self, instances_list):
-        """ Returning all hosts of all instances """
+        """Returning all hosts of all instances."""
         GeneralLogger.log_debug("Getting hosts names")
         return [self.get_host_name(instance.name)
                 for instance in instances_list]
 
     def check(self, resources):
-        """ Checking if all instances are on the Appropriate hosts and racks """
+        """Check if all instances are on the Appropriate hosts and racks."""
         GeneralLogger.log_debug("Starting to check instances location")
         result = True
 
@@ -73,6 +76,7 @@ class Analyzer(object):
         return Result(result)
 
     def get_resources_to_compare(self, resources, group_resources):
+        """Return resources to compare."""
         resources_to_compare = []
 
         try:
@@ -91,6 +95,7 @@ class Analyzer(object):
                                     % ex, traceback.format_exc())
 
     def are_we_alone(self, hosts_list, ins_for_group):
+        """Return result of whether any instances on host."""
         try:
             # instances is all the instances on this host
             all_instances_on_host = self.get_instances_per_host(hosts_list)
@@ -104,7 +109,7 @@ class Analyzer(object):
                                     % ex, traceback.format_exc())
 
     def get_instances_per_host(self, hosts_list):
-        """ get_instances_per_host """
+        """Get number of instances per host."""
         instances = []
         try:
             for host in set(hosts_list):
@@ -118,8 +123,7 @@ class Analyzer(object):
                                     % ex, traceback.format_exc())
 
     def are_different(self, hosts_list, level):
-        """Checking if all hosts (and racks) are different for all instances"""
-
+        """Check if all hosts (and racks) are different for all instances."""
         diction = {}
 
         try:
@@ -136,6 +140,7 @@ class Analyzer(object):
             return False
 
     def are_the_same(self, hosts_list, level):
+        """Check if all hosts (and racks) are the same for all instances."""
         GeneralLogger.log_debug("Hosts are:")
         try:
             for h in hosts_list:
@@ -152,10 +157,10 @@ class Analyzer(object):
             return False
 
     def get_group_instances(self, resources, group_ins):
-        """ gets the instance object according to the group_ins
+        """Get the instance object according to the group_ins.
 
         group_ins - the group_resources name of the instances belong to
-        this group (['my-instance-1', 'my-instance-2'])
+        this group (['my-instance-1', 'my-instance-2']).
         """
         ins_for_group = []
         try:
@@ -171,9 +176,11 @@ class Analyzer(object):
             return None
 
     def get_hostname(self, vm):
+        """Get hostname of vm."""
         return str(getattr(vm, CONF.nova.ATTR))
 
     def is_already_exists(self, diction, item):
+        """If item exists, return True, otherwise return False."""
         if item in diction:
             return True
 
@@ -181,19 +188,24 @@ class Analyzer(object):
         return False
 
     def compare_rack(self, current_host, first_host):
+        """Return True if racks of current and first host are equal."""
         GeneralLogger.log_debug(current_host)
         return self.get_rack(current_host) == self.get_rack(first_host)
 
     def compare_host(self, current_host, first_host):
+        """Compare current host to first host."""
         GeneralLogger.log_debug(current_host)
         return current_host == first_host
 
     def get_rack(self, host):
+        """Get rack from host."""
         return (host.split("r")[1])[:2]
 
     def get_host_or_rack(self, level, host):
+        """Return host if current level is host, otherwise return rack."""
         return host if level == "host" else self.get_rack(host)
 
     def get_vms_by_hypervisor(self, host):
+        """Return vms based on hypervisor(host)."""
         return [vm for vm in self.nova.servers.list(
             search_opts={"all_tenants": True}) if self.get_hostname(vm) == host]

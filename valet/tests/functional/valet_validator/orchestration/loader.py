@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Loader."""
+
 from heatclient.client import Client
 import sys
 import time
@@ -24,9 +26,10 @@ from valet.tests.functional.valet_validator.group_api.valet_group import ValetGr
 
 
 class Loader(object):
+    """Class is responsible for loading stacks and groups."""
 
     def __init__(self):
-        """ initializing the loader - connecting to heat """
+        """Initializing the loader - connecting to heat."""
         GeneralLogger.log_info("Initializing Loader")
 
         heat_url = CONF.heat.HEAT_URL + str(Auth.get_project_id())
@@ -36,6 +39,7 @@ class Loader(object):
         self.stacks = heat.stacks
 
     def create_stack(self, stack_name, template_resources):
+        """Create stack from template resources."""
         GeneralLogger.log_info("Starting to create stacks")
         groups = template_resources.groups
 
@@ -54,6 +58,7 @@ class Loader(object):
             sys.exit(1)
 
     def create_valet_group(self, group_name):
+        """Create valet group."""
         try:
             v_group = ValetGroup()
 
@@ -67,10 +72,12 @@ class Loader(object):
             sys.exit(1)
 
     def delete_stack(self, stack_name):
+        """Delete stack according to stack_name."""
         self.stacks.delete(stack_id=stack_name)
         return self.wait(stack_name, operation="delete")
 
     def delete_all_stacks(self):
+        """Delete all stacks."""
         GeneralLogger.log_info("Starting to delete stacks")
         try:
             for stack in self.stacks.list():
@@ -82,8 +89,7 @@ class Loader(object):
 
     def wait(self, stack_name, count=CONF.valet.TIME_CAP,
              operation="Operation"):
-        """ Checking the result of the process (create/delete)
-        and writing the result to log """
+        """Check result of process (create/delete) and write result to log."""
         while str(self.stacks.get(stack_name).status) == "IN_PROGRESS" \
                 and count > 0:
             count -= 1
@@ -94,7 +100,7 @@ class Loader(object):
             return Result()
         elif str(self.stacks.get(stack_name).status) == "FAILED":
             msg = operation + " failed  -  " + \
-                  self.stacks.get(stack_name).stack_status_reason
+                self.stacks.get(stack_name).stack_status_reason
         else:
             msg = operation + " timed out"
         GeneralLogger.log_error(msg)

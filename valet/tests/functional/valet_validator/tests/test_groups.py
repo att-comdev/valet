@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Test Groups."""
+
 from valet.tests.functional.valet_validator.common.auth import Auth
 from valet.tests.functional.valet_validator.common import GeneralLogger
 from valet.tests.functional.valet_validator.group_api.valet_group import ValetGroup
@@ -20,15 +22,17 @@ from valet.tests.functional.valet_validator.tests.functional_base import Functio
 
 
 class TestGroups(FunctionalTestCase):
+    """Test valet groups functional."""
 
     def setUp(self):
-        """ Adding configuration and logging mechanism """
+        """Add configuration and logging mechanism."""
         super(TestGroups, self).setUp()
         self.groups = ValetGroup()
         self.group_name = "test_group"
         self.group_type = "exclusivity"
 
     def test_groups(self):
+        """Test groups using multiple methods and checking response codes."""
         GeneralLogger.log_group("Delete all stacks")
         self.load.delete_all_stacks()
 
@@ -99,4 +103,5 @@ class TestGroups(FunctionalTestCase):
         GeneralLogger.log_group(self.groups.get_group_details(grp_id).json())
 
     def get_name(self):
+        """Return name."""
         return __name__

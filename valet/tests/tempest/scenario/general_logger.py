@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""General Logger."""
+
 from oslo_log import log as logging
 from tempest import config
 
@@ -31,15 +33,19 @@ COLORS = \
 
 
 class GeneralLogger(object):
+    """Class containing general log methods."""
 
     def __init__(self, name):
+        """Init logger with test name."""
         self.test_name = name
 
     def log_info(self, msg):
+        """Info log."""
         LOG.info("%s %s - %s %s %s" % (COLORS["L_PURPLE"], self.test_name,
                                        COLORS["L_GREEN"], msg, COLORS["WHITE"]))
 
     def log_error(self, msg, trc_back=None):
+        """Log error and trace_back for error if there is one."""
         LOG.error("%s %s - %s %s %s" % (COLORS["L_PURPLE"], self.test_name,
                                         COLORS["L_RED"], msg, COLORS["WHITE"]))
         if trc_back:
@@ -48,9 +54,11 @@ class GeneralLogger(object):
                                             COLORS["WHITE"]))
 
     def log_debug(self, msg):
+        """Log debug."""
         LOG.debug("%s %s - %s %s %s" % (COLORS["L_PURPLE"], self.test_name,
                                         COLORS["L_BLUE"], msg, COLORS["WHITE"]))
 
     def log_group(self, msg):
+        """Log info."""
         LOG.info("%s %s - %s %s %s" % (COLORS["L_PURPLE"], self.test_name,
                                        COLORS["Yellow"], msg, COLORS["WHITE"]))

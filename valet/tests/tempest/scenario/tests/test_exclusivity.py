@@ -13,13 +13,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Test Exclusivity."""
+
 from valet.tests.tempest.scenario.general_logger import GeneralLogger
 from valet.tests.tempest.scenario.scenario_base import ScenarioTestCase
 
 
 class TestExclusivity(ScenarioTestCase):
+    """Test Exclusivity Scenario."""
 
     def test_exclusivity(self):
+        """Test Exclusivity."""
         logger = GeneralLogger("test_exclusivity")
         self.run_test(logger, "exclusivity",
                       "/templates/exclusivity_basic_2_instances.yml")

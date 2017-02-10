@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 #
 # Copyright 2014-2017 AT&T Intellectual Property
 #
@@ -14,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Plugin."""
+
 import os
 
 from tempest import config
@@ -24,7 +25,10 @@ import valet
 
 
 class ValetTempestPlugin(plugins.TempestPlugin):
+    """Plugins for Valet Tempest Testing."""
+
     def load_tests(self):
+        """Load tempest tests, return full test dir and base path."""
         base_path = os.path.split(os.path.dirname(
             os.path.abspath(valet.__file__)))[0]
         test_dir = "valet/tests/tempest"
@@ -32,6 +36,7 @@ class ValetTempestPlugin(plugins.TempestPlugin):
         return full_test_dir, base_path
 
     def register_opts(self, conf):
+        """Register opt groups in config."""
         config.register_opt_group(conf, project_config.service_available_group,
                                   project_config.ServiceAvailableGroup)
 
@@ -42,4 +47,5 @@ class ValetTempestPlugin(plugins.TempestPlugin):
                                   project_config.opt_valet)
 
     def get_opt_lists(self):
+        """Get Opt Lists."""
         pass

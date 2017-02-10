@@ -13,13 +13,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Test Affinity."""
+
 from valet.tests.tempest.scenario.general_logger import GeneralLogger
 from valet.tests.tempest.scenario.scenario_base import ScenarioTestCase
 
 
 class TestAffinity(ScenarioTestCase):
+    """Test Affinity Scenario."""
 
     def test_affinity(self):
+        """Run affinity test."""
         logger = GeneralLogger("test_affinity")
         self.run_test(logger, "affinity",
                       "/templates/affinity_basic_2_instances.yml")

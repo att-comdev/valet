@@ -13,13 +13,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Test Diversity."""
+
 from valet.tests.tempest.scenario.general_logger import GeneralLogger
 from valet.tests.tempest.scenario.scenario_base import ScenarioTestCase
 
 
 class TestDiversity(ScenarioTestCase):
+    """Test Diversity Scenario."""
 
     def test_diversity(self):
+        """Run Test diversity."""
         logger = GeneralLogger("test_diversity")
         self.run_test(logger, "diversity",
                       "/templates/diversity_basic_2_instances.yml")

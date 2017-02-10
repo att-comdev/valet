@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Config."""
+
 from oslo_config import cfg
 
 service_available_group = cfg.OptGroup(name="service_available",

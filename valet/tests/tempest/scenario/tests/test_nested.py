@@ -13,13 +13,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Test Nested."""
+
 from valet.tests.tempest.scenario.general_logger import GeneralLogger
 from valet.tests.tempest.scenario.scenario_base import ScenarioTestCase
 
 
 class TestNested(ScenarioTestCase):
+    """Test Nested Scenario Test Case."""
 
     def test_nested(self):
+        """Log test_nested and call run test from base."""
         logger = GeneralLogger("test_nested")
         self.run_test(logger, "affinity_diversity",
                       "/templates/diversity_between_2_affinity.yml")

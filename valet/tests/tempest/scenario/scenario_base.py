@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Scenario Base."""
+
 import os
 from tempest import config
 from tempest import exceptions
@@ -28,10 +30,13 @@ CONF = config.CONF
 
 
 class ScenarioTestCase(test.BaseTestCase):
+    """Base class for Scenario Test cases."""
+
     credentials = ['primary']
 
     @classmethod
     def skip_checks(cls):
+        """Skip checks, if valet service not available, raise exception."""
         super(ScenarioTestCase, cls).skip_checks()
         if not CONF.service_available.valet:
             skip_msg = ("%s skipped as valet is not available" % cls.__name__)
@@ -39,15 +44,18 @@ class ScenarioTestCase(test.BaseTestCase):
 
     @classmethod
     def resource_setup(cls):
+        """Setup resource, set catalog_type."""
         super(ScenarioTestCase, cls).resource_setup()
         cls.catalog_type = CONF.placement.catalog_type
 
     @classmethod
     def resource_cleanup(cls):
+        """Class method resource cleanup."""
         super(ScenarioTestCase, cls).resource_cleanup()
 
     @classmethod
     def setup_clients(cls):
+        """Setup clients (valet)."""
         super(ScenarioTestCase, cls).setup_clients()
         cls.heat_client = cls.os.orchestration_client
         cls.nova_client = cls.os.servers_client
@@ -62,7 +70,7 @@ class ScenarioTestCase(test.BaseTestCase):
         cls.tries = CONF.valet.TRIES_TO_CREATE
 
     def run_test(self, logger, stack_name, template_path):
-        """ scenario -
+        """Scenario.
 
         create new stack
         checks if host (or rack) is the same for all instances
@@ -86,6 +94,7 @@ class ScenarioTestCase(test.BaseTestCase):
         self.log.log_info(" ********** THE END ****************")
 
     def create_stack(self, stack_name, env_data, template_resources):
+        """Create stack with name/env/resource. Create all groups/instances."""
         try:
             groups = template_resources.groups
 
@@ -114,6 +123,7 @@ class ScenarioTestCase(test.BaseTestCase):
         return True
 
     def create_valet_group(self, group_name):
+        """Create valet group with name using valet client. Add members."""
         try:
             v_group = self.valet_client.create_group(name=group_name,
                                                      group_type='exclusivity',
@@ -129,6 +139,7 @@ class ScenarioTestCase(test.BaseTestCase):
                                traceback.format_exc())
 
     def get_env_file(self, template):
+        """Return file.read for env file or return None."""
         env_url = template.replace(".yml", ".env")
 
         if os.path.exists(env_url):
@@ -142,15 +153,18 @@ class ScenarioTestCase(test.BaseTestCase):
         self.valet_client.delete_group(group_id)
 
     def delete_stack(self):
+        """Use heat client to delete stack."""
         self.heat_client.delete_stack(self.stack_identifier)
         self.heat_client.wait_for_stack_status(
             self.stack_identifier, "DELETE_COMPLETE",
             failure_pattern='^.*DELETE_FAILED$')
 
     def show_stack(self, stack_id):
+        """Return show stack with given id from heat client."""
         return self.heat_client.show_stack(stack_id)
 
     def wait_for_stack(self, stack_name, env_data, template_resources):
+        """Use heat client to create stack, then wait for status."""
         try:
             self.log.log_info("Trying to create stack")
             new_stack = self.heat_client.create_stack(

@@ -1,17 +1,19 @@
 #
 # Copyright 2014-2017 AT&T Intellectual Property
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #     http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+"""Test Valet Filter."""
 
 from keystoneclient.v2_0 import client
 import mock
@@ -21,13 +23,18 @@ from valet_plugins.tests.base import Base
 
 
 class TestResources(object):
+    """Test Resources."""
+
     def __init__(self, host_name):
+        """Initialize."""
         self.host = host_name
 
 
 class TestValetFilter(Base):
+    """Test Valet Filter Base."""
 
     def setUp(self):
+        """Setup by mocking client and init valet filter."""
         super(TestValetFilter, self).setUp()
 
         client.Client = mock.MagicMock()
@@ -36,6 +43,7 @@ class TestValetFilter(Base):
     @mock.patch.object(valet_api.ValetAPIWrapper, '_register_opts')
     @mock.patch.object(ValetFilter, '_register_opts')
     def init_ValetFilter(self, mock_opt, mock_init):
+        """Called by setup, mock init and opt and return ValetFilter()."""
         mock_init.return_value = None
         mock_opt.return_value = None
         return ValetFilter()
@@ -43,6 +51,7 @@ class TestValetFilter(Base):
     @mock.patch.object(valet_api.ValetAPIWrapper, 'plans_create')
     @mock.patch.object(valet_api.ValetAPIWrapper, 'placement')
     def test_filter_all(self, mock_placement, mock_create):
+        """Test Filter All by validating resource host values."""
         mock_placement.return_value = None
         mock_create.return_value = None
 
@@ -56,7 +65,7 @@ class TestValetFilter(Base):
                      self.valet_filter.opt_auth_uri_str: "test_admin_auth_url"})
 
             filter_properties = {'request_spec': {'instance_properties':
-                                                      {'uuid': ""}},
+                                                  {'uuid': ""}},
                                  'scheduler_hints':
                                      {'heat_resource_uuid': "123456"},
                                  'instance_type': {'name': "instance_name"}}
@@ -70,7 +79,7 @@ class TestValetFilter(Base):
                 self.validate_test(mock_placement.called)
 
             filter_properties = {'request_spec': {'instance_properties':
-                                                      {'uuid': ""}},
+                                                  {'uuid': ""}},
                                  'scheduler_hints': "scheduler_hints",
                                  'instance_type': {'name': "instance_name"}}
 

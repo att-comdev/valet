@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" Valet Nova Scheduler Filter """
+"""Valet Nova Scheduler Filter."""
 
 from keystoneclient.v2_0 import client
 
@@ -31,7 +31,7 @@ LOG = logging.getLogger(__name__)
 
 
 class ValetFilter(filters.BaseHostFilter):
-    """ Filter on Valet assignment. """
+    """Filter on Valet assignment."""
 
     # Host state does not change within a request
     run_filter_once_per_request = True
@@ -40,7 +40,7 @@ class ValetFilter(filters.BaseHostFilter):
     _auth_token = None
 
     def __init__(self):
-        """ Initializer """
+        """Initializer."""
         self.api = valet_api.ValetAPIWrapper()
         self.opt_group_str = 'valet'
         self.opt_failure_mode_str = 'failure_mode'
@@ -51,7 +51,7 @@ class ValetFilter(filters.BaseHostFilter):
         self._register_opts()
 
     def _authorize(self):
-        """ Keystone AuthN """
+        """Keystone AuthN."""
         opt = getattr(cfg.CONF, self.opt_group_str)
         project_name = opt[self.opt_project_name_str]
         username = opt[self.opt_username_str]
@@ -68,11 +68,11 @@ class ValetFilter(filters.BaseHostFilter):
         self._auth_token = keystone_client.auth_token
 
     def _is_same_host(self, host, location):  # pylint: disable=R0201
-        """ Returns true if host matches location """
+        """Return true if host matches location."""
         return host == location
 
     def _register_opts(self):
-        """ Register Options """
+        """Register Options."""
         opts = []
         option = cfg.StrOpt(
             self.opt_failure_mode_str,
@@ -97,10 +97,9 @@ class ValetFilter(filters.BaseHostFilter):
         cfg.CONF.register_group(opt_group)
         cfg.CONF.register_opts(opts, group=opt_group)
 
-    # TODO: Factor out common code between this and the cinder filter
+    # TODO(UNKNOWN): Factor out common code between this and the cinder filter
     def filter_all(self, filter_obj_list, filter_properties):
-        """ Filter all hosts in one swell foop """
-
+        """Filter all hosts in one swell foop."""
         hints_key = 'scheduler_hints'
         orch_id_key = 'heat_resource_uuid'
 
@@ -161,7 +160,7 @@ class ValetFilter(filters.BaseHostFilter):
                 response = self.api.plans_create(None, plan,
                                                  auth_token=self._auth_token)
             except Exception:
-                # TODO: Get context from exception
+                # TODO(UNKNOWN): Get context from exception
                 LOG.error(_LE("Valet did not respond to ad hoc placement "
                               "request."))
                 response = None
@@ -203,7 +202,7 @@ class ValetFilter(filters.BaseHostFilter):
                     location = placement['location']
 
             if not location:
-                # TODO: Get context from exception
+                # TODO(UNKNOWN): Get context from exception
                 LOG.error(_LE("Valet placement unknown for resource id {0},"
                               "orchestration id {1}.").format(res_id, orch_id))
                 if failure_mode == 'yield':
@@ -234,6 +233,6 @@ class ValetFilter(filters.BaseHostFilter):
 
     def host_passes(self, host_state,   # pylint: disable=W0613,R0201
                     filter_properties):
-        """Individual host pass check"""
+        """Individual host pass check."""
         # Intentionally let filter_all() handle in one swell foop.
         return False

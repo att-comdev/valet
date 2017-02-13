@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" Valet API Wrapper """
+"""Valet API Wrapper."""
 
 from heat.common.i18n import _
 import json
@@ -29,7 +29,7 @@ LOG = logging.getLogger(__name__)
 
 
 def _exception(exc, exc_info, req):
-    """ Handle an exception """
+    """Handle an exception."""
     response = None
     try:
         response = json.loads(req.text)
@@ -49,24 +49,25 @@ def _exception(exc, exc_info, req):
         # TODO(JD): Re-evaluate if this clause is necessary.
         exc_class, exc, traceback = exc_info  # pylint: disable=W0612
         msg = _("%(exc)s for %(method)s %(url)s with body %(body)s") %\
-              {'exc': exc, 'method': exc.request.method, 'url': exc.request.url,
-               'body': exc.request.body}
+            {'exc': exc, 'method': exc.request.method, 'url': exc.request.url,
+                'body': exc.request.body}
         my_exc = ValetAPIError(msg)
         # traceback can be added to the end of the raise
         raise my_exc.__class__, my_exc
 
 
-# TODO: Improve exception reporting back up to heat
+# TODO(UNKNOWN): Improve exception reporting back up to heat
 class ValetAPIError(Exception):
-    """ Valet API Error """
+    """Valet API Error."""
+
     pass
 
 
 class ValetAPIWrapper(object):
-    """ Valet API Wrapper """
+    """Valet API Wrapper."""
 
     def __init__(self):
-        """ Initializer """
+        """Initializer."""
         self.headers = {'Content-Type': 'application/json'}
         self.opt_group_str = 'valet'
         self.opt_name_str = 'url'
@@ -75,7 +76,7 @@ class ValetAPIWrapper(object):
         self._register_opts()
 
     def _api_endpoint(self):
-        """ Returns API endpoint """
+        """Return API endpoint."""
         try:
             opt = getattr(cfg.CONF, self.opt_group_str)
             endpoint = opt[self.opt_name_str]
@@ -88,8 +89,10 @@ class ValetAPIWrapper(object):
             raise  # exception.Error(_('API Endpoint not defined.'))
 
     def _get_timeout(self):
-        """ Returns Valet plugin API request timeout
-        tuple (conn_timeout, read_timeout)
+        """Get timeout.
+
+        Return Valet plugin API request timeout
+        tuple (conn_timeout, read_timeout).
         """
         conn_timeout = 3
         read_timeout = 5
@@ -102,7 +105,7 @@ class ValetAPIWrapper(object):
         return conn_timeout, read_timeout
 
     def _register_opts(self):
-        """ Register options """
+        """Register options."""
         opts = []
         option = cfg.StrOpt(self.opt_name_str, default=None,
                             help=_('Valet API endpoint'))
@@ -118,9 +121,9 @@ class ValetAPIWrapper(object):
         cfg.CONF.register_group(opt_group)
         cfg.CONF.register_opts(opts, group=opt_group)
 
-    # TODO: Keep stack param for now. We may need it again.
+    # TODO(UNKOWN): Keep stack param for now. We may need it again.
     def plans_create(self, stack, plan, auth_token=None):  # pylint: disable=W0613
-        """ Create a plan """
+        """Create a plan."""
         response = None
         try:
             timeout = self._get_timeout()
@@ -140,9 +143,9 @@ class ValetAPIWrapper(object):
             LOG.error("Exception (at plans_create) is: %s" % e)
         return response
 
-    # TODO: Keep stack param for now. We may need it again.
+    # TODO(UNKNOWN): Keep stack param for now. We may need it again.
     def plans_delete(self, stack, auth_token=None):  # pylint: disable=W0613
-        """ Delete a plan """
+        """Delete a plan."""
         try:
             timeout = self._get_timeout()
             url = self._api_endpoint() + '/plans/' + stack.id
@@ -158,7 +161,7 @@ class ValetAPIWrapper(object):
         # Delete does not return a response body.
 
     def placement(self, orch_id, res_id, hosts=None, auth_token=None):
-        """ Reserve previously made placement. """
+        """Reserve previously made placement."""
         try:
             timeout = self._get_timeout()
             url = self._api_endpoint() + '/placements/' + orch_id
@@ -174,7 +177,7 @@ class ValetAPIWrapper(object):
             else:
                 req = requests.get(url, headers=self.headers, timeout=timeout)
 
-            # TODO: Raise an exception IFF the scheduler can handle it
+            # TODO(UNKNOWN): Raise an exception IFF the scheduler can handle it
 
             response = json.loads(req.text)
         except Exception:  # pylint: disable=W0702

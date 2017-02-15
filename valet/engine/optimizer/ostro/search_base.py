@@ -1,25 +1,29 @@
 #
 # Copyright 2014-2017 AT&T Intellectual Property
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #     http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Resources utlized by search engine."""
+
 from valet.engine.optimizer.app_manager.app_topology_base \
     import VGroup, VM, Volume, LEVELS
 
 
 class Resource(object):
+    """Resource."""
 
     def __init__(self):
+        """Initialization."""
         # level of placement
         self.level = None
 
@@ -99,6 +103,9 @@ class Resource(object):
         self.sort_base = 0
 
     def get_common_placement(self, _resource):
+        """Get common placement level."""
+        """Get the common level between this resource and the one
+        provided."""
         level = None
 
         if self.cluster_name != _resource.cluster_name:
@@ -115,6 +122,7 @@ class Resource(object):
         return level
 
     def get_resource_name(self, _level):
+        """Get the name of this resource at the specified level."""
         name = "unknown"
 
         if _level == "cluster":
@@ -127,6 +135,7 @@ class Resource(object):
         return name
 
     def get_memberships(self, _level):
+        """Get the memberships of this resource at the specified level."""
         memberships = None
 
         if _level == "cluster":
@@ -139,6 +148,7 @@ class Resource(object):
         return memberships
 
     def get_num_of_placed_vms(self, _level):
+        """Get the number of placed vms of this resource at the specified level."""
         num_of_vms = 0
 
         if _level == "cluster":
@@ -151,6 +161,7 @@ class Resource(object):
         return num_of_vms
 
     def get_avail_resources(self, _level):
+        """Get the available vCPUs, memory, local disk of this resource at the specified level."""
         avail_vCPUs = 0
         avail_mem = 0
         avail_local_disk = 0
@@ -171,6 +182,7 @@ class Resource(object):
         return (avail_vCPUs, avail_mem, avail_local_disk)
 
     def get_local_disk(self, _level):
+        """Get the local disk and available local disk of this resource at the specified level."""
         local_disk = 0
         avail_local_disk = 0
 
@@ -187,6 +199,7 @@ class Resource(object):
         return (local_disk, avail_local_disk)
 
     def get_vCPUs(self, _level):
+        """Get the vCPUs and available vCPUs of this resource at the specified level."""
         vCPUs = 0
         avail_vCPUs = 0
 
@@ -203,6 +216,7 @@ class Resource(object):
         return (vCPUs, avail_vCPUs)
 
     def get_mem(self, _level):
+        """Get the memory and available memory of this resource at the specified level."""
         mem = 0
         avail_mem = 0
 
@@ -219,6 +233,7 @@ class Resource(object):
         return (mem, avail_mem)
 
     def get_avail_storages(self, _level):
+        """Get the available storages of this resource at the specified level."""
         avail_storages = None
 
         if _level == "cluster":
@@ -231,6 +246,7 @@ class Resource(object):
         return avail_storages
 
     def get_avail_switches(self, _level):
+        """Get the available switches of this resource at the specified level."""
         avail_switches = None
 
         if _level == "cluster":
@@ -244,8 +260,10 @@ class Resource(object):
 
 
 class LogicalGroupResource(object):
+    """LogicalGroupResource."""
 
     def __init__(self):
+        """Initialization."""
         self.name = None
         self.group_type = "AGGR"
 
@@ -256,9 +274,12 @@ class LogicalGroupResource(object):
         # key = host (i.e., id of host or rack), value = num_of_placed_vms
         self.num_of_placed_vms_per_host = {}
 
+
 class StorageResource(object):
+    """StorageResource."""
 
     def __init__(self):
+        """Initialization."""
         self.storage_name = None
         self.storage_class = None
         self.storage_avail_disk = 0
@@ -267,8 +288,10 @@ class StorageResource(object):
 
 
 class SwitchResource(object):
+    """SwitchResource."""
 
     def __init__(self):
+        """Initialization."""
         self.switch_name = None
         self.switch_type = None
         self.avail_bandwidths = []          # out-bound bandwidths
@@ -277,13 +300,16 @@ class SwitchResource(object):
 
 
 class Node(object):
+    """Node."""
 
     def __init__(self):
+        """Initialization."""
         self.node = None                    # VM, Volume, or VGroup
 
         self.sort_base = -1
 
     def get_all_links(self):
+        """Return a list of links for vms, volumes, and/or vgroups."""
         link_list = []
 
         if isinstance(self.node, VM):
@@ -301,6 +327,7 @@ class Node(object):
         return link_list
 
     def get_bandwidth_of_link(self, _link):
+        """Return bandwidth of link."""
         bandwidth = 0
 
         if isinstance(self.node, VGroup) or isinstance(self.node, VM):
@@ -314,6 +341,7 @@ class Node(object):
         return bandwidth
 
     def get_common_diversity(self, _diversity_groups):
+        """Return the common level of the given diversity groups."""
         common_level = "ANY"
 
         for dk in self.node.diversity_groups.keys():
@@ -328,17 +356,19 @@ class Node(object):
         return common_level
 
     def get_affinity_id(self):
+        """Return the affinity id."""
         aff_id = None
 
         if isinstance(self.node, VGroup) and \
-                        self.node.vgroup_type == "AFF" and \
-                        self.node.name != "any":
+                self.node.vgroup_type == "AFF" and \
+                self.node.name != "any":
             aff_id = self.node.level + ":" + self.node.name
 
         return aff_id
 
 
 def compute_reservation(_level, _placement_level, _bandwidth):
+    """Compute and return the reservation."""
     reservation = 0
 
     if _placement_level != "ANY":

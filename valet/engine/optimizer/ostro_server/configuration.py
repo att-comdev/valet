@@ -1,12 +1,12 @@
 #
 # Copyright 2014-2017 AT&T Intellectual Property
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #     http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -14,6 +14,8 @@
 # limitations under the License.
 
 # - Set all configurations to run Ostro
+
+"""Valet Engine Server Configuration."""
 
 import os
 from oslo_config import cfg
@@ -24,9 +26,10 @@ CONF = cfg.CONF
 
 
 class Config(object):
+    """Valet Engine Server Configuration."""
 
     def __init__(self, *default_config_files):
-
+        """Initialization."""
         register_conf()
         if default_config_files:
             CONF(default_config_files=default_config_files)
@@ -126,7 +129,7 @@ class Config(object):
         self.base_flavor_disk = 0
 
     def configure(self):
-
+        """Store config info extracted from oslo."""
         status = self._init_system()
         if status != "success":
             return status

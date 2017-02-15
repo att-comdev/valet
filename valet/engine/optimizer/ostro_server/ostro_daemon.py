@@ -1,17 +1,19 @@
 #
 # Copyright 2014-2017 AT&T Intellectual Property
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #     http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+"""Daemon foe Valet Engine."""
 
 import os
 import sys
@@ -23,9 +25,10 @@ from valet.engine.optimizer.util.util import init_logger
 
 
 class OstroDaemon(Daemon):
+    """Daemon foe Valet Engine."""
 
     def run(self):
-
+        """Run the daemon."""
         self.logger.info("##### Valet Engine is launched #####")
         try:
             ostro = Ostro(config, self.logger)
@@ -40,6 +43,7 @@ class OstroDaemon(Daemon):
 
 
 def verify_dirs(list_of_dirs):
+    """If a directory in the list does not exist, create it."""
     for d in list_of_dirs:
         try:
             if not os.path.exists(d):

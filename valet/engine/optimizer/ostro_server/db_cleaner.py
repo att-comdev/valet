@@ -1,12 +1,12 @@
 #
 # Copyright 2014-2017 AT&T Intellectual Property
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #     http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,19 +15,27 @@
 
 # - Handle user requests
 
-import sys
+"""Database Cleaner."""
+
 from configuration import Config
+import sys
 from valet.api.db.models.music import Music
 
 
 class DBCleaner(object):
+    """Database Cleaner."""
 
     def __init__(self, _config):
+        """Initialization."""
         self.config = _config
 
         self.music = Music()
 
     def clean_db_tables(self):
+        """Clean tables in Music."""
+        """Clean resource, resource_index, request, response, event,
+        app, app_index, and uuid tables.
+        """
         results = self.music.read_all_rows(self.config.db_keyspace,
                                            self.config.db_resource_table)
         if len(results) > 0:
@@ -102,6 +110,10 @@ class DBCleaner(object):
                                                  'uuid', row['uuid'])
 
     def check_db_tables(self):
+        """Log whether tables in Music have been cleaned."""
+        """Check resource, resource_index, request, response, event,
+        app, app_index, and uuid tables.
+        """
         results = self.music.read_all_rows(self.config.db_keyspace,
                                            self.config.db_resource_table)
         if len(results) > 0:

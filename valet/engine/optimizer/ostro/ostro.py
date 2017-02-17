@@ -1,17 +1,19 @@
 #
 # Copyright 2014-2017 AT&T Intellectual Property
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #     http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+"""Valet Engine."""
 
 from oslo_config import cfg
 import threading
@@ -30,8 +32,10 @@ CONF = cfg.CONF
 
 
 class Ostro(object):
+    """Valet Engine."""
 
     def __init__(self, _config, _logger):
+        """Initialization."""
         self.config = _config
         self.logger = _logger
 
@@ -71,6 +75,10 @@ class Ostro(object):
         self.end_of_process = False
 
     def run_ostro(self):
+        """Start main engine process."""
+        """Start topology, compute, and listener processes. Start process of
+        retrieving and handling events and requests from the db every 1 second.
+        """
         self.logger.info("Ostro.run_ostro: start Ostro ......")
 
         self.topology.start()
@@ -107,6 +115,10 @@ class Ostro(object):
         self.logger.info("Ostro.run_ostro: exit Ostro")
 
     def stop_ostro(self):
+        """Stop main engine process."""
+        """Stop process of retrieving and handling events and requests from
+        the db. Stop topology and compute processes.
+        """
         self.end_of_process = True
 
         while len(self.thread_list) > 0:
@@ -116,6 +128,7 @@ class Ostro(object):
                     self.thread_list.remove(t)
 
     def bootstrap(self):
+        """Start bootstrap and update the engine's resource topology."""
         self.logger.info("Ostro.bootstrap: start bootstrap")
 
         try:
@@ -180,6 +193,7 @@ class Ostro(object):
         return True
 
     def place_app(self, _app_data):
+        """Place results of query and placement requests in the db."""
         self.data_lock.acquire()
 
         start_time = time.time()
@@ -274,7 +288,7 @@ class Ostro(object):
         vm_id_list = []
         for lgk, lg in self.resource.logical_groups.iteritems():
             if lg.group_type == "EX" or lg.group_type == "AFF" or \
-                            lg.group_type == "DIV":
+                    lg.group_type == "DIV":
                 lg_id = lgk.split(":")
                 if lg_id[1] == _group_name:
                     vm_id_list = lg.vm_list
@@ -295,7 +309,7 @@ class Ostro(object):
         return logical_groups
 
     def _place_app(self, _app_data):
-        """ set application topology """
+        """Set application topology."""
         app_topology = self.app_handler.add_app(_app_data)
         if app_topology is None:
             self.status = self.app_handler.status
@@ -303,7 +317,7 @@ class Ostro(object):
                               "requested apps: " + self.status)
             return None
 
-        """ check and set vm flavor information """
+        """Check and set vm flavor information."""
         for _, vm in app_topology.vms.iteritems():
             if self._set_vm_flavor_information(vm) is False:
                 self.status = "fail to set flavor information"
@@ -315,11 +329,11 @@ class Ostro(object):
                 self.logger.error("Ostro._place_app: " + self.status)
                 return None
 
-        """ set weights for optimization """
+        """Set weights for optimization."""
         app_topology.set_weight()
         app_topology.set_optimization_priority()
 
-        """ perform search for optimal placement of app topology  """
+        """Perform search for optimal placement of app topology."""
         placement_map = self.optimizer.place(app_topology)
         if placement_map is None:
             self.status = self.optimizer.status
@@ -327,13 +341,13 @@ class Ostro(object):
                               "placement: " + self.status)
             return None
 
-        """ update resource and app information """
+        """Update resource and app information."""
         if len(placement_map) > 0:
             self.resource.update_topology()
             self.app_handler.add_placement(placement_map,
                                            self.resource.current_timestamp)
             if len(app_topology.exclusion_list_map) > 0 and \
-                            len(app_topology.planned_vm_map) > 0:
+                    len(app_topology.planned_vm_map) > 0:
                 for vk in app_topology.planned_vm_map.keys():
                     if vk in placement_map.keys():
                         del placement_map[vk]
@@ -356,7 +370,7 @@ class Ostro(object):
             self.logger.warn("Ostro._set_vm_flavor_properties: does not exist "
                              "flavor (" + _vm.flavor + ") and try to refetch")
 
-            """ reset flavor resource and try again """
+            """Reset flavor resource and try again."""
             if self._set_flavors() is False:
                 return False
             self.resource.update_topology()
@@ -377,6 +391,10 @@ class Ostro(object):
         return True
 
     def handle_events(self, _event_list):
+        """Handle events in the event list."""
+        """Update the engine's resource topology based on the properties of
+        each event in the event list.
+        """
         self.data_lock.acquire()
 
         resource_updated = False
@@ -425,7 +443,7 @@ class Ostro(object):
                                                  e.vcpus, e.mem, e.local_disk)
                         else:
                             if "planned_host" in vm_info.keys() and \
-                                            vm_info["planned_host"] != e.host:
+                                    vm_info["planned_host"] != e.host:
                                 """
                                 vm is activated in the different host
                                 """

@@ -15,19 +15,30 @@
 
 # - Handle user requests
 
+<<<<<<< HEAD
+=======
+"""Database Cleaner."""
+
+>>>>>>> c12ce63b0d04c2b664b8f00a8702388fd0c7fad8
 from configuration import Config
 import sys
 from valet.api.db.models.music import Music
 
 
 class DBCleaner(object):
+    """Database Cleaner."""
 
     def __init__(self, _config):
+        """Initialization."""
         self.config = _config
 
         self.music = Music()
 
     def clean_db_tables(self):
+        """Clean tables in Music."""
+        """Clean resource, resource_index, request, response, event,
+        app, app_index, and uuid tables.
+        """
         results = self.music.read_all_rows(self.config.db_keyspace,
                                            self.config.db_resource_table)
         if len(results) > 0:
@@ -102,6 +113,10 @@ class DBCleaner(object):
                                                  'uuid', row['uuid'])
 
     def check_db_tables(self):
+        """Log whether tables in Music have been cleaned."""
+        """Check resource, resource_index, request, response, event,
+        app, app_index, and uuid tables.
+        """
         results = self.music.read_all_rows(self.config.db_keyspace,
                                            self.config.db_resource_table)
         if len(results) > 0:

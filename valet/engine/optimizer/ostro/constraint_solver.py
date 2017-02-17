@@ -1,17 +1,19 @@
 #
 # Copyright 2014-2017 AT&T Intellectual Property
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #     http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+"""ConstraintSolver."""
 
 from valet.engine.optimizer.app_manager.app_topology_base \
     import VGroup, VM, LEVELS
@@ -25,8 +27,11 @@ from valet.engine.optimizer.ostro.openstack_filters import RamFilter
 
 
 class ConstraintSolver(object):
+    """ConstraintSolver."""
 
     def __init__(self, _logger):
+        """Initialization."""
+        """Instantiate filters to help enforce constraints."""
         self.logger = _logger
 
         self.openstack_AZ = AvailabilityZoneFilter(self.logger)
@@ -39,9 +44,10 @@ class ConstraintSolver(object):
 
     def compute_candidate_list(self, _level, _n, _node_placements,
                                _avail_resources, _avail_logical_groups):
+        """Compute candidate list for the given VGroup or VM."""
         candidate_list = []
 
-        """ when replanning """
+        """When replanning."""
         if _n.node.host is not None and len(_n.node.host) > 0:
             self.logger.debug("ConstraintSolver: reconsider with given "
                               "candidates")
@@ -60,7 +66,7 @@ class ConstraintSolver(object):
             self.logger.debug("ConstraintSolver: num of candidates = " +
                               str(len(candidate_list)))
 
-        """ availability zone constraint """
+        """Availability zone constraint."""
         if isinstance(_n.node, VGroup) or isinstance(_n.node, VM):
             if (isinstance(_n.node, VM) and _n.node.availability_zone
                 is not None) or (isinstance(_n.node, VGroup) and
@@ -75,7 +81,7 @@ class ConstraintSolver(object):
                     self.logger.debug("ConstraintSolver: done availability_"
                                       "zone constraint")
 
-        """ host aggregate constraint """
+        """Host aggregate constraint."""
         if isinstance(_n.node, VGroup) or isinstance(_n.node, VM):
             if len(_n.node.extra_specs_list) > 0:
                 self._constrain_host_aggregates(_level, _n, candidate_list)
@@ -88,7 +94,7 @@ class ConstraintSolver(object):
                     self.logger.debug("ConstraintSolver: done host_aggregate "
                                       "constraint")
 
-        """ cpu capacity constraint """
+        """CPU capacity constraint."""
         if isinstance(_n.node, VGroup) or isinstance(_n.node, VM):
             self._constrain_cpu_capacity(_level, _n, candidate_list)
             if len(candidate_list) == 0:
@@ -100,7 +106,7 @@ class ConstraintSolver(object):
                 self.logger.debug("ConstraintSolver: done cpu capacity "
                                   "constraint")
 
-        """ memory capacity constraint """
+        """Memory capacity constraint."""
         if isinstance(_n.node, VGroup) or isinstance(_n.node, VM):
             self._constrain_mem_capacity(_level, _n, candidate_list)
             if len(candidate_list) == 0:
@@ -112,7 +118,7 @@ class ConstraintSolver(object):
                 self.logger.debug("ConstraintSolver: done memory capacity "
                                   "constraint")
 
-        """ local disk capacity constraint """
+        """Local disk capacity constraint."""
         if isinstance(_n.node, VGroup) or isinstance(_n.node, VM):
             self._constrain_local_disk_capacity(_level, _n, candidate_list)
             if len(candidate_list) == 0:
@@ -124,7 +130,7 @@ class ConstraintSolver(object):
                 self.logger.debug("ConstraintSolver: done local disk capacity "
                                   "constraint")
 
-        """ network bandwidth constraint """
+        """Network bandwidth constraint."""
         self._constrain_nw_bandwidth_capacity(_level, _n, _node_placements,
                                               candidate_list)
         if len(candidate_list) == 0:
@@ -136,7 +142,7 @@ class ConstraintSolver(object):
             self.logger.debug("ConstraintSolver: done bandwidth capacity "
                               "constraint")
 
-        """ diversity constraint """
+        """Diversity constraint."""
         if len(_n.node.diversity_groups) > 0:
             for _, diversity_id in _n.node.diversity_groups.iteritems():
                 if diversity_id.split(":")[0] == _level:
@@ -163,7 +169,7 @@ class ConstraintSolver(object):
                     self.logger.debug("ConstraintSolver: done diversity_group "
                                       "constraint")
 
-        """ exclusivity constraint """
+        """Exclusivity constraint."""
         exclusivities = self.get_exclusivities(_n.node.exclusivity_groups,
                                                _level)
         if len(exclusivities) > 1:
@@ -196,7 +202,7 @@ class ConstraintSolver(object):
                     self.logger.debug("ConstraintSolver: done non-exclusivity_"
                                       "group constraint")
 
-        """ affinity constraint """
+        """Affinity constraint."""
         affinity_id = _n.get_affinity_id()  # level:name, except name == "any"
         if affinity_id is not None:
             if affinity_id.split(":")[0] == _level:
@@ -215,7 +221,7 @@ class ConstraintSolver(object):
         return candidate_list
 
     """
-    constraint modules
+    Constraint modules.
     """
 
     def _constrain_affinity(self, _level, _affinity_id, _candidate_list):
@@ -250,6 +256,10 @@ class ConstraintSolver(object):
                               if c not in conflict_list]
 
     def exist_group(self, _level, _id, _group_type, _candidate):
+        """Check if group esists."""
+        """Return True if there exists a group within the candidate's
+         membership list that matches the provided id and group type.
+        """
         match = False
 
         memberships = _candidate.get_memberships(_level)
@@ -278,20 +288,21 @@ class ConstraintSolver(object):
                               if c not in conflict_list]
 
     def conflict_diversity(self, _level, _n, _node_placements, _candidate):
+        """Return True if the candidate has a placement conflict."""
         conflict = False
 
         for v in _node_placements.keys():
             diversity_level = _n.get_common_diversity(v.diversity_groups)
             if diversity_level != "ANY" and \
-                            LEVELS.index(diversity_level) >= \
-                            LEVELS.index(_level):
+                    LEVELS.index(diversity_level) >= \
+                    LEVELS.index(_level):
                 if diversity_level == "host":
                     if _candidate.cluster_name == \
                             _node_placements[v].cluster_name and \
                        _candidate.rack_name == \
-                                    _node_placements[v].rack_name and  \
+                            _node_placements[v].rack_name and  \
                        _candidate.host_name == \
-                                    _node_placements[v].host_name:
+                            _node_placements[v].host_name:
                         conflict = True
                         break
                 elif diversity_level == "rack":
@@ -324,17 +335,24 @@ class ConstraintSolver(object):
                               if c not in conflict_list]
 
     def conflict_exclusivity(self, _level, _candidate):
+        """Check for an exculsivity conflict."""
+        """Check if the candidate contains an exclusivity group within its
+        list of memberships."""
         conflict = False
 
         memberships = _candidate.get_memberships(_level)
         for mk in memberships.keys():
             if memberships[mk].group_type == "EX" and \
-                            mk.split(":")[0] == _level:
+                    mk.split(":")[0] == _level:
                 conflict = True
 
         return conflict
 
     def get_exclusivities(self, _exclusivity_groups, _level):
+        """Return a list of filtered exclusivities."""
+        """Extract and return only those exclusivities that exist at the
+        specified level.
+        """
         exclusivities = {}
 
         for exk, level in _exclusivity_groups.iteritems():
@@ -386,6 +404,10 @@ class ConstraintSolver(object):
         return candidate_list
 
     def check_hibernated(self, _level, _candidate):
+        """Check if the candidate is hibernated."""
+        """Return True if the candidate has no placed VMs at the specified
+        level.
+        """
         match = False
 
         num_of_placed_vms = _candidate.get_num_of_placed_vms(_level)
@@ -410,6 +432,7 @@ class ConstraintSolver(object):
                               if c not in conflict_list]
 
     def check_host_aggregates(self, _level, _candidate, _v):
+        """Check if the candidate passes the aggregate instance extra specs zone filter."""
         return self.openstack_AIES.host_passes(_level, _candidate, _v)
 
     def _constrain_availability_zone(self, _level, _n, _candidate_list):
@@ -428,6 +451,7 @@ class ConstraintSolver(object):
                               if c not in conflict_list]
 
     def check_availability_zone(self, _level, _candidate, _v):
+        """Check if the candidate passes the availability zone filter."""
         return self.openstack_AZ.host_passes(_level, _candidate, _v)
 
     def _constrain_cpu_capacity(self, _level, _n, _candidate_list):
@@ -445,6 +469,7 @@ class ConstraintSolver(object):
                               if c not in conflict_list]
 
     def check_cpu_capacity(self, _level, _v, _candidate):
+        """Check if the candidate passes the core filter."""
         return self.openstack_C.host_passes(_level, _candidate, _v)
 
     def _constrain_mem_capacity(self, _level, _n, _candidate_list):
@@ -462,6 +487,7 @@ class ConstraintSolver(object):
                               if c not in conflict_list]
 
     def check_mem_capacity(self, _level, _v, _candidate):
+        """Check if the candidate passes the RAM filter."""
         return self.openstack_R.host_passes(_level, _candidate, _v)
 
     def _constrain_local_disk_capacity(self, _level, _n, _candidate_list):
@@ -479,6 +505,7 @@ class ConstraintSolver(object):
                               if c not in conflict_list]
 
     def check_local_disk_capacity(self, _level, _v, _candidate):
+        """Check if the candidate passes the disk filter."""
         return self.openstack_D.host_passes(_level, _candidate, _v)
 
     def _constrain_storage_capacity(self, _level, _n, _candidate_list):
@@ -513,6 +540,7 @@ class ConstraintSolver(object):
                               if c not in conflict_list]
 
     def check_storage_availability(self, _level, _v, _ch):
+        """Return True if there is sufficient storage availability."""
         available = False
 
         volume_sizes = []
@@ -542,7 +570,7 @@ class ConstraintSolver(object):
 
         for cr in _candidate_list:
             if self.check_nw_bandwidth_availability(
-                    _level, _n,_node_placements, cr) is False:
+                    _level, _n, _node_placements, cr) is False:
                 if cr not in conflict_list:
                     conflict_list.append(cr)
 
@@ -555,6 +583,7 @@ class ConstraintSolver(object):
 
     def check_nw_bandwidth_availability(self, _level, _n, _node_placements,
                                         _cr):
+        """Return True if there is sufficient network availability."""
         # NOTE: 3rd entry for special node requiring bandwidth of out-going
         # from spine switch
         total_req_bandwidths = [0, 0, 0]
@@ -588,6 +617,7 @@ class ConstraintSolver(object):
     # to find any implicit diversity relation caused by the other links of _v
     # (i.e., intersection between _v and _target_v)
     def get_implicit_diversity(self, _v, _link_list, _target_v, _level):
+        """Get the maximum implicit diversity between _v and _target_v."""
         max_implicit_diversity = (None, 0)
 
         for vl in _link_list:
@@ -605,6 +635,7 @@ class ConstraintSolver(object):
 
     def get_req_bandwidths(self, _level, _placement_level, _bandwidth,
                            _total_req_bandwidths):
+        """Calculate and update total required bandwidths."""
         if _level == "cluster" or _level == "rack":
             if _placement_level == "cluster" or _placement_level == "rack":
                 _total_req_bandwidths[1] += _bandwidth

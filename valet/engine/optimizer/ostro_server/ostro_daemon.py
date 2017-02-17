@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Daemon foe Valet Engine."""
+
 import os
 import sys
 import traceback
@@ -23,9 +25,10 @@ from valet.engine.optimizer.util.util import init_logger
 
 
 class OstroDaemon(Daemon):
+    """Daemon foe Valet Engine."""
 
     def run(self):
-
+        """Run the daemon."""
         self.logger.info("##### Valet Engine is launched #####")
         try:
             ostro = Ostro(config, self.logger)
@@ -40,6 +43,7 @@ class OstroDaemon(Daemon):
 
 
 def verify_dirs(list_of_dirs):
+    """If a directory in the list does not exist, create it."""
     for d in list_of_dirs:
         try:
             if not os.path.exists(d):

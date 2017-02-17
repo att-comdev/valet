@@ -1,17 +1,19 @@
 #
 # Copyright 2014-2017 AT&T Intellectual Property
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #     http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+"""Optimizer."""
 
 import time
 
@@ -21,8 +23,10 @@ from valet.engine.optimizer.ostro.search import Search
 
 
 class Optimizer(object):
+    """Optimizer."""
 
     def __init__(self, _resource, _logger):
+        """Initialization."""
         self.resource = _resource
         self.logger = _logger
 
@@ -31,6 +35,8 @@ class Optimizer(object):
         self.status = "success"
 
     def place(self, _app_topology):
+        """Perform a replan, migration, or create operation."""
+        """Return a placement map for VMs, Volumes, and VGroups."""
         success = False
 
         uuid_map = None
@@ -174,7 +180,7 @@ class Optimizer(object):
     def _update_logical_grouping(self, _v, _avail_host, _uuid):
         for lgk, lg in _avail_host.host_memberships.iteritems():
             if lg.group_type == "EX" or lg.group_type == "AFF" or \
-                            lg.group_type == "DIV":
+                    lg.group_type == "DIV":
                 lg_name = lgk.split(":")
                 if lg_name[0] == "host" and lg_name[1] != "any":
                     self.resource.add_logical_group(_avail_host.host_name,
@@ -183,7 +189,7 @@ class Optimizer(object):
         if _avail_host.rack_name != "any":
             for lgk, lg in _avail_host.rack_memberships.iteritems():
                 if lg.group_type == "EX" or lg.group_type == "AFF" or \
-                                lg.group_type == "DIV":
+                        lg.group_type == "DIV":
                     lg_name = lgk.split(":")
                     if lg_name[0] == "rack" and lg_name[1] != "any":
                         self.resource.add_logical_group(_avail_host.rack_name,
@@ -192,7 +198,7 @@ class Optimizer(object):
         if _avail_host.cluster_name != "any":
             for lgk, lg in _avail_host.cluster_memberships.iteritems():
                 if lg.group_type == "EX" or lg.group_type == "AFF" or \
-                                lg.group_type == "DIV":
+                        lg.group_type == "DIV":
                     lg_name = lgk.split(":")
                     if lg_name[0] == "cluster" and lg_name[1] != "any":
                         self.resource.add_logical_group(

@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Search."""
+
 import copy
 import operator
 
@@ -28,29 +30,31 @@ from valet.engine.resource_manager.resource_base import Datacenter
 
 
 class Search(object):
+    """Search."""
 
     def __init__(self, _logger):
+        """Initialization."""
         self.logger = _logger
 
-        """ search inputs """
+        """Search inputs."""
         self.resource = None
         self.app_topology = None
 
-        """ snapshot of current resource status """
+        """Snapshot of current resource status."""
         self.avail_hosts = {}
         self.avail_logical_groups = {}
         self.avail_storage_hosts = {}
         self.avail_switches = {}
 
-        """ search results """
+        """Search results."""
         self.node_placements = {}
         self.bandwidth_usage = 0
         self.num_of_hosts = 0
 
-        """ for replan """
+        """For replan."""
         self.planned_placements = {}
 
-        """ optimization criteria """
+        """Optimization criteria."""
         self.nw_bandwidth_weight = -1
         self.CPU_weight = -1
         self.mem_weight = -1
@@ -80,6 +84,7 @@ class Search(object):
         self.disk_weight = -1
 
     def copy_resource_status(self, _resource):
+        """Copy the resource status."""
         self._init_placements()
 
         self.resource = _resource
@@ -90,11 +95,14 @@ class Search(object):
         self._create_avail_hosts()
 
     def place_nodes(self, _app_topology, _resource):
+        """Place nodes."""
+        """Copy the resource status and utilize the constraint solver
+        to place nodes based on the app topology."""
         self._init_placements()
 
         self.app_topology = _app_topology
 
-        """ ping request """
+        """Ping request."""
         if self.app_topology.optimization_priority is None:
             return True
 
@@ -117,11 +125,14 @@ class Search(object):
                                                   self.app_topology.vgroups,
                                                   init_level)
 
-        """ start from 'rack' level """
+        """Start from 'rack' level."""
 
         return self._run_greedy(open_node_list, level, self.avail_hosts)
 
     def re_place_nodes(self, _app_topology, _resource):
+        """Re-place nodes."""
+        """Copy the resource status and utilize the constraint solver
+        to re-place nodes based on the app topology."""
         self._init_placements()
 
         self.app_topology = _app_topology
@@ -145,7 +156,7 @@ class Search(object):
 
         self.logger.debug("Search: first, place already-planned nodes")
 
-        """ reconsider all vms to be migrated together """
+        """Reconsider all vms to be migrated together."""
         if len(_app_topology.exclusion_list_map) > 0:
             self._set_no_migrated_list()
 
@@ -834,7 +845,7 @@ class Search(object):
         return success
 
     def _get_best_resource(self, _n, _level, _avail_resources):
-        """ already planned vgroup """
+        """Already-planned vgroup."""
         planned_host = None
         if _n.node in self.planned_placements.keys():
             self.logger.debug("Search: already determined node = " +
@@ -996,7 +1007,7 @@ class Search(object):
                             if h.host_name == cr.host_name:
                                 avail_hosts[hk] = h
 
-                    """ recursive call """
+                    """Recursive call."""
                     if self._run_greedy(open_node_list, level, avail_hosts) \
                             is True:
                         best_resource = copy.deepcopy(cr)
@@ -1008,7 +1019,7 @@ class Search(object):
                                           "resource = " + debug_candidate_name)
 
                         if planned_host is None:
-                            """ recursively rollback deductions of all child
+                            """Recursively rollback deductions of all child
                             VMs and Volumes of _n """
                             self._rollback_reservation(_n.node)
                             """ recursively rollback closing """
@@ -1016,7 +1027,7 @@ class Search(object):
                         else:
                             break
 
-                """ after explore top candidate list for _n """
+                """After explore top candidate list for _n."""
                 if best_resource is not None:
                     break
                 else:
@@ -1555,7 +1566,7 @@ class Search(object):
                                        in sr.avail_bandwidths]
 
     """
-    deduction modules
+    Deduction modules.
     """
 
     def _deduct_reservation(self, _level, _best, _n):
@@ -1832,7 +1843,7 @@ class Search(object):
                 self.node_placements[_v] = _best
 
     """
-    rollback modules
+    Rollback modules.
     """
 
     def _rollback_reservation(self, _v):

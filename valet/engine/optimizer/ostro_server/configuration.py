@@ -15,6 +15,8 @@
 
 # - Set all configurations to run Ostro
 
+"""Valet Engine Server Configuration."""
+
 import os
 from oslo_config import cfg
 from valet.engine.conf import register_conf
@@ -24,9 +26,10 @@ CONF = cfg.CONF
 
 
 class Config(object):
+    """Valet Engine Server Configuration."""
 
     def __init__(self, *default_config_files):
-
+        """Initialization."""
         register_conf()
         if default_config_files:
             CONF(default_config_files=default_config_files)
@@ -126,7 +129,7 @@ class Config(object):
         self.base_flavor_disk = 0
 
     def configure(self):
-
+        """Store config info extracted from oslo."""
         status = self._init_system()
         if status != "success":
             return status

@@ -19,12 +19,12 @@ from valet.tests.base import Base
 
 
 class TestGeneral(Base):
-	"""Test General Class."""
+    """Test General Class."""
 
     def setUp(self):
-    	"""Setup Test General."""
+        """Setup Test General."""
         super(TestGeneral, self).setUp()
 
     def test_general(self):
-    	"""Test General performs validate test with True."""
+        """Test General performs validate test with True."""
         self.validate_test(True)

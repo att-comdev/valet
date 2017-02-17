@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-# vi: sw=4 ts=4:
 #
 # Copyright 2014-2017 AT&T Intellectual Property
 #
@@ -15,16 +13,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
+"""HA Valet.
 
-    Mnemonic:   ha_valet.py
-    Abstract:   High availability script for valet processes. Starts it's
-                configured processes, and pings for their availability. If local
-                instances are not running, then makes the current instances
-                start. If it finds multiple instances running, then determines
-                which instance should be shut down based on priorities.
+Mnemonic:   ha_valet.py
+Abstract:   High availability script for valet processes. Starts it's
+            configured processes, and pings for their availability. If local
+            instances are not running, then makes the current instances
+            start. If it finds multiple instances running, then determines
+            which instance should be shut down based on priorities.
 
-    Author:     Amnon Sagiv based on ha_tegu by Kaustubh Joshi
+Author:     Amnon Sagiv based on ha_tegu by Kaustubh Joshi
 
  ------------------------------------------------------------------------------
 
@@ -111,7 +109,7 @@ CONF.register_opts(havalet_opts, ostro_group)
 
 
 def read_conf():
-    """returns dictionary of configured processes"""
+    """Return dictionary of configured processes."""
     return dict([
         ('Ostro', {
             NAME: 'Ostro',
@@ -154,12 +152,13 @@ def prepare_log(obj, name):
 class HaValetThread (threading.Thread):
 
     def __init__(self, data, exit_event):
+        """Initialize HAValetThread."""
         threading.Thread.__init__(self)
         self.data = data
         self.log = None
 
     def run(self):
-        """Main function"""
+        """Main function."""
         prepare_log(self, self.data[NAME])
         self.log.info('HA Valet - ' + self.data[NAME] +
                       ' Watcher Thread - starting')
@@ -196,7 +195,7 @@ class HaValetThread (threading.Thread):
         pass
 
     def _main_loop(self, this_node):
-        """ Main heartbeat and liveness check loop
+        """Main heartbeat and liveness check loop.
 
         :param this_node: host name
         :type this_node: string
@@ -320,11 +319,13 @@ class HaValetThread (threading.Thread):
         # end loop
 
     def _should_be_active(self, host_priority, my_priority):
-        """ Returns True if host should be active as opposed to current node,
-            based on the hosts priorities.
+        """Should Be Active.
 
-           Lower value means higher Priority,
-           0 (zero) - invalid priority (e.g. process is down)
+        Returns True if host should be active as opposed to current node,
+        based on the hosts priorities.
+
+        Lower value means higher Priority,
+        0 (zero) - invalid priority (e.g. process is down)
 
         :param host_priority: other host's priority
         :type host_priority: int
@@ -338,11 +339,11 @@ class HaValetThread (threading.Thread):
         return host_priority < my_priority
 
     def _is_active(self, call):
-        """ Return 'True, Priority' if valet is running on host
+        """_is_active.
 
-           'False, None' Otherwise.
+        Return 'True, Priority' if valet is running on host
+        'False, None' Otherwise.
         """
-
         # must use no-proxy to avoid proxy servers gumming up the works
         for i in xrange(RETRY_COUNT):
             try:
@@ -364,11 +365,11 @@ class HaValetThread (threading.Thread):
         return False, None
 
     def _deactivate_process(self, deactivate_command):
-        """ Deactivate valet on a given host. If host is omitted, local
+        """Deactivate Process.
 
-            valet is stopped. Returns True if successful, False on error.
+        Deactivate valet on a given host. If host is omitted, local
+        valet is stopped. Returns True if successful, False on error.
         """
-
         try:
             # call = "'" + deactivate_command % (PROTO, host, port) + "'"
             self.log.info('deactivate_command: ' + deactivate_command)
@@ -379,11 +380,11 @@ class HaValetThread (threading.Thread):
             return False
 
     def _activate_process(self, activate_command, priority):
-        """ Activate valet on a given host. If host is omitted, local
+        """Activate Process.
 
-            valet is started. Returns True if successful, False on error.
+        Activate valet on a given host. If host is omitted, local
+        valet is started. Returns True if successful, False on error.
         """
-
         try:
             self.log.info('activate_command: ' + activate_command)
             subprocess.check_call(activate_command, shell=True)
@@ -395,8 +396,10 @@ class HaValetThread (threading.Thread):
 
 
 class HAValet(object):
+    """"""
 
     def __init__(self):
+        """Init HAValet object."""
         if not os.path.exists(LOG_DIR):
             os.makedirs(LOG_DIR)
         self.log = None
@@ -404,9 +407,10 @@ class HAValet(object):
     @DeprecationWarning
     def _parse_valet_conf_v010(self, conf_file_name=DEFAULT_CONF_FILE,
                                process=''):
-        """ This function reads the valet config file and returns configuration
+        """Parse Valet Conf v010.
 
-            attributes in key/value format
+        This function reads the valet config file and returns configuration
+        attributes in key/value format
 
         :param conf_file_name: config file name
         :type conf_file_name: string
@@ -417,7 +421,6 @@ class HAValet(object):
         :return: dictionary of configured monitored processes
         :rtype: dict
         """
-
         cdata = {}
         section = ''
 
@@ -452,15 +455,16 @@ class HAValet(object):
         return cdata
 
     def _valid_process_conf_data(self, process_data):
-        """ verify all mandatory parameters are found in the monitored process
-            configuration only standby_list is optional
+        """Valid Process conf data.
+
+        verify all mandatory parameters are found in the monitored process
+        configuration only standby_list is optional
 
         :param process_data: specific process configuration parameters
         :type process_data: dict
         :return: are all mandatory parameters are found
         :rtype: bool
         """
-
         if (process_data.get(HOST) is not None and
             process_data.get(PRIORITY) is not None and
             process_data.get(ORDER) is not None and
@@ -472,7 +476,7 @@ class HAValet(object):
             return False
 
     def start(self):
-        """Start valet HA - Main function"""
+        """Start valet HA - Main function."""
         prepare_log(self, 'havalet')
         self.log.info('ha_valet v1.1 starting')
 

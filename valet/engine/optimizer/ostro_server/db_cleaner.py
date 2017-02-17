@@ -15,11 +15,8 @@
 
 # - Handle user requests
 
-<<<<<<< HEAD
-=======
 """Database Cleaner."""
 
->>>>>>> c12ce63b0d04c2b664b8f00a8702388fd0c7fad8
 from configuration import Config
 import sys
 from valet.api.db.models.music import Music

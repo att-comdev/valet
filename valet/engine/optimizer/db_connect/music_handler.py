@@ -1,11 +1,8 @@
 #!/bin/python
 
-# Modified: Jan. 30, 2017
-
 
 import json
 import operator
-import time
 from valet.common.music import Music
 from valet.engine.optimizer.db_connect.event import Event
 
@@ -132,17 +129,17 @@ class MusicHandler(object):
 
         return True
 
+    # TODO(GJ): evaluate the delay
     def get_events(self):
         event_list = []
 
-        ts = time.time()
         events = {}
         try:
             events = self.music.read_all_rows(self.config.db_keyspace, self.config.db_event_table)
         except Exception as e:
             self.logger.error("DB:event: " + str(e))
-            self.logger.debug("EVAL: the delay of getting events = " + str(time.time() - ts))
-            return None
+            # FIXME(GJ): return None?
+            return {}
 
         if len(events) > 0:
             for _, row in events.iteritems():
@@ -195,6 +192,9 @@ class MusicHandler(object):
                                             e.args = args
                                             event_list.append(e)
                                         else:
+                                            self.logger.warn("unknown vm_state = " + change_data["vm_state"])
+                                            if 'uuid' in change_data.keys():
+                                                self.logger.warn("    uuid = " + change_data['uuid'])
                                             if self.delete_event(event_id) is False:
                                                 return None
                                     else:
@@ -229,13 +229,7 @@ class MusicHandler(object):
                         if self.delete_event(event_id) is False:
                             return None
                         continue
-                    '''
-                    else:
-                        filter_properties = args['filter_properties']
-                        if 'scheduler_hints' not in filter_properties.keys():
-                            self.delete_event(event_id)
-                            continue
-                    '''
+                    # NOTE(GJ): do not check the existance of scheduler_hints
 
                     if 'instance' not in args.keys():
                         if self.delete_event(event_id) is False:
@@ -272,13 +266,6 @@ class MusicHandler(object):
                         self.logger.warn("DB: data missing in compute object event")
 
             elif e.method == "build_and_run_instance":
-                '''
-                if e.heat_resource_name == None or e.heat_resource_name == "none" or \
-                   e.heat_resource_uuid == None or e.heat_resource_uuid == "none" or \
-                   e.heat_root_stack_id == None or e.heat_root_stack_id == "none" or \
-                   e.heat_stack_name == None or e.heat_stack_name == "none" or \
-                   e.uuid == None or e.uuid == "none":
-                '''
                 if e.uuid is None or e.uuid == "none":
                     error_event_list.append(e)
                     self.logger.warn("DB: data missing in build event")
@@ -289,7 +276,6 @@ class MusicHandler(object):
         if len(event_list) > 0:
             event_list.sort(key=operator.attrgetter('event_id'))
 
-            self.logger.debug("EVAL: the delay of getting events = " + str(time.time() - ts))
         return event_list
 
     def delete_event(self, _event_id):
@@ -318,10 +304,6 @@ class MusicHandler(object):
             h_uuid = row[row.keys()[0]]['h_uuid']
             s_uuid = row[row.keys()[0]]['s_uuid']
 
-            # self.logger.info("DB: heat uuid (" + h_uuid + ") for uuid = " + _uuid)
-        # else:
-            # self.logger.debug("DB: heat uuid not found")
-
         return h_uuid, s_uuid
 
     def put_uuid(self, _e):
@@ -348,13 +330,6 @@ class MusicHandler(object):
             self.logger.error("DB: while inserting uuid: " + str(e))
             return False
 
-        # self.logger.info("DB: uuid (" + _e.uuid + ") added")
-
-        '''
-        self.delete_event(_e.event_id)
-
-        '''
-
         return True
 
     def delete_uuid(self, _k):
@@ -369,14 +344,13 @@ class MusicHandler(object):
     def get_requests(self):
         request_list = []
 
-        ts = time.time()
         requests = {}
         try:
             requests = self.music.read_all_rows(self.config.db_keyspace, self.config.db_request_table)
         except Exception as e:
             self.logger.error("DB: while reading requests: " + str(e))
-            self.logger.debug("EVAL: the delay of getting requests = " + str(time.time() - ts))
-            return None
+            # FIXME(GJ): return None?
+            return {}
 
         if len(requests) > 0:
             self.logger.info("DB: placement request arrived")
@@ -388,7 +362,6 @@ class MusicHandler(object):
                 for r in r_list:
                     request_list.append(r)
 
-            self.logger.debug("EVAL: the delay of getting requests = " + str(time.time() - ts))
         return request_list
 
     def put_result(self, _result):
@@ -404,8 +377,6 @@ class MusicHandler(object):
                 self.logger.error("DB: while putting placement result: " + str(e))
                 return False
 
-            # self.logger.info("DB: placement result added " + appk)
-
         for appk in _result.keys():
             try:
                 self.music.delete_row_eventually(self.config.db_keyspace,
@@ -414,8 +385,6 @@ class MusicHandler(object):
             except Exception as e:
                 self.logger.error("DB: while deleting handled request: " + str(e))
                 return False
-
-            # self.logger.info("DB: placement request deleted " + appk)
 
         return True
 
@@ -432,8 +401,6 @@ class MusicHandler(object):
         if len(row) > 0:
             str_resource = row[row.keys()[0]]['resource']
             json_resource = json.loads(str_resource)
-
-            # self.logger.info("DB: get resource status")
 
         return json_resource
 
@@ -539,8 +506,6 @@ class MusicHandler(object):
             self.logger.error("DB: while updating resource log index: " + str(e))
             return False
 
-        # self.logger.info("DB: resource log index updated")
-
         return True
 
     def update_app_log_index(self, _k, _index):
@@ -557,8 +522,6 @@ class MusicHandler(object):
             self.logger.error("DB: while updating app log index: " + str(e))
             return False
 
-        # self.logger.info("DB: app log index updated")
-
         return True
 
     def add_app(self, _k, _app_data):
@@ -567,8 +530,6 @@ class MusicHandler(object):
         except Exception as e:
             self.logger.error("DB: while deleting app: " + str(e))
             return False
-
-        # self.logger.info("DB: app deleted")
 
         if _app_data is not None:
             data = {
@@ -581,8 +542,6 @@ class MusicHandler(object):
             except Exception as e:
                 self.logger.error("DB: while inserting app: " + str(e))
                 return False
-
-            # self.logger.info("DB: app added")
 
         return True
 
@@ -630,8 +589,6 @@ class MusicHandler(object):
                             self.logger.warn("DB: conflicted placement decision from Ostro")
                             # TODO(GY): affinity, diversity, exclusivity validation check
                             updated = True
-                        # else:
-                            # self.logger.debug("DB: placement as expected")
                     else:
                         vm["status"] = "scheduled"
                         self.logger.warn("DB: vm was deleted")
@@ -688,24 +645,3 @@ class MusicHandler(object):
                 return False
 
         return True
-
-
-# Unit test
-'''
-if __name__ == '__main__':
-    config = Config()
-    config_status = config.configure()
-    if config_status != "success":
-        print "Error while configuring Client: " + config_status
-        sys.exit(2)
-
-    mh = MusicHandler(config, None)
-    event_list = mh.get_events()
-    for e in event_list:
-        print "event id = ", e.event_id
-        print "host = ", e.host
-        print "least disk = ", e.disk_available_least
-        print "disk = ", e.local_disk
-        for nc in e.numa_cell_list:
-            print "numa cell = ", nc
-'''

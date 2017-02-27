@@ -1,7 +1,5 @@
 #!/bin/python
 
-# Modified: Sep. 27, 2016
-
 
 from valet.engine.optimizer.app_manager.app_topology_base import LEVELS
 
@@ -88,7 +86,6 @@ class Datacenter(object):
                 'last_link_update': self.last_link_update}
 
 
-# data container for rack or cluster
 class HostGroup(object):
 
     def __init__(self, _id):
@@ -558,16 +555,18 @@ class LogicalGroup(object):
     def clean_none_vms(self, _host_id):
         success = False
 
-        for vm_id in self.vm_list:
-            if vm_id[2] == "none":
-                self.vm_list.remove(vm_id)
-                success = True
+        blen = len(self.vm_list)
+        self.vm_list = [v for v in self.vm_list if v[2] != "none"]
+        alen = len(self.vm_list)
+        if alen != blen:
+            success = True
 
         if _host_id in self.vms_per_host.keys():
-            for vm_id in self.vms_per_host[_host_id]:
-                if vm_id[2] == "none":
-                    self.vms_per_host[_host_id].remove(vm_id)
-                    success = True
+            blen = len(self.vms_per_host[_host_id])
+            self.vms_per_host[_host_id] = [v for v in self.vms_per_host[_host_id] if v[2] != "none"]
+            alen = len(self.vm_list)
+            if alen != blen:
+                success = True
 
         if self.group_type == "EX" or self.group_type == "AFF" or self.group_type == "DIV":
             if (_host_id in self.vms_per_host.keys()) and len(self.vms_per_host[_host_id]) == 0:

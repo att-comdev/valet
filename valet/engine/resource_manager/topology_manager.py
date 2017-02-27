@@ -1,7 +1,5 @@
 #!/bin/python
 
-# Modified: Jan. 30, 2017
-
 
 import threading
 import time
@@ -26,6 +24,8 @@ class TopologyManager(threading.Thread):
 
         self.logger = _logger
 
+        self.update_batch_wait = self.config.update_batch_wait
+
     def run(self):
         self.logger.info("start topology_manager " + self.thread_name + " ......")
 
@@ -34,33 +34,15 @@ class TopologyManager(threading.Thread):
 
             while self.end_of_process is False:
                 time.sleep(70)
+                curr_ts = time.time()
+                if curr_ts > period_end:
+                    # Give some time (batch_wait) to update resource status via message bus
+                    # Otherwise, late update will be cleaned up
+                    if (curr_ts - self.resource.current_timestamp) > self.update_batch_wait:
+                        self._run()
+                        period_end = curr_ts + self.config.topology_trigger_freq
 
-                if time.time() > period_end:
-                    self._run()
-                    period_end = time.time() + self.config.topology_trigger_freq
-
-        else:
-            (alarm_HH, alarm_MM) = self.config.topology_trigger_time.split(':')
-            now = time.localtime()
-            timeout = True
-            last_trigger_year = now.tm_year
-            last_trigger_mon = now.tm_mon
-            last_trigger_mday = now.tm_mday
-
-            while self.end_of_process is False:
-                time.sleep(70)
-
-                now = time.localtime()
-                if now.tm_year > last_trigger_year or now.tm_mon > last_trigger_mon or now.tm_mday > last_trigger_mday:
-                    timeout = False
-
-                if timeout is False and now.tm_hour >= int(alarm_HH) and now.tm_min >= int(alarm_MM):
-                    self._run()
-
-                    timeout = True
-                    last_trigger_year = now.tm_year
-                    last_trigger_mon = now.tm_mon
-                    last_trigger_mday = now.tm_mday
+        # NOTE(GJ): do not timer based batch
 
         self.logger.info("exit topology_manager " + self.thread_name)
 
@@ -89,7 +71,6 @@ class TopologyManager(threading.Thread):
 
         status = topology.set_topology(datacenter, host_groups, hosts, self.resource.hosts, switches)
         if status != "success":
-            # self.logger.error("TopologyManager: " + status)
             return False
 
         self.data_lock.acquire()
@@ -443,11 +424,14 @@ class TopologyManager(threading.Thread):
                 updated = True
                 self.logger.warn("datacenter updated (new region code, " + rc + ")")
 
-        for rrc in self.resource.datacenter.region_code_list:
-            if rrc not in _datacenter.region_code_list:
-                self.resource.datacenter.region_code_list.remove(rrc)
-                updated = True
-                self.logger.warn("datacenter updated (region code, " + rrc + ", removed)")
+        code_list = self.resource.datacenter.region_code_list
+        blen = len(code_list)
+        code_list = [r for r in code_list if r in _datacenter.region_code_list]
+        alen = len(code_list)
+        if alen != blen:
+            updated = True
+            self.resource.datacenter.region_code_list = code_list
+            self.logger.warn("datacenter updated (region code removed)")
 
         for rk in _datacenter.resources.keys():
             exist = False

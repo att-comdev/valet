@@ -147,16 +147,13 @@ class ListenerManager(threading.Thread):
         OsloMessage(**kwargs)  # pylint: disable=W0612
 
     def is_nova_name(self, args):
-        if args['objinst']['nova_object.data']['vm_state'] in ['deleted', 'active']:
-            return True
-        else:
-            if args['objinst']['nova_object.data']['vm_state'] == 'building':
-                return False
-            else:
-                return True
+        return args['objinst']['nova_object.name'] == 'Instance'
 
     def is_nova_state(self, args):
-        return args['objinst']['nova_object.data']['vm_state'] in ['deleted', 'active']
+        if args['objinst']['nova_object.data']['vm_state'] == 'building':
+            return False
+        else:
+            return True
 
     def is_compute_name(self, args):
         return args['objinst']['nova_object.name'] == 'ComputeNode'

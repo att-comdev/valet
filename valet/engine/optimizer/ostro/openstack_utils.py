@@ -1,7 +1,5 @@
 #!/bin/python
 
-# Modified: Mar. 15, 2016
-
 
 import collections
 import operator

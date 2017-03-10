@@ -1,6 +1,5 @@
 #!/bin/python
 
-# Modified: Jan. 21, 2017
 
 from novaclient import client as nova_client
 from oslo_config import cfg
@@ -45,7 +44,7 @@ class Compute(object):
         return "success"
 
     def _get_nova_client(self):
-        '''Returns a nova client'''
+        ''' returns a nova client '''
         self.nova = nova_client.Client(VERSION,
                                        CONF.identity.username,
                                        CONF.identity.password,
@@ -75,8 +74,6 @@ class Compute(object):
                         if host.name not in logical_group.vms_per_host.keys():
                             logical_group.vms_per_host[host.name] = []
 
-                        # self.logger.info("adding Host LogicalGroup: " + str(host.__dict__))
-
                         _hosts[host.name] = host
 
             except (ValueError, KeyError, TypeError):
@@ -103,8 +100,6 @@ class Compute(object):
                     metadata[mk] = a.metadata.get(mk)
                 aggregate.metadata = metadata
 
-                # self.logger.info("adding aggregate LogicalGroup: " + str(aggregate.__dict__))
-
                 _logical_groups[aggregate.name] = aggregate
 
                 for hn in a.hosts:
@@ -119,7 +114,6 @@ class Compute(object):
 
         return "success"
 
-    # NOTE: do not set any info in _logical_groups
     def _set_placed_vms(self, _hosts, _logical_groups):
         error_status = None
 
@@ -133,12 +127,9 @@ class Compute(object):
                     result_status_detail = self._get_vm_detail(vm_uuid, vm_detail)
 
                     if result_status_detail == "success":
-                        # if vm_detail[3] != "SHUTOFF":  # status == "ACTIVE" or "SUSPENDED"
                         vm_id = ("none", vm_detail[0], vm_uuid)
                         _hosts[hk].vm_list.append(vm_id)
-
-                        # _logical_groups[vm_detail[1]].vm_list.append(vm_id)
-                        # _logical_groups[vm_detail[1]].vms_per_host[hk].append(vm_id)
+                        # FIXME(GJ): should track logical groups (e.g., AZ)?
                     else:
                         error_status = result_status_detail
                         break
@@ -189,7 +180,8 @@ class Compute(object):
         return "success"
 
     def _set_resources(self, _hosts):
-        # Returns Hypervisor list
+        ''' returns Hypervisor list '''
+
         host_list = self.nova.hypervisors.list()
 
         try:
@@ -234,7 +226,8 @@ class Compute(object):
             return error_status
 
     def _set_flavors(self, _flavors):
-        # Get a list of all flavors
+        ''' get a list of all flavors '''
+
         flavor_list = self.nova.flavors.list()
 
         try:
@@ -261,9 +254,6 @@ class Compute(object):
                         swap_mb = float(sw)
 
                 flavor.disk_cap = root_gb + ephemeral_gb + swap_mb / float(1024)
-
-                # self.logger.info("adding flavor " + str(flavor.__dict__))
-
                 _flavors[flavor.name] = flavor
 
         except (ValueError, KeyError, TypeError):
@@ -292,44 +282,3 @@ class Compute(object):
             return "Error while getting flavor extra spec"
 
         return "success"
-
-
-# Unit test
-'''
-if __name__ == '__main__':
-    config = Config()
-    config_status = config.configure()
-    if config_status != "success":
-        print "Error while configuring Ostro: " + config_status
-        sys.exit(2)
-
-    auth = Authentication()
-
-    admin_token = auth.get_tenant_token(config)
-    if admin_token is None:
-        print "Error while getting admin_token"
-        sys.exit(2)
-    else:
-        print "admin_token=",admin_token
-
-    project_token = auth.get_project_token(config, admin_token)
-    if project_token is None:
-        print "Error while getting project_token"
-        sys.exit(2)
-    else:
-        print "project_token=",project_token
-
-    c = Compute(config, admin_token, project_token)
-
-    hosts = {}
-    logical_groups = {}
-    flavors = {}
-
-    #c._set_availability_zones(hosts, logical_groups)
-    #c._set_aggregates(None, logical_groups)
-    #c._set_placed_vms(hosts, logical_groups)
-    #c._get_vms_of_host("qos101", None)
-    #c._get_vm_detail("20b2890b-81bb-4942-94bf-c6bee29630bb", None)
-    c._set_resources(hosts)
-    #c._set_flavors(flavors)
-'''

@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 
-# Modified: Mar. 1, 2016
-
 
 import atexit
 import os
@@ -70,9 +68,6 @@ class Daemon(object):
         os.dup2(se.fileno(), sys.stderr.fileno())
 
         atexit.register(self.delpid)
-        # write pidfile - moved to OstroDaemon.run
-        # pid = str(os.getpid())
-        # file(self.pidfile, 'w+').write("%s\n" % pid)
 
     def delpid(self):
         os.remove(self.pidfile)
@@ -134,7 +129,6 @@ class Daemon(object):
                 if os.path.exists(self.pidfile):
                     os.remove(self.pidfile)
             else:
-                # print str(err)
                 sys.exit(1)
 
     def status(self):

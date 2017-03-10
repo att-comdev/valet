@@ -5,6 +5,7 @@ from valet.engine.optimizer.app_manager.app_topology_base import LEVELS
 
 
 class Datacenter(object):
+    ''' do not consider switch and storage resources at this version '''
 
     def __init__(self, _name):
         self.name = _name
@@ -25,16 +26,11 @@ class Datacenter(object):
         self.original_local_disk_cap = 0
         self.avail_local_disk_cap = 0
 
-        self.root_switches = {}
-        self.storages = {}
-
         self.resources = {}
 
         self.vm_list = []                # a list of placed vms, (ochestration_uuid, vm_name, physical_uuid)
-        self.volume_list = []            # a list of placed volumes
 
         self.last_update = 0
-        self.last_link_update = 0
 
     def init_resources(self):
         self.vCPUs = 0
@@ -51,14 +47,6 @@ class Datacenter(object):
         membership_list = []
         for lgk in self.memberships.keys():
             membership_list.append(lgk)
-
-        switch_list = []
-        for sk in self.root_switches.keys():
-            switch_list.append(sk)
-
-        storage_list = []
-        for shk in self.storages.keys():
-            storage_list.append(shk)
 
         child_list = []
         for ck in self.resources.keys():
@@ -77,16 +65,13 @@ class Datacenter(object):
                 'local_disk': self.local_disk_cap,
                 'original_local_disk': self.original_local_disk_cap,
                 'avail_local_disk': self.avail_local_disk_cap,
-                'switch_list': switch_list,
-                'storage_list': storage_list,
                 'children': child_list,
                 'vm_list': self.vm_list,
-                'volume_list': self.volume_list,
-                'last_update': self.last_update,
-                'last_link_update': self.last_link_update}
+                'last_update': self.last_update}
 
 
 class HostGroup(object):
+    ''' do not consider switch and storage resources at this version '''
 
     def __init__(self, _id):
         self.name = _id
@@ -106,17 +91,12 @@ class HostGroup(object):
         self.original_local_disk_cap = 0
         self.avail_local_disk_cap = 0
 
-        self.switches = {}               # ToRs
-        self.storages = {}
-
         self.parent_resource = None      # e.g., datacenter
         self.child_resources = {}        # e.g., hosting servers
 
         self.vm_list = []                # a list of placed vms, (ochestration_uuid, vm_name, physical_uuid)
-        self.volume_list = []            # a list of placed volumes
 
         self.last_update = 0
-        self.last_link_update = 0
 
     def init_resources(self):
         self.vCPUs = 0
@@ -160,14 +140,6 @@ class HostGroup(object):
         for lgk in self.memberships.keys():
             membership_list.append(lgk)
 
-        switch_list = []
-        for sk in self.switches.keys():
-            switch_list.append(sk)
-
-        storage_list = []
-        for shk in self.storages.keys():
-            storage_list.append(shk)
-
         child_list = []
         for ck in self.child_resources.keys():
             child_list.append(ck)
@@ -184,17 +156,14 @@ class HostGroup(object):
                 'local_disk': self.local_disk_cap,
                 'original_local_disk': self.original_local_disk_cap,
                 'avail_local_disk': self.avail_local_disk_cap,
-                'switch_list': switch_list,
-                'storage_list': storage_list,
                 'parent': self.parent_resource.name,
                 'children': child_list,
                 'vm_list': self.vm_list,
-                'volume_list': self.volume_list,
-                'last_update': self.last_update,
-                'last_link_update': self.last_link_update}
+                'last_update': self.last_update}
 
 
 class Host(object):
+    ''' do not consider switch and storage resources at this version '''
 
     def __init__(self, _name):
         self.name = _name
@@ -220,16 +189,11 @@ class Host(object):
         self.free_disk_gb = 0
         self.disk_available_least = 0
 
-        self.switches = {}               # leaf
-        self.storages = {}
-
         self.host_group = None           # e.g., rack
 
         self.vm_list = []                # a list of placed vms, (ochestration_uuid, vm_name, physical_uuid)
-        self.volume_list = []            # a list of placed volumes
 
         self.last_update = 0
-        self.last_link_update = 0
 
     def clean_memberships(self):
         cleaned = False
@@ -372,14 +336,6 @@ class Host(object):
         for lgk in self.memberships.keys():
             membership_list.append(lgk)
 
-        switch_list = []
-        for sk in self.switches.keys():
-            switch_list.append(sk)
-
-        storage_list = []
-        for shk in self.storages.keys():
-            storage_list.append(shk)
-
         return {'tag': self.tag, 'status': self.status, 'state': self.state,
                 'membership_list': membership_list,
                 'vCPUs': self.vCPUs,
@@ -395,13 +351,9 @@ class Host(object):
                 'free_mem_mb': self.free_mem_mb,
                 'free_disk_gb': self.free_disk_gb,
                 'disk_available_least': self.disk_available_least,
-                'switch_list': switch_list,
-                'storage_list': storage_list,
                 'parent': self.host_group.name,
                 'vm_list': self.vm_list,
-                'volume_list': self.volume_list,
-                'last_update': self.last_update,
-                'last_link_update': self.last_link_update}
+                'last_update': self.last_update}
 
 
 class LogicalGroup(object):
@@ -415,7 +367,6 @@ class LogicalGroup(object):
         self.metadata = {}               # any metadata to be matched when placing nodes
 
         self.vm_list = []                # a list of placed vms, (ochestration_uuid, vm_name, physical_uuid)
-        self.volume_list = []            # a list of placed volumes
 
         self.vms_per_host = {}           # key = host_id, value = a list of placed vms
 
@@ -579,82 +530,8 @@ class LogicalGroup(object):
                 'group_type': self.group_type,
                 'metadata': self.metadata,
                 'vm_list': self.vm_list,
-                'volume_list': self.volume_list,
                 'vms_per_host': self.vms_per_host,
                 'last_update': self.last_update}
-
-
-class Switch(object):
-
-    def __init__(self, _switch_id):
-        self.name = _switch_id
-        self.switch_type = "ToR"         # root, spine, ToR, or leaf
-
-        self.status = "enabled"
-
-        self.up_links = {}
-        self.down_links = {}             # currently, not used
-        self.peer_links = {}
-
-        self.last_update = 0
-
-    def get_json_info(self):
-        ulinks = {}
-        for ulk, ul in self.up_links.iteritems():
-            ulinks[ulk] = ul.get_json_info()
-
-        plinks = {}
-        for plk, pl in self.peer_links.iteritems():
-            plinks[plk] = pl.get_json_info()
-
-        return {'status': self.status,
-                'switch_type': self.switch_type,
-                'up_links': ulinks,
-                'peer_links': plinks,
-                'last_update': self.last_update}
-
-
-class Link(object):
-
-    def __init__(self, _name):
-        self.name = _name                # format: source + "-" + target
-        self.resource = None             # switch beging connected to
-
-        self.nw_bandwidth = 0            # Mbps
-        self.avail_nw_bandwidth = 0
-
-    def get_json_info(self):
-        return {'resource': self.resource.name,
-                'bandwidth': self.nw_bandwidth,
-                'avail_bandwidth': self.avail_nw_bandwidth}
-
-
-class StorageHost(object):
-
-    def __init__(self, _name):
-        self.name = _name
-        self.storage_class = None        # tiering, e.g., platinum, gold, silver
-
-        self.status = "enabled"
-        self.host_list = []
-
-        self.disk_cap = 0                # GB
-        self.avail_disk_cap = 0
-
-        self.volume_list = []            # list of volume names placed in this host
-
-        self.last_update = 0
-        self.last_cap_update = 0
-
-    def get_json_info(self):
-        return {'status': self.status,
-                'class': self.storage_class,
-                'host_list': self.host_list,
-                'disk': self.disk_cap,
-                'avail_disk': self.avail_disk_cap,
-                'volume_list': self.volume_list,
-                'last_update': self.last_update,
-                'last_cap_update': self.last_cap_update}
 
 
 class Flavor(object):

@@ -36,7 +36,8 @@ class Config(object):
         self.db_app_table = None
         self.db_uuid_table = None
         self.replication_factor = 3
-        self.db_hosts = []
+        self.db_host = 'localhost'
+        self.db_port = 8080
 
         self.ip = None
 
@@ -181,6 +182,8 @@ class Config(object):
         self.replication_factor = CONF.music.replication_factor
 
         self.db_host = CONF.music.host
+
+        self.db_port = CONF.music.port
 
         self.ip = CONF.engine.ip
 

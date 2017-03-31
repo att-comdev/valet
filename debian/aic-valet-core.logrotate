@@ -1,20 +1,8 @@
 /var/log/apache2/valet/*.log
 /var/log/valet/*.log
 {
-  weekly
-  rotate 4
-  compress
-  delaycompress
-  missingok
-  copytruncate
-  notifempty
-}
-
-/var/log/tomcat7/catalina.out
-/var/log/tomcat7/*.log
-{
   daily
-  rotate 4
+  rotate 14
   compress
   delaycompress
   missingok

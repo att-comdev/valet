@@ -5,3 +5,4 @@ aic-valet-core/etc/valet/api/valet_apache.conf etc/apache2/sites-available/
 aic-valet-core/valet/ha/ha_valet.cfg etc/valet/ha/
 aic-valet-core/etc/valet/valet.conf etc/valet/
 aic-valet-core/tools/utils/* opt/app/aic-valet-tools/
+aic-valet-core/bin/valet-engine usr/bin

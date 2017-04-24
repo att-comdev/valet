@@ -4,6 +4,7 @@ chmod 0750 /etc/valet
 chown -R valet:valet /opt/app/aic-valet-tools
 chmod 755 /opt/app/aic-valet-tools/*
 chown valet:valet /var/log/valet
+chmod 0750 /var/log/valet
 chown valet:valet /var/log/havalet
 chown valet:valet /var/run/valet
 chown valet:valet /var/www/valet/app.wsgi
